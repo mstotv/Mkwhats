@@ -380,9 +380,8 @@ export interface EvolutionSendResult {
 export async function sendEvolutionTextMessage(
   args: EvolutionSendTextArgs
 ): Promise<EvolutionSendResult> {
-  // Evolution expects the phone without the leading "+" and with
-  // the @s.whatsapp.net suffix for individual chats.
-  const normalized = args.to.replace(/^\+/, '') + '@s.whatsapp.net'
+  // Evolution v2 expects `number` as digits only (no leading + or @s.whatsapp.net suffix)
+  const normalized = args.to.replace(/\D/g, '')
 
   const data = await evolutionFetch<{
     key?: { id?: string }
@@ -420,7 +419,7 @@ export interface EvolutionSendMediaArgs {
 export async function sendEvolutionMediaMessage(
   args: EvolutionSendMediaArgs
 ): Promise<EvolutionSendResult> {
-  const normalized = args.to.replace(/^\+/, '') + '@s.whatsapp.net'
+  const normalized = args.to.replace(/\D/g, '')
 
   const data = await evolutionFetch<{
     key?: { id?: string }
