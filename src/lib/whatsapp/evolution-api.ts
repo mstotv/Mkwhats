@@ -185,11 +185,57 @@ export async function createEvolutionInstance(
   const returnedInstanceName = data.instance?.instanceName ?? data.instance?.name ?? args.instanceName
   const returnedApiKey = data.hash?.apikey ?? data.token ?? args.token ?? ''
 
+  // Automatically register the Webhook on Evolution v2 via POST /webhook/set/{instanceName}
+  try {
+    await setEvolutionWebhook({
+      instanceName: returnedInstanceName,
+      webhookUrl: args.webhookUrl,
+      apiKey: returnedApiKey || globalKey,
+    })
+  } catch (webhookErr) {
+    console.warn('[createEvolutionInstance] setEvolutionWebhook warning:', webhookErr)
+  }
+
   return {
     instanceName: returnedInstanceName,
     apiKey: returnedApiKey,
     qrBase64: data.qrcode?.base64 ?? null,
   }
+}
+
+/**
+ * Registers / sets the webhook URL for an Evolution API instance.
+ * Evolution API v2 requires calling POST /webhook/set/{instanceName}
+ * after instance creation.
+ */
+export async function setEvolutionWebhook(args: {
+  instanceName: string
+  webhookUrl: string
+  apiKey?: string
+}): Promise<void> {
+  const globalKey = getEvolutionGlobalApiKey()
+  const apiKey = args.apiKey || globalKey
+
+  const body = {
+    webhook: {
+      enabled: true,
+      url: args.webhookUrl,
+      byEvents: false,
+      events: [
+        'QRCODE_UPDATED',
+        'CONNECTION_UPDATE',
+        'MESSAGES_UPSERT',
+        'MESSAGES_UPDATE',
+        'SEND_MESSAGE',
+      ],
+    },
+  }
+
+  await evolutionFetch(`/webhook/set/${args.instanceName}`, {
+    method: 'POST',
+    apiKey,
+    body: JSON.stringify(body),
+  })
 }
 
 /**
