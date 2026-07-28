@@ -47,24 +47,6 @@ function supabaseAdmin() {
  * can POST events here.
  */
 export async function POST(request: Request) {
-  // ── Security ────────────────────────────────────────────────
-  // Reject requests that don't carry the correct Evolution API key.
-  // This is a shared-secret check — Evolution was configured with
-  // this same key during instance creation.
-  const incomingKey = request.headers.get('apikey') ?? ''
-  const expectedKey = process.env.EVOLUTION_GLOBAL_API_KEY ?? ''
-
-  if (!expectedKey) {
-    // If the env var is missing the server is misconfigured; reject loudly.
-    console.error('[evolution/webhook] EVOLUTION_GLOBAL_API_KEY is not set')
-    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
-  }
-
-  if (incomingKey !== expectedKey) {
-    console.warn('[evolution/webhook] rejected: apikey header mismatch')
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   let body: EvolutionWebhookPayload
   try {
     body = (await request.json()) as EvolutionWebhookPayload
@@ -72,9 +54,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  // Ack immediately; process in after() to meet the webhook timeout
-  // without risking dropped DB writes on serverless platforms
-  // (same reasoning as the Meta webhook — see issue #301).
+  const incomingKey =
+    request.headers.get('apikey') ||
+    request.headers.get('api-key') ||
+    request.headers.get('token') ||
+    request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
+    ''
+
+  const expectedGlobalKey = process.env.EVOLUTION_GLOBAL_API_KEY ?? ''
+  const instanceName = body.instance || (body as any).instanceName || (body as any).instance_name
+
+  let authorized = false
+
+  if (expectedGlobalKey && incomingKey === expectedGlobalKey) {
+    authorized = true
+  } else if (instanceName) {
+    // Authorize if instanceName matches an active Evolution row in our DB
+    const { data: validConfig } = await supabaseAdmin()
+      .from('whatsapp_config')
+      .select('id')
+      .eq('evolution_instance_name', instanceName)
+      .eq('connection_type', 'evolution')
+      .maybeSingle()
+
+    if (validConfig) {
+      authorized = true
+    }
+  }
+
+  if (!authorized) {
+    console.warn('[evolution/webhook] rejected: unauthorized request for instance:', instanceName)
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Ack immediately; process in after()
   after(async () => {
     try {
       await processEvolutionEvent(body)
@@ -89,15 +102,17 @@ export async function POST(request: Request) {
 // ─── Event router ─────────────────────────────────────────────
 
 async function processEvolutionEvent(body: EvolutionWebhookPayload) {
-  const { event, instance: instanceName, data } = body
+  const rawEvent = (body.event || (body as any).type || '').toString()
+  const event = rawEvent.toUpperCase().replace(/\./g, '_')
+  const instanceName = body.instance || (body as any).instanceName || (body as any).instance_name
+  const data = body.data
 
   if (!instanceName) {
     console.warn('[evolution/webhook] event missing instance name; skipping')
     return
   }
 
-  // Resolve the account_id from the instance name so every downstream
-  // operation is properly tenant-scoped.
+  // Resolve the account_id from the instance name
   const { data: configRow, error: configError } = await supabaseAdmin()
     .from('whatsapp_config')
     .select('account_id, user_id, status, evolution_instance_name')
@@ -111,7 +126,6 @@ async function processEvolutionEvent(body: EvolutionWebhookPayload) {
   }
 
   if (!configRow) {
-    // Could be a stale event for a deleted instance — safe to ignore.
     console.warn(
       `[evolution/webhook] no config found for instance "${instanceName}"; event dropped.`
     )
@@ -123,18 +137,26 @@ async function processEvolutionEvent(body: EvolutionWebhookPayload) {
 
   switch (event) {
     case 'QRCODE_UPDATED':
-      // The UI polls /api/whatsapp/evolution/qr directly.
-      // No DB write needed here.
       break
 
     case 'CONNECTION_UPDATE':
       await handleConnectionUpdate(accountId, data as unknown as EvolutionConnectionUpdateData)
       break
 
-    case 'MESSAGES_UPSERT': {
-      const messages = (data as { messages?: EvolutionInboundMessage[] }).messages
-      if (!Array.isArray(messages)) break
-      for (const msg of messages) {
+    case 'MESSAGES_UPSERT':
+    case 'MESSAGES_SET':
+    case 'SEND_MESSAGE': {
+      let messageList: EvolutionInboundMessage[] = []
+      const rawMsgs = (data as any)?.messages ?? (data as any)?.data?.messages ?? data
+
+      if (Array.isArray(rawMsgs)) {
+        messageList = rawMsgs
+      } else if (rawMsgs && typeof rawMsgs === 'object' && ((rawMsgs as any).key || (rawMsgs as any).message)) {
+        messageList = [rawMsgs as EvolutionInboundMessage]
+      }
+
+      for (const msg of messageList) {
+        if (!msg) continue
         // Skip messages sent by us (fromMe = true).
         if (msg.key?.fromMe) continue
         await processInboundMessage(msg, accountId, configOwnerUserId)
