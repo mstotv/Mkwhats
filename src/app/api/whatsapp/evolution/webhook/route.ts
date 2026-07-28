@@ -1,0 +1,494 @@
+import { NextResponse, after } from 'next/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { decrypt } from '@/lib/whatsapp/encryption'
+import { normalizePhone } from '@/lib/whatsapp/phone-utils'
+import { findExistingContact, isUniqueViolation } from '@/lib/contacts/dedupe'
+import { runAutomationsForTrigger } from '@/lib/automations/engine'
+import { dispatchInboundToFlows } from '@/lib/flows/engine'
+import { dispatchInboundToAiReply } from '@/lib/ai/auto-reply'
+import { dispatchWebhookEvent } from '@/lib/webhooks/deliver'
+import type {
+  EvolutionWebhookPayload,
+  EvolutionConnectionUpdateData,
+  EvolutionInboundMessage,
+} from '@/lib/whatsapp/evolution-api'
+
+// Same max-duration approach as the Meta webhook — Evolution events
+// can fan out to automations/AI, so give the after() callback headroom.
+export const maxDuration = 60
+
+// Lazy-initialized service-role client (same pattern as Meta webhook).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _adminClient: any = null
+function supabaseAdmin() {
+  if (!_adminClient) {
+    _adminClient = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+  }
+  return _adminClient
+}
+
+/**
+ * POST /api/whatsapp/evolution/webhook
+ *
+ * Receives events from the Evolution API server.
+ * Completely separate from /api/whatsapp/webhook (Meta).
+ *
+ * Handled events:
+ *   QRCODE_UPDATED      — QR refreshed; no DB write needed (UI polls /qr)
+ *   CONNECTION_UPDATE   — phone connected / disconnected
+ *   MESSAGES_UPSERT     — inbound message from a customer
+ *   MESSAGES_UPDATE     — outbound message delivery status update
+ *
+ * Security: Evolution sends its global API key in the `apikey` header.
+ * We compare it to EVOLUTION_GLOBAL_API_KEY so only our own server
+ * can POST events here.
+ */
+export async function POST(request: Request) {
+  // ── Security ────────────────────────────────────────────────
+  // Reject requests that don't carry the correct Evolution API key.
+  // This is a shared-secret check — Evolution was configured with
+  // this same key during instance creation.
+  const incomingKey = request.headers.get('apikey') ?? ''
+  const expectedKey = process.env.EVOLUTION_GLOBAL_API_KEY ?? ''
+
+  if (!expectedKey) {
+    // If the env var is missing the server is misconfigured; reject loudly.
+    console.error('[evolution/webhook] EVOLUTION_GLOBAL_API_KEY is not set')
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
+  }
+
+  if (incomingKey !== expectedKey) {
+    console.warn('[evolution/webhook] rejected: apikey header mismatch')
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  let body: EvolutionWebhookPayload
+  try {
+    body = (await request.json()) as EvolutionWebhookPayload
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+
+  // Ack immediately; process in after() to meet the webhook timeout
+  // without risking dropped DB writes on serverless platforms
+  // (same reasoning as the Meta webhook — see issue #301).
+  after(async () => {
+    try {
+      await processEvolutionEvent(body)
+    } catch (err) {
+      console.error('[evolution/webhook] processEvolutionEvent threw:', err)
+    }
+  })
+
+  return NextResponse.json({ status: 'received' }, { status: 200 })
+}
+
+// ─── Event router ─────────────────────────────────────────────
+
+async function processEvolutionEvent(body: EvolutionWebhookPayload) {
+  const { event, instance: instanceName, data } = body
+
+  if (!instanceName) {
+    console.warn('[evolution/webhook] event missing instance name; skipping')
+    return
+  }
+
+  // Resolve the account_id from the instance name so every downstream
+  // operation is properly tenant-scoped.
+  const { data: configRow, error: configError } = await supabaseAdmin()
+    .from('whatsapp_config')
+    .select('account_id, user_id, status, evolution_instance_name')
+    .eq('evolution_instance_name', instanceName)
+    .eq('connection_type', 'evolution')
+    .maybeSingle()
+
+  if (configError) {
+    console.error('[evolution/webhook] DB lookup failed:', configError)
+    return
+  }
+
+  if (!configRow) {
+    // Could be a stale event for a deleted instance — safe to ignore.
+    console.warn(
+      `[evolution/webhook] no config found for instance "${instanceName}"; event dropped.`
+    )
+    return
+  }
+
+  const accountId: string = configRow.account_id
+  const configOwnerUserId: string = configRow.user_id
+
+  switch (event) {
+    case 'QRCODE_UPDATED':
+      // The UI polls /api/whatsapp/evolution/qr directly.
+      // No DB write needed here.
+      break
+
+    case 'CONNECTION_UPDATE':
+      await handleConnectionUpdate(accountId, data as unknown as EvolutionConnectionUpdateData)
+      break
+
+    case 'MESSAGES_UPSERT': {
+      const messages = (data as { messages?: EvolutionInboundMessage[] }).messages
+      if (!Array.isArray(messages)) break
+      for (const msg of messages) {
+        // Skip messages sent by us (fromMe = true).
+        if (msg.key?.fromMe) continue
+        await processInboundMessage(msg, accountId, configOwnerUserId)
+      }
+      break
+    }
+
+    case 'MESSAGES_UPDATE': {
+      const updates = (data as { updates?: Array<{ key: { id: string }; update: { status?: string } }> }).updates
+      if (!Array.isArray(updates)) break
+      for (const upd of updates) {
+        if (upd.key?.id && upd.update?.status) {
+          await handleMessageStatusUpdate(accountId, upd.key.id, upd.update.status)
+        }
+      }
+      break
+    }
+
+    default:
+      // Unknown events are silently ignored to stay forward-compatible.
+      break
+  }
+}
+
+// ─── CONNECTION_UPDATE ────────────────────────────────────────
+
+async function handleConnectionUpdate(
+  accountId: string,
+  data: EvolutionConnectionUpdateData,
+) {
+  const state = (data.state ?? '').toLowerCase()
+
+  if (state === 'open') {
+    // Extract the phone number from the wuid field.
+    // Evolution's wuid format: "5511999998888" (no + or @).
+    const rawPhone = data.wuid ?? null
+    const phone = rawPhone ? `+${rawPhone.replace('@s.whatsapp.net', '')}` : null
+
+    const { error } = await supabaseAdmin()
+      .from('whatsapp_config')
+      .update({
+        status: 'connected',
+        connected_at: new Date().toISOString(),
+        ...(phone ? { evolution_connected_phone: phone } : {}),
+      })
+      .eq('account_id', accountId)
+      .eq('connection_type', 'evolution')
+
+    if (error) {
+      console.error('[evolution/webhook] CONNECTION_UPDATE open — DB update failed:', error)
+    }
+  } else if (state === 'close' || state === 'refused') {
+    const { error } = await supabaseAdmin()
+      .from('whatsapp_config')
+      .update({ status: 'disconnected' })
+      .eq('account_id', accountId)
+      .eq('connection_type', 'evolution')
+
+    if (error) {
+      console.error('[evolution/webhook] CONNECTION_UPDATE close — DB update failed:', error)
+    }
+  }
+  // 'connecting' state — no DB update needed, status stays as-is.
+}
+
+// ─── MESSAGES_UPSERT (inbound) ────────────────────────────────
+
+async function processInboundMessage(
+  msg: EvolutionInboundMessage,
+  accountId: string,
+  configOwnerUserId: string,
+) {
+  // Extract sender phone from remoteJid ("5511999998888@s.whatsapp.net")
+  const rawJid = msg.key?.remoteJid ?? ''
+  const rawPhone = rawJid.split('@')[0]
+  if (!rawPhone) {
+    console.warn('[evolution/webhook] inbound message has no remoteJid; skipping')
+    return
+  }
+
+  const senderPhone = normalizePhone(`+${rawPhone}`)
+  const contactName = msg.pushName ?? ''
+  const whatsappMessageId = msg.key?.id ?? null
+
+  // Extract message content
+  const { contentType, contentText, mediaUrl } = extractMessageContent(msg)
+
+  // ── Find or create contact ────────────────────────────────
+  const contactOutcome = await findOrCreateEvolutionContact(
+    accountId,
+    configOwnerUserId,
+    senderPhone,
+    contactName,
+  )
+  if (!contactOutcome) return
+  const contactRecord = contactOutcome.contact
+
+  // ── Find or create conversation ───────────────────────────
+  const convResult = await findOrCreateEvolutionConversation(
+    accountId,
+    configOwnerUserId,
+    contactRecord.id,
+  )
+  if (!convResult) return
+  const conversation = convResult.conversation
+
+  // Dispatch conversation.created event (before message insert).
+  if (convResult.created) {
+    await dispatchWebhookEvent(supabaseAdmin(), accountId, 'conversation.created', {
+      conversation_id: conversation.id,
+      contact_id: contactRecord.id,
+    })
+  }
+
+  // ── Persist the inbound message ───────────────────────────
+  const messageTs = msg.messageTimestamp
+    ? new Date(msg.messageTimestamp * 1000).toISOString()
+    : new Date().toISOString()
+
+  const { data: insertedMessage, error: msgInsertError } = await supabaseAdmin()
+    .from('messages')
+    .insert({
+      conversation_id: conversation.id,
+      sender_type: 'customer',
+      sender_id: contactRecord.id,
+      content_type: contentType,
+      content_text: contentText ?? null,
+      media_url: mediaUrl ?? null,
+      message_id: whatsappMessageId,
+      status: 'delivered',
+      created_at: messageTs,
+    })
+    .select('id')
+    .single()
+
+  if (msgInsertError) {
+    // Duplicate wamid — already processed (webhook retry). Safe to skip.
+    if (isUniqueViolation(msgInsertError)) return
+    console.error('[evolution/webhook] message insert failed:', msgInsertError)
+    return
+  }
+
+  // ── Update conversation last_message ──────────────────────
+  await supabaseAdmin()
+    .from('conversations')
+    .update({
+      last_message_text: contentText ?? `[${contentType}]`,
+      last_message_at: messageTs,
+      status: 'open',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', conversation.id)
+
+  // ── Fan-out: webhooks, automations, flows, AI ─────────────
+  await dispatchWebhookEvent(supabaseAdmin(), accountId, 'message.received', {
+    message_id: insertedMessage.id,
+    conversation_id: conversation.id,
+    contact_id: contactRecord.id,
+    content_type: contentType,
+    content_text: contentText ?? null,
+  })
+
+  try {
+    await runAutomationsForTrigger({
+      accountId,
+      triggerType: 'new_message_received',
+      contactId: contactRecord.id,
+      context: {
+        message_text: contentText ?? '',
+        conversation_id: conversation.id,
+      },
+    })
+  } catch (err) {
+    console.error('[evolution/webhook] automations engine error:', err)
+  }
+
+  let flowConsumed = false
+  try {
+    const flowResult = await dispatchInboundToFlows({
+      accountId,
+      userId: configOwnerUserId,
+      contactId: contactRecord.id,
+      conversationId: conversation.id,
+      message: {
+        kind: 'text',
+        text: contentText ?? '',
+        meta_message_id: whatsappMessageId ?? undefined,
+      },
+      isFirstInboundMessage: contactOutcome.wasCreated,
+    })
+    flowConsumed = flowResult.consumed
+  } catch (err) {
+    console.error('[evolution/webhook] flows engine error:', err)
+  }
+
+  if (!flowConsumed && contentText?.trim()) {
+    try {
+      await dispatchInboundToAiReply({
+        accountId,
+        conversationId: conversation.id,
+        contactId: contactRecord.id,
+        configOwnerUserId,
+      })
+    } catch (err) {
+      console.error('[evolution/webhook] AI auto-reply error:', err)
+    }
+  }
+}
+
+// ─── MESSAGES_UPDATE (delivery status) ───────────────────────
+
+async function handleMessageStatusUpdate(
+  accountId: string,
+  whatsappMessageId: string,
+  rawStatus: string,
+) {
+  // Map Evolution status strings to our messages.status CHECK constraint.
+  const STATUS_MAP: Record<string, string> = {
+    PENDING: 'sending',
+    SERVER_ACK: 'sent',
+    DELIVERY_ACK: 'delivered',
+    READ: 'read',
+    PLAYED: 'read',
+  }
+  const mappedStatus = STATUS_MAP[rawStatus.toUpperCase()]
+  if (!mappedStatus) return
+
+  await supabaseAdmin()
+    .from('messages')
+    .update({ status: mappedStatus })
+    .eq('message_id', whatsappMessageId)
+}
+
+// ─── Helpers ──────────────────────────────────────────────────
+
+function extractMessageContent(msg: EvolutionInboundMessage): {
+  contentType: string
+  contentText: string | null
+  mediaUrl: string | null
+} {
+  const m = msg.message
+  if (!m) return { contentType: 'text', contentText: null, mediaUrl: null }
+
+  if (m.conversation)
+    return { contentType: 'text', contentText: m.conversation, mediaUrl: null }
+
+  if (m.extendedTextMessage?.text)
+    return { contentType: 'text', contentText: m.extendedTextMessage.text, mediaUrl: null }
+
+  if (m.imageMessage)
+    return {
+      contentType: 'image',
+      contentText: m.imageMessage.caption ?? null,
+      mediaUrl: m.imageMessage.url ?? null,
+    }
+
+  if (m.videoMessage)
+    return {
+      contentType: 'video',
+      contentText: m.videoMessage.caption ?? null,
+      mediaUrl: m.videoMessage.url ?? null,
+    }
+
+  if (m.documentMessage)
+    return {
+      contentType: 'document',
+      contentText: m.documentMessage.fileName ?? null,
+      mediaUrl: m.documentMessage.url ?? null,
+    }
+
+  if (m.audioMessage)
+    return { contentType: 'audio', contentText: null, mediaUrl: m.audioMessage.url ?? null }
+
+  if (m.locationMessage)
+    return {
+      contentType: 'location',
+      contentText: `${m.locationMessage.degreesLatitude ?? 0},${m.locationMessage.degreesLongitude ?? 0}`,
+      mediaUrl: null,
+    }
+
+  return { contentType: 'text', contentText: null, mediaUrl: null }
+}
+
+async function findOrCreateEvolutionContact(
+  accountId: string,
+  userId: string,
+  phone: string,
+  name: string,
+) {
+  try {
+    const existing = await findExistingContact(supabaseAdmin(), accountId, phone)
+    if (existing) return { contact: existing, wasCreated: false }
+
+    const { data: created, error } = await supabaseAdmin()
+      .from('contacts')
+      .insert({ account_id: accountId, user_id: userId, phone, name: name || phone })
+      .select()
+      .single()
+
+    if (error) {
+      if (isUniqueViolation(error)) {
+        // Race — another webhook event inserted first.
+        const retry = await findExistingContact(supabaseAdmin(), accountId, phone)
+        if (retry) return { contact: retry, wasCreated: false }
+      }
+      console.error('[evolution/webhook] contact insert failed:', error)
+      return null
+    }
+
+    return { contact: created, wasCreated: true }
+  } catch (err) {
+    console.error('[evolution/webhook] findOrCreateEvolutionContact error:', err)
+    return null
+  }
+}
+
+async function findOrCreateEvolutionConversation(
+  accountId: string,
+  userId: string,
+  contactId: string,
+) {
+  try {
+    const { data: existing } = await supabaseAdmin()
+      .from('conversations')
+      .select('*')
+      .eq('account_id', accountId)
+      .eq('contact_id', contactId)
+      .maybeSingle()
+
+    if (existing) return { conversation: existing, created: false }
+
+    const { data: created, error } = await supabaseAdmin()
+      .from('conversations')
+      .insert({ account_id: accountId, user_id: userId, contact_id: contactId })
+      .select()
+      .single()
+
+    if (error) {
+      if (isUniqueViolation(error)) {
+        const { data: retry } = await supabaseAdmin()
+          .from('conversations')
+          .select('*')
+          .eq('account_id', accountId)
+          .eq('contact_id', contactId)
+          .maybeSingle()
+        if (retry) return { conversation: retry, created: false }
+      }
+      console.error('[evolution/webhook] conversation insert failed:', error)
+      return null
+    }
+
+    return { conversation: created, created: true }
+  } catch (err) {
+    console.error('[evolution/webhook] findOrCreateEvolutionConversation error:', err)
+    return null
+  }
+}
