@@ -35,6 +35,10 @@ import {
   type InteractiveMessagePayload,
 } from '@/lib/whatsapp/interactive';
 import { decrypt, encrypt, isLegacyFormat } from '@/lib/whatsapp/encryption';
+import {
+  sendEvolutionTextMessage,
+  sendEvolutionMediaMessage,
+} from '@/lib/whatsapp/evolution-api';
 import { supabaseAdmin } from '@/lib/flows/admin-client';
 import {
   sanitizePhoneForMeta,
@@ -260,6 +264,118 @@ export async function sendMessageToConversation(
       'WhatsApp not configured. Please set up your WhatsApp integration first.',
       400
     );
+  }
+
+  // ── Evolution API Outbound Send ────────────────────────────
+  if (config.connection_type === 'evolution') {
+    if (!config.evolution_instance_name || !config.evolution_api_key) {
+      throw new SendMessageError(
+        'evolution_not_configured',
+        'Evolution WhatsApp connection is not fully configured.',
+        400
+      );
+    }
+
+    let instanceApiKey: string;
+    try {
+      instanceApiKey = decrypt(config.evolution_api_key);
+    } catch {
+      throw new SendMessageError(
+        'key_corrupted',
+        'Could not decrypt Evolution API key. Reset the connection.',
+        500
+      );
+    }
+
+    let evolutionResult: { messageId: string };
+    try {
+      if (messageType === 'text') {
+        evolutionResult = await sendEvolutionTextMessage({
+          instanceName: config.evolution_instance_name,
+          instanceApiKey,
+          to: sanitizedPhone,
+          text: (contentText || '').trim(),
+        });
+      } else if ((MEDIA_KINDS as readonly string[]).includes(messageType)) {
+        evolutionResult = await sendEvolutionMediaMessage({
+          instanceName: config.evolution_instance_name,
+          instanceApiKey,
+          to: sanitizedPhone,
+          mediatype: messageType as any,
+          media: (mediaUrl || '').trim(),
+          caption: contentText?.trim() || undefined,
+          fileName: filename?.trim() || undefined,
+        });
+      } else {
+        throw new SendMessageError(
+          'bad_request',
+          `Message type "${messageType}" is not supported for Evolution API`,
+          400
+        );
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error('[send-message] Evolution send failed:', message);
+      throw new SendMessageError(
+        'evolution_api_error',
+        `Failed to send message via Evolution: ${message}`,
+        502
+      );
+    }
+
+    // Persist outbound message to DB
+    const now = new Date().toISOString();
+    const { data: messageRecord, error: msgError } = await db
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_type: 'agent',
+        content_type: messageType,
+        content_text: contentText || null,
+        media_url: mediaUrl || null,
+        message_id: evolutionResult.messageId,
+        status: 'sent',
+        reply_to_message_id: replyToMessageId || null,
+        created_at: now,
+      })
+      .select()
+      .single();
+
+    if (msgError) {
+      console.error('[send-message] Evolution DB insert failed:', msgError);
+      throw new SendMessageError(
+        'db_error',
+        `Message sent via Evolution but failed to save to DB: ${msgError.message}`,
+        500
+      );
+    }
+
+    await db
+      .from('conversations')
+      .update({
+        last_message_text: contentText || `[${messageType}]`,
+        last_message_at: now,
+        updated_at: now,
+      })
+      .eq('id', conversationId);
+
+    // Pause active Flow run for contact
+    try {
+      await supabaseAdmin()
+        .from('flow_runs')
+        .update({
+          status: 'paused_by_agent',
+          ended_at: now,
+          end_reason: 'agent_replied',
+        })
+        .eq('account_id', accountId)
+        .eq('contact_id', contact.id)
+        .eq('status', 'active');
+    } catch (err) {
+      console.error('[flows] pause-on-agent-send failed:', err);
+    }
+
+    return { messageId: messageRecord.id, whatsappMessageId: evolutionResult.messageId };
   }
 
   const accessToken = decrypt(config.access_token);
