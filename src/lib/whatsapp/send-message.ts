@@ -41,6 +41,10 @@ import {
 } from '@/lib/whatsapp/evolution-api';
 import { supabaseAdmin } from '@/lib/flows/admin-client';
 import {
+  checkAccountUsageLimit,
+  incrementAccountUsageCounter,
+} from '@/lib/plans/check-usage-limit';
+import {
   sanitizePhoneForMeta,
   isValidE164,
   phoneVariants,
@@ -266,6 +270,16 @@ export async function sendMessageToConversation(
     );
   }
 
+  // Check monthly plan message limit before sending (Outbound only)
+  const limitCheck = await checkAccountUsageLimit(accountId, 'messages', 1);
+  if (!limitCheck.allowed) {
+    throw new SendMessageError(
+      'limit_exceeded',
+      limitCheck.reason || 'تم الوصول للحد الأقصى للرسائل الشهرية المسموحة في خطتك الحالية',
+      429
+    );
+  }
+
   // ── Evolution API Outbound Send ────────────────────────────
   if (config.connection_type === 'evolution') {
     if (!config.evolution_instance_name || !config.evolution_api_key) {
@@ -358,6 +372,11 @@ export async function sendMessageToConversation(
         updated_at: now,
       })
       .eq('id', conversationId);
+
+    // Atomically increment monthly message counter
+    await incrementAccountUsageCounter(accountId, 1, 0);
+
+    return { messageId: messageRecord.id, whatsappMessageId: evolutionResult.messageId };
 
     // Pause active Flow run for contact
     try {
@@ -627,6 +646,9 @@ export async function sendMessageToConversation(
       err instanceof Error ? err.message : err
     );
   }
+
+  // Atomically increment monthly message counter
+  await incrementAccountUsageCounter(accountId, 1, 0);
 
   return { messageId: messageRecord.id, whatsappMessageId: waMessageId };
 }

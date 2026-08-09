@@ -18,6 +18,7 @@ import {
   Radio,
   Settings,
   Shield,
+  ShoppingBag,
   User,
   UserCog,
   Users,
@@ -97,6 +98,7 @@ const navItems: NavItem[] = [
   { href: "/pipelines", labelKey: "pipelines", icon: GitBranch },
   { href: "/broadcasts", labelKey: "broadcasts", icon: Radio },
   { href: "/automations", labelKey: "automations", icon: Zap },
+  { href: "/orders", labelKey: "orders", icon: ShoppingBag },
   { href: "/flows", labelKey: "flows", icon: Workflow, beta: true },
   { href: "/agents", labelKey: "aiAgents", icon: Bot },
 ];
@@ -112,11 +114,22 @@ interface SidebarProps {
 }
 
 import { useTranslations } from "next-intl";
+import { isImpersonatingClient } from "@/lib/admin-impersonation";
 
 export function Sidebar({ open = false, onClose }: SidebarProps) {
   const t = useTranslations("Sidebar");
   const pathname = usePathname();
   const { profile, profileLoading, account, accountRole, signOut } = useAuth();
+
+  const handleSignOut = () => {
+    if (isImpersonatingClient()) {
+      alert(
+        "أنت تتصفح حالياً في وضع الدخول كمستخدم. يرجى استخدام زر 'الخروج من وضع الدخول كمستخدم' بالشريط العلوي بدلاً من تسجيل الخروج العادي."
+      );
+      return;
+    }
+    signOut();
+  };
   const totalUnread = useTotalUnread();
   const unreadNotifications = useUnreadNotifications();
   // Only surface the account-name strip when it actually carries
@@ -386,7 +399,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem
-                onClick={signOut}
+                onClick={handleSignOut}
                 className="text-popover-foreground focus:bg-accent focus:text-accent-foreground"
               >
                 <LogOut className="size-4" />

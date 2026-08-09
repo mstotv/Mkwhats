@@ -81,6 +81,46 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Look up invitation's account_id to verify max_users limit before redeeming
+  const { data: inviteRow } = await supabase
+    .from('account_invitations')
+    .select('account_id')
+    .eq('token_hash', hashInviteToken(token))
+    .maybeSingle();
+
+  if (inviteRow?.account_id) {
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('plans(max_users)')
+      .eq('account_id', inviteRow.account_id)
+      .in('status', ['active', 'trialing'])
+      .maybeSingle();
+
+    const plan = sub?.plans
+      ? Array.isArray(sub.plans)
+        ? sub.plans[0]
+        : sub.plans
+      : null;
+
+    const maxUsers = plan?.max_users ?? 1;
+
+    if (maxUsers !== -1) {
+      const { count: currentMembersCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('account_id', inviteRow.account_id);
+
+      if ((currentMembersCount ?? 0) >= maxUsers) {
+        return NextResponse.json(
+          {
+            error: 'هذا الحساب وصل للحد الأقصى المسموح لأعضاء الفريق وفقاً لخطته الحالية.',
+          },
+          { status: 400 }
+        );
+      }
+    }
+  }
+
   const { data: accountId, error } = await supabase.rpc("redeem_invitation", {
     p_token_hash: hashInviteToken(token),
   });

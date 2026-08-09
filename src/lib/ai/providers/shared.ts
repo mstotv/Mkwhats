@@ -45,6 +45,12 @@ export function toNetworkError(err: unknown): AiError {
     })
   }
   const msg = err instanceof Error ? err.message : String(err)
+  if (msg.includes('ByteString') || msg.includes('character at index')) {
+    return new AiError('مفتاح الـ API يحتوي على أحرف غير صالحة. يرجى التأكد من كتابة المفتاح باللغة الإنجليزية بدون مسافات أو أحرف عربية.', {
+      code: 'invalid_key',
+      status: 400,
+    })
+  }
   return new AiError(`Could not reach the AI provider: ${msg}`, {
     code: 'network_error',
     status: 502,

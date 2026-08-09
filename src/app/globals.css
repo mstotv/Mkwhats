@@ -228,3 +228,31 @@ html[data-theme="rose"] {
     @apply font-sans;
   }
 }
+
+/* ============================================================
+ * Infinite Partners Marquee Animation (Seamless Loop)
+ * ============================================================ */
+@keyframes marquee-seamless {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-marquee-infinite {
+  display: flex;
+  width: max-content;
+  animation: marquee-seamless 35s linear infinite !important;
+}
+
+.animate-marquee-infinite {
+  display: flex;
+  width: max-content;
+  animation: marquee-seamless 35s linear infinite !important;
+}
+
+.animate-marquee-infinite:hover {
+  animation-play-state: paused;
+}

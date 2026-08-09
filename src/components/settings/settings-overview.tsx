@@ -159,6 +159,11 @@ export function SettingsOverview({
     subtitle: ReactNode;
   }[] = [
     {
+      section: 'plan',
+      loading: false,
+      subtitle: 'عرض تفاصيل الخطة والرصيد الشهري',
+    },
+    {
       section: 'whatsapp',
       loading: whatsappLoading,
       subtitle: !whatsapp?.configured ? (

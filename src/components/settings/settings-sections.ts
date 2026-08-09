@@ -5,7 +5,9 @@ import {
   LayoutGrid,
   Palette,
   PlugZap,
+  Send,
   Shield,
+  Sparkles,
   Tags,
   User,
   UsersRound,
@@ -13,20 +15,14 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-/**
- * Settings information architecture for the redesigned page.
- *
- * The flat tab strip became a grouped left rail with a new Overview
- * landing. The URL query param stays `?tab=` (deep-linkable, and it
- * keeps the existing links in sidebar.tsx / header.tsx working) — we
- * just map the old values onto the new sections.
- */
 export const SETTINGS_SECTIONS = [
   'overview',
   'profile',
   'security',
   'appearance',
+  'plan',
   'whatsapp',
+  'telegram',
   'templates',
   'quick-replies',
   'fields',
@@ -52,7 +48,9 @@ export const SECTION_META: Record<SettingsSection, SectionMeta> = {
   profile: { id: 'profile', label: 'Your profile', icon: User, group: 'account' },
   security: { id: 'security', label: 'Login & security', icon: Shield, group: 'account' },
   appearance: { id: 'appearance', label: 'Appearance', icon: Palette, group: 'account' },
+  plan: { id: 'plan', label: 'Plan & Usage', icon: Sparkles, group: 'account' },
   whatsapp: { id: 'whatsapp', label: 'WhatsApp', icon: PlugZap, group: 'workspace' },
+  telegram: { id: 'telegram', label: 'Telegram Bot', icon: Send, group: 'workspace' },
   templates: { id: 'templates', label: 'Templates', icon: FileText, group: 'workspace' },
   'quick-replies': { id: 'quick-replies', label: 'Quick replies', icon: Zap, group: 'workspace' },
   fields: { id: 'fields', label: 'Fields & tags', icon: Tags, group: 'workspace' },

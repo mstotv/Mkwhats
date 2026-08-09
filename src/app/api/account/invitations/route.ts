@@ -178,6 +178,38 @@ export async function POST(request: Request) {
     );
     if (!limit.success) return rateLimitResponse(limit);
 
+    // Check max_users plan limit for this account
+    const { data: sub } = await ctx.supabase
+      .from('subscriptions')
+      .select('plans(max_users)')
+      .eq('account_id', ctx.accountId)
+      .in('status', ['active', 'trialing'])
+      .maybeSingle();
+
+    const plan = sub?.plans
+      ? Array.isArray(sub.plans)
+        ? sub.plans[0]
+        : sub.plans
+      : null;
+
+    const maxUsers = plan?.max_users ?? 1;
+
+    if (maxUsers !== -1) {
+      const { count: currentMembersCount } = await ctx.supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('account_id', ctx.accountId);
+
+      if ((currentMembersCount ?? 0) >= maxUsers) {
+        return NextResponse.json(
+          {
+            error: `وصلت للحد الأقصى المسموح لأعضاء الفريق في خطتك الحالية (${currentMembersCount}/${maxUsers}). يرجى ترقية الخطة لإضافة أعضاء جدد.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const body = (await request.json().catch(() => null)) as
       | { role?: unknown; expiresInDays?: unknown; label?: unknown }
       | null;

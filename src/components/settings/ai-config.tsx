@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import { SettingsPanelHead } from './settings-panel-head';
 import { AiKnowledgeCard } from './ai-knowledge';
+import { OrderFieldsManager } from './order-fields-manager';
 import { AI_PROVIDER_DEFAULT_MODEL } from '@/lib/ai/defaults';
 import type { AiProvider } from '@/lib/ai/types';
 import type { AccountMember } from '@/types';
@@ -75,6 +76,8 @@ export function AiConfig() {
   // Empty string = leave unassigned (shared queue).
   const [handoffAgentId, setHandoffAgentId] = useState('');
   const [members, setMembers] = useState<AccountMember[]>([]);
+  const [orderCollectionEnabled, setOrderCollectionEnabled] = useState(false);
+  const [savingOrderToggle, setSavingOrderToggle] = useState(false);
 
   // Guard keyed on the account (not a bare boolean) so an in-place
   // account switch — ownership transfer, multi-account membership —
@@ -106,6 +109,7 @@ export function AiConfig() {
         setHasStoredEmbeddingsKey(Boolean(data.has_embeddings_key));
         setEmbeddingsKey(data.has_embeddings_key ? MASKED_KEY : '');
         setEmbeddingsKeyEdited(false);
+        setOrderCollectionEnabled(Boolean(data.order_collection_enabled));
       }
     } catch {
       toast.error(t('loadFailed'));
@@ -151,6 +155,7 @@ export function AiConfig() {
     auto_reply_enabled: autoReplyEnabled,
     auto_reply_max_per_conversation: maxPerConversation,
     handoff_agent_id: handoffAgentId || null,
+    order_collection_enabled: orderCollectionEnabled,
   });
 
   const handleTest = async () => {
@@ -193,7 +198,11 @@ export function AiConfig() {
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success(t('saveSuccess'));
+        if (data.warning) {
+          toast.warning(data.warning, { duration: 6000 });
+        } else {
+          toast.success(t('saveSuccess'));
+        }
         await fetchConfig();
       } else {
         toast.error(data.error ?? t('saveFailed'));
@@ -219,6 +228,7 @@ export function AiConfig() {
         setAutoReplyEnabled(false);
         setSystemPrompt('');
         setHandoffAgentId('');
+        setOrderCollectionEnabled(false);
       } else {
         const data = await res.json();
         toast.error(data.error ?? t('removeFailed'));
@@ -494,6 +504,43 @@ export function AiConfig() {
               ? embeddingsKey.trim().length > 0
               : hasStoredEmbeddingsKey
           }
+        />
+
+        {/* Order collection — always visible so fields can be configured */}
+        <OrderFieldsManager
+          canEdit={canEdit}
+          orderCollectionEnabled={orderCollectionEnabled}
+          savingToggle={savingOrderToggle}
+          onToggleOrderCollection={async (enabled) => {
+            if (!configured) {
+              toast.error('احفظ مفتاح الذكاء الاصطناعي أولاً قبل تفعيل تجميع الطلبات');
+              return;
+            }
+            setSavingOrderToggle(true);
+            try {
+              const res = await fetch('/api/ai/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // Send only the toggle — all other fields come from
+                // current state so nothing else changes.
+                body: JSON.stringify({
+                  ...buildBody(),
+                  order_collection_enabled: enabled,
+                }),
+              });
+              if (res.ok) {
+                setOrderCollectionEnabled(enabled);
+                toast.success(enabled ? 'تم تفعيل تجميع الطلبات' : 'تم تعطيل تجميع الطلبات');
+              } else {
+                const d = await res.json();
+                toast.error(d.error ?? 'تعذّر حفظ الإعداد');
+              }
+            } catch {
+              toast.error('تعذّر الاتصال بالخادم');
+            } finally {
+              setSavingOrderToggle(false);
+            }
+          }}
         />
 
         <div className="flex items-center justify-between">

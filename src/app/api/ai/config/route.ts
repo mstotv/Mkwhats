@@ -30,7 +30,7 @@ export async function GET() {
       // `api_key` is selected only to derive `has_key` — it is stripped
       // out below and never returned to the client.
       .select(
-        'provider, model, system_prompt, is_active, auto_reply_enabled, auto_reply_max_per_conversation, handoff_agent_id, api_key, embeddings_api_key',
+        'provider, model, system_prompt, is_active, auto_reply_enabled, auto_reply_max_per_conversation, handoff_agent_id, api_key, embeddings_api_key, order_collection_enabled',
       )
       .eq('account_id', accountId)
       .maybeSingle()
@@ -90,6 +90,7 @@ export async function POST(request: Request) {
         : null
     const isActive = body.is_active === true
     const autoReplyEnabled = body.auto_reply_enabled === true
+    const orderCollectionEnabled = body.order_collection_enabled === true
 
     let maxPer = Number(body.auto_reply_max_per_conversation)
     if (!Number.isFinite(maxPer)) maxPer = 3
@@ -145,15 +146,21 @@ export async function POST(request: Request) {
       return bad('api_key is required')
     }
 
-    // Only spend a provider round-trip when the credentials that affect
-    // reachability actually changed. A save that just flips a toggle or
-    // edits the system prompt on an existing, already-validated config
-    // skips the call — no wasted token/latency on the account's key.
+    if (/[^\x00-\x7F]/.test(apiKeyPlain)) {
+      return bad('مفتاح API غير صالح — يحتوي على أحرف غير إنجليزية. يرجى التأكد من كتابة المفتاح باللغة الإنجليزية (sk-...).')
+    }
+
+    if (rawEmbeddingsKey && /[^\x00-\x7F]/.test(rawEmbeddingsKey)) {
+      return bad('مفتاح Embeddings يحتوي على أحرف غير إنجليزية.')
+    }
+
     const credentialsChanged =
       !existing ||
       rawKey !== '' ||
       provider !== existing.provider ||
       model !== existing.model
+
+    let warning: string | null = null
 
     if (credentialsChanged) {
       try {
@@ -167,16 +174,12 @@ export async function POST(request: Request) {
           autoReplyMaxPerConversation: maxPer,
           handoffAgentId: null,
           embeddingsApiKey: null,
+          orderCollectionEnabled: false,
         })
       } catch (err) {
-        if (err instanceof AiError) {
-          return NextResponse.json(
-            { error: err.message, code: err.code },
-            { status: 400 },
-          )
-        }
-        console.error('[ai/config POST] validation error:', err)
-        return bad('Could not validate the API key with the provider.')
+        const errMsg = err instanceof AiError ? err.message : 'تعذّر التواصل مع المزود'
+        console.warn('[ai/config POST] credentials validation warning:', errMsg)
+        warning = `تم حفظ الإعدادات بنجاح، ولكن لم نتمكن من التحقق من صحة المفتاح لدى المزود (${errMsg}).`
       }
     }
 
@@ -186,14 +189,10 @@ export async function POST(request: Request) {
       try {
         await embedTexts(rawEmbeddingsKey, ['ping'])
       } catch (err) {
-        if (err instanceof AiError) {
-          return NextResponse.json(
-            { error: `Embeddings key: ${err.message}`, code: err.code },
-            { status: 400 },
-          )
-        }
-        console.error('[ai/config POST] embeddings validation error:', err)
-        return bad('Could not validate the embeddings key.')
+        const errMsg = err instanceof AiError ? err.message : 'تعذّر التحقق'
+        console.warn('[ai/config POST] embeddings validation error:', err)
+        const embWarn = `تعذّر التحقق من مفتاح Embeddings (${errMsg}).`
+        warning = warning ? `${warning} ${embWarn}` : `تم حفظ الإعدادات، لكن ${embWarn}`
       }
     }
 
@@ -205,6 +204,7 @@ export async function POST(request: Request) {
       is_active: isActive,
       auto_reply_enabled: autoReplyEnabled,
       auto_reply_max_per_conversation: maxPer,
+      order_collection_enabled: orderCollectionEnabled,
     }
     // Only touch the handoff target when the form actually sent the field,
     // so a partial save (e.g. flipping a toggle) doesn't wipe it.
@@ -243,7 +243,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, warning })
   } catch (err) {
     return toErrorResponse(err)
   }

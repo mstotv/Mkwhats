@@ -6,6 +6,33 @@
 // whether the account is on OpenAI or Anthropic.
 // ============================================================
 
+// ── Order collection ────────────────────────────────────────
+
+/** One field definition from `order_form_fields`, loaded from DB. */
+export interface OrderField {
+  field_key: string
+  field_label: string
+  field_type: 'text' | 'number' | 'choice'
+  choices: string[] | null
+}
+
+/**
+ * Parsed output of the |||{...}||| JSON block the model embeds in its
+ * reply when order-collection mode is active.
+ *
+ * - `extracted`: map of field_key → value gleaned from THIS message.
+ *   Empty when the customer said nothing extractable.
+ * - `confirmed`: the model decided the customer is explicitly confirming
+ *   the order summary that was shown to them (not a mid-collection "ok").
+ * - `new_order`: the customer is starting a fresh order; the route must
+ *   cancel any stale 'collecting' order before creating a new one.
+ */
+export interface ExtractedOrderData {
+  extracted: Record<string, string>
+  confirmed: boolean
+  new_order: boolean
+}
+
 export type AiProvider = 'openai' | 'anthropic'
 
 /**
@@ -29,6 +56,10 @@ export interface AiConfig {
    *  knowledge base is embedded and semantic retrieval turns on; when
    *  null, retrieval falls back to lexical full-text search. */
   embeddingsApiKey: string | null
+  /** When true the auto-reply bot enters order-collection mode for this
+   *  account: it injects the order form fields into the system prompt
+   *  and parses a structured JSON block from every model reply. */
+  orderCollectionEnabled: boolean
 }
 
 /** A single conversation turn in the shape both providers accept. */
@@ -56,12 +87,18 @@ export interface ProviderResult {
 
 /** Outcome of a generation call. */
 export interface GenerateResult {
-  /** The reply text, with any handoff sentinel stripped. */
+  /** The reply text, with any handoff sentinel and JSON block stripped. */
   text: string
   /** True when the model asked to hand off to a human (auto-reply mode). */
   handoff: boolean
   /** Provider token usage for this call, or null when unavailable. */
   usage: AiUsage | null
+  /**
+   * Structured data extracted by the model in order-collection mode.
+   * Null when order-collection mode is off, or when the model's JSON
+   * block was absent / malformed (safe fallback — text still delivered).
+   */
+  extracted: ExtractedOrderData | null
 }
 
 /**

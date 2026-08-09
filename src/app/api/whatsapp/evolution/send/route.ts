@@ -7,6 +7,10 @@ import {
 } from '@/lib/whatsapp/evolution-api'
 import { sanitizePhoneForMeta, isValidE164 } from '@/lib/whatsapp/phone-utils'
 import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit'
+import {
+  checkAccountUsageLimit,
+  incrementAccountUsageCounter,
+} from '@/lib/plans/check-usage-limit'
 
 /**
  * POST /api/whatsapp/evolution/send
@@ -167,6 +171,15 @@ export async function POST(request: Request) {
       )
     }
 
+    // Check monthly plan message limit before sending (Outbound only)
+    const limitCheck = await checkAccountUsageLimit(accountId, 'messages', 1)
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { error: limitCheck.reason || 'تم الوصول للحد الأقصى للرسائل الشهرية المسموحة في خطتك الحالية' },
+        { status: 429 }
+      )
+    }
+
     // ── Send via Evolution ────────────────────────────────────
     let evolutionMessageId: string
     try {
@@ -237,6 +250,9 @@ export async function POST(request: Request) {
         updated_at: now,
       })
       .eq('id', conversation_id)
+
+    // Atomically increment monthly message counter
+    await incrementAccountUsageCounter(accountId, 1, 0)
 
     return NextResponse.json({
       success: true,

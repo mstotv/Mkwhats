@@ -38,6 +38,10 @@ export const maxDuration = 60;
 import { ok, fail, toApiErrorResponse } from '@/lib/api/v1/respond';
 import { resolveAuditUserId, ContactError } from '@/lib/api/v1/contacts';
 import {
+  checkAccountUsageLimit,
+  incrementAccountUsageCounter,
+} from '@/lib/plans/check-usage-limit';
+import {
   createBroadcast,
   deliverBroadcast,
   BroadcastError,
@@ -59,6 +63,17 @@ export async function POST(request: Request) {
       typeof body.template_name === 'string' ? body.template_name : '';
     const recipients = Array.isArray(body.recipients) ? body.recipients : [];
 
+    // Check monthly plan limits for broadcasts and message recipient count
+    const broadcastCheck = await checkAccountUsageLimit(ctx.accountId, 'broadcasts', 1);
+    if (!broadcastCheck.allowed) {
+      return fail('limit_exceeded', broadcastCheck.reason || 'Broadcasts monthly limit reached', 429);
+    }
+
+    const messagesCheck = await checkAccountUsageLimit(ctx.accountId, 'messages', recipients.length);
+    if (!messagesCheck.allowed) {
+      return fail('limit_exceeded', messagesCheck.reason || 'Recipients count exceeds monthly messages limit', 429);
+    }
+
     const auditUserId = await resolveAuditUserId(ctx.supabase, ctx.accountId);
 
     const plan = await createBroadcast(ctx.supabase, ctx.accountId, auditUserId, {
@@ -73,6 +88,9 @@ export async function POST(request: Request) {
         params: Array.isArray(r?.params) ? r.params : undefined,
       })),
     });
+
+    // Atomically increment monthly broadcast counter
+    await incrementAccountUsageCounter(ctx.accountId, plan.planned.length, 1);
 
     // Fan out after the response is sent. Uses the same service-role
     // client — no request-scoped auth needed for the Meta calls or

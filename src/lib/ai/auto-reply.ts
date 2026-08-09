@@ -7,6 +7,15 @@ import { buildSystemPrompt } from './defaults'
 import { buildHandoffSummary } from './handoff'
 import { logAiUsage } from './usage'
 import { latestUserMessage } from './query'
+import {
+  cancelAndCreateOrder,
+  checkOrderComplete,
+  confirmOrder,
+  ensureActiveOrder,
+  getMissingFields,
+  loadOrderFormFields,
+  upsertOrderFields,
+} from './order-collection'
 import { engineSendText } from '@/lib/flows/meta-send'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
@@ -34,6 +43,12 @@ interface DispatchArgs {
  *   - auto-reply was disabled for this conversation (prior handoff)
  *   - the per-conversation reply cap is reached
  *   - there's nothing to reply to
+ *
+ * When `config.orderCollectionEnabled` is true the bot enters order-
+ * collection mode: it injects the order form into the system prompt,
+ * extracts structured values from the model's JSON block, and confirms
+ * the order when the customer explicitly agrees. Accounts where the
+ * feature is off pass through the original code path unchanged.
  *
  * The 24h WhatsApp session window is inherently open here — we're
  * reacting to a customer message that just landed — so no separate
@@ -98,6 +113,48 @@ export async function dispatchInboundToAiReply(
       return
     }
 
+    // ── Order-collection mode ──────────────────────────────────────
+    // When the account has order-collection enabled we build an
+    // order-aware system prompt and process the model's JSON block.
+    // Accounts where the feature is off skip this block entirely and
+    // continue with the original prompt-only path below.
+    let orderContext:
+      | {
+          orderId: string
+          missingFields: Awaited<ReturnType<typeof getMissingFields>>
+          collectedFields: Record<string, string>
+          readyToConfirm: boolean
+        }
+      | undefined
+
+    if (config.orderCollectionEnabled) {
+      // Load the account's order form fields. If none are configured yet
+      // the owner hasn't finished setup — skip order mode silently.
+      const formFields = await loadOrderFormFields(db, accountId)
+      if (formFields.length > 0) {
+        // Get or create the active collecting order for this conversation.
+        const activeOrder = await ensureActiveOrder(
+          db,
+          conversationId,
+          accountId,
+          contactId,
+        )
+
+        if (activeOrder) {
+          const missingFields = await getMissingFields(db, activeOrder.orderId)
+          const readyToConfirm = missingFields.length === 0
+
+          orderContext = {
+            orderId: activeOrder.orderId,
+            missingFields,
+            collectedFields: activeOrder.collectedFields,
+            readyToConfirm,
+          }
+        }
+      }
+    }
+    // ── End order-collection setup ─────────────────────────────────
+
     // Ground the reply in the account's knowledge base (best-effort).
     const knowledge = await retrieveKnowledge(
       db,
@@ -110,19 +167,32 @@ export async function dispatchInboundToAiReply(
       userPrompt: config.systemPrompt,
       mode: 'auto_reply',
       knowledge,
+      // Pass orderContext only when order mode is active AND we have a
+      // live order. Undefined → buildSystemPrompt skips the order block.
+      ...(orderContext
+        ? {
+            orderContext: {
+              missingFields: orderContext.missingFields,
+              collectedFields: orderContext.collectedFields,
+              readyToConfirm: orderContext.readyToConfirm,
+            },
+          }
+        : {}),
     })
 
-    const { text, handoff, usage } = await generateReply({
+    const { text, handoff, usage, extracted } = await generateReply({
       config,
       systemPrompt,
       messages,
+      // Tell parseGeneration to attempt JSON block extraction only when
+      // we're in order mode — avoids regex overhead on normal replies.
+      orderMode: config.orderCollectionEnabled && !!orderContext,
     })
 
     // Record token spend on the account's BYO key. Fire-and-forget so it
     // never adds latency to the customer-facing send: `logAiUsage`
     // swallows its own errors, so the floating promise can't reject.
-    // Logged regardless of handoff — the provider call happened either
-    // way.
+    // Logged regardless of handoff — the provider call happened either way.
     void logAiUsage(db, {
       accountId,
       conversationId,
@@ -156,6 +226,53 @@ export async function dispatchInboundToAiReply(
       await db.from('conversations').update(update).eq('id', conversationId)
       return
     }
+
+    // ── Process order extraction (order mode only) ─────────────────
+    if (orderContext && extracted) {
+      const { orderId } = orderContext
+
+      // If the model detected the customer wants a new order, cancel the
+      // current one and open a fresh one. The text reply is still sent
+      // so the customer isn't left hanging.
+      if (extracted.new_order) {
+        const fresh = await cancelAndCreateOrder(
+          db,
+          conversationId,
+          accountId,
+          contactId,
+        )
+        if (fresh) {
+          // Update orderContext so confirmation check below uses the new id.
+          orderContext = {
+            ...orderContext,
+            orderId: fresh.orderId,
+            collectedFields: {},
+            readyToConfirm: false,
+          }
+        }
+        // After opening a fresh order we fall through to send the text;
+        // values extracted in this same message are intentionally NOT saved
+        // here — they belong to the new order and the AI will re-ask.
+      } else {
+        // Save any newly extracted values for the current order.
+        await upsertOrderFields(db, orderId, accountId, extracted.extracted)
+
+        // Confirm the order only when:
+        //   a) the model signalled confirmed: true (customer said yes)
+        //   b) the DB confirms all required fields are present
+        // The DB check guards against the model hallucinating confirmed:true
+        // before the form is actually complete.
+        if (extracted.confirmed) {
+          const complete = await checkOrderComplete(db, orderId)
+          if (complete) {
+            await confirmOrder(db, orderId, accountId)
+          }
+          // If not complete despite confirmed:true → do nothing. The next
+          // turn the model will see the missing fields and re-ask.
+        }
+      }
+    }
+    // ── End order processing ───────────────────────────────────────
 
     // Atomically claim a reply slot: the cap check + increment happen in
     // one UPDATE, so concurrent inbounds can never overshoot the cap. If

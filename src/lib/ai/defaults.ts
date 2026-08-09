@@ -1,4 +1,4 @@
-import type { AiProvider } from './types'
+import type { AiProvider, OrderField } from './types'
 
 // ============================================================
 // Tunables + prompt scaffold for the AI reply assistant.
@@ -47,13 +47,33 @@ export function aiContextMessageLimit(): number {
  * own `system_prompt` (business context / persona / tone) is appended
  * to a fixed scaffold so behaviour stays predictable regardless of what
  * the user typed. Auto-reply mode additionally teaches the handoff
- * protocol.
+ * protocol and, when order-collection mode is on, the JSON extraction
+ * format.
  */
 export function buildSystemPrompt(args: {
   userPrompt: string | null
   mode: 'draft' | 'auto_reply'
   /** Knowledge-base excerpts retrieved for the current question. */
   knowledge?: string[]
+  /**
+   * Order-collection context. When provided (auto_reply mode only),
+   * the model is instructed to:
+   *   a) Begin every reply with a |||{...}||| JSON block.
+   *   b) Fill `extracted` with any values it can glean from THIS message.
+   *   c) Set `confirmed` to true only when the customer is explicitly
+   *      confirming the order summary presented to them.
+   *   d) Set `new_order` to true when the customer is clearly starting a
+   *      completely fresh order.
+   */
+  orderContext?: {
+    /** Fields still missing (the AI must ask for these, in order). */
+    missingFields: OrderField[]
+    /** Fields already collected (so the AI does not re-ask). */
+    collectedFields: Record<string, string>
+    /** True when all required fields are filled and the AI should show
+     *  the order summary and ask for confirmation. */
+    readyToConfirm: boolean
+  }
 }): string {
   const { userPrompt, mode, knowledge } = args
   const parts: string[] = [
@@ -70,6 +90,58 @@ export function buildSystemPrompt(args: {
     parts.push(
       `You are replying automatically with no human in the loop. If you cannot confidently and safely help — the customer explicitly asks for a human, is upset or complaining, or the request needs information you do not have — reply with exactly ${HANDOFF_SENTINEL} and nothing else. A human agent will then take over. Prefer handing off over guessing.`,
     )
+  }
+
+  // ── Order-collection instructions (auto_reply only) ───────────
+  if (mode === 'auto_reply' && args.orderContext) {
+    const { missingFields, collectedFields, readyToConfirm } = args.orderContext
+
+    // Describe the JSON block format the model must produce.
+    parts.push(
+      'ORDER COLLECTION MODE IS ACTIVE.\n' +
+      'You are collecting a structured order from the customer.\n\n' +
+      'MANDATORY: Begin every reply with a JSON block in this exact format (on one line, before any other text):\n' +
+      '|||{"extracted": {"field_key": "value"}, "confirmed": false, "new_order": false}|||\n\n' +
+      'Rules for the JSON block:\n' +
+      '- "extracted": a flat object of field_key → value pairs you can glean from THIS message ONLY. Use the exact field keys listed below. If nothing new was said, use {}.\n' +
+      '- "confirmed": set to true ONLY when the customer is explicitly confirming the full order summary you just showed them (e.g. they say yes/ok/confirm after seeing the summary). Do NOT set it for casual mid-conversation agreement.\n' +
+      '- "new_order": set to true ONLY when the customer clearly wants to cancel the current order and start a completely new one.\n' +
+      'The JSON block must be on one line. Do not pretty-print it. Do not repeat it later in your reply.'
+    )
+
+    // Show already-collected fields.
+    const collectedEntries = Object.entries(collectedFields)
+    if (collectedEntries.length > 0) {
+      const collected = collectedEntries
+        .map(([k, v]) => `  ✔ ${k}: ${v}`)
+        .join('\n')
+      parts.push(`Already collected:\n${collected}`)
+    }
+
+    if (readyToConfirm) {
+      // All required fields are filled — show summary and ask for confirmation.
+      const summary = collectedEntries
+        .map(([k, v]) => `  - ${k}: ${v}`)
+        .join('\n')
+      parts.push(
+        `All required information has been collected. Present the following order summary to the customer and ask them to confirm it:\n${summary}\n\nWait for their explicit confirmation before setting "confirmed": true.`
+      )
+    } else if (missingFields.length > 0) {
+      // Ask for the next missing field only (do not ask for multiple at once).
+      const next = missingFields[0]
+      const choicesHint =
+        next.field_type === 'choice' && next.choices && next.choices.length > 0
+          ? ` (options: ${next.choices.join(', ')})`
+          : next.field_type === 'number'
+          ? ' (must be a number)'
+          : ''
+      const remaining = missingFields
+        .map((f) => `  - ${f.field_label}${f.field_type === 'choice' && f.choices ? ` (${f.choices.join('/')})` : ''}`)
+        .join('\n')
+      parts.push(
+        `Still needed (ask for the FIRST one only, do not ask for all at once):\n${remaining}\n\nAsk for: "${next.field_label}"${choicesHint}`
+      )
+    }
   }
 
   if (userPrompt && userPrompt.trim()) {

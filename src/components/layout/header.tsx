@@ -44,12 +44,23 @@ interface HeaderProps {
 }
 
 import { useTranslations } from "next-intl";
+import { isImpersonatingClient } from "@/lib/admin-impersonation";
 
 export function Header({ onOpenSidebar }: HeaderProps) {
   const t = useTranslations("Header");
   const pathname = usePathname();
   const { profile, signOut } = useAuth();
   const titleKey = getPageTitleKey(pathname);
+
+  const handleSignOut = () => {
+    if (isImpersonatingClient()) {
+      alert(
+        "أنت تتصفح حالياً في وضع الدخول كمستخدم. يرجى استخدام زر 'الخروج من وضع الدخول كمستخدم' بالشريط العلوي بدلاً من تسجيل الخروج العادي."
+      );
+      return;
+    }
+    signOut();
+  };
 
   const initial =
     profile?.full_name?.charAt(0)?.toUpperCase() ??
@@ -134,7 +145,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-border" />
           <DropdownMenuItem
-            onClick={signOut}
+            onClick={handleSignOut}
             className="text-popover-foreground focus:bg-accent focus:text-accent-foreground"
           >
             <LogOut className="size-4" />

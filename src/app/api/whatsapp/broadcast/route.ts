@@ -15,6 +15,10 @@ import {
   rateLimitResponse,
   RATE_LIMITS,
 } from '@/lib/rate-limit'
+import {
+  checkAccountUsageLimit,
+  incrementAccountUsageCounter,
+} from '@/lib/plans/check-usage-limit'
 
 interface BroadcastResult {
   phone: string
@@ -134,6 +138,28 @@ export async function POST(request: Request) {
       )
     }
 
+    // 1. Check monthly plan limit for broadcasts
+    const broadcastLimitCheck = await checkAccountUsageLimit(accountId, 'broadcasts', 1)
+    if (!broadcastLimitCheck.allowed) {
+      return NextResponse.json(
+        { error: broadcastLimitCheck.reason || 'تم الوصول للحد الأقصى لعدد الحملات الشهرية' },
+        { status: 429 }
+      )
+    }
+
+    // 2. Check monthly plan limit for messages (recipients count)
+    const messagesLimitCheck = await checkAccountUsageLimit(
+      accountId,
+      'messages',
+      recipients.length
+    )
+    if (!messagesLimitCheck.allowed) {
+      return NextResponse.json(
+        { error: messagesLimitCheck.reason || 'عدد المستلمين للحملة يتجاوز الرصيد المتبقي للرسائل الشهرية' },
+        { status: 429 }
+      )
+    }
+
     const { data: config, error: configError } = await supabase
       .from('whatsapp_config')
       .select('*')
@@ -245,6 +271,9 @@ export async function POST(request: Request) {
         failedCount++
       }
     }
+
+    // Atomically increment monthly broadcast counter (+1 broadcast, +sentCount messages)
+    await incrementAccountUsageCounter(accountId, sentCount, 1)
 
     return NextResponse.json({
       success: true,

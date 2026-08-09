@@ -18,6 +18,8 @@ import { FieldsAndTagsPanel } from '@/components/settings/fields-and-tags-panel'
 import { DealsSettings } from '@/components/settings/deals-settings';
 import { MembersTab } from '@/components/settings/members-tab';
 import { ApiKeysSettings } from '@/components/settings/api-keys-settings';
+import { PlanUsagePanel } from '@/components/settings/plan-usage-panel';
+import { TelegramSettingsPanel } from '@/components/settings/telegram-settings-panel';
 import {
   resolveSection,
   type SettingsSection,
@@ -74,7 +76,9 @@ function SettingsPageInner() {
     profile: <ProfileForm />,
     security: <SecurityPanel />,
     appearance: <AppearancePanel />,
+    plan: <PlanUsagePanel />,
     whatsapp: <WhatsAppConfig />,
+    telegram: <TelegramSettingsPanel />,
     templates: <TemplateManager />,
     'quick-replies': <QuickRepliesManager />,
     fields: <FieldsAndTagsPanel />,
