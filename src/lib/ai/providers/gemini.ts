@@ -112,6 +112,15 @@ export async function generateGemini(args: ProviderArgs): Promise<ProviderResult
   const data = (await res.json().catch(() => null)) as GeminiResponse | null
   const parts = data?.candidates?.[0]?.content?.parts ?? []
 
+  // DIAGNOSTIC: log raw parts structure so we can see exactly where
+  // thought parts end and text parts begin, and where the JSON block lands.
+  console.log('[DIAG][gemini] raw parts count:', parts.length)
+  parts.forEach((p, i) => {
+    console.log(
+      `[DIAG][gemini] parts[${i}] thought=${!!p.thought} textLen=${p.text?.length ?? 0} preview=${JSON.stringify(p.text?.slice(0, 120))}`,
+    )
+  })
+
   // Gemini thinking models return multiple parts per response:
   //   - parts with `thought: true`  → internal chain-of-thought (MUST be excluded)
   //   - parts without `thought`     → the actual customer-facing reply
@@ -122,6 +131,8 @@ export async function generateGemini(args: ProviderArgs): Promise<ProviderResult
     .map((p) => p.text as string)
     .join('')
     .trim()
+
+  console.log('[DIAG][gemini] text after thought-filter len:', text.length, 'contains|||:', text.includes('|||'))
 
   if (!text) {
     throw new AiError('Google Gemini returned an empty response.', {

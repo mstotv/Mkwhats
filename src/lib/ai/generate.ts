@@ -122,9 +122,13 @@ export function parseGeneration(
   // sentinel characters never reach the customer.
   const withoutBlock = raw.replace(/\|\|\|\{[\s\S]*?\}\|\|\|/, '')
 
+  console.log('[DIAG][parseGeneration] orderMode:', orderMode, '| raw contains|||:', raw.includes('|||'), '| withoutBlock contains|||:', withoutBlock.includes('|||'), '| extracted:', JSON.stringify(extracted))
+
   // Step 2: detect and strip the handoff sentinel.
   const handoff = withoutBlock.includes(HANDOFF_SENTINEL)
   const text = withoutBlock.split(HANDOFF_SENTINEL).join('').trim()
+
+  console.log('[DIAG][parseGeneration] final text len:', text.length, '| preview:', JSON.stringify(text.slice(0, 100)))
 
   return { text, handoff, usage, extracted }
 }
