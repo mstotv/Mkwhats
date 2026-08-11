@@ -81,29 +81,48 @@ export async function generateReply(args: GenerateArgs): Promise<GenerateResult>
 export function tryParseOrderBlock(raw: string): ExtractedOrderData | null {
   const startIdx = raw.indexOf('|||')
   if (startIdx === -1) return null
-  const endIdx = raw.lastIndexOf('|||')
-  // If only one ||| exists, startIdx === endIdx — not a valid block.
-  if (endIdx <= startIdx) return null
 
-  const jsonStr = raw.slice(startIdx + 3, endIdx).trim()
+  const endIdx = raw.lastIndexOf('|||')
+  let jsonStr = ''
+
+  if (endIdx > startIdx) {
+    jsonStr = raw.slice(startIdx + 3, endIdx).trim()
+  } else {
+    // Unclosed ||| block (e.g. model output got truncated mid-JSON)
+    jsonStr = raw.slice(startIdx + 3).trim()
+  }
+
+  // Attempt 1: Direct JSON parse
   try {
     const parsed = JSON.parse(jsonStr) as Record<string, unknown>
-    return {
-      extracted:
-        typeof parsed.extracted === 'object' &&
-        parsed.extracted !== null &&
-        !Array.isArray(parsed.extracted)
-          ? (parsed.extracted as Record<string, string>)
-          : {},
-      confirmed: parsed.confirmed === true,
-      new_order: parsed.new_order === true,
-    }
+    return buildExtractedOrderData(parsed)
   } catch {
-    // The model produced a malformed block. Log once and return null —
-    // the caller will skip upsert for this turn; the AI will re-ask for
-    // the missing field in the next message.
-    console.warn('[order-collection] model returned a malformed JSON block — skipping extraction for this turn')
+    // Attempt 2: Rescue unclosed JSON by appending missing quotes/closing braces
+    const suffixes = ['}', '"}', '"}}', '"}}}', 'false}', 'false}}', 'null}']
+    for (const suffix of suffixes) {
+      try {
+        const parsed = JSON.parse(jsonStr + suffix) as Record<string, unknown>
+        return buildExtractedOrderData(parsed)
+      } catch {
+        // try next suffix
+      }
+    }
+    console.warn('[order-collection] model returned a malformed or truncated JSON block — skipping extraction for this turn')
     return null
+  }
+}
+
+function buildExtractedOrderData(parsed: Record<string, unknown>): ExtractedOrderData | null {
+  if (!parsed || typeof parsed !== 'object') return null
+  return {
+    extracted:
+      typeof parsed.extracted === 'object' &&
+      parsed.extracted !== null &&
+      !Array.isArray(parsed.extracted)
+        ? (parsed.extracted as Record<string, string>)
+        : {},
+    confirmed: parsed.confirmed === true,
+    new_order: parsed.new_order === true,
   }
 }
 
@@ -112,14 +131,12 @@ export function tryParseOrderBlock(raw: string): ExtractedOrderData | null {
  *
  * Stripping order:
  *   1. Remove the |||{...}||| block (order data) — it must never appear
- *      in the customer-facing text. Uses the same indexOf/lastIndexOf
- *      strategy as tryParseOrderBlock so both functions always agree on
- *      which bytes are "the block".
- *   2. Remove the [[HANDOFF]] sentinel.
- *   3. Trim whitespace.
- *
- * Both strips happen unconditionally so malformed / partial blocks
- * don't leak into the send. `usage` is passed straight through.
+ *      in the customer-facing text. If the block is unclosed (only one |||
+ *      present), strips EVERYTHING from ||| to the end of string so
+ *      unclosed JSON never leaks to the customer.
+ *   2. Remove any residual ||| markers or English meta-thinking lines.
+ *   3. Remove the [[HANDOFF]] sentinel.
+ *   4. Trim whitespace.
  */
 export function parseGeneration(
   raw: string,
@@ -130,19 +147,28 @@ export function parseGeneration(
   // processing. tryParseOrderBlock() is safe — returns null on any error.
   const extracted = orderMode ? tryParseOrderBlock(raw) : null
 
-  // Strip the block from the text unconditionally — uses the same
-  // indexOf/lastIndexOf boundaries as tryParseOrderBlock so that any
-  // block the parser saw is exactly what gets removed from the output.
+  // Strip the block from the text unconditionally.
   let withoutBlock = raw
   const blockStart = raw.indexOf('|||')
-  const blockEnd = raw.lastIndexOf('|||')
-  if (blockStart !== -1 && blockEnd > blockStart) {
-    withoutBlock = raw.slice(0, blockStart) + raw.slice(blockEnd + 3)
+  if (blockStart !== -1) {
+    const blockEnd = raw.lastIndexOf('|||')
+    if (blockEnd > blockStart) {
+      // Complete block between blockStart and blockEnd
+      withoutBlock = raw.slice(0, blockStart) + raw.slice(blockEnd + 3)
+    } else {
+      // UNCLOSED ||| block (e.g. truncated mid-JSON) -> strip everything from blockStart to end!
+      withoutBlock = raw.slice(0, blockStart)
+    }
   }
+
+  // Step 2: Clean up any lingering ||| artifacts or meta commentary
+  withoutBlock = withoutBlock
+    .replace(/\|\|\|[\s\S]*/g, '')
+    .replace(/(?:Let's|Let us|No preamble|Here is the JSON|Formatting JSON)[\s\S]*/gi, '')
 
   console.log('[DIAG][parseGeneration] orderMode:', orderMode, '| raw contains|||:', raw.includes('|||'), '| withoutBlock contains|||:', withoutBlock.includes('|||'), '| extracted:', JSON.stringify(extracted))
 
-  // Step 2: detect and strip the handoff sentinel.
+  // Step 3: detect and strip the handoff sentinel.
   const handoff = withoutBlock.includes(HANDOFF_SENTINEL)
   const text = withoutBlock.split(HANDOFF_SENTINEL).join('').trim()
 

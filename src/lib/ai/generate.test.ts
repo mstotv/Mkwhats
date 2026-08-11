@@ -45,6 +45,7 @@ describe('parseGeneration', () => {
       text: 'Hello there',
       handoff: false,
       usage: null,
+      extracted: null,
     })
   })
 
@@ -53,11 +54,13 @@ describe('parseGeneration', () => {
       text: '',
       handoff: true,
       usage: null,
+      extracted: null,
     })
     expect(parseGeneration('Let me get a human [[HANDOFF]]')).toEqual({
       text: 'Let me get a human',
       handoff: true,
       usage: null,
+      extracted: null,
     })
   })
 
@@ -67,6 +70,7 @@ describe('parseGeneration', () => {
       text: 'Hi',
       handoff: false,
       usage,
+      extracted: null,
     })
   })
 })
@@ -91,6 +95,7 @@ describe('generateReply — OpenAI', () => {
       text: 'Sure — happy to help!',
       handoff: false,
       usage: { promptTokens: 42, completionTokens: 8, totalTokens: 50 },
+      extracted: null,
     })
     const [url, opts] = fetchMock.mock.calls[0]
     expect(url).toContain('api.openai.com')
@@ -150,6 +155,7 @@ describe('generateReply — Anthropic', () => {
       text: 'Hi there!',
       handoff: false,
       usage: { promptTokens: 30, completionTokens: 6, totalTokens: 36 },
+      extracted: null,
     })
     const [url, opts] = fetchMock.mock.calls[0]
     expect(url).toContain('api.anthropic.com')

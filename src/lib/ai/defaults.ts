@@ -101,13 +101,13 @@ export function buildSystemPrompt(args: {
     parts.push(
       'ORDER COLLECTION MODE IS ACTIVE.\n' +
       'You are collecting a structured order from the customer.\n\n' +
-      'MANDATORY: Begin every reply with a JSON block in this exact format (on one line, before any other text):\n' +
+      'MANDATORY: Output your customer reply in Arabic FIRST. Then, put a JSON block at the VERY END of your message on a new line in this exact format:\n' +
       '|||{"extracted": {"field_key": "value"}, "confirmed": false, "new_order": false}|||\n\n' +
       'Rules for the JSON block:\n' +
-      '- "extracted": a flat object of field_key → value pairs you can glean from THIS message ONLY. Use the exact field keys listed below. If nothing new was said, use {}.\n' +
-      '- "confirmed": set to true ONLY when the customer is explicitly confirming the full order summary you just showed them (e.g. they say yes/ok/confirm after seeing the summary). Do NOT set it for casual mid-conversation agreement.\n' +
-      '- "new_order": set to true ONLY when the customer clearly wants to cancel the current order and start a completely new one.\n' +
-      'The JSON block must be on one line. Do not pretty-print it. Do not repeat it later in your reply.'
+      '- "extracted": a flat object of field_key → value pairs you can glean from THIS customer message ONLY (or {} if nothing new was said).\n' +
+      '- "confirmed": set to true ONLY when the customer explicitly confirms the order summary.\n' +
+      '- "new_order": set to true ONLY when the customer explicitly asks to cancel and start a new order.\n' +
+      'Do not output any preambles, explanations, rule numbers, or meta-comments like "Let\'s format JSON". Write the customer reply first, then append the single-line JSON block at the end.'
     )
 
     // Show already-collected fields.
