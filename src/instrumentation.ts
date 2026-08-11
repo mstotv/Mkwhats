@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Next.js Instrumentation Hook
  * https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
  *
@@ -21,13 +21,14 @@ export async function register() {
     process.env.BUILD_TIME ??
     new Date().toISOString()
 
-  console.log(
-    [STARTUP] ========================================\n +
-    [STARTUP] App server started\n +
-    [STARTUP] Commit :  + commit + \n +
-    [STARTUP] Built  :  + buildTime + \n +
-    [STARTUP] Node   :  + process.version + \n +
-    [STARTUP] Env    :  + (process.env.NODE_ENV ?? 'unknown') + \n +
-    [STARTUP] ========================================
-  )
+  const lines = [
+    '[STARTUP] ========================================',
+    '[STARTUP] App server started',
+    '[STARTUP] Commit : ' + commit,
+    '[STARTUP] Built  : ' + buildTime,
+    '[STARTUP] Node   : ' + process.version,
+    '[STARTUP] Env    : ' + (process.env.NODE_ENV ?? 'unknown'),
+    '[STARTUP] ========================================',
+  ]
+  console.log(lines.join('\n'))
 }
