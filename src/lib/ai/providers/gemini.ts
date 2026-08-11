@@ -17,10 +17,20 @@ interface GeminiContent {
   parts: { text: string }[]
 }
 
+interface GeminiPart {
+  text?: string
+  /**
+   * Present on thinking-model parts that contain the model's internal
+   * chain-of-thought. These MUST be filtered out before sending text to
+   * the customer — they are not part of the final answer.
+   */
+  thought?: boolean
+}
+
 interface GeminiResponse {
   candidates?: {
     content?: {
-      parts?: { text?: string }[]
+      parts?: GeminiPart[]
     }
   }[]
   usageMetadata?: {
@@ -100,8 +110,20 @@ export async function generateGemini(args: ProviderArgs): Promise<ProviderResult
   }
 
   const data = (await res.json().catch(() => null)) as GeminiResponse | null
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text || typeof text !== 'string' || !text.trim()) {
+  const parts = data?.candidates?.[0]?.content?.parts ?? []
+
+  // Gemini thinking models return multiple parts per response:
+  //   - parts with `thought: true`  → internal chain-of-thought (MUST be excluded)
+  //   - parts without `thought`     → the actual customer-facing reply
+  // Taking parts[0] blindly would send the thinking text to the customer.
+  // We concatenate only the non-thought parts here.
+  const text = parts
+    .filter((p) => !p.thought && typeof p.text === 'string')
+    .map((p) => p.text as string)
+    .join('')
+    .trim()
+
+  if (!text) {
     throw new AiError('Google Gemini returned an empty response.', {
       code: 'empty_response',
     })
