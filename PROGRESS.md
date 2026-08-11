@@ -57,8 +57,16 @@
   - واجهة إعدادات مخصصة بصفحة الإعدادات (`/settings?tab=telegram`) محكومة بـ `telegram_bot` feature flag مع خيار اختبار الاتصال الفوري بالبوت (Test Connection).
   - إرسال تلقائي غير معطل (Non-blocking Best-effort) لجميع الحقول الديناميكية وبينات العميل لبوت تيليقرام فور تحول الطلب إلى `confirmed`.
   - ✅ Telegram Bot notifications: ربط بوت لكل حساب (bot token + chat id مشفّر)، اختبار اتصال، إشعار تلقائي غير معطّل عند تأكيد الطلب. مختبر: رسالة تجريبية وصلت بنجاح.
-  - إصلاح زر التشغيل (Switch Button) في وضع RTL بإضافة `dir="ltr"` لمنع خروج الدائرة خارج الإطار البيضاوي في كل صفحات المنصة.
-  - إصلاح معالجة الأخطاء في `PresenceHeartbeat` لتفادي أخطاء `TypeError: Failed to fetch` في الكونسول عند الانقطاع الشبكي المؤقت.
+- ✅ إضافة مزود الذكاء الاصطناعي Google Gemini (Gemini 3.6 Flash):
+  - مايقريشن `050_add_gemini_provider.sql` لتوسيع قيد `provider` في جدول `ai_configs` ليشمل `gemini`.
+  - محول المزود الخاص [`src/lib/ai/providers/gemini.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/providers/gemini.ts) للربط مع Google Generative Language v1beta API بـ BYO Key الخاص بالحساب مع التجميع الآلي للرسائل المتتالية وحساب استخدام التوكينات.
+  - تحديث كامل لواجهات إعدادات الـ AI والـ Playground ليدعم اختيار مزود Gemini وموديلاته واختبارها بنجاح 100%.
+- ✅ تشخيص وإصلاح الرد التلقائي والأوتوميشن لربط Evolution API:
+  - تشخيص دقيق بالـ DB Logs لمعالجة خطأ فك التشفير `expected 1 or 2 colons, got 0` الناتج عن حقل `access_token` الفارغ لحسابات Evolution.
+  - حماية مسار الإرسال في [`src/lib/flows/meta-send.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/flows/meta-send.ts) لتوجيه الإرسال الصادر بشكل صحيح وحصري عبر Evolution API.
+  - التحقق من توافق عمل الأوتوميشن والـ AI Auto-Reply بدون تكرار الردود ومع احترام إسناد الموظفين البشريين.
+- إصلاح زر التشغيل (Switch Button) في وضع RTL بإضافة `dir="ltr"` لمنع خروج الدائرة خارج الإطار البيضاوي في كل صفحات المنصة.
+- إصلاح معالجة الأخطاء في `PresenceHeartbeat` لتفادي أخطاء `TypeError: Failed to fetch` في الكونسول عند الانقطاع الشبكي المؤقت.
 
 
 
