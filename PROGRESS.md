@@ -61,10 +61,12 @@
   - مايقريشن `050_add_gemini_provider.sql` لتوسيع قيد `provider` في جدول `ai_configs` ليشمل `gemini`.
   - محول المزود الخاص [`src/lib/ai/providers/gemini.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/providers/gemini.ts) للربط مع Google Generative Language v1beta API بـ BYO Key الخاص بالحساب مع التجميع الآلي للرسائل المتتالية وحساب استخدام التوكينات.
   - تحديث كامل لواجهات إعدادات الـ AI والـ Playground ليدعم اختيار مزود Gemini وموديلاته واختبارها بنجاح 100%.
-- ✅ تشخيص وإصلاح الرد التلقائي والأوتوميشن لربط Evolution API:
-  - تشخيص دقيق بالـ DB Logs لمعالجة خطأ فك التشفير `expected 1 or 2 colons, got 0` الناتج عن حقل `access_token` الفارغ لحسابات Evolution.
-  - حماية مسار الإرسال في [`src/lib/flows/meta-send.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/flows/meta-send.ts) لتوجيه الإرسال الصادر بشكل صحيح وحصري عبر Evolution API.
-  - التحقق من توافق عمل الأوتوميشن والـ AI Auto-Reply بدون تكرار الردود ومع احترام إسناد الموظفين البشريين.
+- ✅ إصلاحات وتطويرات نظام الـ AI Auto-Reply وتجميع الطلبات لـ Gemini و Evolution API:
+  - **تصفية أفكار السلسلة الداخلي (Thought Parts Filtering)**: تعديل [`src/lib/ai/providers/gemini.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/providers/gemini.ts) لاستبعاد الأجزاء التي تحتوي على `thought: true` في نماذج Gemini التفكيرية (مثل Gemini 2.5/3.6 Flash)، ومنع تسرب أفكار الموديل الداخلي والتعليقات الإنجليزية للعميل على واتساب.
+  - **معالجة وحظر الـ JSON غير المغلق (Unclosed ||| Block Handling)**: تحديث [`src/lib/ai/generate.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/generate.ts) باستخدام استراتيجية `indexOf` و `lastIndexOf` لقص بلوك `|||{...}|||` حتى مع الكائنات المتداخلة (nested objects). في حال انقطع الـ JSON قبل الإغلاق، يتم قص كل شيء من نقطة البداية إلى نهاية النص لمنع تسرب الـ JSON الخام نهائياً للعميل، مع إضافة محاولات ترقيع تلقائية (JSON Rescue) لاستخراج الحقول بنجاح.
+  - **إلزام مطابقة المفتاح البرمجي (`field_key`) للطلب**: تحديث الـ System Prompt في [`src/lib/ai/defaults.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/defaults.ts) لإجبار الـ AI على استخدام الـ `field_key` الحرفي (مثل `name`, `phone`, `address`) وعدم ترجمة المفاتيح للعربية في الـ JSON، مما يضمن تطابق البيانات وحفظها بقاعدة البيانات وتأكيد الطلب تلقائياً وإطلاق إشعار التليجرام.
+  - **الاستجابة التلقائية عند خطأ الـ LLM (Fallback & Auto-Handoff)**: إضافة معالجة استثناءات في [`src/lib/ai/auto-reply.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/auto-reply.ts) لإرسال رسالة اعتذار تلقائية مهذبة للعميل عند حدوث خطأ بالمزود أو تجاوُز الـ Rate Limit وتعطيل البوت وتحويل المحادثة لموظف بشري فوراً بدلاً من الصمت التام.
+  - **وسم البناء والتأكد من السيرفر (Instrumentation & Diagnostic Logging)**: إنشاء [`src/instrumentation.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/instrumentation.ts) وتحديث [`next.config.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/next.config.ts) لطباعة الـ Commit SHA ووقت البناء عند تشغيل السيرفر للتأكد الفوري من النسخة Live المرفوعة على Coolify، مع إضافة سجلات تشخيصية غنية في Webhook واستدعاءات الذكاء الاصطناعي.
 - إصلاح زر التشغيل (Switch Button) في وضع RTL بإضافة `dir="ltr"` لمنع خروج الدائرة خارج الإطار البيضاوي في كل صفحات المنصة.
 - إصلاح معالجة الأخطاء في `PresenceHeartbeat` لتفادي أخطاء `TypeError: Failed to fetch` في الكونسول عند الانقطاع الشبكي المؤقت.
 
