@@ -311,6 +311,8 @@ async function processInboundMessage(
     .eq('id', conversation.id)
 
   // ── Fan-out: webhooks, automations, flows, AI ─────────────
+  console.log('[DIAG][evolution/webhook] ▶ fan-out start | conv:', conversation.id, '| contentText:', JSON.stringify(contentText?.slice(0, 80)))
+
   await dispatchWebhookEvent(supabaseAdmin(), accountId, 'message.received', {
     message_id: insertedMessage.id,
     conversation_id: conversation.id,
@@ -319,6 +321,7 @@ async function processInboundMessage(
     content_text: contentText ?? null,
   })
 
+  console.log('[DIAG][evolution/webhook] runAutomationsForTrigger → calling...')
   try {
     await runAutomationsForTrigger({
       accountId,
@@ -329,11 +332,13 @@ async function processInboundMessage(
         conversation_id: conversation.id,
       },
     })
+    console.log('[DIAG][evolution/webhook] runAutomationsForTrigger → done')
   } catch (err) {
     console.error('[evolution/webhook] automations engine error:', err)
   }
 
   let flowConsumed = false
+  console.log('[DIAG][evolution/webhook] dispatchInboundToFlows → calling...')
   try {
     const flowResult = await dispatchInboundToFlows({
       accountId,
@@ -348,11 +353,15 @@ async function processInboundMessage(
       isFirstInboundMessage: contactOutcome.wasCreated,
     })
     flowConsumed = flowResult.consumed
+    console.log('[DIAG][evolution/webhook] dispatchInboundToFlows → done | consumed:', flowConsumed)
   } catch (err) {
     console.error('[evolution/webhook] flows engine error:', err)
   }
 
+  console.log('[DIAG][evolution/webhook] AI gate check | flowConsumed:', flowConsumed, '| contentText?.trim():', JSON.stringify(contentText?.trim()?.slice(0, 40)))
+
   if (!flowConsumed && contentText?.trim()) {
+    console.log('[DIAG][evolution/webhook] dispatchInboundToAiReply → calling... | accountId:', accountId, 'conversationId:', conversation.id)
     try {
       await dispatchInboundToAiReply({
         accountId,
@@ -360,9 +369,12 @@ async function processInboundMessage(
         contactId: contactRecord.id,
         configOwnerUserId,
       })
+      console.log('[DIAG][evolution/webhook] dispatchInboundToAiReply → returned (no throw)')
     } catch (err) {
       console.error('[evolution/webhook] AI auto-reply error:', err)
     }
+  } else {
+    console.log('[DIAG][evolution/webhook] ⚠ AI auto-reply SKIPPED | reason:', flowConsumed ? 'flow consumed' : 'no text content')
   }
 }
 
