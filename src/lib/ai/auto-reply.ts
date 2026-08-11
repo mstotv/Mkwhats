@@ -207,14 +207,46 @@ export async function dispatchInboundToAiReply(
         : {}),
     })
 
-    const { text, handoff, usage, extracted } = await generateReply({
-      config,
-      systemPrompt,
-      messages,
-      // Tell parseGeneration to attempt JSON block extraction only when
-      // we're in order mode — avoids regex overhead on normal replies.
-      orderMode: config.orderCollectionEnabled && !!orderContext,
-    })
+    let text: string
+    let handoff: boolean
+    let usage: Awaited<ReturnType<typeof generateReply>>['usage']
+    let extracted: Awaited<ReturnType<typeof generateReply>>['extracted']
+
+    try {
+      ;({ text, handoff, usage, extracted } = await generateReply({
+        config,
+        systemPrompt,
+        messages,
+        // Tell parseGeneration to attempt JSON block extraction only when
+        // we're in order mode — avoids regex overhead on normal replies.
+        orderMode: config.orderCollectionEnabled && !!orderContext,
+      }))
+    } catch (aiErr) {
+      // The LLM call failed (rate limit, network error, bad API key, etc.).
+      // Don't leave the customer hanging in silence — send a polite fallback
+      // and hand the thread to a human immediately.
+      console.error('[ai auto-reply] generateReply failed — sending fallback and triggering handoff:', aiErr)
+      try {
+        await engineSendText({
+          accountId,
+          userId: configOwnerUserId,
+          conversationId,
+          contactId,
+          text: 'عذراً، صار خلل تقني بسيط. سيتواصل معك فريقنا قريباً. 🙏',
+          aiGenerated: true,
+        })
+      } catch (sendErr) {
+        console.error('[ai auto-reply] fallback send failed:', sendErr)
+      }
+      // Disable auto-reply on this thread so the next inbound goes straight
+      // to a human — the owner can re-enable it once the issue is resolved.
+      const fallbackUpdate: Record<string, unknown> = { ai_autoreply_disabled: true }
+      if (config.handoffAgentId && !conv.assigned_agent_id) {
+        fallbackUpdate.assigned_agent_id = config.handoffAgentId
+      }
+      await db.from('conversations').update(fallbackUpdate).eq('id', conversationId)
+      return
+    }
 
     // Record token spend on the account's BYO key. Fire-and-forget so it
     // never adds latency to the customer-facing send: `logAiUsage`
