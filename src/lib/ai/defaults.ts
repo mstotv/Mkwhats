@@ -105,6 +105,7 @@ export function buildSystemPrompt(args: {
       '|||{"extracted": {"field_key": "value"}, "confirmed": false, "new_order": false}|||\n\n' +
       'Rules for the JSON block:\n' +
       '- "extracted": a flat object of field_key → value pairs you can glean from THIS customer message ONLY (or {} if nothing new was said).\n' +
+      '  CRITICAL RULE FOR JSON KEYS: You MUST use the EXACT `field_key` string (e.g. "name", "phone", "address") as the key in the "extracted" object. NEVER translate the field_key into Arabic or alter its spelling!\n' +
       '- "confirmed": set to true ONLY when the customer explicitly confirms the order summary.\n' +
       '- "new_order": set to true ONLY when the customer explicitly asks to cancel and start a new order.\n' +
       'Do not output any preambles, explanations, rule numbers, or meta-comments like "Let\'s format JSON". Write the customer reply first, then append the single-line JSON block at the end.'
@@ -114,7 +115,7 @@ export function buildSystemPrompt(args: {
     const collectedEntries = Object.entries(collectedFields)
     if (collectedEntries.length > 0) {
       const collected = collectedEntries
-        .map(([k, v]) => `  ✔ ${k}: ${v}`)
+        .map(([k, v]) => `  ✔ field_key "${k}": ${v}`)
         .join('\n')
       parts.push(`Already collected:\n${collected}`)
     }
@@ -137,10 +138,10 @@ export function buildSystemPrompt(args: {
           ? ' (must be a number)'
           : ''
       const remaining = missingFields
-        .map((f) => `  - ${f.field_label}${f.field_type === 'choice' && f.choices ? ` (${f.choices.join('/')})` : ''}`)
+        .map((f) => `  - field_key: "${f.field_key}" (Label: "${f.field_label}")${f.field_type === 'choice' && f.choices ? ` (options: ${f.choices.join('/')})` : ''}`)
         .join('\n')
       parts.push(
-        `Still needed (ask for the FIRST one only, do not ask for all at once):\n${remaining}\n\nAsk for: "${next.field_label}"${choicesHint}`
+        `Still needed (ask for the FIRST one only, do not ask for all at once):\n${remaining}\n\nAsk the customer for: "${next.field_label}"${choicesHint}. In your JSON "extracted" object, use exact key "${next.field_key}".`
       )
     }
   }
