@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/layout/mode-toggle";
+import { isValidImageUrl } from "@/lib/utils";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "dashboard",
@@ -93,7 +94,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
           aria-label={t("openAccountMenu")}
         >
           <Avatar className="size-8">
-            {profile?.avatar_url ? (
+            {profile?.avatar_url && isValidImageUrl(profile.avatar_url) ? (
               <AvatarImage
                 src={profile.avatar_url}
                 alt={profile.full_name ?? t("defaultAvatar")}

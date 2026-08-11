@@ -22,6 +22,7 @@
 // ============================================================
 
 import { useCallback, useEffect, useState } from 'react';
+import { isValidImageUrl } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   AlertTriangle,
@@ -354,9 +355,9 @@ export function MembersTab() {
                       <TooltipTrigger
                         render={
                           <Avatar className="size-9 shrink-0">
-                            {member.avatar_url ? (
+                            {isValidImageUrl(member.avatar_url) ? (
                               <AvatarImage
-                                src={member.avatar_url}
+                                src={member.avatar_url!}
                                 alt={member.full_name || 'Member'}
                               />
                             ) : null}

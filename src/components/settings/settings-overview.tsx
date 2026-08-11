@@ -11,7 +11,7 @@ import { THEMES } from '@/lib/themes';
 import { CURRENCIES } from '@/lib/currency';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { cn, isValidImageUrl } from '@/lib/utils';
 
 import { SECTION_META, type SettingsSection } from './settings-sections';
 import { SettingsChip, StatusDot } from './settings-chip';
@@ -229,7 +229,7 @@ export function SettingsOverview({
       {/* Identity */}
       <Card className="flex-row items-center gap-4 px-5 py-5">
         <Avatar size="lg" className="size-14">
-          {profile?.avatar_url ? (
+          {profile?.avatar_url && isValidImageUrl(profile.avatar_url) ? (
             <AvatarImage src={profile.avatar_url} alt={displayName} />
           ) : null}
           <AvatarFallback className="bg-primary/10 text-xl text-primary">

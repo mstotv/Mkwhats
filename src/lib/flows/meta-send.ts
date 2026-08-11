@@ -7,6 +7,7 @@ import {
   type InteractiveListSection,
   type MediaKind,
 } from '@/lib/whatsapp/meta-api'
+import { sendEvolutionTextMessage } from '@/lib/whatsapp/evolution-api'
 import type { InteractiveMessagePayload } from '@/lib/whatsapp/interactive'
 import { decrypt } from '@/lib/whatsapp/encryption'
 import {
@@ -89,6 +90,52 @@ export async function engineSendText(
     .single()
   if (configErr || !config) {
     throw new Error('WhatsApp not configured for this account')
+  }
+
+  // Evolution API Connection
+  if (config.connection_type === 'evolution') {
+    if (!config.evolution_instance_name || !config.evolution_api_key) {
+      throw new Error('Evolution WhatsApp connection is not fully configured')
+    }
+    let instanceApiKey: string
+    try {
+      instanceApiKey = decrypt(config.evolution_api_key)
+    } catch {
+      throw new Error('Could not decrypt Evolution API key')
+    }
+
+    const evolutionResult = await sendEvolutionTextMessage({
+      instanceName: config.evolution_instance_name,
+      instanceApiKey,
+      to: sanitized,
+      text: args.text,
+    })
+
+    const waMessageId = evolutionResult.messageId
+
+    const { error: msgErr } = await db.from('messages').insert({
+      conversation_id: args.conversationId,
+      sender_type: 'bot',
+      content_type: 'text',
+      content_text: args.text,
+      message_id: waMessageId,
+      status: 'sent',
+      ai_generated: args.aiGenerated ?? false,
+    })
+    if (msgErr) {
+      throw new Error(`sent via Evolution but DB insert failed: ${msgErr.message}`)
+    }
+
+    await db
+      .from('conversations')
+      .update({
+        last_message_text: args.text,
+        last_message_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', args.conversationId)
+
+    return { whatsapp_message_id: waMessageId }
   }
 
   const accessToken = decrypt(config.access_token)
@@ -351,6 +398,10 @@ async function sendInteractiveViaMeta(
     .single()
   if (configErr || !config) {
     throw new Error('WhatsApp not configured for this account')
+  }
+
+  if (config.connection_type === 'evolution') {
+    throw new Error('Interactive messages (buttons/list) are not supported on Evolution API connection.')
   }
 
   const accessToken = decrypt(config.access_token)

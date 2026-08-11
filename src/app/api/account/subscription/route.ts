@@ -58,8 +58,8 @@ export async function GET() {
         : subscription.plans
       : null
 
-    // 4. Fetch current month usage counter and members count
-    const [{ data: counter }, { count: membersCount }] = await Promise.all([
+    // 4. Fetch current month usage counter, members count, and available active plans
+    const [{ data: counter }, { count: membersCount }, { data: availablePlans }] = await Promise.all([
       supabase
         .from('account_usage_counters')
         .select('messages_count, broadcasts_count')
@@ -70,6 +70,11 @@ export async function GET() {
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('account_id', accountId),
+      supabase
+        .from('plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('price_monthly', { ascending: true }),
     ])
 
     const messagesCount = counter?.messages_count || 0
@@ -124,6 +129,19 @@ export async function GET() {
           maxUsers === -1 ? 0 : Math.min(100, Math.round((currentMembersCount / maxUsers) * 100)),
       },
       limits_exceeded: messagesLimitExceeded || broadcastsLimitExceeded || usersLimitExceeded,
+      available_plans: (availablePlans || []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        price_monthly: Number(p.price_monthly),
+        price_yearly: Number(p.price_yearly),
+        max_users: p.max_users,
+        max_whatsapp_instances: p.max_whatsapp_instances,
+        max_contacts: p.max_contacts,
+        max_messages_monthly: p.max_messages_monthly,
+        max_broadcasts_monthly: p.max_broadcasts_monthly,
+        features: p.features || {},
+      })),
     })
   } catch (err: any) {
     console.error('[UserSubscriptionAPI] Unexpected error:', err)

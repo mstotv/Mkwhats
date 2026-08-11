@@ -33,7 +33,7 @@ export interface ExtractedOrderData {
   new_order: boolean
 }
 
-export type AiProvider = 'openai' | 'anthropic'
+export type AiProvider = 'openai' | 'anthropic' | 'gemini'
 
 /**
  * Account AI setup, decrypted and ready to use. Produced by

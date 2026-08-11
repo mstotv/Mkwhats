@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Sparkles,
   CreditCard,
@@ -16,7 +17,9 @@ import {
   FileSpreadsheet,
   Send,
   Loader2,
+  ArrowUpRight,
 } from 'lucide-react'
+import { UpgradePlanModal, type PlanItem } from './upgrade-plan-modal'
 
 interface PlanData {
   id: string
@@ -60,9 +63,11 @@ export function PlanUsagePanel() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [plan, setPlan] = useState<PlanData | null>(null)
+  const [availablePlans, setAvailablePlans] = useState<PlanItem[]>([])
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null)
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [limitsExceeded, setLimitsExceeded] = useState(false)
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
 
   useEffect(() => {
     async function fetchSubscriptionInfo() {
@@ -80,6 +85,7 @@ export function PlanUsagePanel() {
         setSubscription(data.subscription)
         setUsage(data.usage)
         setLimitsExceeded(Boolean(data.limits_exceeded))
+        setAvailablePlans(data.available_plans || [])
       } catch (err: any) {
         setError(err.message || 'حدث خطأ غير متوقع')
       } finally {
@@ -139,22 +145,32 @@ export function PlanUsagePanel() {
     <div className="space-y-6 dir-rtl">
       {/* Limit Exceeded Alert Banner */}
       {limitsExceeded && (
-        <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-4 text-rose-500 flex items-start gap-3 shadow-sm">
-          <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <h4 className="font-bold text-sm">وصلت للحد الأقصى المسموح به لخطة {plan.name}</h4>
-            <p className="text-xs text-rose-400/90 leading-relaxed">
-              لقد استهلكت كامل الرصيد المتاح من الرسائل أو البرودكاست لهذا الشهر. يرجى التواصل مع إدارة المنصة لترقية خطتك ومتابعة العمل بدون انقطاع.
-            </p>
+        <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-4 text-rose-500 flex items-start justify-between gap-3 shadow-sm">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="font-bold text-sm">وصلت للحد الأقصى المسموح به لخطة {plan.name}</h4>
+              <p className="text-xs text-rose-400/90 leading-relaxed">
+                لقد استهلكت كامل الرصيد المتاح من الرسائل أو البرودكاست لهذا الشهر. يرجى الترقية لمتابعة العمل بدون انقطاع.
+              </p>
+            </div>
           </div>
+          <Button
+            size="sm"
+            onClick={() => setIsUpgradeModalOpen(true)}
+            className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shrink-0 gap-1"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            ترقية الخطة الآن
+          </Button>
         </div>
       )}
 
       {/* Main Plan Overview Card */}
       <Card className="border-border">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <CardTitle className="text-xl font-bold flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-indigo-500" />
                 {plan.name}
@@ -175,13 +191,24 @@ export function PlanUsagePanel() {
             </CardDescription>
           </div>
 
-          <div className="text-left dir-ltr">
-            <span className="text-2xl font-black text-foreground">
-              ${subscription?.billing_cycle === 'yearly' ? plan.price_yearly : plan.price_monthly}
-            </span>
-            <span className="text-xs text-muted-foreground mr-1">
-              /{subscription?.billing_cycle === 'yearly' ? 'سنة' : 'شهر'}
-            </span>
+          <div className="flex items-center gap-4 self-end sm:self-auto">
+            <div className="text-left dir-ltr">
+              <span className="text-2xl font-black text-foreground">
+                ${subscription?.billing_cycle === 'yearly' ? plan.price_yearly : plan.price_monthly}
+              </span>
+              <span className="text-xs text-muted-foreground mr-1">
+                /{subscription?.billing_cycle === 'yearly' ? 'سنة' : 'شهر'}
+              </span>
+            </div>
+
+            <Button
+              onClick={() => setIsUpgradeModalOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm gap-1.5"
+            >
+              <Sparkles className="h-4 w-4" />
+              ترقية الخطة / عرض الكل
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </CardHeader>
 
@@ -323,12 +350,25 @@ export function PlanUsagePanel() {
             <span>
               دورة الاستهلاك تتجدد تلقائياً بداية كل شهر ميلادي ({usage?.year_month}).
             </span>
-            <span className="font-medium text-indigo-500">
-              الدفع والترقية المباشرة تتاح قريباً
-            </span>
+            <button
+              type="button"
+              onClick={() => setIsUpgradeModalOpen(true)}
+              className="font-bold text-indigo-500 hover:text-indigo-600 transition-colors flex items-center gap-1"
+            >
+              <span>الانتقال أو الترقية لخطة جديدة</span>
+              <ArrowUpRight className="h-3 w-3" />
+            </button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Upgrade Modal */}
+      <UpgradePlanModal
+        open={isUpgradeModalOpen}
+        onOpenChange={setIsUpgradeModalOpen}
+        currentPlanId={plan?.id}
+        availablePlans={availablePlans}
+      />
     </div>
   )
 }

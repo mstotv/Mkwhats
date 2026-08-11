@@ -67,6 +67,7 @@ export async function POST(request: Request) {
       })
     })
     if (!config) {
+      console.warn(`[ai/draft] AI assistant not configured or not active for account: ${accountId}`)
       return NextResponse.json(
         {
           error: 'AI assistant is not set up. Enable it in Settings → AI Assistant.',
@@ -80,6 +81,7 @@ export async function POST(request: Request) {
     // Nothing to draft from — a brand-new thread with no customer text
     // would otherwise produce a nonsensical reply-to-nothing.
     if (messages.length === 0) {
+      console.warn(`[ai/draft] No messages found for conversation: ${conversationId}`)
       return NextResponse.json(
         {
           error: 'No messages to draft from yet.',

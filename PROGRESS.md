@@ -34,6 +34,16 @@
   - فحص حماية `max_users` عند إنشاء واستبدال الدعوات في [`api/account/invitations/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/account/invitations/route.ts) و [`api/invitations/[token]/redeem/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/invitations/%5Btoken%5D/redeem/route.ts).
   - تصحيح مفتاح الترجمة `"plan": "Plan & Usage"` بالكامل لمنع ظهور النص الخام `Settings.sections.plan`.
   - تحديث نافذة تعديل الخطة بالأدمن [`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/edit-plan-modal.tsx) والـ API [`api/admin/plans/[id]/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/admin/plans/%5Bid%5D/route.ts) لتشمل `max_messages_monthly` و `max_broadcasts_monthly` ومفاتيح تشغيل/إيقاف ميزات `features` (ai_assistant, excel_export, telegram_bot) لتحديثها بضغطة زر واحدة.
+  - ✅ نظام ترقية الخطط الهجين (Hybrid Plan Upgrade):
+    - مايقريشن `048_upgrade_requests.sql` المخصص لجدول `upgrade_requests` مع حماية RLS بـ `is_account_member`.
+    - مسار آمن [`/api/account/upgrade-request`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/account/upgrade-request/route.ts) لتسجيل طلب الترقية كـ `pending` وإنشاء رابط محادثة واتساب موجه للدعم برقم الطلب.
+    - نافذة تفاعلية [`src/components/settings/upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/upgrade-plan-modal.tsx) تعجب بطاقات الخطط والتبديل الشهري/السنوي مع زر طلب الترقية المباشر.
+  - ✅ Plisio Payment Gateway: بوابة دفع كريبتو حقيقية، إدخال مفتاح الأدمن من site-settings، إنشاء فاتورة تلقائي عند طلب الترقية، webhook محمي (HMAC-SHA1 + منع تكرار + مطابقة مبلغ) يفعّل اشتراك جديد تلقائياً بعد الدفع — مختبر بالكامل بسكربت محاكاة (scripts/test-plisio-webhook.js).
+    - مايقريشن `049_plisio_payment_integration.sql` مطبق ومفعل بنجاح على قاعدة البيانات (إضافة `plisio_api_key` و `plisio_enabled` لـ `site_settings` وأعمدة الفاتورة لـ `upgrade_requests`).
+    - واجهة إعدادات موحدة بالأدمن بانل [`/admin/site-settings`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/site-settings/page.tsx) لإدخال `Plisio Secret API Key` ومفتاح التفعيل الشامل.
+    - إنشاء فواتير Plisio أوتوماتيكياً في [`/api/account/upgrade-request`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/account/upgrade-request/route.ts) والتحويل الفوري لصفحة الدفع بالعملات الرقمية (`USDT_TRX`, `BTC`, `ETH`).
+    - معالج الـ Webhook الموثق والمحمي ثلاثياً في [`/api/v1/webhooks/plisio`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/v1/webhooks/plisio/route.ts) بمصادقة توقيع `HMAC-SHA1` الحية، والوقاية من Replay attacks ومطابقة المبالغ، وتفعيل اشتراك الحساب بجدول `subscriptions` تلقائياً فور تأكيد الشبكة.
+    - صفحة نجاح الاشتراك الاحترافية [`/settings/upgrade-success`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/(dashboard)/settings/upgrade-success/page.tsx) مع التحقق المباشر عبر API [`/api/account/upgrade-status`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/account/upgrade-status/route.ts) وفحص تفعيل الخطة، وتأثير قصاصات الورق (Confetti)، وعرض كارت ملخص الدفع وزر الانتقال للوحة التحكم.
 - ✅ نظام إعدادات الموقع واللاندنك بيج التسويقية العامة:
   - مايقريشن `044_site_settings_and_content_pages.sql` مطبق ومفعل بنجاح (تم التراجع عن تعديله المباشر والالتزام التام بقواعد `AGENTS.md`).
   - مايقريشن `045_update_site_settings_partners.sql` مطبق بنجاح لتحديث الشركاء الـ 20 في قاعدة البيانات.
@@ -46,6 +56,7 @@
   - مايقريشن `047_telegram_bot_settings.sql` لجدول `telegram_configs` بـ RLS وتشفير AES-256-GCM للتوكن.
   - واجهة إعدادات مخصصة بصفحة الإعدادات (`/settings?tab=telegram`) محكومة بـ `telegram_bot` feature flag مع خيار اختبار الاتصال الفوري بالبوت (Test Connection).
   - إرسال تلقائي غير معطل (Non-blocking Best-effort) لجميع الحقول الديناميكية وبينات العميل لبوت تيليقرام فور تحول الطلب إلى `confirmed`.
+  - ✅ Telegram Bot notifications: ربط بوت لكل حساب (bot token + chat id مشفّر)، اختبار اتصال، إشعار تلقائي غير معطّل عند تأكيد الطلب. مختبر: رسالة تجريبية وصلت بنجاح.
   - إصلاح زر التشغيل (Switch Button) في وضع RTL بإضافة `dir="ltr"` لمنع خروج الدائرة خارج الإطار البيضاوي في كل صفحات المنصة.
   - إصلاح معالجة الأخطاء في `PresenceHeartbeat` لتفادي أخطاء `TypeError: Failed to fetch` في الكونسول عند الانقطاع الشبكي المؤقت.
 
@@ -70,3 +81,4 @@
 ## مشاكل معروفة / ملاحظات
 - 📌 صفحة "إدارة الحسابات" (/admin/accounts) تعمل حالياً وتؤدي الغرض ولكنها لا تزال بالتصميم القديم وستحتاج إعادة تصميم لتطابق ستايل Vercel/Supabase لاحقاً.
 - 📌 لم يتم اختبار التراجع الذاتي (Rollback) الفعلي بشكل يدوي حتى الآن، ويُفضل اختباره والتأكد منه قبل الإطلاق الرسمي للزبائن.
+- 📌 أصلحنا دفعة أخطاء ترجمة متكررة (roles, telegram, api-keys, templates, automations.builder.delete) — عند إضافة أي نص جديد بملفات الترجمة يحتوي أقواس مزدوجة {{ }} حرفية أو HTML attributes داخل tags، يجب تغليفها/تنظيفها حسب معايير next-intl ICU.

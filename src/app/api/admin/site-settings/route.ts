@@ -69,7 +69,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { platform_name, logo_url, social_links, partners } = body || {}
+    const { platform_name, logo_url, social_links, partners, plisio_api_key, plisio_enabled } = body || {}
 
     const updateData: Record<string, any> = {
       updated_at: new Date().toISOString(),
@@ -79,6 +79,8 @@ export async function PATCH(request: NextRequest) {
     if (logo_url !== undefined) updateData.logo_url = logo_url ? String(logo_url) : null
     if (social_links !== undefined) updateData.social_links = social_links
     if (partners !== undefined) updateData.partners = partners
+    if (plisio_api_key !== undefined) updateData.plisio_api_key = plisio_api_key ? String(plisio_api_key) : null
+    if (plisio_enabled !== undefined) updateData.plisio_enabled = Boolean(plisio_enabled)
 
     const { data: updatedSettings, error: updateError } = await serviceClient
       .from('site_settings')

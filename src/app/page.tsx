@@ -584,17 +584,32 @@ export default async function LandingPage() {
               جميع الحقوق محفوظة © {new Date().getFullYear()} {platformName}.
             </div>
             <div className="flex items-center gap-3">
-              {socialLinks.map((s, idx) => (
-                <a
-                  key={idx}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="h-8 w-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:border-emerald-500/50 transition-all"
-                >
-                  <Globe className="h-4 w-4" />
-                </a>
-              ))}
+              {socialLinks.map((s, idx) => {
+                const rawUrl = (s.url || '').trim()
+                const formattedHref =
+                  rawUrl.startsWith('http://') ||
+                  rawUrl.startsWith('https://') ||
+                  rawUrl.startsWith('mailto:') ||
+                  rawUrl.startsWith('tel:')
+                    ? rawUrl
+                    : rawUrl.includes('@')
+                    ? `mailto:${rawUrl}`
+                    : rawUrl
+                    ? `https://${rawUrl}`
+                    : '#'
+
+                return (
+                  <a
+                    key={idx}
+                    href={formattedHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-8 w-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:border-emerald-500/50 transition-all"
+                  >
+                    <Globe className="h-4 w-4" />
+                  </a>
+                )
+              })}
             </div>
           </div>
         </div>

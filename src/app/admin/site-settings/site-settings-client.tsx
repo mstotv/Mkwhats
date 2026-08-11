@@ -43,6 +43,8 @@ interface SiteSettings {
   logo_url: string | null
   social_links: SocialLink[]
   partners: Partner[]
+  plisio_api_key?: string | null
+  plisio_enabled?: boolean
 }
 
 interface ContentPage {
@@ -238,6 +240,48 @@ export function SiteSettingsClient({
                       className="bg-slate-950 border-slate-800 text-slate-100 text-sm"
                     />
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Plisio Payment Gateway Settings */}
+            <Card className="bg-slate-900 border-slate-800 text-slate-100">
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <div className="space-y-1">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <span className="text-amber-400">🪙</span> بوابة دفع الكريبتو (Plisio Crypto Payment Gateway)
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-400">
+                    مفتاح منصة Plisio الموحد للتحصيل بالعملات الرقمية (USDT, BTC, ETH) لترقية الاشتراكات تلقائياً.
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-300">
+                    {settings.plisio_enabled ? 'تفعيل البوابة' : 'تعطيل البوابة'}
+                  </span>
+                  <Switch
+                    checked={Boolean(settings.plisio_enabled)}
+                    onCheckedChange={(checked) =>
+                      setSettings({ ...settings, plisio_enabled: checked })
+                    }
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-0">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-slate-300">Plisio Secret API Key (Secret Key)</Label>
+                  <Input
+                    type="password"
+                    value={settings.plisio_api_key || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, plisio_api_key: e.target.value })
+                    }
+                    placeholder="أدخل مفتاح Plisio الخاص بك (Secret Key)"
+                    className="bg-slate-950 border-slate-800 text-slate-100 text-sm font-mono"
+                  />
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    يمكنك الحصول على المفتاح من حسابك في Plisio من قسم API Settings. عند تفعيل البوابة، سيتم تحويل أي مستخدم يطلب الترقية إلى صفحة دفع الكريبتو وتفعيل اشتراكه أوتوماتيكياً فور تأكيد الشبكة.
+                  </p>
                 </div>
               </CardContent>
             </Card>
