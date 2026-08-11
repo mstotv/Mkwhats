@@ -121,6 +121,16 @@ export async function generateGemini(args: ProviderArgs): Promise<ProviderResult
     )
   })
 
+  // Log the COMPLETE raw concatenation of all parts (including thought parts)
+  // BEFORE any filtering — this is the ground truth of what Gemini returned.
+  const rawAllParts = parts.map((p) => p.text ?? '').join('')
+  console.log('[DIAG][gemini] RAW FULL (all parts, pre-filter) len:', rawAllParts.length)
+  console.log('[DIAG][gemini] RAW FULL first-|||:', rawAllParts.indexOf('|||'), 'last-|||:', rawAllParts.lastIndexOf('|||'))
+  // Print the full text in chunks of 200 chars so nothing is truncated in logs
+  for (let i = 0; i < rawAllParts.length; i += 200) {
+    console.log(`[DIAG][gemini] RAW[${i}–${Math.min(i + 200, rawAllParts.length)}]:`, JSON.stringify(rawAllParts.slice(i, i + 200)))
+  }
+
   // Gemini thinking models return multiple parts per response:
   //   - parts with `thought: true`  → internal chain-of-thought (MUST be excluded)
   //   - parts without `thought`     → the actual customer-facing reply

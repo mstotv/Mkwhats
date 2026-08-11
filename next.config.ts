@@ -65,6 +65,29 @@ const SECURITY_HEADERS = [
 
 const nextConfig: NextConfig = {
   /**
+   * Inject build-time identifiers so `instrumentation.ts` can log the
+   * exact commit SHA and build timestamp when the server starts. This
+   * lets us immediately confirm in Coolify logs whether the expected
+   * version is actually running — no more guessing after a re-deploy.
+   */
+  env: {
+    NEXT_PUBLIC_COMMIT_SHA: process.env.NEXT_PUBLIC_COMMIT_SHA ??
+      process.env.COMMIT_SHA ??
+      process.env.GIT_COMMIT ??
+      (() => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          return require('child_process')
+            .execSync('git rev-parse --short HEAD', { encoding: 'utf8' })
+            .trim()
+        } catch {
+          return 'unknown'
+        }
+      })(),
+    NEXT_PUBLIC_BUILD_TIME: new Date().toISOString(),
+  },
+
+  /**
    * Cross-origin dev access (Next.js 16).
    *
    * Next 16 blocks requests to dev-only resources (`/_next/*` internals,
