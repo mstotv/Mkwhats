@@ -207,10 +207,10 @@ export function AiConfig() {
         }
         await fetchConfig();
       } else {
-        toast.error(data.error ?? t('saveFailed'));
+        toast.error(data.error || t('saveFailed'), { duration: 6000 });
       }
     } catch {
-      toast.error(t('saveFailed'));
+      toast.error(t('saveFailed'), { duration: 6000 });
     } finally {
       setSaving(false);
     }
