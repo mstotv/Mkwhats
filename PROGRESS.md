@@ -66,7 +66,13 @@
   - **معالجة وحظر الـ JSON غير المغلق (Unclosed ||| Block Handling)**: تحديث [`src/lib/ai/generate.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/generate.ts) باستخدام استراتيجية `indexOf` و `lastIndexOf` لقص بلوك `|||{...}|||` حتى مع الكائنات المتداخلة (nested objects). في حال انقطع الـ JSON قبل الإغلاق، يتم قص كل شيء من نقطة البداية إلى نهاية النص لمنع تسرب الـ JSON الخام نهائياً للعميل، مع إضافة محاولات ترقيع تلقائية (JSON Rescue) لاستخراج الحقول بنجاح.
   - **إلزام مطابقة المفتاح البرمجي (`field_key`) للطلب**: تحديث الـ System Prompt في [`src/lib/ai/defaults.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/defaults.ts) لإجبار الـ AI على استخدام الـ `field_key` الحرفي (مثل `name`, `phone`, `address`) وعدم ترجمة المفاتيح للعربية في الـ JSON، مما يضمن تطابق البيانات وحفظها بقاعدة البيانات وتأكيد الطلب تلقائياً وإطلاق إشعار التليجرام.
   - **الاستجابة التلقائية عند خطأ الـ LLM (Fallback & Auto-Handoff)**: إضافة معالجة استثناءات في [`src/lib/ai/auto-reply.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/auto-reply.ts) لإرسال رسالة اعتذار تلقائية مهذبة للعميل عند حدوث خطأ بالمزود أو تجاوُز الـ Rate Limit وتعطيل البوت وتحويل المحادثة لموظف بشري فوراً بدلاً من الصمت التام.
-  - **وسم البناء والتأكد من السيرفر (Instrumentation & Diagnostic Logging)**: إنشاء [`src/instrumentation.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/instrumentation.ts) وتحديث [`next.config.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/next.config.ts) لطباعة الـ Commit SHA ووقت البناء عند تشغيل السيرفر للتأكد الفوري من النسخة Live المرفوعة على Coolify، مع إضافة سجلات تشخيصية غنية في Webhook واستدعاءات الذكاء الاصطناعي.
+  - **دعم الردود غير المحدودة بالذكاء الاصطناعي (-1 Unlimited Auto-Replies Cap)**:
+    - مايقريشن `051_allow_unlimited_ai_auto_replies.sql` لتحديث قيد `CHECK (auto_reply_max_per_conversation = -1 OR (auto_reply_max_per_conversation >= 1 AND auto_reply_max_per_conversation <= 500))` ودالة `claim_ai_reply_slot` لدعم `-1` دون قيد أقصى.
+    - تحديث واجهة الإعدادات والـ API بالسماح بادخال `-1` مع نص توضيحي وإرجاع رسالة خطأ DB التفصيلية للـ UI.
+  - **توسيع سقف التوكنات الناتجة (`MAX_OUTPUT_TOKENS` = 4096) وحل انقطاع الردود**:
+    - رفع سقف التوكنات في [`src/lib/ai/defaults.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/defaults.ts) إلى **4096** توكن لمنع استهلاك توكنات الـ Thinking في موديلات Gemini التفكيرية (مثل Gemini 3.6 Flash) لرد البوت وبلوك الـ JSON الاستخراجي.
+    - حل مشكلة انقطاع الردود بمنتصف الجملة وضمان وصول واستخراج كامل حقول الطلب وتأكيده تلقائياً وانطلاق إشعار تيليقرام المباشر.
+    - إضافة سجلات تشخيصية تفصيلية `[DIAG]` لعمليات استخراج البيانات، الفحص الذاتي لاكتمال الحقول، وتأكيد الطلب وإرسال التليجرام.
 - إصلاح زر التشغيل (Switch Button) في وضع RTL بإضافة `dir="ltr"` لمنع خروج الدائرة خارج الإطار البيضاوي في كل صفحات المنصة.
 - إصلاح معالجة الأخطاء في `PresenceHeartbeat` لتفادي أخطاء `TypeError: Failed to fetch` في الكونسول عند الانقطاع الشبكي المؤقت.
 
