@@ -448,26 +448,35 @@ export function AiConfig() {
               />
             </div>
 
-            <div className="flex items-center justify-between gap-4">
-              <div>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
                 <Label htmlFor="ai-max">{t('maxAutoReplies')}</Label>
                 <p className="text-xs text-muted-foreground">
                   {t('maxAutoRepliesDesc')}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  اكتب{' '}
+                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">-1</code>
+                  {' '}لإزالة الحد تماماً (بلا حدود)
                 </p>
               </div>
               <Input
                 id="ai-max"
                 type="number"
-                min={1}
-                max={20}
+                min={-1}
+                max={500}
                 value={maxPerConversation}
-                onChange={(e) =>
-                  setMaxPerConversation(
-                    Math.min(20, Math.max(1, Number(e.target.value) || 1)),
-                  )
-                }
+                onChange={(e) => {
+                  const v = Number(e.target.value)
+                  if (e.target.value === '' || e.target.value === '-') return
+                  if (v === -1) {
+                    setMaxPerConversation(-1)
+                  } else {
+                    setMaxPerConversation(Math.min(500, Math.max(1, Math.floor(v) || 1)))
+                  }
+                }}
                 disabled={disabled || !autoReplyEnabled}
-                className="w-20"
+                className="w-24"
               />
             </div>
 

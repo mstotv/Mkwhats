@@ -111,7 +111,8 @@ export async function dispatchInboundToAiReply(
     }
     // Cheap early-out; the authoritative cap check is the atomic claim
     // below (this read can race a concurrent inbound).
-    if (conv.ai_reply_count >= config.autoReplyMaxPerConversation) {
+    // -1 = unlimited — skip the cap check entirely.
+    if (config.autoReplyMaxPerConversation !== -1 && conv.ai_reply_count >= config.autoReplyMaxPerConversation) {
       console.log('[DIAG][ai auto-reply] ⚠ EARLY EXIT: reply cap reached', conv.ai_reply_count, '>=', config.autoReplyMaxPerConversation)
       return
     }
@@ -339,11 +340,17 @@ export async function dispatchInboundToAiReply(
     // skip the send. (We consume a slot slightly before the send lands —
     // fail-safe: under-reply rather than over-reply.)
     console.log('[DIAG][ai auto-reply] calling claim_ai_reply_slot RPC...')
+    // When the cap is -1 (unlimited) pass a very large sentinel so the
+    // Postgres function's counter-check never blocks the send.
+    const effectiveCap =
+      config.autoReplyMaxPerConversation === -1
+        ? 2147483647
+        : config.autoReplyMaxPerConversation
     const { data: claimed, error: claimErr } = await db.rpc(
       'claim_ai_reply_slot',
       {
         conversation_id: conversationId,
-        max_replies: config.autoReplyMaxPerConversation,
+        max_replies: effectiveCap,
       },
     )
     console.log('[DIAG][ai auto-reply] claim_ai_reply_slot result | claimed:', claimed, 'claimErr:', claimErr?.message)
