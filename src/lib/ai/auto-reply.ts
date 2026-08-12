@@ -288,13 +288,17 @@ export async function dispatchInboundToAiReply(
     }
 
     // ── Process order extraction (order mode only) ─────────────────
+    console.log('[DIAG][ai auto-reply] order processing check | orderContext:', orderContext ? `orderId=${orderContext.orderId} missingCount=${orderContext.missingFields.length}` : 'NONE', '| extracted:', JSON.stringify(extracted))
+
     if (orderContext && extracted) {
       const { orderId } = orderContext
+      console.log('[DIAG][ai auto-reply] extracted data details | keys:', Object.keys(extracted.extracted), '| extracted:', JSON.stringify(extracted.extracted), '| confirmed:', extracted.confirmed, '| new_order:', extracted.new_order)
 
       // If the model detected the customer wants a new order, cancel the
       // current one and open a fresh one. The text reply is still sent
       // so the customer isn't left hanging.
       if (extracted.new_order) {
+        console.log('[DIAG][ai auto-reply] 🔄 extracted.new_order is true — cancelling current and opening fresh order...')
         const fresh = await cancelAndCreateOrder(
           db,
           conversationId,
@@ -310,11 +314,9 @@ export async function dispatchInboundToAiReply(
             readyToConfirm: false,
           }
         }
-        // After opening a fresh order we fall through to send the text;
-        // values extracted in this same message are intentionally NOT saved
-        // here — they belong to the new order and the AI will re-ask.
       } else {
         // Save any newly extracted values for the current order.
+        console.log('[DIAG][ai auto-reply] Saving extracted fields to DB...')
         await upsertOrderFields(db, orderId, accountId, extracted.extracted)
 
         // Confirm the order only when:
@@ -323,12 +325,22 @@ export async function dispatchInboundToAiReply(
         // The DB check guards against the model hallucinating confirmed:true
         // before the form is actually complete.
         if (extracted.confirmed) {
+          console.log('[DIAG][ai auto-reply] extracted.confirmed is TRUE! Evaluating checkOrderComplete...')
           const complete = await checkOrderComplete(db, orderId)
+          console.log('[DIAG][ai auto-reply] checkOrderComplete result:', complete)
+
           if (complete) {
+            console.log('[DIAG][ai auto-reply] ✅ Order is complete! Calling confirmOrder...')
             await confirmOrder(db, orderId, accountId)
+          } else {
+            const missing = await getMissingFields(db, orderId)
+            const { data: dbVals } = await db.from('order_field_values').select('field_key, field_value').eq('order_id', orderId)
+            console.warn('[DIAG][ai auto-reply] ⚠ confirmOrder SKIPPED: model sent confirmed=true BUT checkOrderComplete returned FALSE!')
+            console.warn('[DIAG][ai auto-reply] missing required fields:', missing.map((f) => f.field_key))
+            console.warn('[DIAG][ai auto-reply] current stored field values:', JSON.stringify(dbVals))
           }
-          // If not complete despite confirmed:true → do nothing. The next
-          // turn the model will see the missing fields and re-ask.
+        } else {
+          console.log('[DIAG][ai auto-reply] extracted.confirmed is false — order remains in collecting state')
         }
       }
     }

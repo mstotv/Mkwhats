@@ -196,6 +196,8 @@ export async function upsertOrderFields(
       collected_at: new Date().toISOString(),
     }))
 
+  console.log('[DIAG][order-collection] upsertOrderFields | orderId:', orderId, '| rows count:', rows.length, '| data:', JSON.stringify(rows))
+
   if (rows.length === 0) return true
 
   const { error } = await db
@@ -203,9 +205,10 @@ export async function upsertOrderFields(
     .upsert(rows, { onConflict: 'order_id,field_key' })
 
   if (error) {
-    console.error('[order-collection] upsertOrderFields error:', error)
+    console.error('[DIAG][order-collection] ❌ upsertOrderFields error:', error)
     return false
   }
+  console.log('[DIAG][order-collection] ✅ upsertOrderFields success')
   return true
 }
 
@@ -222,13 +225,15 @@ export async function checkOrderComplete(
   db: SupabaseClient,
   orderId: string,
 ): Promise<boolean> {
+  console.log('[DIAG][order-collection] checking is_order_complete for orderId:', orderId)
   const { data, error } = await db.rpc('is_order_complete', {
     p_order_id: orderId,
   })
   if (error) {
-    console.error('[order-collection] is_order_complete error:', error)
+    console.error('[DIAG][order-collection] ❌ is_order_complete RPC error:', error)
     return false
   }
+  console.log('[DIAG][order-collection] is_order_complete RPC returned:', data)
   return data === true
 }
 
@@ -246,11 +251,12 @@ export async function getMissingFields(
     p_order_id: orderId,
   })
   if (error) {
-    console.error('[order-collection] get_order_missing_fields error:', error)
+    console.error('[DIAG][order-collection] ❌ get_order_missing_fields error:', error)
     return []
   }
   return (data ?? []) as OrderField[]
 }
+
 /**
  * Mark an order as confirmed (status → 'confirmed').
  * Called after the model sets `confirmed: true` AND `is_order_complete`
@@ -263,7 +269,8 @@ export async function confirmOrder(
   orderId: string,
   accountId: string,
 ): Promise<void> {
-  const { error } = await db
+  console.log('[DIAG][order-collection] ▶ confirmOrder START | orderId:', orderId, 'accountId:', accountId)
+  const { data: updated, error } = await db
     .from('orders')
     .update({
       status: 'confirmed',
@@ -272,15 +279,23 @@ export async function confirmOrder(
     .eq('id', orderId)
     .eq('account_id', accountId)
     .eq('status', 'collecting') // guard: only confirm if still collecting
+    .select('id, status')
 
   if (error) {
-    console.error('[order-collection] confirmOrder error:', error)
+    console.error('[DIAG][order-collection] ❌ confirmOrder DB update error:', error)
     return
   }
 
+  console.log('[DIAG][order-collection] ✅ confirmOrder DB status updated to confirmed:', JSON.stringify(updated))
+
   // Trigger non-blocking Telegram notification if enabled for this account
-  void sendTelegramOrderNotification(db, orderId, accountId).catch((err) => {
-    console.error('[order-collection] Non-blocking Telegram notification failed:', err)
-  })
+  console.log('[DIAG][order-collection] Dispatching Telegram notification...')
+  void sendTelegramOrderNotification(db, orderId, accountId)
+    .then((result) => {
+      console.log('[DIAG][order-collection] ✅ sendTelegramOrderNotification completed:', JSON.stringify(result))
+    })
+    .catch((err) => {
+      console.error('[DIAG][order-collection] ❌ Telegram notification failed:', err)
+    })
 }
 

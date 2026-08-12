@@ -24,8 +24,9 @@ export const AI_PROVIDER_DEFAULT_MODEL: Record<AiProvider, string> = {
 export const HANDOFF_SENTINEL = '[[HANDOFF]]'
 
 /** Cap on generated reply length — keeps WhatsApp replies short and
- *  bounds token spend on the caller's own key. */
-export const MAX_OUTPUT_TOKENS = 1024
+ *  bounds token spend on the caller's own key. Set to 4096 to accommodate
+ *  Gemini thinking tokens + reply text + JSON extraction block. */
+export const MAX_OUTPUT_TOKENS = 4096
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
 const DEFAULT_CONTEXT_MESSAGE_LIMIT = 20
