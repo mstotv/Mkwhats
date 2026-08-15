@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ShieldCheck, LayoutDashboard, Users, CreditCard, Globe, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { LanguageSwitcher } from '@/components/language-switcher'
 
 export function AdminNav() {
   const pathname = usePathname()
@@ -84,6 +85,7 @@ export function AdminNav() {
         </div>
 
         <div className="flex items-center gap-3">
+          <LanguageSwitcher variant="ghost" size="sm" className="text-slate-300 hover:text-white" />
           <Button
             variant="ghost"
             size="sm"
