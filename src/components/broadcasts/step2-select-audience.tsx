@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { CustomField, Tag } from '@/types';
+import { Contact, CustomField, Tag } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
   Users,
@@ -13,10 +13,14 @@ import {
   ArrowRight,
   ArrowLeft,
   X,
+  ListChecks,
+  Search,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-type AudienceType = 'all' | 'tags' | 'custom_field' | 'csv';
+type AudienceType = 'all' | 'tags' | 'custom_field' | 'csv' | 'manual';
 type CustomFieldOperator = 'is' | 'is_not' | 'contains';
 
 interface CustomFieldFilter {
@@ -31,6 +35,8 @@ interface AudienceConfig {
   customField?: CustomFieldFilter;
   csvContacts?: { phone: string; name?: string }[];
   excludeTagIds?: string[];
+  /** IDs of manually selected contacts (for type === 'manual') */
+  manualContactIds?: string[];
 }
 
 interface Step2Props {
@@ -84,7 +90,14 @@ export function Step2SelectAudience({
       description: t('selectAudience.csvDesc'),
       icon: Upload,
     },
+    {
+      type: 'manual',
+      label: 'اختيار يدوي',
+      description: 'اختر جهات الاتصال يدوياً بوضع إشارة ✓ بجانب كل شخص.',
+      icon: ListChecks,
+    },
   ], [t]);
+
   const [tags, setTags] = useState<Tag[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [loadingTags, setLoadingTags] = useState(false);
@@ -92,8 +105,11 @@ export function Step2SelectAudience({
   const [estimatedCount, setEstimatedCount] = useState<number | null>(null);
   const [loadingCount, setLoadingCount] = useState(false);
 
-  // Tags are used both by the primary "Filter by Tags" audience type
-  // AND by the exclude-list below — so always load once on mount.
+  // Manual selection state
+  const [allContacts, setAllContacts] = useState<Contact[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [contactSearch, setContactSearch] = useState('');
+
   useEffect(() => {
     async function fetchTags() {
       setLoadingTags(true);
@@ -108,7 +124,6 @@ export function Step2SelectAudience({
     fetchTags();
   }, []);
 
-  // Lazy-load custom fields only when that audience type is active.
   useEffect(() => {
     if (audience.type !== 'custom_field') return;
     async function fetchFields() {
@@ -127,16 +142,39 @@ export function Step2SelectAudience({
     fetchFields();
   }, [audience.type]);
 
+  // Load all contacts when "manual" type selected
+  useEffect(() => {
+    if (audience.type !== 'manual') return;
+    async function fetchContacts() {
+      setLoadingContacts(true);
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('contacts')
+          .select('id, name, phone, email')
+          .order('name', { ascending: true });
+        setAllContacts((data as Contact[]) ?? []);
+      } finally {
+        setLoadingContacts(false);
+      }
+    }
+    fetchContacts();
+  }, [audience.type]);
+
   const fetchEstimatedCount = useCallback(async () => {
     setLoadingCount(true);
     try {
       const supabase = createClient();
 
-      // Base query — produces the superset before exclude is applied.
-      let baseIds: Set<string> | null = null; // null means "all contacts"
+      if (audience.type === 'manual') {
+        setEstimatedCount((audience.manualContactIds ?? []).length);
+        return;
+      }
+
+      let baseIds: Set<string> | null = null;
 
       if (audience.type === 'all') {
-        // Handled below — full-table count adjusted by excludes.
+        // Handled below
       } else if (
         audience.type === 'tags' &&
         audience.tagIds &&
@@ -170,12 +208,10 @@ export function Step2SelectAudience({
         setEstimatedCount(audience.csvContacts.length);
         return;
       } else {
-        // Partially-configured audience — wait for the user to finish.
         setEstimatedCount(null);
         return;
       }
 
-      // Apply exclude tags
       let excludeSet: Set<string> | null = null;
       if (audience.excludeTagIds && audience.excludeTagIds.length > 0) {
         const { data: excludeRows } = await supabase
@@ -191,7 +227,6 @@ export function Step2SelectAudience({
         );
         setEstimatedCount(effective.length);
       } else {
-        // "All" — fetch the total, then subtract exclude set if any.
         const { count } = await supabase
           .from('contacts')
           .select('*', { count: 'exact', head: true });
@@ -207,6 +242,7 @@ export function Step2SelectAudience({
     audience.customField,
     audience.csvContacts,
     audience.excludeTagIds,
+    audience.manualContactIds,
   ]);
 
   useEffect(() => {
@@ -238,6 +274,48 @@ export function Step2SelectAudience({
     onUpdate({ ...audience, customField: { ...prev, ...patch } });
   }
 
+  function toggleManualContact(contactId: string) {
+    const current = audience.manualContactIds ?? [];
+    const updated = current.includes(contactId)
+      ? current.filter((id) => id !== contactId)
+      : [...current, contactId];
+    onUpdate({ ...audience, manualContactIds: updated });
+  }
+
+  function selectAllFiltered() {
+    const filteredIds = filteredContacts.map((c) => c.id);
+    const existing = audience.manualContactIds ?? [];
+    // Union: add all filtered that aren't already selected
+    const merged = [...new Set([...existing, ...filteredIds])];
+    onUpdate({ ...audience, manualContactIds: merged });
+  }
+
+  function deselectAllFiltered() {
+    const filteredIds = new Set(filteredContacts.map((c) => c.id));
+    const updated = (audience.manualContactIds ?? []).filter((id) => !filteredIds.has(id));
+    onUpdate({ ...audience, manualContactIds: updated });
+  }
+
+  const filteredContacts = useMemo(() => {
+    const q = contactSearch.trim().toLowerCase();
+    if (!q) return allContacts;
+    return allContacts.filter(
+      (c) =>
+        c.name?.toLowerCase().includes(q) ||
+        c.phone?.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q),
+    );
+  }, [allContacts, contactSearch]);
+
+  const selectedIds = useMemo(
+    () => new Set(audience.manualContactIds ?? []),
+    [audience.manualContactIds],
+  );
+
+  const allFilteredSelected =
+    filteredContacts.length > 0 &&
+    filteredContacts.every((c) => selectedIds.has(c.id));
+
   const isValid =
     audience.type === 'all' ||
     (audience.type === 'tags' && audience.tagIds && audience.tagIds.length > 0) ||
@@ -246,7 +324,10 @@ export function Step2SelectAudience({
       audience.customField.value.length > 0) ||
     (audience.type === 'csv' &&
       audience.csvContacts &&
-      audience.csvContacts.length > 0);
+      audience.csvContacts.length > 0) ||
+    (audience.type === 'manual' &&
+      audience.manualContactIds &&
+      audience.manualContactIds.length > 0);
 
   return (
     <div className="space-y-6">
@@ -258,7 +339,7 @@ export function Step2SelectAudience({
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {audienceOptions.map((option: { type: AudienceType; label: string; description: string; icon: typeof Users }) => {
+        {audienceOptions.map((option) => {
           const isSelected = audience.type === option.type;
           const Icon = option.icon;
           return (
@@ -268,8 +349,6 @@ export function Step2SelectAudience({
                 onUpdate({
                   ...audience,
                   type: option.type,
-                  // Wipe shape fields from other types to avoid stale
-                  // config leaking across selections.
                   tagIds: option.type === 'tags' ? audience.tagIds : undefined,
                   customField:
                     option.type === 'custom_field'
@@ -277,6 +356,8 @@ export function Step2SelectAudience({
                       : undefined,
                   csvContacts:
                     option.type === 'csv' ? audience.csvContacts : undefined,
+                  manualContactIds:
+                    option.type === 'manual' ? audience.manualContactIds : undefined,
                 })
               }
               className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
@@ -373,7 +454,7 @@ export function Step2SelectAudience({
                 }
                 className="h-9 rounded-lg border border-border bg-muted px-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
               >
-                {OPERATOR_OPTIONS.map((op: { value: CustomFieldOperator; label: string }) => (
+                {OPERATOR_OPTIONS.map((op) => (
                   <option key={op.value} value={op.value}>
                     {op.label}
                   </option>
@@ -391,41 +472,192 @@ export function Step2SelectAudience({
         </div>
       )}
 
-      {/* Exclude list — applies regardless of audience type */}
-      <div className="rounded-xl border border-border bg-card/50 p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <X className="h-4 w-4 text-red-400" />
-          <p className="text-sm font-medium text-foreground">
-            {t('selectAudience.excludeTags')}
-          </p>
-        </div>
-        {tags.length === 0 ? (
-          <p className="text-xs text-muted-foreground">{t('selectAudience.noTagsFound')}</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => {
-              const isExcluded = audience.excludeTagIds?.includes(tag.id);
-              return (
-                <button
-                  key={tag.id}
-                  onClick={() => toggleExcludeTag(tag.id)}
-                  className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-all ${
-                    isExcluded
-                      ? 'border-red-500/30 bg-red-500/10 text-red-300'
-                      : 'border-border bg-muted text-muted-foreground hover:border-border'
-                  }`}
-                >
-                  <span
-                    className="mr-1.5 h-2 w-2 rounded-full"
-                    style={{ backgroundColor: tag.color }}
-                  />
-                  {tag.name}
-                </button>
-              );
-            })}
+      {/* ── Manual contact picker ───────────────────────────────── */}
+      {audience.type === 'manual' && (
+        <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <div className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4 text-primary" />
+              <p className="text-sm font-medium text-foreground">
+                اختيار جهات الاتصال
+              </p>
+              {selectedIds.size > 0 && (
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  {selectedIds.size} محدد
+                </span>
+              )}
+            </div>
+            {filteredContacts.length > 0 && (
+              <button
+                onClick={allFilteredSelected ? deselectAllFiltered : selectAllFiltered}
+                className="flex items-center gap-1.5 text-xs text-primary hover:underline"
+              >
+                {allFilteredSelected ? (
+                  <>
+                    <CheckSquare className="h-3.5 w-3.5" />
+                    إلغاء تحديد الكل
+                  </>
+                ) : (
+                  <>
+                    <Square className="h-3.5 w-3.5" />
+                    تحديد الكل
+                  </>
+                )}
+              </button>
+            )}
           </div>
-        )}
-      </div>
+
+          {/* Search */}
+          <div className="border-b border-border px-3 py-2">
+            <div className="relative">
+              <Search className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={contactSearch}
+                onChange={(e) => setContactSearch(e.target.value)}
+                placeholder="ابحث بالاسم أو الرقم أو الإيميل..."
+                className="w-full rounded-lg border border-border bg-muted py-1.5 pr-8 pl-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          {/* Contact list */}
+          <div className="max-h-72 overflow-y-auto">
+            {loadingContacts ? (
+              <div className="flex h-32 items-center justify-center">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </div>
+            ) : filteredContacts.length === 0 ? (
+              <div className="flex h-24 items-center justify-center">
+                <p className="text-xs text-muted-foreground">
+                  {contactSearch ? 'لا توجد نتائج للبحث' : 'لا توجد جهات اتصال'}
+                </p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-border">
+                {filteredContacts.map((contact) => {
+                  const isChecked = selectedIds.has(contact.id);
+                  return (
+                    <li key={contact.id}>
+                      <button
+                        onClick={() => toggleManualContact(contact.id)}
+                        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
+                          isChecked
+                            ? 'bg-primary/5'
+                            : 'hover:bg-muted/50'
+                        }`}
+                      >
+                        {/* Checkbox visual */}
+                        <div
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${
+                            isChecked
+                              ? 'border-primary bg-primary'
+                              : 'border-border bg-transparent'
+                          }`}
+                        >
+                          {isChecked && (
+                            <svg
+                              className="h-3 w-3 text-primary-foreground"
+                              viewBox="0 0 12 12"
+                              fill="none"
+                            >
+                              <path
+                                d="M2 6l3 3 5-5"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </div>
+
+                        {/* Avatar */}
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                          {(contact.name || contact.phone || '?').charAt(0).toUpperCase()}
+                        </div>
+
+                        {/* Info */}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">
+                            {contact.name || <span className="text-muted-foreground">بدون اسم</span>}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {contact.phone}
+                          </p>
+                        </div>
+
+                        {/* Status badge */}
+                        {isChecked && (
+                          <span className="shrink-0 text-[10px] font-medium text-primary">✓ محدد</span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
+          {/* Footer summary */}
+          {selectedIds.size > 0 && (
+            <div className="border-t border-border bg-primary/5 px-4 py-2 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                تم تحديد{' '}
+                <span className="font-semibold text-foreground">{selectedIds.size}</span>
+                {' '}من{' '}
+                <span className="font-semibold text-foreground">{allContacts.length}</span>
+                {' '}جهة اتصال
+              </span>
+              <button
+                onClick={() => onUpdate({ ...audience, manualContactIds: [] })}
+                className="text-xs text-red-400 hover:underline"
+              >
+                إلغاء الكل
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Exclude tags — not shown for manual selection (user controls exactly who to include) */}
+      {audience.type !== 'manual' && (
+        <div className="rounded-xl border border-border bg-card/50 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <X className="h-4 w-4 text-red-400" />
+            <p className="text-sm font-medium text-foreground">
+              {t('selectAudience.excludeTags')}
+            </p>
+          </div>
+          {tags.length === 0 ? (
+            <p className="text-xs text-muted-foreground">{t('selectAudience.noTagsFound')}</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => {
+                const isExcluded = audience.excludeTagIds?.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    onClick={() => toggleExcludeTag(tag.id)}
+                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-all ${
+                      isExcluded
+                        ? 'border-red-500/30 bg-red-500/10 text-red-300'
+                        : 'border-border bg-muted text-muted-foreground hover:border-border'
+                    }`}
+                  >
+                    <span
+                      className="mr-1.5 h-2 w-2 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    {tag.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Audience Summary */}
       <div className="rounded-xl border border-border bg-card/50 p-4">

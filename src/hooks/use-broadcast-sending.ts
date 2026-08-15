@@ -14,12 +14,14 @@ export interface CustomFieldFilter {
 }
 
 export interface AudienceConfig {
-  type: 'all' | 'tags' | 'custom_field' | 'csv';
+  type: 'all' | 'tags' | 'custom_field' | 'csv' | 'manual';
   tagIds?: string[];
   customField?: CustomFieldFilter;
   csvContacts?: { phone: string; name?: string }[];
   /** Contacts carrying any of these tags are subtracted from the result. */
   excludeTagIds?: string[];
+  /** Manually selected contact IDs (for type === 'manual') */
+  manualContactIds?: string[];
 }
 
 /**
@@ -171,6 +173,18 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
       contacts = await resolveCustomFieldAudience(supabase, audience.customField);
     } else if (audience.type === 'csv' && audience.csvContacts) {
       contacts = await upsertCsvContacts(supabase, audience.csvContacts);
+    } else if (
+      audience.type === 'manual' &&
+      audience.manualContactIds &&
+      audience.manualContactIds.length > 0
+    ) {
+      // Manual selection: fetch exactly the chosen contacts
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('*')
+        .in('id', audience.manualContactIds);
+      if (error) throw new Error(`Failed to fetch manual contacts: ${error.message}`);
+      contacts = data ?? [];
     }
 
     if (audience.excludeTagIds && audience.excludeTagIds.length > 0) {
