@@ -10,7 +10,7 @@ import {
   Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { AdminNav } from '../_components/admin-nav'
 import { StatsCard } from '../_components/stats-card'
 import { AccountsGrowthChart, type GrowthDataPoint } from '../_components/accounts-growth-chart'
@@ -44,6 +44,7 @@ export function DashboardClient({
   recentAccounts,
 }: DashboardClientProps) {
   const t = useTranslations('Admin.dashboard')
+  const locale = useLocale()
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
@@ -180,12 +181,15 @@ export function DashboardClient({
                           {acc.status === 'suspended' ? t('suspended') : t('active')}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5 text-slate-400">
-                        {new Date(acc.created_at).toLocaleDateString(undefined, {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
+                      <td className="py-3.5 px-5 text-slate-400" suppressHydrationWarning>
+                        {new Date(acc.created_at).toLocaleDateString(
+                          locale === 'ar' ? 'ar-EG' : 'en-US',
+                          {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          }
+                        )}
                       </td>
                       <td className="py-3.5 px-5 text-slate-500 font-mono text-[11px]">
                         {acc.id}

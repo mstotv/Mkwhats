@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Search, Building2, Users, Calendar, Hash, ChevronLeft } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 export interface AccountItem {
   id: string
@@ -20,6 +20,7 @@ interface AccountsTableProps {
 
 export function AccountsTable({ accounts }: AccountsTableProps) {
   const t = useTranslations('Admin.accounts')
+  const locale = useLocale()
   const [searchTerm, setSearchTerm] = useState('')
 
   const filteredAccounts = accounts.filter((acc) =>
@@ -116,13 +117,16 @@ export function AccountsTable({ accounts }: AccountsTableProps) {
                       </Link>
                     </td>
 
-                    <td className="py-3.5 px-5 text-slate-400">
+                    <td className="py-3.5 px-5 text-slate-400" suppressHydrationWarning>
                       <Link href={`/admin/accounts/${account.id}`}>
-                        {new Date(account.created_at).toLocaleDateString(undefined, {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
+                        {new Date(account.created_at).toLocaleDateString(
+                          locale === 'ar' ? 'ar-EG' : 'en-US',
+                          {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          }
+                        )}
                       </Link>
                     </td>
 
