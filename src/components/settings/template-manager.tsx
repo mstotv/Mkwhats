@@ -543,7 +543,7 @@ export function TemplateManager() {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>
               {editingId ? t('editTitle') : connectionType === 'evolution' ? 'حفظ قالب محلي جديد' : t('newTitle')}
@@ -556,9 +556,9 @@ export function TemplateManager() {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name">{t('nameLabel')}</Label>
+                <Label htmlFor="name">Template Name</Label>
                 <Input
                   id="name"
                   value={form.name}
@@ -572,7 +572,7 @@ export function TemplateManager() {
               </div>
 
               <div>
-                <Label htmlFor="category">{t('categoryLabel')}</Label>
+                <Label htmlFor="category">Category</Label>
                 <Select
                   value={form.category}
                   onValueChange={(val) =>

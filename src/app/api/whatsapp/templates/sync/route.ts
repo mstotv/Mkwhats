@@ -211,7 +211,7 @@ export async function POST() {
       const batch = rowsToUpsert.slice(i, i + BATCH_SIZE)
       const { error: upsertError } = await supabase
         .from('message_templates')
-        .upsert(batch, { onConflict: 'account_id,name,language' })
+        .upsert(batch, { onConflict: 'user_id,name,language' })
 
       if (upsertError) {
         console.error('[templates/sync POST] Batch upsert error:', upsertError)

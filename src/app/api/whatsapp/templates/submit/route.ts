@@ -47,7 +47,7 @@ async function upsertTemplateRow(
   row: ReturnType<typeof buildUpsertRow>,
 ) {
   return supabase.from('message_templates').upsert(row, {
-    onConflict: 'account_id,name,language',
+    onConflict: 'user_id,name,language',
   })
 }
 
