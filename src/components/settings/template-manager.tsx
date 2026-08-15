@@ -79,7 +79,7 @@ interface TemplateFormData {
 
 const emptyForm: TemplateFormData = {
   name: '',
-  category: 'Marketing',
+  category: 'Utility',
   language: 'en_US',
   header_format: 'none',
   header_content: '',
@@ -90,26 +90,6 @@ const emptyForm: TemplateFormData = {
   footer_text: '',
   buttons: [],
 };
-
-const COMMON_LANGUAGE_CODES = [
-  'en_US',
-  'en_GB',
-  'en',
-  'es',
-  'es_ES',
-  'es_MX',
-  'fr',
-  'fr_FR',
-  'de',
-  'it',
-  'pt_BR',
-  'pt_PT',
-  'nl',
-  'pl',
-  'ru',
-  'tr',
-  'lt',
-];
 
 function emptyButton(type: TemplateButton['type']): TemplateButton {
   switch (type) {
@@ -126,48 +106,29 @@ function emptyButton(type: TemplateButton['type']): TemplateButton {
 
 export function TemplateManager() {
   const t = useTranslations('Settings.templates');
-  const supabase = createClient();
   const { user, loading: authLoading } = useAuth();
+  const supabase = createClient();
 
-  const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [form, setForm] = useState<TemplateFormData>(emptyForm);
-  // Non-null when the dialog is editing an existing row — switches the
-  // submit handler from POST /submit to PATCH /[id] and changes the
-  // dialog title + CTA. Set to the template id to pre-fill from a row.
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  // Template selected for the confirm-delete dialog. The destructive
-  // action goes through this two-step so a slip on the trash icon
-  // doesn't take the template off Meta as well as locally.
   const [templateToDelete, setTemplateToDelete] =
     useState<MessageTemplate | null>(null);
-  // Header-image upload (issue #230). Uploads to the account-scoped
-  // chat-media bucket and stores the public URL in header_media_url; the
-  // submit route turns that into a Meta Resumable-Upload handle.
   const [uploadingHeader, setUploadingHeader] = useState(false);
-  const headerFileRef = useRef<HTMLInputElement>(null);
+  const [connectionType, setConnectionType] = useState<'meta' | 'evolution'>('meta');
 
-  // Body variable indices — `[1, 2, 3]` for "{{1}} {{2}} {{3}}". We
-  // re-run the extractor on every render to keep the sample-value rows
-  // in sync with what the user typed.
-  const bodyVarCount = useMemo(
-    () => extractVariableIndices(form.body_text).length,
-    [form.body_text],
-  );
-  const headerVarCount = useMemo(
-    () =>
-      form.header_format === 'text'
-        ? extractVariableIndices(form.header_content).length
-        : 0,
-    [form.header_format, form.header_content],
-  );
+  const [form, setForm] = useState<TemplateFormData>(emptyForm);
 
-  // Resize body_samples so it always has exactly bodyVarCount entries.
-  // (We mutate via setForm in an effect so React owns the state.)
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const bodyVarCount = useMemo(() => {
+    return extractVariableIndices(form.body_text).length;
+  }, [form.body_text]);
+
   useEffect(() => {
     setForm((prev) => {
       if (prev.body_samples.length === bodyVarCount) return prev;
@@ -184,8 +145,34 @@ export function TemplateManager() {
       return;
     }
     fetchTemplates(user.id);
+    fetchConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user?.id]);
+
+  async function fetchConfig() {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('account_id')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+      if (!profile?.account_id) return;
+
+      const { data: config } = await supabase
+        .from('whatsapp_config')
+        .select('connection_type')
+        .eq('account_id', profile.account_id)
+        .maybeSingle();
+
+      if (config?.connection_type === 'evolution') {
+        setConnectionType('evolution');
+      } else {
+        setConnectionType('meta');
+      }
+    } catch (err) {
+      console.error('Failed to fetch whatsapp config connection_type:', err);
+    }
+  }
 
   async function fetchTemplates(userId: string) {
     try {
@@ -257,38 +244,34 @@ export function TemplateManager() {
     setDialogOpen(true);
   }
 
-  async function handleSubmit() {
-    // AUTHENTICATION is blocked by the persistent banner + disabled
-    // submit button; this is a defensive second line of defense.
-    if (form.category === 'Authentication') return;
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user) return;
+
+    setSubmitting(true);
     try {
-      setSubmitting(true);
-      const isEdit = editingId !== null;
-      const url = isEdit
+      const payload = buildSubmitPayload();
+      const url = editingId
         ? `/api/whatsapp/templates/${editingId}`
         : '/api/whatsapp/templates/submit';
+      const method = editingId ? 'PATCH' : 'POST';
+
       const res = await fetch(url, {
-        method: isEdit ? 'PATCH' : 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildSubmitPayload()),
+        body: JSON.stringify(payload),
       });
-      const data = await res.json();
+
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(
-          data?.error || `${isEdit ? 'Edit' : 'Submit'} failed (HTTP ${res.status})`,
-        );
+        throw new Error(data?.error || `Submit failed (HTTP ${res.status})`);
       }
-      // Refresh first, then close — re-opening the dialog
-      // immediately should not show a stale list.
-      if (user) await fetchTemplates(user.id);
+
+      await fetchTemplates(user.id);
       toast.success(
-        data.dry_run
-          ? isEdit
-            ? t('toastSaveEditDry')
-            : t('toastSaveNewDry')
-          : isEdit
-            ? t('toastSubmitEditSuccess')
-            : t('toastSubmitNewSuccess'),
+        editingId
+          ? t('toastSubmitEditSuccess')
+          : t('toastSubmitNewSuccess'),
       );
       setDialogOpen(false);
       setForm(emptyForm);
@@ -311,29 +294,8 @@ export function TemplateManager() {
         throw new Error(data?.error || `Sync failed (HTTP ${res.status})`);
       }
       toast.success(
-        t('toastSyncCount', { total: data.total }) +
-          (data.inserted || data.updated
-            ? t('toastSyncDetails', { inserted: data.inserted, updated: data.updated })
-            : ''),
+        t('toastSyncCount', { total: data.syncedCount ?? data.total ?? 0 }),
       );
-      if (Array.isArray(data.errors) && data.errors.length > 0) {
-        const preview = data.errors.slice(0, 3).map(
-          (e: { name: string; language: string; message: string }) =>
-            `${e.name} (${e.language})`,
-        );
-        const suffix =
-          data.errors.length > 3 ? `, +${data.errors.length - 3} more` : '';
-        toast.error(t('toastSyncFailed', { preview: preview.join(', ') + suffix }));
-      }
-      if (data.truncated) {
-        // Use error (not warning) so the message survives long
-        // enough to read — sonner's `warning` auto-dismisses on
-        // the same short timer as `success`.
-        toast.error(
-          t('toastSyncTruncated'),
-          { duration: 10000 },
-        );
-      }
       await fetchTemplates(user.id);
     } catch (err) {
       console.error('Template sync error:', err);
@@ -348,9 +310,6 @@ export function TemplateManager() {
     if (!target || deletingId) return;
     setDeletingId(target.id);
     try {
-      // Route handler scopes the Meta delete via hsm_id (so sibling
-      // language variants survive) and falls through to remove the
-      // local row. Local-only rows skip the Meta call.
       const res = await fetch(`/api/whatsapp/templates/${target.id}`, {
         method: 'DELETE',
       });
@@ -369,12 +328,24 @@ export function TemplateManager() {
     }
   }
 
-  // The patch type unions every field across button variants. The
-  // conditional rendering below ensures only fields valid for the
-  // current button's `type` reach this function, so the runtime
-  // assertion + per-type spread preserves discriminated-union
-  // invariants without forcing every call site to thread the type
-  // through generics (which TS can't infer from a partial literal).
+  function addButton(type: TemplateButton['type']) {
+    if (form.buttons.length >= TEMPLATE_LIMITS.maxButtonsTotal) {
+      toast.error(t('toastMaxButtons', { max: TEMPLATE_LIMITS.maxButtonsTotal }));
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      buttons: [...prev.buttons, emptyButton(type)],
+    }));
+  }
+
+  function removeButton(index: number) {
+    setForm((prev) => ({
+      ...prev,
+      buttons: prev.buttons.filter((_, i) => i !== index),
+    }));
+  }
+
   type ButtonPatch = {
     text?: string;
     url?: string;
@@ -386,8 +357,6 @@ export function TemplateManager() {
       const current = prev.buttons[index];
       if (!current) return prev;
       const next = [...prev.buttons];
-      // Per-variant spread keeps the discriminant pinned. Switch
-      // exhaustiveness is enforced by TypeScript.
       switch (current.type) {
         case 'QUICK_REPLY':
           next[index] = {
@@ -432,32 +401,6 @@ export function TemplateManager() {
     });
   }
 
-  function removeButton(index: number) {
-    setForm((prev) => ({
-      ...prev,
-      buttons: prev.buttons.filter((_, i) => i !== index),
-    }));
-  }
-
-  function addButton() {
-    if (form.buttons.length >= TEMPLATE_LIMITS.maxButtonsTotal) return;
-    setForm((prev) => ({
-      ...prev,
-      buttons: [...prev.buttons, emptyButton('QUICK_REPLY')],
-    }));
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="size-6 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  const headerNeedsMedia =
-    form.header_format !== 'none' && form.header_format !== 'text';
-
   async function handleHeaderImageFile(file: File) {
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
       toast.error(t('toastInvalidImage'));
@@ -488,15 +431,17 @@ export function TemplateManager() {
         description={t('description')}
         action={
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={handleSyncFromMeta}
-              disabled={syncing}
-              title={t('syncTitle')}
-            >
-              <RefreshCw className={`size-4 ${syncing ? 'animate-spin' : ''}`} />
-              {syncing ? t('syncing') : t('syncFromMeta')}
-            </Button>
+            {connectionType === 'meta' && (
+              <Button
+                variant="outline"
+                onClick={handleSyncFromMeta}
+                disabled={syncing}
+                title={t('syncTitle')}
+              >
+                <RefreshCw className={`size-4 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? t('syncing') : t('syncFromMeta')}
+              </Button>
+            )}
             <Button onClick={openCreate}>
               <Plus className="size-4" />
               {t('newTemplate')}
@@ -505,7 +450,11 @@ export function TemplateManager() {
         }
       />
 
-      {templates.length === 0 ? (
+      {loading ? (
+        <div className="flex h-48 items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      ) : templates.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-muted-foreground text-sm">{t('noTemplates')}</p>
@@ -518,108 +467,72 @@ export function TemplateManager() {
         <div className="grid gap-3 xl:grid-cols-2">
           {templates.map((template) => {
             const statusKey = template.status || 'DRAFT';
-            const status = templateStatusConfig[statusKey];
+            const statusCfg = templateStatusConfig[statusKey];
+
             return (
-              <Card key={template.id}>
-                <CardContent className="flex items-start justify-between pt-4">
-                  <div className="space-y-2 min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-medium text-foreground">{template.name}</h3>
-                      <Badge
-                        className={`text-xs border ${categoryColors[template.category] || ''}`}
-                      >
-                        {template.category}
-                      </Badge>
-                      <Badge className={`text-xs border ${status.classes}`}>
-                        {status.label}
-                      </Badge>
-                      {template.language && (
-                        <span className="text-xs text-muted-foreground uppercase">
-                          {template.language}
-                        </span>
-                      )}
-                      {template.quality_score && (
-                        <span
-                          className={`text-[10px] uppercase font-medium ${
-                            template.quality_score === 'GREEN'
-                              ? 'text-emerald-400'
-                              : template.quality_score === 'YELLOW'
-                                ? 'text-yellow-400'
-                                : 'text-red-400'
-                          }`}
-                          title="Meta quality score"
+              <Card key={template.id} className="relative overflow-hidden">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-foreground text-sm">
+                          {template.name}
+                        </h3>
+                        <Badge
+                          variant="outline"
+                          className={
+                            categoryColors[template.category] ??
+                            categoryColors.Utility
+                          }
                         >
-                          {template.quality_score}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {template.body_text}
-                    </p>
-                    {template.footer_text && (
-                      <p className="text-xs text-muted-foreground italic">
-                        {template.footer_text}
-                      </p>
-                    )}
-                    {(template.rejection_reason || template.submission_error) && (
-                      <div className="flex items-start gap-1.5 text-xs text-red-400 bg-red-950/20 border border-red-900/40 rounded px-2 py-1.5">
-                        <AlertCircle className="size-3.5 mt-0.5 shrink-0" />
-                        <span>
-                          {template.rejection_reason || template.submission_error}
-                        </span>
+                          {template.category}
+                        </Badge>
                       </div>
-                    )}
+                      <p className="text-muted-foreground text-xs mt-0.5">
+                        Language: {template.language || 'en_US'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <Badge
+                        variant="secondary"
+                        className={`${statusCfg.classes} text-xs font-medium`}
+                      >
+                        {statusCfg.label}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0 ml-2">
-                    {statusKey === 'APPROVED' && (
+
+                  {template.body_text && (
+                    <div className="bg-muted/50 rounded-lg p-3 text-xs text-foreground font-mono whitespace-pre-wrap line-clamp-4">
+                      {template.body_text}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between border-t border-border/50 pt-2.5">
+                    <span className="text-[11px] text-muted-foreground">
+                      Header: {template.header_type || 'none'}
+                    </span>
+
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon-sm"
                         onClick={() => openEdit(template)}
-                        title={t('editTitle')}
-                        aria-label={t('editLabel')}
-                        className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 px-2"
+                        title="Edit template"
                       >
                         <Pencil className="size-3.5" />
-                        {t('edit')}
                       </Button>
-                    )}
-                    {(statusKey === 'REJECTED' || statusKey === 'PAUSED') && (
                       <Button
                         variant="ghost"
-                        size="sm"
-                        onClick={() => openEdit(template)}
-                        title={t('resubmitTitle')}
-                        aria-label={t('resubmitLabel')}
-                        className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 px-2"
+                        size="icon-sm"
+                        onClick={() => setTemplateToDelete(template)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        title="Delete template"
                       >
-                        <RotateCcw className="size-3.5" />
-                        {t('resubmit')}
+                        <Trash2 className="size-3.5" />
                       </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setTemplateToDelete(template)}
-                      disabled={deletingId === template.id}
-                      aria-label={
-                        template.meta_template_id
-                          ? t('deleteMetaLocallyAria')
-                          : t('deleteLocallyAria')
-                      }
-                      title={
-                        template.meta_template_id
-                          ? t('deleteMetaLocallyTitle')
-                          : t('deleteLocallyTitle')
-                      }
-                      className="text-muted-foreground hover:text-red-400 hover:bg-red-950/30 h-8 w-8"
-                    >
-                      {deletingId === template.id ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="size-4" />
-                      )}
-                    </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -628,499 +541,224 @@ export function TemplateManager() {
         </div>
       )}
 
-      <Dialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) {
-            setEditingId(null);
-            setForm(emptyForm);
-          }
-        }}
-      >
-        <DialogContent className="bg-popover border-border sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      {/* Create / Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-popover-foreground">
-              {editingId ? t('dialogEditTitle') : t('dialogNewTitle')}
+            <DialogTitle>
+              {editingId ? t('editTitle') : connectionType === 'evolution' ? 'حفظ قالب محلي جديد' : t('newTitle')}
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {editingId
-                ? t('dialogEditDesc')
-                : t('dialogNewDesc')}
+            <DialogDescription>
+              {connectionType === 'evolution'
+                ? 'أدخل بيانات القالب لحفظه محلياً واستخدامه مباشرة كرسالة جاهزة.'
+                : t('newDesc')}
             </DialogDescription>
           </DialogHeader>
 
-          {form.category === 'Authentication' && (
-            <div className="flex items-start gap-2 rounded border border-amber-700/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-300">
-              <AlertCircle className="size-4 mt-0.5 shrink-0" />
-              <p>{t.rich('authWarning', { bold: (chunks) => <strong>{chunks}</strong> })}</p>
-            </div>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="name">{t('nameLabel')}</Label>
+                <Input
+                  id="name"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  placeholder="e.g. order_update"
+                  disabled={!!editingId}
+                  required
+                />
+              </div>
 
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('templateName')}</Label>
-              <Input
-                placeholder={t('namePlaceholder')}
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                disabled={editingId !== null}
-                className="bg-muted border-border text-foreground placeholder:text-muted-foreground disabled:opacity-60 disabled:cursor-not-allowed"
-              />
-              <p className="text-[11px] text-muted-foreground">
-                {editingId
-                  ? t('nameFixed')
-                  : t('nameHint')}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">{t('category')}</Label>
+              <div>
+                <Label htmlFor="category">{t('categoryLabel')}</Label>
                 <Select
                   value={form.category}
                   onValueChange={(val) =>
-                    setForm({
-                      ...form,
+                    setForm((f) => ({
+                      ...f,
                       category: val as MessageTemplate['category'],
-                    })
+                    }))
                   }
                 >
-                  <SelectTrigger className="w-full bg-muted border-border text-foreground">
+                  <SelectTrigger id="category">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    {CATEGORIES.map((cat) => (
-                      <SelectItem
-                        key={cat}
-                        value={cat}
-                        className="text-popover-foreground focus:bg-muted focus:text-popover-foreground"
-                      >
-                        {cat}
+                  <SelectContent>
+                    {CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">{t('language')}</Label>
-                <Input
-                  list="template-language-codes"
-                  placeholder="en_US"
-                  value={form.language}
-                  onChange={(e) =>
-                    setForm({ ...form, language: e.target.value })
-                  }
-                  disabled={editingId !== null}
-                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground disabled:opacity-60 disabled:cursor-not-allowed"
-                />
-                <datalist id="template-language-codes">
-                  {COMMON_LANGUAGE_CODES.map((code) => (
-                    <option key={code} value={code} />
-                  ))}
-                </datalist>
-                <p className="text-[11px] text-muted-foreground">
-                  {editingId ? (
-                    t('langFixed')
-                  ) : (
-                    <span>{t.rich('langHint', { code: (chunks) => <code>{chunks}</code> })}</span>
-                  )}
-                </p>
-              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('header')}</Label>
+            <div>
+              <Label htmlFor="language">Language Code</Label>
+              <Input
+                id="language"
+                value={form.language}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, language: e.target.value }))
+                }
+                placeholder="en_US or ar"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="header_format">Header Type</Label>
               <Select
                 value={form.header_format}
                 onValueChange={(val) =>
-                  // Preserve header_content, header_media_url, and
-                  // header_sample across format switches. The submit
-                  // payload builder only reads the field that matches
-                  // the active format, so an orphan value on a hidden
-                  // field is harmless — and keeping it lets the user
-                  // switch formats to compare without losing typing.
-                  setForm({
-                    ...form,
-                    header_format: (val || 'none') as HeaderFormat,
-                  })
+                  setForm((f) => ({ ...f, header_format: val as HeaderFormat }))
                 }
               >
-                <SelectTrigger className="w-full bg-muted border-border text-foreground">
+                <SelectTrigger id="header_format">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
-                  {HEADER_FORMATS.map((type) => (
-                    <SelectItem
-                      key={type}
-                      value={type}
-                      className="text-popover-foreground focus:bg-muted focus:text-popover-foreground"
-                    >
-                      {type === 'none'
-                        ? t('headerNone')
-                        : type === 'text'
-                          ? t('headerText')
-                          : type === 'image'
-                            ? t('headerImage')
-                            : type === 'video'
-                              ? t('headerVideo')
-                              : t('headerDocument')}
+                <SelectContent>
+                  {HEADER_FORMATS.map((fmt) => (
+                    <SelectItem key={fmt} value={fmt}>
+                      {fmt.toUpperCase()}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
 
-              {form.header_format === 'text' && (
-                <div className="space-y-2 mt-2">
+            {form.header_format === 'text' && (
+              <div>
+                <Label htmlFor="header_content">Header Text</Label>
+                <Input
+                  id="header_content"
+                  value={form.header_content}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, header_content: e.target.value }))
+                  }
+                  placeholder="Header text..."
+                />
+              </div>
+            )}
+
+            {['image', 'video', 'document'].includes(form.header_format) && (
+              <div>
+                <Label htmlFor="header_media_url">Header Media URL</Label>
+                <div className="flex gap-2">
                   <Input
-                    id="template-header-text"
-                    aria-label="Header text"
-                    placeholder={t('headerTextPlaceholder')}
-                    value={form.header_content}
+                    id="header_media_url"
+                    value={form.header_media_url}
                     onChange={(e) =>
-                      setForm({ ...form, header_content: e.target.value })
+                      setForm((f) => ({ ...f, header_media_url: e.target.value }))
                     }
-                    maxLength={TEMPLATE_LIMITS.headerTextMaxLength}
-                    className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
+                    placeholder="https://..."
                   />
-                  {headerVarCount > 0 && (
-                    <Input
-                      id="template-header-sample"
-                      aria-label={t('headerSampleAria')}
-                      placeholder={t('headerSamplePlaceholder')}
-                      value={form.header_sample}
-                      onChange={(e) =>
-                        setForm({ ...form, header_sample: e.target.value })
-                      }
-                      className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
-                    />
-                  )}
-                </div>
-              )}
-
-              {headerNeedsMedia && (
-                <div className="space-y-2 mt-2">
                   {form.header_format === 'image' && (
-                    <div className="flex items-center gap-2">
+                    <>
                       <input
-                        ref={headerFileRef}
                         type="file"
+                        ref={fileInputRef}
                         accept="image/jpeg,image/png"
                         className="hidden"
                         onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) void handleHeaderImageFile(f);
-                          e.target.value = '';
+                          const file = e.target.files?.[0];
+                          if (file) handleHeaderImageFile(file);
                         }}
                       />
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingHeader}
-                        onClick={() => headerFileRef.current?.click()}
                       >
                         {uploadingHeader ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <Loader2 className="size-4 animate-spin" />
                         ) : (
-                          <Upload className="h-3.5 w-3.5" />
+                          <Upload className="size-4" />
                         )}
-                        {t('uploadImage')}
                       </Button>
-                      <span className="text-[11px] text-muted-foreground">
-                        {t('uploadHint')}
-                      </span>
-                    </div>
+                    </>
                   )}
-                  <Input
-                    placeholder={t('mediaUrlPlaceholder', { format: form.header_format })}
-                    value={form.header_media_url}
-                    onChange={(e) =>
-                      setForm({ ...form, header_media_url: e.target.value })
-                    }
-                    className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
-                  />
-                  {form.header_format === 'image' && form.header_media_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={form.header_media_url}
-                      alt="Header sample"
-                      className="max-h-28 rounded-md border border-border object-contain"
-                    />
-                  )}
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    {form.header_format === 'image'
-                      ? t('imageHint')
-                      : t('mediaHint')}
-                    {form.header_format === 'video' &&
-                      t('videoHint')}
-                    {form.header_format === 'document' &&
-                      t('documentHint')}
-                  </p>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('bodyText')}</Label>
+            <div>
+              <Label htmlFor="body_text">Body Text</Label>
               <Textarea
-                placeholder={t('bodyPlaceholder')}
+                id="body_text"
+                rows={4}
                 value={form.body_text}
                 onChange={(e) =>
-                  setForm({ ...form, body_text: e.target.value })
+                  setForm((f) => ({ ...f, body_text: e.target.value }))
                 }
-                rows={4}
-                maxLength={TEMPLATE_LIMITS.bodyMaxLength}
-                className="bg-muted border-border text-foreground placeholder:text-muted-foreground resize-none"
+                placeholder="Hello {{1}}, your order {{2}} is ready."
+                required
               />
-              <p className="text-[11px] text-muted-foreground">
-                {t('bodyHint')}
-              </p>
-
-              {bodyVarCount > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <Label className="text-[11px] text-muted-foreground">
-                    {t('sampleValues')}
-                  </Label>
-                  {form.body_samples.map((val, i) => {
-                    const inputId = `template-body-sample-${i}`;
-                    return (
-                      <Input
-                        key={i}
-                        id={inputId}
-                        aria-label={t('sampleAria', { var: `{{${i + 1}}}` })}
-                        placeholder={t('samplePlaceholder', { var: `{{${i + 1}}}` })}
-                        value={val}
-                        onChange={(e) => {
-                          const next = [...form.body_samples];
-                          next[i] = e.target.value;
-                          setForm({ ...form, body_samples: next });
-                        }}
-                        className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
-                      />
-                    );
-                  })}
-                </div>
-              )}
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('footer')}</Label>
+            <div>
+              <Label htmlFor="footer_text">Footer Text (Optional)</Label>
               <Input
-                placeholder={t('footerPlaceholder')}
+                id="footer_text"
                 value={form.footer_text}
                 onChange={(e) =>
-                  setForm({ ...form, footer_text: e.target.value })
+                  setForm((f) => ({ ...f, footer_text: e.target.value }))
                 }
-                maxLength={TEMPLATE_LIMITS.footerMaxLength}
-                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
+                placeholder="Reply STOP to unsubscribe"
               />
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-muted-foreground">{t('buttons')}</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addButton}
-                  disabled={form.buttons.length >= TEMPLATE_LIMITS.maxButtonsTotal}
-                  className="border-border bg-transparent text-muted-foreground hover:bg-muted h-7 text-xs"
-                >
-                  <Plus className="size-3" />
-                  {t('addButton')}
-                </Button>
-              </div>
-              {form.buttons.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground">
-                  {t('buttonsLimit', { max: TEMPLATE_LIMITS.maxButtonsTotal })}
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {form.buttons.map((btn, i) => (
-                    <div
-                      key={i}
-                      className="space-y-2 rounded border border-border bg-muted/50 p-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Select
-                          value={btn.type}
-                          onValueChange={(val) => {
-                            // Same null guard as the Header Select
-                            // (per PR 148): @base-ui Select fires
-                            // onValueChange(null) on deselect.
-                            if (!val) return;
-                            changeButtonType(i, val as TemplateButton['type']);
-                          }}
-                        >
-                          <SelectTrigger className="w-40 bg-muted border-border text-foreground h-8 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border-border">
-                            <SelectItem
-                              value="QUICK_REPLY"
-                              className="text-popover-foreground focus:bg-muted focus:text-popover-foreground"
-                            >
-                              {t('btnQuickReply')}
-                            </SelectItem>
-                            <SelectItem
-                              value="URL"
-                              className="text-popover-foreground focus:bg-muted focus:text-popover-foreground"
-                            >
-                              {t('btnUrl')}
-                            </SelectItem>
-                            <SelectItem
-                              value="PHONE_NUMBER"
-                              className="text-popover-foreground focus:bg-muted focus:text-popover-foreground"
-                            >
-                              {t('btnPhone')}
-                            </SelectItem>
-                            <SelectItem
-                              value="COPY_CODE"
-                              className="text-popover-foreground focus:bg-muted focus:text-popover-foreground"
-                            >
-                              {t('btnCopyCode')}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          placeholder={t('btnLabelPlaceholder')}
-                          value={btn.text}
-                          maxLength={TEMPLATE_LIMITS.buttonTextMaxLength}
-                          onChange={(e) =>
-                            updateButton(i, { text: e.target.value })
-                          }
-                          className="flex-1 bg-muted border-border text-foreground placeholder:text-muted-foreground h-8 text-xs"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeButton(i)}
-                          className="text-muted-foreground hover:text-red-400 hover:bg-red-950/30 size-7"
-                        >
-                          <X className="size-3.5" />
-                        </Button>
-                      </div>
-                      {btn.type === 'URL' && (
-                        <div className="space-y-1 pl-1">
-                          <Input
-                            placeholder={t('urlPlaceholder')}
-                            value={btn.url}
-                            onChange={(e) =>
-                              updateButton(i, { url: e.target.value })
-                            }
-                            className="bg-muted border-border text-foreground placeholder:text-muted-foreground h-8 text-xs"
-                          />
-                          {extractVariableIndices(btn.url).length > 0 && (
-                            <Input
-                              placeholder={t('urlSamplePlaceholder')}
-                              value={btn.example ?? ''}
-                              onChange={(e) =>
-                                updateButton(i, { example: e.target.value })
-                              }
-                              className="bg-muted border-border text-foreground placeholder:text-muted-foreground h-8 text-xs"
-                            />
-                          )}
-                        </div>
-                      )}
-                      {btn.type === 'PHONE_NUMBER' && (
-                        <Input
-                          placeholder={t('phonePlaceholder')}
-                          value={btn.phone_number}
-                          onChange={(e) =>
-                            updateButton(i, { phone_number: e.target.value })
-                          }
-                          className="bg-muted border-border text-foreground placeholder:text-muted-foreground h-8 text-xs"
-                        />
-                      )}
-                      {btn.type === 'COPY_CODE' && (
-                        <Input
-                          placeholder={t('codePlaceholder')}
-                          value={btn.example}
-                          onChange={(e) =>
-                            updateButton(i, { example: e.target.value })
-                          }
-                          className="bg-muted border-border text-foreground placeholder:text-muted-foreground h-8 text-xs"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <DialogFooter className="bg-popover border-border">
-            <Button
-              variant="outline"
-              onClick={() => setDialogOpen(false)}
-              className="border-border text-muted-foreground hover:bg-muted"
-            >
-              {t('cancel')}
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={submitting || form.category === 'Authentication'}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  {editingId ? t('saving') : t('submitting')}
-                </>
-              ) : editingId ? (
-                t('saveResubmit')
-              ) : (
-                t('submitApproval')
-              )}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting && <Loader2 className="size-4 animate-spin mr-2" />}
+                {editingId
+                  ? 'Update Template'
+                  : connectionType === 'evolution'
+                    ? 'حفظ القالب'
+                    : 'Submit for Approval'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
-      {/* Confirm-delete dialog. Surfacing the meta_template_id case
-          separately so users understand a real Meta delete is happening,
-          not just a local cleanup. */}
+      {/* Delete Confirmation Dialog */}
       <Dialog
-        open={templateToDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) setTemplateToDelete(null);
-        }}
+        open={!!templateToDelete}
+        onOpenChange={(open) => !open && setTemplateToDelete(null)}
       >
-        <DialogContent className="bg-popover border-border sm:max-w-sm">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-popover-foreground">{t('deleteDialogTitle')}</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {templateToDelete?.meta_template_id
-                ? t('deleteMetaDesc', { name: templateToDelete.name })
-                : t('deleteLocalDesc', { name: templateToDelete?.name || '' })}
+            <DialogTitle>Delete Template</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete template &quot;{templateToDelete?.name}&quot;? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="bg-popover border-border">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setTemplateToDelete(null)}
-              disabled={deletingId !== null}
-              className="border-border text-muted-foreground hover:bg-muted"
             >
-              {t('cancel')}
+              Cancel
             </Button>
             <Button
+              variant="destructive"
               onClick={confirmDelete}
-              disabled={deletingId !== null}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={!!deletingId}
             >
-              {deletingId !== null ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  {t('deleting')}
-                </>
-              ) : (
-                t('delete')
-              )}
+              {deletingId && <Loader2 className="size-4 animate-spin mr-2" />}
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
