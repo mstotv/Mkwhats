@@ -2,6 +2,19 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import DOMPurify from 'isomorphic-dompurify'
+
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'p', 'a', 'img', 'ul', 'ol', 'li',
+    'strong', 'em', 'b', 'i', 'u', 'br', 'hr',
+    'div', 'span', 'blockquote', 'code', 'pre',
+    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+  ],
+  ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'target', 'class', 'id', 'rel', 'style'],
+  ALLOW_DATA_ATTR: false,
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -59,7 +72,9 @@ export async function PATCH(
     }
 
     if (title !== undefined) updateData.title = String(title).trim()
-    if (content_html !== undefined) updateData.content_html = String(content_html)
+    if (content_html !== undefined) {
+      updateData.content_html = DOMPurify.sanitize(String(content_html), SANITIZE_CONFIG)
+    }
     if (is_published !== undefined) updateData.is_published = Boolean(is_published)
 
     const { data: updatedPage, error: updateError } = await serviceClient

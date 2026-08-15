@@ -5,28 +5,30 @@ import { usePathname } from 'next/navigation'
 import { ShieldCheck, LayoutDashboard, Users, CreditCard, Globe, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { useTranslations } from 'next-intl'
 
 export function AdminNav() {
+  const t = useTranslations('Admin.nav')
   const pathname = usePathname()
 
   const navItems = [
     {
-      label: 'نظرة عامة',
+      label: t('overview'),
       href: '/admin/dashboard',
       icon: LayoutDashboard,
     },
     {
-      label: 'إدارة الحسابات',
+      label: t('accounts'),
       href: '/admin/accounts',
       icon: Users,
     },
     {
-      label: 'إدارة الخطط',
+      label: t('plans'),
       href: '/admin/plans',
       icon: CreditCard,
     },
     {
-      label: 'إعدادات الموقع',
+      label: t('siteSettings'),
       href: '/admin/site-settings',
       icon: Globe,
     },
@@ -52,7 +54,7 @@ export function AdminNav() {
             </div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-slate-100 text-sm tracking-tight">
-                Super Admin
+                {t('superAdmin')}
               </span>
               <span className="rounded bg-slate-800/80 border border-slate-700/50 px-1.5 py-0.5 text-[10px] font-mono text-slate-400">
                 v1.0
@@ -93,7 +95,7 @@ export function AdminNav() {
             className="text-slate-400 hover:bg-slate-900 hover:text-rose-400 gap-1.5 border border-slate-800/80 hover:border-rose-500/30 text-xs h-8 px-3"
           >
             <LogOut className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">تسجيل الخروج</span>
+            <span className="hidden sm:inline">{t('logout')}</span>
           </Button>
         </div>
       </div>

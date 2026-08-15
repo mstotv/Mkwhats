@@ -590,10 +590,10 @@ export function WhatsAppConfig() {
             )}
             <div>
               <span className="text-sm font-medium text-foreground">
-                طريقة الربط النشطة:{' '}
+                {t('activeMethod')}{' '}
                 {config.connection_type === 'evolution'
-                  ? 'Evolution API (QR Code)'
-                  : 'Meta Business API'}
+                  ? t('evolutionQrTitle')
+                  : t('metaTitle')}
               </span>
             </div>
           </div>
@@ -607,10 +607,10 @@ export function WhatsAppConfig() {
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2 text-lg">
                 <QrCode className="size-5 text-emerald-500" />
-                ربط الواتساب عبر Evolution API
+                {t('evolutionConnectTitle')}
               </CardTitle>
               <CardDescription className="text-muted-foreground">
-                قم بإنشاء الاتصال ثم مسح رمز QR Code برقم هاتفك لربطه بالنظام مباشرة.
+                {t('evolutionConnectDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -632,11 +632,11 @@ export function WhatsAppConfig() {
                     )}
                     <div>
                       <AlertTitle className="text-foreground font-semibold mb-0">
-                        {evolutionConnected ? 'متصل بنجاح (Connected)' : 'غير متصل (Disconnected)'}
+                        {evolutionConnected ? t('connectedStatus') : t('disconnectedStatus')}
                       </AlertTitle>
                       {evolutionPhone && (
                         <p className="text-xs text-emerald-300 mt-0.5">
-                          الرقم المقترن: <span className="font-mono font-bold">{evolutionPhone}</span>
+                          {t('pairedNumber', { phone: evolutionPhone })}
                         </p>
                       )}
                     </div>
@@ -655,7 +655,7 @@ export function WhatsAppConfig() {
                       ) : (
                         <Trash2 className="size-4" />
                       )}
-                      إلغاء الربط (Disconnect)
+                      {t('disconnect')}
                     </Button>
                   )}
                 </div>
@@ -668,10 +668,10 @@ export function WhatsAppConfig() {
                     <Smartphone className="size-6" />
                   </div>
                   <h3 className="text-lg font-semibold text-emerald-200">
-                    الواتساب جاهز وتعمل الرسائل عبر Evolution API
+                    {t('readyTitle')}
                   </h3>
                   <p className="text-xs text-emerald-400/80 max-w-md mx-auto">
-                    يتم استقبال وتوجيه كافة الرسائل الواردة والصادرة تلقائياً عبر محركات الأتمتة والـ Flows والذكاء الاصطناعي.
+                    {t('readyDesc')}
                   </p>
                 </div>
               ) : (
@@ -680,9 +680,9 @@ export function WhatsAppConfig() {
                   {!config ? (
                     <div className="space-y-4 rounded-lg border border-border bg-card p-5">
                       <div className="space-y-1">
-                        <h4 className="text-sm font-semibold text-foreground">بيانات الاتصال بـ Evolution API</h4>
+                        <h4 className="text-sm font-semibold text-foreground">{t('creationDataTitle')}</h4>
                         <p className="text-xs text-muted-foreground">
-                          قم بتعبئة البيانات أدناه لإنشاء الـ Instance وجلب رمز الـ QR Code لمسحه.
+                          {t('creationDataDesc')}
                         </p>
                       </div>
 
@@ -690,7 +690,7 @@ export function WhatsAppConfig() {
                         {/* 1. Name */}
                         <div className="space-y-1.5">
                           <Label className="text-xs text-foreground font-medium">
-                            اسم الـ Instance (Name) <span className="text-red-400">*</span>
+                            {t('instanceNameLabel')} <span className="text-red-400">*</span>
                           </Label>
                           <Input
                             placeholder="e.g. mussaaa"
@@ -703,7 +703,7 @@ export function WhatsAppConfig() {
                         {/* 2. Token */}
                         <div className="space-y-1.5">
                           <Label className="text-xs text-foreground font-medium">
-                            رمز الأمان (Token) <span className="text-muted-foreground text-[10px]">(اختياري)</span>
+                            {t('tokenLabel')} <span className="text-muted-foreground text-[10px]">{t('optional')}</span>
                           </Label>
                           <Input
                             placeholder="e.g. Mustafa12345"
@@ -716,7 +716,7 @@ export function WhatsAppConfig() {
                         {/* 3. Number */}
                         <div className="space-y-1.5">
                           <Label className="text-xs text-foreground font-medium">
-                            رقم الهاتف (Number) <span className="text-muted-foreground text-[10px]">(اختياري)</span>
+                            {t('phoneLabel')} <span className="text-muted-foreground text-[10px]">{t('optional')}</span>
                           </Label>
                           <Input
                             placeholder="e.g. 966501234567"
@@ -736,12 +736,12 @@ export function WhatsAppConfig() {
                           {evolutionCreating ? (
                             <>
                               <Loader2 className="size-4 animate-spin" />
-                              جاري إنشاء الاتصال...
+                              {t('creatingConnection')}
                             </>
                           ) : (
                             <>
                               <QrCode className="size-4" />
-                              متابعة وإنشاء الـ QR Code
+                              {t('continueQr')}
                             </>
                           )}
                         </Button>
@@ -763,7 +763,7 @@ export function WhatsAppConfig() {
                         ) : (
                           <div className="flex size-64 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card">
                             <Loader2 className="size-8 animate-spin text-emerald-500" />
-                            <span className="text-xs text-muted-foreground">جاري تحديث الـ QR Code...</span>
+                            <span className="text-xs text-muted-foreground">{t('updatingQr')}</span>
                           </div>
                         )}
 
@@ -775,21 +775,21 @@ export function WhatsAppConfig() {
                           className="text-xs text-muted-foreground hover:text-foreground"
                         >
                           <RefreshCw className={`size-3.5 ${evolutionLoadingQr ? 'animate-spin' : ''}`} />
-                          تحديث رمز الـ QR يدويّاً
+                          {t('refreshQrManual')}
                         </Button>
                       </div>
 
                       {/* Instructions */}
                       <div className="space-y-4">
-                        <h4 className="text-base font-semibold text-foreground">خطوات الربط:</h4>
+                        <h4 className="text-base font-semibold text-foreground">{t('stepsTitle')}</h4>
                         <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside leading-relaxed">
-                          <li>افتح تطبيق <strong>WhatsApp</strong> على هاتفك المحمول.</li>
-                          <li>انتقل إلى <strong>الإعدادات (Settings)</strong> ← <strong>الأجهزة المرتبطة (Linked Devices)</strong>.</li>
-                          <li>اضغط على <strong>ربط جهاز (Link a Device)</strong>.</li>
-                          <li>وجه كاميرا الهاتف نحو رمز الـ <strong>QR Code</strong> الظاهر على الشاشة.</li>
+                          <li>{t('step1')}</li>
+                          <li>{t('step2')}</li>
+                          <li>{t('step3')}</li>
+                          <li>{t('step4')}</li>
                         </ol>
                         <p className="text-xs text-amber-400 bg-amber-950/30 border border-amber-800/40 p-3 rounded-md">
-                          ⏳ يتحدث الـ QR Code تلقائياً كل بضع ثوانٍ. بمجرد المسح سيتعرف النظام فوراً ويتحول الوضع إلى متصل.
+                          {t('qrAutoRefreshHint')}
                         </p>
                       </div>
                     </div>

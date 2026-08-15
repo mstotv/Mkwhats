@@ -2,8 +2,21 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
 import { MessageSquare, ArrowRight } from 'lucide-react'
+import DOMPurify from 'isomorphic-dompurify'
 
 export const dynamic = 'force-dynamic'
+
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'p', 'a', 'img', 'ul', 'ol', 'li',
+    'strong', 'em', 'b', 'i', 'u', 'br', 'hr',
+    'div', 'span', 'blockquote', 'code', 'pre',
+    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+  ],
+  ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'target', 'class', 'id', 'rel', 'style'],
+  ALLOW_DATA_ATTR: false,
+}
 
 export default async function ContentPage({
   params,
@@ -28,6 +41,7 @@ export default async function ContentPage({
   }
 
   const platformName = settings?.platform_name || 'MK Whats'
+  const sanitizedContent = DOMPurify.sanitize(page.content_html || '', SANITIZE_CONFIG)
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans dir-rtl selection:bg-indigo-500 selection:text-white flex flex-col justify-between">
@@ -64,7 +78,7 @@ export default async function ContentPage({
 
           <div
             className="prose prose-invert max-w-none text-slate-300 text-sm leading-relaxed space-y-4"
-            dangerouslySetInnerHTML={{ __html: page.content_html }}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
         </div>
       </main>

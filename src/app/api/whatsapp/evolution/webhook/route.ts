@@ -7,10 +7,11 @@ import { runAutomationsForTrigger } from '@/lib/automations/engine'
 import { dispatchInboundToFlows } from '@/lib/flows/engine'
 import { dispatchInboundToAiReply } from '@/lib/ai/auto-reply'
 import { dispatchWebhookEvent } from '@/lib/webhooks/deliver'
-import type {
-  EvolutionWebhookPayload,
-  EvolutionConnectionUpdateData,
-  EvolutionInboundMessage,
+import {
+  type EvolutionWebhookPayload,
+  type EvolutionConnectionUpdateData,
+  type EvolutionInboundMessage,
+  fetchEvolutionProfilePictureUrl,
 } from '@/lib/whatsapp/evolution-api'
 
 // Same max-duration approach as the Meta webhook — Evolution events
@@ -159,7 +160,13 @@ async function processEvolutionEvent(body: EvolutionWebhookPayload) {
         if (!msg) continue
         // Skip messages sent by us (fromMe = true).
         if (msg.key?.fromMe) continue
-        await processInboundMessage(msg, accountId, configOwnerUserId)
+        await processInboundMessage(
+          msg,
+          accountId,
+          configOwnerUserId,
+          configRow.evolution_instance_name,
+          configRow.evolution_api_key,
+        )
       }
       break
     }
@@ -228,6 +235,8 @@ async function processInboundMessage(
   msg: EvolutionInboundMessage,
   accountId: string,
   configOwnerUserId: string,
+  instanceName?: string,
+  instanceApiKey?: string,
 ) {
   // Extract sender phone from remoteJid ("5511999998888@s.whatsapp.net")
   const rawJid = msg.key?.remoteJid ?? ''
@@ -250,6 +259,8 @@ async function processInboundMessage(
     configOwnerUserId,
     senderPhone,
     contactName,
+    instanceName,
+    instanceApiKey,
   )
   if (!contactOutcome) return
   const contactRecord = contactOutcome.contact
@@ -457,20 +468,53 @@ async function findOrCreateEvolutionContact(
   userId: string,
   phone: string,
   name: string,
+  instanceName?: string,
+  instanceApiKey?: string,
 ) {
   try {
     const existing = await findExistingContact(supabaseAdmin(), accountId, phone)
-    if (existing) return { contact: existing, wasCreated: false }
+    if (existing) {
+      if (!existing.avatar_url && instanceName && instanceApiKey) {
+        fetchEvolutionProfilePictureUrl({
+          instanceName,
+          instanceApiKey,
+          number: phone,
+        }).then((url) => {
+          if (url) {
+            supabaseAdmin()
+              .from('contacts')
+              .update({ avatar_url: url })
+              .eq('id', existing.id)
+              .then(() => {})
+          }
+        }).catch(() => {})
+      }
+      return { contact: existing, wasCreated: false }
+    }
+
+    let avatarUrl: string | null = null
+    if (instanceName && instanceApiKey) {
+      avatarUrl = await fetchEvolutionProfilePictureUrl({
+        instanceName,
+        instanceApiKey,
+        number: phone,
+      })
+    }
 
     const { data: created, error } = await supabaseAdmin()
       .from('contacts')
-      .insert({ account_id: accountId, user_id: userId, phone, name: name || phone })
+      .insert({
+        account_id: accountId,
+        user_id: userId,
+        phone,
+        name: name || phone,
+        avatar_url: avatarUrl,
+      })
       .select()
       .single()
 
     if (error) {
       if (isUniqueViolation(error)) {
-        // Race — another webhook event inserted first.
         const retry = await findExistingContact(supabaseAdmin(), accountId, phone)
         if (retry) return { contact: retry, wasCreated: false }
       }

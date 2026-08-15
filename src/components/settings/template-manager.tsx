@@ -553,14 +553,14 @@ export function TemplateManager() {
               {editingId
                 ? t('dialogEditTitle')
                 : connectionType === 'evolution'
-                  ? 'New Message Template (Local)'
+                  ? t('dialogNewTitleLocal')
                   : t('dialogNewTitle')}
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
               {editingId
                 ? t('dialogEditDesc')
                 : connectionType === 'evolution'
-                  ? 'Build a template and save it locally for your Evolution API connection. You can use it in broadcasts and inbox.'
+                  ? t('dialogNewDescLocal')
                   : t('dialogNewDesc')}
             </DialogDescription>
           </DialogHeader>
@@ -852,10 +852,10 @@ export function TemplateManager() {
                   <Send className="h-4 w-4" />
                 )}
                 {editingId
-                  ? 'Update Template'
+                  ? t('updateTemplate')
                   : connectionType === 'evolution'
-                    ? 'Save Template'
-                    : 'Submit for Approval'}
+                    ? t('saveTemplate')
+                    : t('submitApproval')}
               </Button>
             </DialogFooter>
           </form>
@@ -869,9 +869,9 @@ export function TemplateManager() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Template</DialogTitle>
+            <DialogTitle>{t('deleteDialogTitle')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete template &quot;{templateToDelete?.name}&quot;? This action cannot be undone.
+              {t('deleteConfirm', { name: templateToDelete?.name ?? '' })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -879,7 +879,7 @@ export function TemplateManager() {
               variant="outline"
               onClick={() => setTemplateToDelete(null)}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -887,7 +887,7 @@ export function TemplateManager() {
               disabled={!!deletingId}
             >
               {deletingId && <Loader2 className="size-4 animate-spin mr-2" />}
-              Delete
+              {t('delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

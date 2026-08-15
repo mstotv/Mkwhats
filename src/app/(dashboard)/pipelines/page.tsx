@@ -37,12 +37,12 @@ import { useTranslations } from "next-intl";
 // not on different copy.
 
 // Spec-defined seed — name and color per the product spec.
-const SPEC_DEFAULT_STAGES = [
-  { name: "New Lead", color: "#3b82f6", position: 0 }, // blue
-  { name: "Qualified", color: "#eab308", position: 1 }, // yellow
-  { name: "Proposal Sent", color: "#f97316", position: 2 }, // orange
-  { name: "Negotiation", color: "#8b5cf6", position: 3 }, // purple
-  { name: "Won", color: "#22c55e", position: 4 }, // green
+const getSpecDefaultStages = (t: ReturnType<typeof useTranslations>) => [
+  { name: t("stages.newLead"), color: "#3b82f6", position: 0 },
+  { name: t("stages.qualified"), color: "#eab308", position: 1 },
+  { name: t("stages.proposalSent"), color: "#f97316", position: 2 },
+  { name: t("stages.negotiation"), color: "#8b5cf6", position: 3 },
+  { name: t("stages.won"), color: "#22c55e", position: 4 },
 ];
 
 export default function PipelinesPage() {
@@ -120,7 +120,7 @@ export default function PipelinesPage() {
 
     const { data: pipeline, error } = await supabase
       .from("pipelines")
-      .insert({ user_id: user.id, account_id: accountId, name: "Sales Pipeline" })
+      .insert({ user_id: user.id, account_id: accountId, name: t("title") })
       .select()
       .single();
 
@@ -129,7 +129,7 @@ export default function PipelinesPage() {
       return null;
     }
 
-    const stagesPayload = SPEC_DEFAULT_STAGES.map((s) => ({
+    const stagesPayload = getSpecDefaultStages(t).map((s) => ({
       pipeline_id: pipeline.id,
       name: s.name,
       color: s.color,
@@ -279,7 +279,7 @@ export default function PipelinesPage() {
       return;
     }
 
-    const stagesPayload = SPEC_DEFAULT_STAGES.map((s) => ({
+    const stagesPayload = getSpecDefaultStages(t).map((s) => ({
       pipeline_id: pipeline.id,
       name: s.name,
       color: s.color,

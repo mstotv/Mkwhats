@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTranslations } from "next-intl";
 
 interface FormField {
   field_key: string;
@@ -44,6 +45,7 @@ interface Order {
 }
 
 export default function OrdersPage() {
+  const t = useTranslations("Orders");
   const [fields, setFields] = useState<FormField[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,6 @@ export default function OrdersPage() {
   const [excelFeatureAllowed, setExcelFeatureAllowed] = useState<boolean>(true);
   const [featureReason, setFeatureReason] = useState<string>("");
 
-  // 1. Fetch Subscription to check excel_export feature flag
   useEffect(() => {
     async function checkSubscription() {
       try {
@@ -65,9 +66,7 @@ export default function OrdersPage() {
             const hasExcelFeature = Boolean(data?.plan?.features?.excel_export);
             setExcelFeatureAllowed(hasExcelFeature);
             if (!hasExcelFeature) {
-              setFeatureReason(
-                "ميزة تصدير Excel غير مفعّلة في خطتك الحالية. يرجى الترقية لتفعيل التصدير."
-              );
+              setFeatureReason(t("featureReason"));
             }
           }
         }
@@ -76,9 +75,8 @@ export default function OrdersPage() {
       }
     }
     checkSubscription();
-  }, []);
+  }, [t]);
 
-  // 2. Fetch Orders
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
@@ -87,76 +85,52 @@ export default function OrdersPage() {
           ? "/api/orders"
           : `/api/orders?status=${statusFilter}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error("فشل جلب قائمة الطلبات");
+      if (!res.ok) throw new Error(t("errorFetch"));
       const text = await res.text();
       const data = text ? JSON.parse(text) : {};
       setFields(data.fields || []);
       setOrders(data.orders || []);
     } catch (err: any) {
-      toast.error(err.message || "حدث خطأ أثناء جلب الطلبات");
+      toast.error(err.message || t("errorFetch"));
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, t]);
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
 
-  // 3. Export to Excel
   const handleExport = async () => {
     if (!excelFeatureAllowed) {
-      toast.error(featureReason || "تصدير Excel يتطلب ترقية الخطة");
+      toast.error(t("upgradeRequired"));
       return;
     }
-
-    const confirmedCount = orders.filter(
-      (o) => o.status === "confirmed" || o.status === "exported"
-    ).length;
-    if (confirmedCount === 0) {
-      toast.info("لا توجد طلبات مؤكدة أو مصدّرة حالياً للتصدير");
-      return;
-    }
-
     setExporting(true);
     try {
-      const res = await fetch("/api/orders/export");
+      const res = await fetch("/api/orders/export", { method: "POST" });
       if (!res.ok) {
-        const text = await res.text();
-        let errorMsg = "فشل تصدير ملف Excel";
-        if (text) {
-          try {
-            const errObj = JSON.parse(text);
-            errorMsg = errObj.error || errorMsg;
-          } catch (e) {}
-        }
-        throw new Error(errorMsg);
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || t("errorExport"));
       }
-
-      // Download file blob
       const blob = await res.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = downloadUrl;
-      const filename = `orders_${new Date().toISOString().slice(0, 10)}.xlsx`;
-      a.download = filename;
+      a.href = url;
+      a.download = `orders_${new Date().toISOString().slice(0, 10)}.xlsx`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(downloadUrl);
-      a.remove();
-
-      toast.success("تم تصدير الطلبات بنجاح وتحديث حالتها إلى 'مصدّر'");
-
-      // Refresh orders to update status in UI
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success(t("exportSuccess"));
       fetchOrders();
     } catch (err: any) {
-      toast.error(err.message || "حدث خطأ أثناء تصدير الملف");
+      toast.error(err.message || t("errorExport"));
     } finally {
       setExporting(false);
     }
   };
 
-  // Filtered by local search query (by contact name or phone)
   const filteredOrders = orders.filter((o) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -174,28 +148,28 @@ export default function OrdersPage() {
         return (
           <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 flex items-center gap-1 w-fit">
             <CheckCircle2 className="size-3" />
-            مؤكد
+            {t("statusConfirmed")}
           </Badge>
         );
       case "exported":
         return (
           <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 flex items-center gap-1 w-fit">
             <FileCheck2 className="size-3" />
-            مصدّر
+            {t("statusExported")}
           </Badge>
         );
       case "collecting":
         return (
           <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 flex items-center gap-1 w-fit">
             <Clock className="size-3" />
-            قيد الجمع
+            {t("statusCollecting")}
           </Badge>
         );
       case "cancelled":
         return (
           <Badge className="bg-muted text-muted-foreground border-border flex items-center gap-1 w-fit">
             <XCircle className="size-3" />
-            ملغى
+            {t("statusCancelled")}
           </Badge>
         );
       default:
@@ -214,10 +188,10 @@ export default function OrdersPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-foreground">
-                طلبات العملاء
+                {t("title")}
               </h1>
               <p className="text-xs text-muted-foreground">
-                متابعة وتصدير الطلبات المجمّعة بواسطة الذكاء الاصطناعي
+                {t("description")}
               </p>
             </div>
           </div>
@@ -232,7 +206,7 @@ export default function OrdersPage() {
             className="h-9 gap-1.5"
           >
             <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
-            تحديث
+            {t("refresh")}
           </Button>
 
           <Button
@@ -247,7 +221,7 @@ export default function OrdersPage() {
             ) : (
               <FileSpreadsheet className="size-4" />
             )}
-            تصدير Excel
+            {t("exportExcel")}
           </Button>
         </div>
       </div>
@@ -260,14 +234,14 @@ export default function OrdersPage() {
               <Lock className="size-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold">ميزة تصدير Excel غير متوفرة بخطتك الحالية</p>
+              <p className="text-sm font-semibold">{t("upgradeAlertTitle")}</p>
               <p className="text-xs opacity-90">{featureReason}</p>
             </div>
           </div>
           <Link href="/settings?tab=plan">
             <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5 shrink-0">
               <Sparkles className="size-3.5" />
-              ترقية الخطة الآن
+              {t("upgradeNow")}
             </Button>
           </Link>
         </div>
@@ -275,14 +249,13 @@ export default function OrdersPage() {
 
       {/* Filters and Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Status Filter Tabs */}
         <div className="flex items-center gap-1 overflow-x-auto rounded-lg border border-border p-1 bg-card">
           {[
-            { id: "all", label: "الكل" },
-            { id: "confirmed", label: "المؤكدة" },
-            { id: "exported", label: "المصدّرة" },
-            { id: "collecting", label: "قيد الجمع" },
-            { id: "cancelled", label: "الملغاة" },
+            { id: "all", label: t("tabs.all") },
+            { id: "confirmed", label: t("tabs.confirmed") },
+            { id: "exported", label: t("tabs.exported") },
+            { id: "collecting", label: t("tabs.collecting") },
+            { id: "cancelled", label: t("tabs.cancelled") },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -298,120 +271,78 @@ export default function OrdersPage() {
           ))}
         </div>
 
-        {/* Search Input */}
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute right-3 top-2.5 size-4 text-muted-foreground" />
+        <div className="relative flex-1 sm:max-w-xs">
+          <Search className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="بحث باسم العميل أو الهاتف..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-border bg-background py-2 pr-9 pl-3 text-xs placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            placeholder={t("searchPlaceholder")}
+            className="w-full rounded-lg border border-border bg-card pl-9 rtl:pl-3 rtl:pr-9 pr-3 py-1.5 text-xs text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none"
           />
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
-        {loading ? (
-          <div className="p-12 text-center">
-            <RefreshCw className="size-6 animate-spin mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">جاري تحميل الطلبات...</p>
-          </div>
-        ) : filteredOrders.length === 0 ? (
-          <div className="p-12 text-center space-y-3">
-            <div className="size-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
-              <ShoppingBag className="size-6" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">لا توجد طلبات</p>
-              <p className="text-xs text-muted-foreground">
-                لم يتم العثور على أي طلبات تطابق الفلتر المالي الحالي.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-muted/50 border-b border-border text-muted-foreground font-medium">
-                <tr>
-                  <th className="py-3 px-4">العميل</th>
-                  <th className="py-3 px-4">الحالة</th>
-                  <th className="py-3 px-4">تاريخ الطلب</th>
-                  {fields.map((f) => (
-                    <th key={f.field_key} className="py-3 px-4">
-                      {f.field_label}
-                    </th>
-                  ))}
-                  <th className="py-3 px-4">تاريخ التصدير</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-muted/30 transition-colors">
-                    {/* Contact Info */}
-                    <td className="py-3.5 px-4 font-medium text-foreground">
+      {loading ? (
+        <div className="flex h-64 items-center justify-center rounded-xl border border-border bg-card">
+          <RefreshCw className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/60 p-6 text-center">
+          <ShoppingBag className="size-10 text-muted-foreground/50 mb-3" />
+          <p className="text-sm font-semibold text-foreground">{t("emptyTitle")}</p>
+          <p className="text-xs text-muted-foreground max-w-sm mt-1">
+            {t("emptyDesc")}
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+          <table className="w-full text-left rtl:text-right text-xs">
+            <thead className="bg-muted/50 text-muted-foreground border-b border-border font-medium">
+              <tr>
+                <th className="px-4 py-3">{t("columns.contact")}</th>
+                <th className="px-4 py-3">{t("columns.status")}</th>
+                <th className="px-4 py-3">{t("columns.orderDate")}</th>
+                {fields.map((f) => (
+                  <th key={f.field_key} className="px-4 py-3">
+                    {f.field_label}
+                  </th>
+                ))}
+                <th className="px-4 py-3 text-right rtl:text-left">{t("columns.exportedAt")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {filteredOrders.map((o) => (
+                <tr key={o.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3 font-medium text-foreground">
+                    <div className="flex items-center gap-2">
                       <div>
-                        <p className="font-semibold text-sm">{order.contactName}</p>
-                        <p className="text-[11px] text-muted-foreground dir-ltr text-right">
-                          {order.contactPhone}
+                        <p className="font-semibold">{o.contactName || t("unknownContact")}</p>
+                        <p className="text-[11px] text-muted-foreground font-mono">
+                          {o.contactPhone}
                         </p>
                       </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">{getStatusBadge(o.status)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {new Date(o.createdAt).toLocaleString()}
+                  </td>
+                  {fields.map((f) => (
+                    <td key={f.field_key} className="px-4 py-3 text-foreground">
+                      {o.fieldValues[f.field_key] || "-"}
                     </td>
-
-                    {/* Status Badge */}
-                    <td className="py-3.5 px-4">{getStatusBadge(order.status)}</td>
-
-                    {/* Date */}
-                    <td className="py-3.5 px-4 text-muted-foreground whitespace-nowrap">
-                      {order.confirmedAt
-                        ? new Date(order.confirmedAt).toLocaleDateString("ar-SA", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : new Date(order.createdAt).toLocaleDateString("ar-SA", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                    </td>
-
-                    {/* Dynamic Fields */}
-                    {fields.map((f) => (
-                      <td key={f.field_key} className="py-3.5 px-4">
-                        {order.fieldValues[f.field_key] ? (
-                          <span className="font-medium text-foreground">
-                            {order.fieldValues[f.field_key]}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground opacity-40">-</span>
-                        )}
-                      </td>
-                    ))}
-
-                    {/* Exported At */}
-                    <td className="py-3.5 px-4 text-muted-foreground whitespace-nowrap">
-                      {order.exportedAt ? (
-                        new Date(order.exportedAt).toLocaleDateString("ar-SA", {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      ) : (
-                        <span className="text-muted-foreground opacity-40">-</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                  ))}
+                  <td className="px-4 py-3 text-right rtl:text-left text-muted-foreground font-mono text-[11px]">
+                    {o.exportedAt ? new Date(o.exportedAt).toLocaleString() : "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

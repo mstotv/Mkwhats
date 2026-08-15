@@ -10,14 +10,14 @@ import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
-// Icon per notification type. Only one type exists today
-// (conversation_assigned) but this keeps future types a one-line add.
 const TYPE_ICON: Record<Notification["type"], typeof Bell> = {
   conversation_assigned: UserPlus,
 };
 
 export default function NotificationsPage() {
+  const t = useTranslations("Notifications");
   const router = useRouter();
   const { accountId } = useAuth();
   const [notifications, setNotifications] = useState<Notification[] | null>(
@@ -43,12 +43,9 @@ export default function NotificationsPage() {
   }, [accountId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
-  // Realtime — new assignments appear without a refresh, and a
-  // "mark all read" fired from another tab/device stays in sync here.
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
@@ -58,22 +55,16 @@ export default function NotificationsPage() {
         { event: "*", schema: "public", table: "notifications" },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            const row = payload.new as Notification;
-            setNotifications((prev) => {
-              if (!prev) return [row];
-              if (prev.some((n) => n.id === row.id)) return prev;
-              return [row, ...prev];
-            });
+            const newNotif = payload.new as Notification;
+            if (newNotif.account_id === accountId) {
+              setNotifications((prev) =>
+                prev ? [newNotif, ...prev] : [newNotif],
+              );
+            }
           } else if (payload.eventType === "UPDATE") {
-            const row = payload.new as Notification;
+            const updated = payload.new as Notification;
             setNotifications((prev) =>
-              prev?.map((n) => (n.id === row.id ? { ...n, ...row } : n)) ??
-              prev,
-            );
-          } else if (payload.eventType === "DELETE") {
-            const oldRow = payload.old as Partial<Notification>;
-            setNotifications(
-              (prev) => prev?.filter((n) => n.id !== oldRow.id) ?? prev,
+              prev ? prev.map((n) => (n.id === updated.id ? updated : n)) : null,
             );
           }
         },
@@ -83,71 +74,59 @@ export default function NotificationsPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [accountId]);
 
-  const markRead = useCallback(
-    async (id: string) => {
-      // Optimistic — the row is already visually "read" by the time the
-      // request lands, so the UI doesn't wait on the round-trip.
-      setNotifications(
-        (prev) =>
-          prev?.map((n) =>
-            n.id === id && !n.read_at
-              ? { ...n, read_at: new Date().toISOString() }
-              : n,
-          ) ?? prev,
-      );
-      const supabase = createClient();
-      const { error: updateErr } = await supabase
-        .from("notifications")
-        .update({ read_at: new Date().toISOString() })
-        .eq("id", id)
-        .is("read_at", null);
-      if (updateErr) {
-        toast.error("Failed to mark notification as read");
-        load();
-      }
-    },
-    [load],
-  );
+  const markAllRead = async () => {
+    if (!accountId || !notifications) return;
+    const unread = notifications.filter((n) => !n.read_at);
+    if (unread.length === 0) return;
 
-  const handleClick = useCallback(
-    (n: Notification) => {
-      if (!n.read_at) markRead(n.id);
-      if (n.conversation_id) {
-        router.push(`/inbox?c=${n.conversation_id}`);
-      }
-    },
-    [markRead, router],
-  );
-
-  const unreadIds = notifications?.filter((n) => !n.read_at).map((n) => n.id) ?? [];
-
-  const markAllRead = useCallback(async () => {
-    if (unreadIds.length === 0) return;
     setMarkingAll(true);
     const now = new Date().toISOString();
-    setNotifications(
-      (prev) => prev?.map((n) => (n.read_at ? n : { ...n, read_at: now })) ?? prev,
-    );
     const supabase = createClient();
-    const { error: updateErr } = await supabase
+    const { error: err } = await supabase
       .from("notifications")
       .update({ read_at: now })
+      .eq("account_id", accountId)
       .is("read_at", null);
+
     setMarkingAll(false);
-    if (updateErr) {
-      toast.error("Failed to mark all as read");
-      load();
+    if (err) {
+      toast.error(err.message);
+      return;
     }
-  }, [unreadIds.length, load]);
+
+    setNotifications((prev) =>
+      prev ? prev.map((n) => ({ ...n, read_at: n.read_at ?? now })) : null,
+    );
+  };
+
+  const handleClick = async (n: Notification) => {
+    if (!n.read_at && accountId) {
+      const now = new Date().toISOString();
+      const supabase = createClient();
+      await supabase
+        .from("notifications")
+        .update({ read_at: now })
+        .eq("id", n.id);
+      setNotifications((prev) =>
+        prev ? prev.map((item) => (item.id === n.id ? { ...item, read_at: now } : item)) : null,
+      );
+    }
+
+    if (n.conversation_id) {
+      router.push(`/inbox?c=${n.conversation_id}`);
+    }
+  };
+
+  const unreadIds = notifications?.filter((n) => !n.read_at) ?? [];
 
   if (error) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-2">
-        <p className="text-sm text-destructive">{error}</p>
-        <Button variant="outline" onClick={() => window.location.reload()}>
-          Retry
+      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
+        <p className="text-sm font-medium text-destructive">{error}</p>
+        <Button variant="outline" size="sm" onClick={load}>
+          {t("retry")}
         </Button>
       </div>
     );
@@ -165,9 +144,9 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Conversations other teammates assign to you show up here.
+            {t("subtitle")}
           </p>
         </div>
         <Button
@@ -181,7 +160,7 @@ export default function NotificationsPage() {
           ) : (
             <CheckCheck className="h-4 w-4" />
           )}
-          Mark all as read
+          {t("markAllRead")}
         </Button>
       </div>
 
@@ -191,11 +170,10 @@ export default function NotificationsPage() {
             <Bell className="h-6 w-6 text-primary" />
           </div>
           <p className="mt-3 text-sm font-medium text-foreground">
-            No notifications yet
+            {t("noNotifications")}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            You&apos;ll see an alert here when someone assigns you a
-            conversation.
+            {t("noNotificationsHint")}
           </p>
         </div>
       ) : (
@@ -209,7 +187,7 @@ export default function NotificationsPage() {
                   type="button"
                   onClick={() => handleClick(n)}
                   className={cn(
-                    "flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors",
+                    "flex w-full items-start gap-3 rounded-xl border p-4 text-left rtl:text-right transition-colors",
                     isUnread
                       ? "border-primary/30 bg-primary/5 hover:border-primary/50"
                       : "border-border bg-card hover:border-border/70",
@@ -237,7 +215,9 @@ export default function NotificationsPage() {
                           isUnread ? "text-foreground" : "text-muted-foreground",
                         )}
                       >
-                        {n.title}
+                        {n.title === "New conversation assigned"
+                          ? t("types.conversationAssignedTitle")
+                          : n.title}
                       </span>
                       {isUnread && (
                         <span
@@ -248,7 +228,11 @@ export default function NotificationsPage() {
                     </div>
                     {n.body && (
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {n.body}
+                        {n.body.startsWith("Someone assigned you a conversation with ")
+                          ? t("types.conversationAssignedBody", {
+                              name: n.body.replace("Someone assigned you a conversation with ", ""),
+                            })
+                          : n.body}
                       </p>
                     )}
                     <p className="mt-1 text-[11px] text-muted-foreground/70">

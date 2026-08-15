@@ -67,6 +67,11 @@
   "ModeToggle": {
     "switchMode": "Switch to {mode} mode"
   },
+  "Navigation": {
+    "language": "Language",
+    "arabic": "Arabic",
+    "english": "English"
+  },
   "Dashboard": {
     "page": {
       "title": "Dashboard",
@@ -130,6 +135,18 @@
     },
     "emptyState": {
       "title": "Not enough data yet"
+    }
+  },
+  "Notifications": {
+    "title": "Notifications",
+    "subtitle": "Conversations other teammates assign to you show up here.",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications yet",
+    "noNotificationsHint": "You'll see an alert here when someone assigns you a conversation.",
+    "retry": "Retry",
+    "types": {
+      "conversationAssignedTitle": "New conversation assigned",
+      "conversationAssignedBody": "Someone assigned you a conversation with {name}"
     }
   },
   "Inbox": {
@@ -366,9 +383,9 @@
         "custom": "Custom Fields",
         "deals": "Deals",
         "tags": "Tags",
-      "noTags": "No tags",
-      "noDeals": "No deals",
-      "addNotePlaceholder": "Add a note..."
+        "noTags": "No tags",
+        "noDeals": "No deals",
+        "addNotePlaceholder": "Add a note..."
       },
       "actions": {
         "edit": "Edit",
@@ -503,6 +520,29 @@
       "toastPipelineCreated": "Pipeline created",
       "toastNotLinkedToAccount": "Your profile is not linked to an account."
     },
+    "analytics": {
+      "totalDeals": "Total Deals",
+      "totalDealsTooltip": "Count of every deal in this pipeline that isn't marked as Lost. Won deals are still included.",
+      "pipelineValue": "Pipeline Value",
+      "pipelineValueTooltip": "Sum of the dollar values of all deals in this pipeline, excluding deals marked as Lost.",
+      "avgDealSize": "Avg Deal Size",
+      "avgDealSizeTooltip": "Pipeline Value divided by Total Deals — the average value of a single non-lost deal.",
+      "weightedValue": "Weighted Value",
+      "weightedValueTooltip": "Expected revenue: each open deal's value × its stage probability. First stage ≈ 10%, stages progress up to 90%, Won = 100%. Lost deals are excluded.",
+      "wonThisMonth": "Won This Month",
+      "wonThisMonthTooltip": "Deals marked as Won since the first day of the current month.",
+      "lostThisMonth": "Lost This Month",
+      "lostThisMonthTooltip": "Deals marked as Lost since the first day of the current month.",
+      "howCalculated": "How {label} is calculated"
+    },
+    "stages": {
+      "newLead": "New Lead",
+      "qualified": "Qualified",
+      "proposalSent": "Proposal Sent",
+      "negotiation": "Negotiation",
+      "won": "Won",
+      "lost": "Lost"
+    },
     "board": {
       "dropDealHere": "Drop a deal here",
       "addDeal": "Add Deal"
@@ -577,21 +617,6 @@
       "toastFailedDeleteStage": "Failed to delete stage",
       "toastFailedDeletePipeline": "Failed to delete pipeline",
       "toastDeleted": "Pipeline deleted"
-    },
-    "analytics": {
-      "totalDeals": "Total Deals",
-      "totalDealsTooltip": "Count of every deal in this pipeline that isn't marked as Lost. Won deals are still included.",
-      "pipelineValue": "Pipeline Value",
-      "pipelineValueTooltip": "Sum of the dollar values of all deals in this pipeline, excluding deals marked as Lost.",
-      "avgDealSize": "Avg Deal Size",
-      "avgDealSizeTooltip": "Pipeline Value divided by Total Deals — the average value of a single non-lost deal.",
-      "weightedValue": "Weighted Value",
-      "weightedValueTooltip": "Expected revenue: each open deal's value × its stage probability. First stage ≈ 10%, stages progress up to 90%, Won = 100%. Lost deals are excluded.",
-      "wonThisMonth": "Won This Month",
-      "wonThisMonthTooltip": "Deals marked as Won since the first day of the current month.",
-      "lostThisMonth": "Lost This Month",
-      "lostThisMonthTooltip": "Deals marked as Lost since the first day of the current month.",
-      "howCalculated": "How {label} is calculated"
     }
   },
   "Broadcasts": {
@@ -782,6 +807,24 @@
       "create": "Create Automation",
       "retry": "Retry",
       "templatesTitle": "Quick-start templates",
+      "templates": {
+        "welcome_message": {
+          "name": "Welcome Message",
+          "description": "Auto-reply to first-time contacts with a greeting."
+        },
+        "out_of_office": {
+          "name": "Out of Office",
+          "description": "Auto-reply during off-hours so nobody is left waiting."
+        },
+        "lead_qualifier": {
+          "name": "Lead Qualifier",
+          "description": "Ask qualification questions to filter inbound leads."
+        },
+        "follow_up_reminder": {
+          "name": "Follow-up Reminder",
+          "description": "Send a nudge if a contact has not replied within 24 hours."
+        }
+      },
       "emptyTitle": "No automations yet",
       "emptyDesc": "Pick a template above or create one from scratch.",
       "runs": "{count} run",
@@ -1016,12 +1059,38 @@
       "triggerKeywordNone": "Triggers on keyword (none set)",
       "triggerKeyword": "Triggers on: {keywords}",
       "triggerFirstInbound": "Triggers on a contact's first-ever inbound message",
-      "triggerManual": "Manual trigger"
+      "triggerManual": "Manual trigger",
+      "templates": {
+        "welcome_menu": {
+          "name": "Welcome menu",
+          "description": "Greet customers who type a keyword and route them to the right agent based on whether they're new or existing."
+        },
+        "faq_bot": {
+          "name": "FAQ bot",
+          "description": "Answer common questions automatically. Customer picks a topic from a list; the bot replies with the answer and ends."
+        },
+        "lead_capture": {
+          "name": "Lead capture",
+          "description": "Greet first-time inbounds, capture name + email + company, then hand off to sales with the answers in the note."
+        }
+      }
     },
     "edit": {
-      "notFound": "Flow not found.",
-      "backToFlows": "← Back to flows",
-      "loadError": "Couldn't load flow."
+      "backToFlows": "Back to Flows",
+      "titlePlaceholder": "Flow name",
+      "descPlaceholder": "Add a short description (internal — customers don't see this)",
+      "edited": "Edited",
+      "runs": "Runs",
+      "delete": "Delete",
+      "pause": "Pause",
+      "activate": "Activate",
+      "save": "Save",
+      "statusDraft": "Draft",
+      "statusActive": "Active",
+      "statusArchived": "Archived",
+      "fixIssuesHint": "Fix the issues below before activating",
+      "loadError": "Couldn't load flow.",
+      "notFound": "Flow not found."
     },
     "logs": {
       "title": "Runs",
@@ -1209,6 +1278,25 @@
   "Settings": {
     "pageTitle": "Settings",
     "pageDesc": "Everything in one place — your account and your workspace. Pick a section to manage it.",
+    "groups": {
+      "account": "Account",
+      "workspace": "Workspace"
+    },
+    "sections": {
+      "overview": "Overview",
+      "profile": "Your profile",
+      "security": "Login & security",
+      "appearance": "Appearance",
+      "plan": "Plan & Usage",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram Bot",
+      "templates": "Templates",
+      "quick-replies": "Quick replies",
+      "fields": "Fields & tags",
+      "deals": "Deals & currency",
+      "members": "Team members",
+      "api": "API keys"
+    },
     "overview": {
       "notSetup": "Not set up yet",
       "connected": "Connected",
@@ -1339,13 +1427,15 @@
       "deleteLocallyAria": "Delete template locally",
       "deleteMetaLocallyTitle": "Delete from Meta and locally",
       "deleteLocallyTitle": "Delete locally",
-      
       "dialogEditTitle": "Edit Message Template",
       "dialogNewTitle": "New Message Template",
-      "dialogEditDesc": "Save your changes to re-submit to Meta. Status will flip back to PENDING during review.",
+      "dialogNewTitleLocal": "New Message Template (Local)",
+      "dialogEditDesc": "Edit stored template parameters.",
       "dialogNewDesc": "Build a template and submit it to Meta for approval. Once approved, you can use it in broadcasts and the inbox.",
+      "dialogNewDescLocal": "Build a template and save it locally for your Evolution API connection. You can use it in broadcasts and inbox.",
+      "updateTemplate": "Update Template",
+      "saveTemplate": "Save Template",
       "authWarning": "AUTHENTICATION templates have a fixed body + OTP button shape that needs a different builder. Create them in Meta WhatsApp Manager for now and use <bold>Sync from Meta</bold> to bring them in.",
-      
       "templateName": "Template Name",
       "namePlaceholder": "e.g. order_confirmation",
       "nameFixed": "Name is fixed once a template exists on Meta — create a new template to change it.",
@@ -1354,7 +1444,6 @@
       "language": "Language",
       "langFixed": "Language is fixed once a template exists on Meta.",
       "langHint": "Must match the exact code on Meta — <code>en_US</code> and <code>en</code> are distinct.",
-      
       "header": "Header",
       "headerNone": "None",
       "headerText": "Text",
@@ -1364,7 +1453,6 @@
       "headerTextPlaceholder": "Header text (max 60 chars, optional '{{1}}')",
       "headerSampleAria": "Sample value for header variable",
       "headerSamplePlaceholder": "Sample value for '{{1}}' (required for Meta review)",
-      
       "uploadImage": "Upload image",
       "uploadHint": "JPEG or PNG, ≤5 MB",
       "mediaUrlPlaceholder": "https://… (or paste a public {format} link)",
@@ -1372,17 +1460,14 @@
       "mediaHint": "Must be a publicly accessible HTTPS link. Meta fetches it once during review, so it needs to stay live for ~24 hrs.",
       "videoHint": " Recommended: MP4 / 3GPP, ≤16 MB, ≤60 seconds.",
       "documentHint": " Recommended: PDF, ≤100 MB.",
-      
       "bodyText": "Body Text",
       "bodyPlaceholder": "Hello '{{1}}', your order '{{2}}' is confirmed.",
       "bodyHint": "Use '{{1}}', '{{2}}' for variables (must be contiguous starting at '{{1}}').",
       "sampleValues": "Sample values (Meta uses these to review your template)",
       "sampleAria": "Sample value for body variable {var}",
       "samplePlaceholder": "Sample for {var}",
-      
       "footer": "Footer (optional)",
       "footerPlaceholder": "Optional footer text (max 60 chars)",
-      
       "buttons": "Buttons (optional)",
       "addButton": "Add Button",
       "buttonsLimit": "Up to {max} buttons. QUICK_REPLY buttons must come before URL / phone / copy-code buttons.",
@@ -1395,19 +1480,16 @@
       "urlSamplePlaceholder": "Example value for '{{1}}' (required when URL has a variable)",
       "phonePlaceholder": "+15551234567",
       "codePlaceholder": "Example code (e.g. SUMMER20)",
-      
       "cancel": "Cancel",
       "saving": "Saving…",
       "submitting": "Submitting…",
       "saveResubmit": "Save & Resubmit",
       "submitApproval": "Submit for Approval",
-      
       "deleteDialogTitle": "Delete template?",
       "deleteMetaDesc": "\"{name}\" will be deleted from Meta and from wacrm. Active broadcasts using this template will start failing on their next send. This can't be undone.",
       "deleteLocalDesc": "\"{name}\" will be deleted from wacrm. It was never submitted to Meta, so no remote cleanup is needed.",
       "deleting": "Deleting…",
       "delete": "Delete",
-      
       "toastLoadFailed": "Failed to load templates",
       "toastSubmitFailed": "Failed to submit",
       "toastSubmitEditSuccess": "Edit submitted — Meta typically reviews within 24 hours.",
@@ -1437,8 +1519,8 @@
       "ownerHint": "Full control over account and billing"
     },
     "whatsapp": {
-      "title": "WhatsApp connection",
-      "description": "Connect your Meta WhatsApp Business API. Credentials, webhook, and setup steps all live here.",
+      "title": "WhatsApp Connection",
+      "description": "Connect and configure WhatsApp Business via Meta Cloud API or Evolution API.",
       "tokenCorrupted": "Stored token can't be decrypted",
       "resetting": "Resetting...",
       "resetConfig": "Reset Configuration",
@@ -1480,46 +1562,59 @@
       "testConnection": "Test API Connection",
       "setupInstructions": "Setup Instructions",
       "setupInstructionsDesc": "Follow these steps to connect your WhatsApp Business API.",
-      "step1": "Create a Meta App",
+      "step1": "Open WhatsApp app on your mobile phone.",
       "step1_1": "Go to developers.facebook.com",
       "step1_2": "Click \"My Apps\" and then \"Create App\"",
       "step1_3": "Select \"Business\" as the app type",
       "step1_4": "Fill in app details and create",
-      "step2": "Add WhatsApp Product",
+      "step2": "Go to Settings → Linked Devices.",
       "step2_1": "In your app dashboard, click \"Add Product\"",
       "step2_2": "Find \"WhatsApp\" and click \"Set Up\"",
       "step2_3": "Follow the setup wizard to link your business",
-      "step3": "Get API Credentials",
+      "step3": "Tap Link a Device.",
       "step3_1": "Go to WhatsApp > API Setup",
       "step3_2": "Copy your <strong>Phone Number ID</strong>",
       "step3_3": "Copy your <strong>WhatsApp Business Account ID</strong>",
       "step3_4": "Generate a <strong>Permanent Access Token</strong> from Business Settings > System Users",
-      "step4": "Configure Webhooks",
+      "step4": "Point your phone camera at the QR Code shown on screen.",
       "step4_1": "Go to WhatsApp > Configuration",
       "step4_2": "Click \"Edit\" on the Webhook section",
       "step4_3": "Paste the <strong>Webhook Callback URL</strong> from above",
       "step4_4": "Enter the same <strong>Verify Token</strong> you set here",
       "step4_5": "Subscribe to \"messages\" webhook field",
-      "metaDocs": "Meta WhatsApp API Documentation"
-    },
-    "sections": {
-      "overview": "Overview",
-      "profile": "Your profile",
-      "security": "Login & security",
-      "appearance": "Appearance",
-      "plan": "Plan & Usage",
-      "whatsapp": "WhatsApp",
-      "telegram": "Telegram Bot",
-      "templates": "Templates",
-      "quick-replies": "Quick replies",
-      "fields": "Fields & tags",
-      "deals": "Deals & currency",
-      "members": "Team members",
-      "api": "API keys"
-    },
-    "groups": {
-      "account": "Account",
-      "workspace": "Workspace"
+      "metaDocs": "Meta WhatsApp API Documentation",
+      "activeMethod": "Active Connection Method:",
+      "evolutionQrTitle": "Evolution API (QR Code)",
+      "evolutionDesc": "Fast & direct connection by scanning a QR code from your mobile phone without Meta Business registration.",
+      "metaTitle": "Meta Business API (Official)",
+      "metaDesc": "Official cloud connection via Meta Facebook Developers platform.",
+      "evolutionConnectTitle": "Connect WhatsApp via Evolution API",
+      "evolutionConnectDesc": "Create instance connection then scan the QR Code with your phone to pair directly.",
+      "connectedStatus": "Connected Successfully",
+      "disconnectedStatus": "Disconnected",
+      "pairedNumber": "Paired Number: {phone}",
+      "disconnect": "Disconnect",
+      "disconnecting": "Disconnecting…",
+      "readyTitle": "WhatsApp is Ready and Messages are Live via Evolution API",
+      "readyDesc": "All inbound and outbound messages are automatically routed through Automations, Flows, and AI engines.",
+      "creationDataTitle": "Evolution API Connection Credentials",
+      "creationDataDesc": "Fill in the details below to create an instance and fetch the QR code for scanning.",
+      "instanceNameLabel": "Instance Name",
+      "tokenLabel": "Security Token",
+      "phoneLabel": "Phone Number",
+      "creatingConnection": "Creating connection…",
+      "continueQr": "Proceed to QR Code",
+      "updatingQr": "Refreshing QR Code…",
+      "refreshQrManual": "Refresh QR Code Manually",
+      "stepsTitle": "Pairing Steps:",
+      "qrAutoRefreshHint": "⏳ The QR Code refreshes automatically every few seconds. Once scanned, the system immediately updates status to Connected.",
+      "statusMap": {
+        "connected": "Connected",
+        "disconnected": "Disconnected",
+        "connecting": "Connecting...",
+        "pairing": "Pairing...",
+        "unknown": "Unknown"
+      }
     },
     "profile": {
       "title": "Your profile",
@@ -1549,7 +1644,6 @@
       "profileSaved": "Profile saved",
       "emailChangeFailed": "Email change failed: {message}",
       "profileSavedEmailCheck": "Profile saved — check your email to confirm the address change",
-      
       "passwordTitle": "Password",
       "passwordDesc": "Use at least {min} characters. You will stay signed in on this device after changing it.",
       "currentPassword": "Current password",
@@ -1563,7 +1657,6 @@
       "currentPasswordIncorrect": "Current password is incorrect",
       "passwordUpdateFailed": "Password update failed: {message}",
       "passwordUpdated": "Password updated",
-      
       "sessionsTitle": "Active sessions",
       "sessionsDesc": "Sign out of every device where you're logged in — including this one. Useful if you lost a laptop or shared your password.",
       "signOutAll": "Sign out of all devices",
@@ -1703,6 +1796,258 @@
       "reindex": "Reindex",
       "reindexTooltip": "Re-embed all documents (e.g. after adding an embeddings key)",
       "loading": "Loading…"
+    },
+    "plan": {
+      "title": "Plan & Usage",
+      "description": "View account operational limits, monthly consumption, and upgrade subscription plan.",
+      "statusTrialing": "Trialing",
+      "statusActive": "Active",
+      "limitExceededTitle": "Reached maximum allowed limit for {name} plan",
+      "limitExceededDesc": "You have consumed all available credits for messages or broadcasts for this month. Please upgrade to continue without interruption.",
+      "upgradeNow": "Upgrade Plan Now",
+      "subTitle": "Active operational plan and limits for your account",
+      "perMonth": "month",
+      "perYear": "year",
+      "upgradeOrViewAll": "Upgrade Plan / View All",
+      "monthlyMessages": "Monthly Messages",
+      "unlimited": "Unlimited",
+      "unlimitedMessagesText": "Unlimited message sending",
+      "usageRate": "Usage Rate",
+      "broadcasts": "Broadcasts",
+      "unlimitedBroadcastsText": "Unlimited broadcasts",
+      "teamMembers": "Team Members",
+      "fullnessRate": "Capacity Rate",
+      "unlimitedMembersText": "Unlimited team members",
+      "planFeaturesTitle": "Plan Included Features",
+      "featureAiAssistant": "Smart AI Assistant",
+      "featureExcelExport": "Excel Report Export",
+      "featureTelegramBot": "Telegram Bot Integration",
+      "cycleNote": "Usage cycle automatically renews at the start of each month ({period}).",
+      "switchOrUpgrade": "Switch or upgrade to a new plan",
+      "fetchFailed": "Failed to fetch plan details",
+      "noPlanFound": "No active plan found for this account",
+      "unexpectedError": "An unexpected error occurred"
+    },
+    "telegram": {
+      "title": "Telegram Bot Notifications",
+      "description": "Receive instant notifications on your Telegram account or group whenever a new order is confirmed.",
+      "active": "Active",
+      "paused": "Paused",
+      "botTokenLabel": "Bot Token",
+      "botTokenHint": "Get it from Telegram's @BotFather when creating a new bot.",
+      "chatIdLabel": "Chat or Channel ID",
+      "chatIdHint": "Find your Chat ID by messaging @userinfobot or adding your bot to a group.",
+      "enableAutoNotify": "Enable Automatic Notifications",
+      "enableAutoNotifyDesc": "When enabled, every confirmed order is immediately dispatched to your Telegram bot.",
+      "deleteSettings": "Remove Settings",
+      "testConnection": "Test Connection",
+      "saveSettings": "Save Settings",
+      "saving": "Saving…",
+      "testing": "Testing…",
+      "deleting": "Deleting…",
+      "loadingSettings": "Loading Telegram settings…",
+      "featureDisabledTitle": "Telegram Bot feature is unavailable on your current plan",
+      "featureDisabledDesc": "Please upgrade your subscription plan to get instant order notifications via Telegram bot.",
+      "enterChatIdFirst": "Please enter your Chat ID first",
+      "enterTokenFirst": "Please enter your Bot Token first",
+      "testFailed": "Failed to connect to Telegram bot. Please verify your Token and Chat ID.",
+      "testSuccess": "Connection tested successfully with bot {username}!",
+      "testError": "An error occurred while testing connection",
+      "saveSuccess": "Telegram bot settings saved successfully!",
+      "saveError": "Failed to save settings",
+      "confirmDelete": "Are you sure you want to remove Telegram bot settings?",
+      "deleteSuccess": "Telegram settings deleted successfully",
+      "deleteError": "Failed to delete settings"
+    },
+    "quickReplies": {
+      "title": "Quick Replies",
+      "description": "Pre-written responses and templates that support agents can instantly insert into conversations.",
+      "newQuickReply": "New quick reply +",
+      "noQuickReplies": "No quick replies yet. Create one to use in inbox chats.",
+      "dialogTitleCreate": "Create New Quick Reply",
+      "dialogTitleEdit": "Edit Quick Reply",
+      "titleLabel": "Quick Reply Title",
+      "titlePlaceholder": "e.g. Business Hours Inquiry",
+      "typeLabel": "Reply Type",
+      "textKind": "Simple Text Message",
+      "interactiveKind": "Interactive Buttons Message",
+      "textPlaceholder": "Type the canned reply content…",
+      "save": "Save Quick Reply",
+      "cancel": "Cancel",
+      "titleRequired": "Please enter a title for the quick reply.",
+      "confirmDelete": "Are you sure you want to delete this quick reply?",
+      "created": "Quick reply created successfully.",
+      "updated": "Quick reply updated successfully.",
+      "saveError": "Failed to save quick reply.",
+      "deleteError": "Failed to delete quick reply."
+    }
+  },
+  "Agents": {
+    "page": {
+      "title": "AI Agents",
+      "description": "Your bring-your-own-key AI agent — set it up, then test it in the playground before it replies to customers in the inbox."
+    },
+    "playground": {
+      "tabTitle": "Playground",
+      "title": "Playground",
+      "subtitle": "— test replies as if you were a customer",
+      "reset": "Reset conversation",
+      "hint": "Send a message to see how your agent would reply.",
+      "notice": "It uses your knowledge base and behaves exactly like the auto-reply bot — including handoff.",
+      "goToSetup": "Not set up yet? Go to Setup & configuration",
+      "wouldHandoff": "Would hand off to a human here",
+      "thinking": "Thinking…",
+      "placeholder": "Type a customer message…",
+      "notConfigured": "No agent configured yet — finish Setup first.",
+      "replyError": "Couldn't get a reply.",
+      "networkError": "Couldn't reach the agent."
+    },
+    "setup": {
+      "tabTitle": "Setup"
+    },
+    "usage": {
+      "tabTitle": "Usage",
+      "title": "Token usage",
+      "subtitle": "Tokens spent on your provider key by drafts and the auto-reply bot. Counts only — no message content is stored here.",
+      "totalTokens": "Total tokens",
+      "llmCalls": "LLM calls",
+      "autoReply": "Auto-reply",
+      "drafts": "Drafts",
+      "tokensPerDay": "Tokens per day",
+      "byModel": "By model",
+      "lastDays": "Last {count} days",
+      "noUsage": "No AI usage in the last {days} days yet.",
+      "noUsageHint": "This fills in as the assistant drafts and auto-replies.",
+      "callCount": "{count, plural, =1 {call} other {calls}}",
+      "partialWindow": "Showing a partial window — usage is high enough that only the most recent records are summarized here.",
+      "loadFailed": "Failed to load usage"
+    }
+  },
+  "Orders": {
+    "title": "Customer Orders",
+    "description": "Track and export orders collected automatically by AI.",
+    "refresh": "Refresh",
+    "exportExcel": "Export Excel",
+    "upgradeRequired": "Please upgrade to enable Excel export.",
+    "featureReason": "Excel export feature is disabled on your current plan. Please upgrade to enable export.",
+    "upgradeAlertTitle": "Excel Export feature unavailable on your current plan",
+    "upgradeNow": "Upgrade Plan Now",
+    "searchPlaceholder": "Search by contact name or phone…",
+    "emptyTitle": "No orders yet",
+    "emptyDesc": "When the AI assistant collects order details from customers in inbox chats, they will appear here.",
+    "unknownContact": "Unknown contact",
+    "errorFetch": "Failed to fetch orders list",
+    "errorExport": "An error occurred while exporting the file",
+    "exportSuccess": "Orders file exported successfully.",
+    "statusConfirmed": "Confirmed",
+    "statusExported": "Exported",
+    "statusCollecting": "Collecting",
+    "statusCancelled": "Cancelled",
+    "tabs": {
+      "all": "All",
+      "confirmed": "Confirmed",
+      "exported": "Exported",
+      "collecting": "Collecting",
+      "cancelled": "Cancelled"
+    },
+    "columns": {
+      "contact": "Contact",
+      "status": "Status",
+      "orderDate": "Order Date",
+      "exportedAt": "Exported At"
+    }
+  },
+  "Admin": {
+    "nav": {
+      "overview": "Overview",
+      "accounts": "Accounts",
+      "plans": "Plans",
+      "siteSettings": "Site Settings",
+      "superAdmin": "Super Admin",
+      "logout": "Log out"
+    },
+    "dashboard": {
+      "title": "Overview",
+      "description": "Track platform performance summary and registered accounts growth",
+      "manageAccounts": "Manage Accounts",
+      "totalAccounts": "Total Accounts",
+      "totalAccountsSub": "All registered accounts",
+      "activeAccounts": "Active Accounts",
+      "activeAccountsSub": "Currently active accounts",
+      "signupsLast7": "Signups (Last 7 Days)",
+      "signupsLast7Sub": "Compared to previous week",
+      "signupsLast30": "Signups (Last 30 Days)",
+      "signupsLast30Sub": "Compared to previous month",
+      "growthChartTitle": "Account Registration Growth (Last 14 Days)",
+      "growthChartSub": "Daily new accounts registration rate",
+      "dailySignups": "Daily Signups",
+      "recentAccountsTitle": "Recently Registered Accounts",
+      "recentAccountsSub": "Latest accounts joined the platform",
+      "viewAllAccounts": "View all accounts ({count})",
+      "thAccountName": "Account Name",
+      "thStatus": "Status",
+      "thCreated": "Registration Date",
+      "thId": "ID",
+      "active": "Active",
+      "suspended": "Suspended",
+      "noAccounts": "No accounts registered yet"
+    },
+    "accounts": {
+      "title": "Platform Accounts List",
+      "description": "View and explore all registered platform accounts and member counts",
+      "searchPlaceholder": "Search by account name or ID...",
+      "showingAccounts": "Total displayed accounts: {count} of {total}",
+      "thAccountName": "Account Name",
+      "thStatus": "Status",
+      "thMembers": "Members Count",
+      "thCreated": "Registration Date",
+      "thId": "ID #",
+      "thDetails": "Details",
+      "view": "View",
+      "active": "Active",
+      "suspended": "Suspended",
+      "memberCount": "{count} member"
+    },
+    "plans": {
+      "title": "Plans & Subscriptions Management",
+      "description": "Control plan pricing, limits, features, and enable/disable plans",
+      "refreshData": "Refresh Data",
+      "subscribers": "Subscribers: {count}",
+      "editPlan": "Edit Plan",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "active": "Active",
+      "disabled": "Disabled",
+      "accountMembers": "Account Members",
+      "whatsappDevices": "WhatsApp Devices",
+      "contacts": "Contacts",
+      "unlimited": "Unlimited",
+      "devices": "{count} device(s)",
+      "contactsCount": "{count} contacts"
+    },
+    "siteSettings": {
+      "title": "Site & Public Pages Settings",
+      "description": "Manage platform name, logo, social links, partners, and static pages.",
+      "tabGeneral": "Identity & Partners",
+      "tabPages": "Static Pages",
+      "generalHeader": "General Identity Information",
+      "generalDesc": "Appears in header, footer, and main landing page",
+      "platformName": "Platform Name",
+      "logoUrl": "Logo Image URL",
+      "cryptoHeader": "Crypto Payment Gateway (Plisio)",
+      "cryptoDesc": "For automatic crypto subscription upgrades via Plisio",
+      "enableCrypto": "Enable Gateway",
+      "socialHeader": "Social Media Platform Links",
+      "socialDesc": "Appears in footer and landing pages",
+      "addSocial": "Add Platform +",
+      "partnersHeader": "Partners Marquee Bar",
+      "partnersDesc": "Logos scrolling automatically on the home page",
+      "addPartner": "Add Partner +",
+      "saveAll": "Save All Settings",
+      "saving": "Saving...",
+      "published": "Published",
+      "draft": "Draft",
+      "editPage": "Edit Page"
     }
   }
 }

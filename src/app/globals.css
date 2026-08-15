@@ -226,6 +226,26 @@ html[data-theme="rose"] {
   }
   html {
     @apply font-sans;
+    color-scheme: dark;
+  }
+
+  /* Custom sleek scrollbar for modern browsers */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(120, 120, 120, 0.3);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(150, 150, 150, 0.5);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
 

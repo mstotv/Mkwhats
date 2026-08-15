@@ -11,7 +11,8 @@ import { cn } from "@/lib/utils";
 import type { Conversation, ConversationStatus, Tag } from "@/types";
 import { Search, ChevronDown, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useTranslations } from "next-intl";
+import { ar, enUS } from "date-fns/locale";
+import { useLocale, useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -444,9 +445,13 @@ function ConversationItem({
     onSelect(conversation);
   }, [onSelect, conversation]);
 
+  const localeStr = useLocale();
+  const dateLocale = localeStr === "ar" ? ar : enUS;
+
   const timeAgo = conversation.last_message_at
     ? formatDistanceToNow(new Date(conversation.last_message_at), {
         addSuffix: false,
+        locale: dateLocale,
       })
     : "";
 
@@ -459,16 +464,17 @@ function ConversationItem({
       )}
     >
       {/* Avatar */}
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground">
-        {contact?.avatar_url ? (
-          <img
-            src={contact.avatar_url}
-            alt={displayName}
-            className="h-10 w-10 rounded-full object-cover"
-          />
-        ) : (
-          initials
-        )}
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground overflow-hidden">
+        <img
+          src={
+            contact?.avatar_url ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              displayName,
+            )}&background=random&color=fff&bold=true`
+          }
+          alt={displayName}
+          className="h-10 w-10 rounded-full object-cover"
+        />
       </div>
 
       {/* Content */}

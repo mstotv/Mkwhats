@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Sparkles,
-  CreditCard,
   MessageSquare,
   Radio,
   Users,
@@ -20,6 +19,7 @@ import {
   ArrowUpRight,
 } from 'lucide-react'
 import { UpgradePlanModal, type PlanItem } from './upgrade-plan-modal'
+import { useTranslations } from 'next-intl'
 
 interface PlanData {
   id: string
@@ -60,6 +60,7 @@ interface UsageData {
 }
 
 export function PlanUsagePanel() {
+  const t = useTranslations('Settings.plan')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [plan, setPlan] = useState<PlanData | null>(null)
@@ -77,7 +78,7 @@ export function PlanUsagePanel() {
         const data = await res.json()
 
         if (!res.ok || data.error) {
-          setError(data.error || 'فشل جلب بيانات الخطة')
+          setError(data.error || t('fetchFailed'))
           return
         }
 
@@ -87,14 +88,14 @@ export function PlanUsagePanel() {
         setLimitsExceeded(Boolean(data.limits_exceeded))
         setAvailablePlans(data.available_plans || [])
       } catch (err: any) {
-        setError(err.message || 'حدث خطأ غير متوقع')
+        setError(err.message || t('unexpectedError'))
       } finally {
         setLoading(false)
       }
     }
 
     fetchSubscriptionInfo()
-  }, [])
+  }, [t])
 
   if (loading) {
     return (
@@ -108,7 +109,7 @@ export function PlanUsagePanel() {
     return (
       <Card>
         <CardContent className="pt-6 text-center text-sm text-destructive">
-          {error || 'لم يتم العثور على خطة مفعّلة لهذا الحساب'}
+          {error || t('noPlanFound')}
         </CardContent>
       </Card>
     )
@@ -123,35 +124,35 @@ export function PlanUsagePanel() {
   const featuresList = [
     {
       key: 'ai_assistant',
-      label: 'مساعد الردود الذكي (AI Assistant)',
+      label: t('featureAiAssistant'),
       icon: Bot,
       enabled: Boolean(plan.features?.ai_assistant),
     },
     {
       key: 'excel_export',
-      label: 'تصدير التقارير بـ Excel',
+      label: t('featureExcelExport'),
       icon: FileSpreadsheet,
       enabled: Boolean(plan.features?.excel_export),
     },
     {
       key: 'telegram_bot',
-      label: 'ربط وتوسيع البوت بـ Telegram',
+      label: t('featureTelegramBot'),
       icon: Send,
       enabled: Boolean(plan.features?.telegram_bot),
     },
   ]
 
   return (
-    <div className="space-y-6 dir-rtl">
+    <div className="space-y-6">
       {/* Limit Exceeded Alert Banner */}
       {limitsExceeded && (
         <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-4 text-rose-500 flex items-start justify-between gap-3 shadow-sm">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <h4 className="font-bold text-sm">وصلت للحد الأقصى المسموح به لخطة {plan.name}</h4>
+              <h4 className="font-bold text-sm">{t('limitExceededTitle', { name: plan.name })}</h4>
               <p className="text-xs text-rose-400/90 leading-relaxed">
-                لقد استهلكت كامل الرصيد المتاح من الرسائل أو البرودكاست لهذا الشهر. يرجى الترقية لمتابعة العمل بدون انقطاع.
+                {t('limitExceededDesc')}
               </p>
             </div>
           </div>
@@ -161,7 +162,7 @@ export function PlanUsagePanel() {
             className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shrink-0 gap-1"
           >
             <Sparkles className="h-3.5 w-3.5" />
-            ترقية الخطة الآن
+            {t('upgradeNow')}
           </Button>
         </div>
       )}
@@ -183,21 +184,21 @@ export function PlanUsagePanel() {
                     : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                 }`}
               >
-                {subscription?.status === 'trialing' ? 'فترة تجريبية (Trialing)' : 'نشط (Active)'}
+                {subscription?.status === 'trialing' ? t('statusTrialing') : t('statusActive')}
               </Badge>
             </div>
             <CardDescription className="text-xs">
-              الخطة والحدود التشغيلية المفعلة لحسابك حالياً
+              {t('subTitle')}
             </CardDescription>
           </div>
 
           <div className="flex items-center gap-4 self-end sm:self-auto">
-            <div className="text-left dir-ltr">
+            <div className="text-left rtl:text-right">
               <span className="text-2xl font-black text-foreground">
                 ${subscription?.billing_cycle === 'yearly' ? plan.price_yearly : plan.price_monthly}
               </span>
-              <span className="text-xs text-muted-foreground mr-1">
-                /{subscription?.billing_cycle === 'yearly' ? 'سنة' : 'شهر'}
+              <span className="text-xs text-muted-foreground ml-1 rtl:ml-0 rtl:mr-1">
+                /{subscription?.billing_cycle === 'yearly' ? t('perYear') : t('perMonth')}
               </span>
             </div>
 
@@ -206,8 +207,8 @@ export function PlanUsagePanel() {
               className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm gap-1.5"
             >
               <Sparkles className="h-4 w-4" />
-              ترقية الخطة / عرض الكل
-              <ArrowUpRight className="h-3.5 w-3.5" />
+              {t('upgradeOrViewAll')}
+              <ArrowUpRight className="h-3.5 w-3.5 rtl:rotate-180" />
             </Button>
           </div>
         </CardHeader>
@@ -219,11 +220,11 @@ export function PlanUsagePanel() {
             <div className="rounded-xl border p-4 bg-accent/30 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-foreground flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-indigo-500" /> الرسائل الشهرية
+                  <MessageSquare className="h-4 w-4 text-indigo-500" /> {t('monthlyMessages')}
                 </span>
                 <span className="font-mono font-bold text-foreground">
                   {plan.max_messages_monthly === -1
-                    ? `${usage?.messages_count.toLocaleString()} (بدون حدود)`
+                    ? `${usage?.messages_count.toLocaleString()} (${t('unlimited')})`
                     : `${usage?.messages_count.toLocaleString()} / ${plan.max_messages_monthly.toLocaleString()}`}
                 </span>
               </div>
@@ -239,12 +240,12 @@ export function PlanUsagePanel() {
                     />
                   </div>
                   <div className="flex justify-between text-[11px] text-muted-foreground">
-                    <span>نسبة الاستهلاك</span>
+                    <span>{t('usageRate')}</span>
                     <span className="font-mono">{usage?.messages_percentage}%</span>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-emerald-500 font-medium">إرسال غير محدود للرسائل</p>
+                <p className="text-xs text-emerald-500 font-medium">{t('unlimitedMessagesText')}</p>
               )}
             </div>
 
@@ -252,11 +253,11 @@ export function PlanUsagePanel() {
             <div className="rounded-xl border p-4 bg-accent/30 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-foreground flex items-center gap-2">
-                  <Radio className="h-4 w-4 text-indigo-500" /> الحملات (Broadcasts)
+                  <Radio className="h-4 w-4 text-indigo-500" /> {t('broadcasts')}
                 </span>
                 <span className="font-mono font-bold text-foreground">
                   {plan.max_broadcasts_monthly === -1
-                    ? `${usage?.broadcasts_count.toLocaleString()} (بدون حدود)`
+                    ? `${usage?.broadcasts_count.toLocaleString()} (${t('unlimited')})`
                     : `${usage?.broadcasts_count.toLocaleString()} / ${plan.max_broadcasts_monthly.toLocaleString()}`}
                 </span>
               </div>
@@ -272,12 +273,12 @@ export function PlanUsagePanel() {
                     />
                   </div>
                   <div className="flex justify-between text-[11px] text-muted-foreground">
-                    <span>نسبة الاستهلاك</span>
+                    <span>{t('usageRate')}</span>
                     <span className="font-mono">{usage?.broadcasts_percentage}%</span>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-emerald-500 font-medium">حملات غير محدودة</p>
+                <p className="text-xs text-emerald-500 font-medium">{t('unlimitedBroadcastsText')}</p>
               )}
             </div>
 
@@ -285,11 +286,11 @@ export function PlanUsagePanel() {
             <div className="rounded-xl border p-4 bg-accent/30 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-foreground flex items-center gap-2">
-                  <Users className="h-4 w-4 text-indigo-500" /> أعضاء الفريق (Team)
+                  <Users className="h-4 w-4 text-indigo-500" /> {t('teamMembers')}
                 </span>
                 <span className="font-mono font-bold text-foreground">
                   {plan.max_users === -1
-                    ? `${usage?.members_count.toLocaleString()} (بدون حدود)`
+                    ? `${usage?.members_count.toLocaleString()} (${t('unlimited')})`
                     : `${usage?.members_count.toLocaleString()} / ${plan.max_users.toLocaleString()}`}
                 </span>
               </div>
@@ -305,12 +306,12 @@ export function PlanUsagePanel() {
                     />
                   </div>
                   <div className="flex justify-between text-[11px] text-muted-foreground">
-                    <span>نسبة الامتلاء</span>
+                    <span>{t('fullnessRate')}</span>
                     <span className="font-mono">{usage?.members_percentage}%</span>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-emerald-500 font-medium">عدد أعضاء غير محدود</p>
+                <p className="text-xs text-emerald-500 font-medium">{t('unlimitedMembersText')}</p>
               )}
             </div>
           </div>
@@ -318,7 +319,7 @@ export function PlanUsagePanel() {
           {/* Features Checklist */}
           <div className="space-y-3 pt-2">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-              الميزات المتوفرة بالخطة
+              {t('planFeaturesTitle')}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {featuresList.map((item) => {
@@ -348,15 +349,15 @@ export function PlanUsagePanel() {
           {/* Info Note */}
           <div className="rounded-lg bg-muted/60 p-3 text-[11px] text-muted-foreground flex items-center justify-between border">
             <span>
-              دورة الاستهلاك تتجدد تلقائياً بداية كل شهر ميلادي ({usage?.year_month}).
+              {t('cycleNote', { period: usage?.year_month || '' })}
             </span>
             <button
               type="button"
               onClick={() => setIsUpgradeModalOpen(true)}
               className="font-bold text-indigo-500 hover:text-indigo-600 transition-colors flex items-center gap-1"
             >
-              <span>الانتقال أو الترقية لخطة جديدة</span>
-              <ArrowUpRight className="h-3 w-3" />
+              <span>{t('switchOrUpgrade')}</span>
+              <ArrowUpRight className="h-3 w-3 rtl:rotate-180" />
             </button>
           </div>
         </CardContent>

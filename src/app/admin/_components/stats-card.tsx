@@ -1,4 +1,7 @@
+'use client'
+
 import type { LucideIcon } from 'lucide-react'
+import { useLocale } from 'next-intl'
 
 interface StatsCardProps {
   title: string
@@ -18,6 +21,8 @@ export function StatsCard({
   icon: Icon,
   trend,
 }: StatsCardProps) {
+  const locale = useLocale()
+
   return (
     <div className="relative overflow-hidden rounded-xl border border-slate-800/60 bg-slate-900/50 p-5 shadow-sm transition-all hover:border-slate-700/60 flex flex-col justify-between">
       <div className="flex items-center justify-between">
@@ -29,7 +34,7 @@ export function StatsCard({
 
       <div className="mt-3">
         <h3 className="text-3xl font-semibold text-slate-50 tracking-tight">
-          {typeof value === 'number' ? value.toLocaleString('ar-SA') : value}
+          {typeof value === 'number' ? value.toLocaleString(locale === 'ar' ? 'ar-SA' : 'en-US') : value}
         </h3>
       </div>
 

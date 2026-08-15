@@ -440,6 +440,37 @@ export async function sendEvolutionMediaMessage(
   return { messageId: id }
 }
 
+/**
+ * Fetches profile picture URL for a contact number from Evolution API.
+ */
+export async function fetchEvolutionProfilePictureUrl(args: {
+  instanceName: string
+  instanceApiKey: string
+  number: string
+}): Promise<string | null> {
+  try {
+    const normalized = args.number.replace(/\D/g, '')
+    let apiKey = args.instanceApiKey
+    try {
+      apiKey = getEvolutionGlobalApiKey()
+    } catch {
+      // fallback to instance key if global key not set
+    }
+    const data = await evolutionFetch<{ profilePictureUrl?: string; picture?: string; url?: string }>(
+      `/chat/fetchProfilePictureUrl/${args.instanceName}`,
+      {
+        method: 'POST',
+        apiKey,
+        body: JSON.stringify({ number: normalized }),
+      }
+    )
+    return data.profilePictureUrl ?? data.picture ?? data.url ?? null
+  } catch (err) {
+    console.warn('[fetchEvolutionProfilePictureUrl] warning:', err)
+    return null
+  }
+}
+
 // ─── Webhook payload types ────────────────────────────────────
 
 /**

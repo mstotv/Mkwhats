@@ -19,8 +19,10 @@ import {
   Sparkles,
   Bot,
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 export function TelegramSettingsPanel() {
+  const t = useTranslations('Settings.telegram')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
@@ -53,13 +55,13 @@ export function TelegramSettingsPanel() {
 
       if (res.status === 403) {
         setFeatureAllowed(false)
-        setPlanReason(data.error || 'ميزة بوت التيليجرام غير متاحة في خطتك الحالية')
+        setPlanReason(data.error || t('featureDisabledDesc'))
         setLoading(false)
         return
       }
 
       if (!res.ok) {
-        throw new Error(data.error || 'فشل جلب الإعدادات')
+        throw new Error(data.error || t('saveError'))
       }
 
       if (data.config) {
@@ -72,7 +74,7 @@ export function TelegramSettingsPanel() {
       }
     } catch (err: any) {
       console.error('[TelegramSettingsPanel] fetchConfig error:', err)
-      setAlertMessage({ type: 'error', text: err.message || 'حدث خطأ أثناء تحميل الإعدادات' })
+      setAlertMessage({ type: 'error', text: err.message || t('saveError') })
     } finally {
       setLoading(false)
     }
@@ -80,11 +82,11 @@ export function TelegramSettingsPanel() {
 
   const handleTestConnection = async () => {
     if (!chatId.trim()) {
-      setAlertMessage({ type: 'error', text: 'يرجى كتابة معرف المحادثة (Chat ID) أولاً' })
+      setAlertMessage({ type: 'error', text: t('enterChatIdFirst') })
       return
     }
     if (!botToken.trim()) {
-      setAlertMessage({ type: 'error', text: 'يرجى كتابة رمز البوت (Bot Token) أولاً' })
+      setAlertMessage({ type: 'error', text: t('enterTokenFirst') })
       return
     }
 
@@ -102,17 +104,17 @@ export function TelegramSettingsPanel() {
       if (!res.ok || !data.success) {
         setAlertMessage({
           type: 'error',
-          text: data.error || 'فشل الاتصال بالبوت. تأكد من صحة التوكن والـ Chat ID.',
+          text: data.error || t('testFailed'),
         })
       } else {
         setAlertMessage({
           type: 'success',
-          text: data.message || `تم اختبار الاتصال بنجاح مع البوت ${data.botUsername}!`,
+          text: data.message || t('testSuccess', { username: data.botUsername || '' }),
         })
       }
     } catch (err: any) {
       console.error('[TelegramSettingsPanel] handleTestConnection error:', err)
-      setAlertMessage({ type: 'error', text: 'حدث خطأ أثناء اختبار الاتصال' })
+      setAlertMessage({ type: 'error', text: t('testError') })
     } finally {
       setTesting(false)
     }
@@ -122,11 +124,11 @@ export function TelegramSettingsPanel() {
     e.preventDefault()
 
     if (!chatId.trim()) {
-      setAlertMessage({ type: 'error', text: 'يرجى كتابة معرف المحادثة (Chat ID)' })
+      setAlertMessage({ type: 'error', text: t('enterChatIdFirst') })
       return
     }
     if (!botToken.trim()) {
-      setAlertMessage({ type: 'error', text: 'يرجى كتابة رمز البوت (Bot Token)' })
+      setAlertMessage({ type: 'error', text: t('enterTokenFirst') })
       return
     }
 
@@ -142,22 +144,22 @@ export function TelegramSettingsPanel() {
       const data = await res.json()
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'فشل حفظ الإعدادات')
+        throw new Error(data.error || t('saveError'))
       }
 
-      setAlertMessage({ type: 'success', text: 'تم حفظ إعدادات بوت التيليجرام بنجاح!' })
+      setAlertMessage({ type: 'success', text: t('saveSuccess') })
       setHasExistingConfig(true)
       await fetchConfig()
     } catch (err: any) {
       console.error('[TelegramSettingsPanel] handleSave error:', err)
-      setAlertMessage({ type: 'error', text: err.message || 'فشل الحفظ' })
+      setAlertMessage({ type: 'error', text: err.message || t('saveError') })
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!confirm('هل أنت تأكد من رغبتك في إزالة إعدادات بوت تيليجرام؟')) return
+    if (!confirm(t('confirmDelete'))) return
 
     setDeleting(true)
     setAlertMessage(null)
@@ -167,17 +169,17 @@ export function TelegramSettingsPanel() {
       const data = await res.json()
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'فشل الحذف')
+        throw new Error(data.error || t('deleteError'))
       }
 
       setBotToken('')
       setChatId('')
       setIsActive(true)
       setHasExistingConfig(false)
-      setAlertMessage({ type: 'success', text: 'تم حذف إعدادات تيليجرام بنجاح' })
+      setAlertMessage({ type: 'success', text: t('deleteSuccess') })
     } catch (err: any) {
       console.error('[TelegramSettingsPanel] handleDelete error:', err)
-      setAlertMessage({ type: 'error', text: err.message || 'فشل الحذف' })
+      setAlertMessage({ type: 'error', text: err.message || t('deleteError') })
     } finally {
       setDeleting(false)
     }
@@ -185,23 +187,23 @@ export function TelegramSettingsPanel() {
 
   if (loading) {
     return (
-      <Card dir="rtl" className="p-8 text-center">
+      <Card className="p-8 text-center">
         <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary mb-3" />
-        <p className="text-sm text-muted-foreground">جاري تحميل إعدادات التيليجرام...</p>
+        <p className="text-sm text-muted-foreground">{t('loadingSettings')}</p>
       </Card>
     )
   }
 
   if (!featureAllowed) {
     return (
-      <Card dir="rtl" className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900/50">
+      <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-900/50">
         <CardHeader>
           <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
             <Sparkles className="w-5 h-5" />
-            <CardTitle>ميزة بوت تيليجرام غير متاحة في خطتك الحالية</CardTitle>
+            <CardTitle>{t('featureDisabledTitle')}</CardTitle>
           </div>
           <CardDescription className="text-amber-800 dark:text-amber-300/80">
-            {planReason || 'يرجى ترقية خطة الاشتراك للاستفادة من الإشعارات الفورية للطلبات عبر بوت التيليجرام.'}
+            {planReason || t('featureDisabledDesc')}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -209,7 +211,7 @@ export function TelegramSettingsPanel() {
   }
 
   return (
-    <Card dir="rtl" className="max-w-3xl">
+    <Card className="max-w-3xl">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -217,15 +219,15 @@ export function TelegramSettingsPanel() {
               <Send className="w-6 h-6" />
             </div>
             <div>
-              <CardTitle className="text-lg font-bold">إشعارات بوت تيليجرام (Telegram Bot)</CardTitle>
+              <CardTitle className="text-lg font-bold">{t('title')}</CardTitle>
               <CardDescription>
-                استلم إشعاراً فورياً على حسابك أو مجموعتك في تيليجرام بمجرد تأكيد أي طلب جديد.
+                {t('description')}
               </CardDescription>
             </div>
           </div>
           {hasExistingConfig && (
             <Badge variant={isActive ? 'default' : 'secondary'} className="px-3 py-1 text-xs">
-              {isActive ? 'مفعّل' : 'متوقف مؤقتاً'}
+              {isActive ? t('active') : t('paused')}
             </Badge>
           )}
         </div>
@@ -252,7 +254,7 @@ export function TelegramSettingsPanel() {
 
           <div className="space-y-2">
             <Label htmlFor="botToken" className="font-medium">
-              رمز البوت (Bot Token)
+              {t('botTokenLabel')}
             </Label>
             <div className="relative">
               <Input
@@ -261,94 +263,98 @@ export function TelegramSettingsPanel() {
                 placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ..."
                 value={botToken}
                 onChange={(e) => setBotToken(e.target.value)}
-                dir="ltr"
-                className="pl-10 font-mono text-sm"
+                className="pl-10 rtl:pl-3 rtl:pr-10 font-mono text-sm"
               />
               <button
                 type="button"
                 onClick={() => setShowToken(!showToken)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              احصل عليه من بوت <code className="bg-muted px-1.5 py-0.5 rounded">@BotFather</code> في تيليجرام عند إنشاء بوت جديد.
+              {t('botTokenHint')}
             </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="chatId" className="font-medium">
-              معرف المحادثة أو القناة (Chat ID)
+              {t('chatIdLabel')}
             </Label>
             <Input
               id="chatId"
               type="text"
-              placeholder="-1001234567890 أو 123456789"
+              placeholder="-1001234567890"
               value={chatId}
               onChange={(e) => setChatId(e.target.value)}
-              dir="ltr"
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              يمكنك معرفة الـ Chat ID بإرسال رسالة إلى <code className="bg-muted px-1.5 py-0.5 rounded">@userinfobot</code> أو إضافة البوت لمجموعتك.
+              {t('chatIdHint')}
             </p>
           </div>
 
           <div className="flex items-center justify-between p-4 rounded-xl border bg-muted/30">
             <div className="space-y-0.5">
-              <Label className="font-medium">تفعيل الإشعارات التلقائية</Label>
+              <Label className="font-medium">{t('enableAutoNotify')}</Label>
               <p className="text-xs text-muted-foreground">
-                عند تفعيله، سيتم إرسال كل طلب مؤكد فوراً إلى بوت التيليجرام.
+                {t('enableAutoNotifyDesc')}
               </p>
             </div>
             <Switch checked={isActive} onCheckedChange={setIsActive} />
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t">
-          <div className="flex items-center gap-2">
-            <Button
-              type="submit"
-              disabled={saving || testing}
-              className="gap-2"
-            >
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              حفظ الإعدادات
-            </Button>
+        <CardFooter className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-6">
+          <div>
+            {hasExistingConfig && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleDelete}
+                disabled={deleting || saving || testing}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs gap-1.5"
+              >
+                {deleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                {t('deleteSettings')}
+              </Button>
+            )}
+          </div>
 
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <Button
               type="button"
               variant="outline"
               onClick={handleTestConnection}
-              disabled={saving || testing}
-              className="gap-2"
+              disabled={testing || saving || deleting}
+              className="w-full sm:w-auto text-xs gap-1.5"
             >
               {testing ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Bot className="w-4 h-4" />
               )}
-              اختبار الاتصال
+              {t('testConnection')}
+            </Button>
+
+            <Button
+              type="submit"
+              disabled={saving || testing || deleting}
+              className="w-full sm:w-auto text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-4 h-4" />
+              )}
+              {t('saveSettings')}
             </Button>
           </div>
-
-          {hasExistingConfig && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleDelete}
-              disabled={deleting || saving || testing}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40"
-            >
-              {deleting ? (
-                <Loader2 className="w-4 h-4 animate-spin ml-2" />
-              ) : (
-                <Trash2 className="w-4 h-4 ml-2" />
-              )}
-              إزالة الإعدادات
-            </Button>
-          )}
         </CardFooter>
       </form>
     </Card>
