@@ -431,17 +431,15 @@ export function TemplateManager() {
         description={t('description')}
         action={
           <div className="flex items-center gap-2">
-            {connectionType === 'meta' && (
-              <Button
-                variant="outline"
-                onClick={handleSyncFromMeta}
-                disabled={syncing}
-                title={t('syncTitle')}
-              >
-                <RefreshCw className={`size-4 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? t('syncing') : t('syncFromMeta')}
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              onClick={handleSyncFromMeta}
+              disabled={syncing}
+              title={t('syncTitle')}
+            >
+              <RefreshCw className={`size-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? t('syncing') : t('syncFromMeta')}
+            </Button>
             <Button onClick={openCreate}>
               <Plus className="size-4" />
               {t('newTemplate')}
@@ -543,36 +541,40 @@ export function TemplateManager() {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-lg font-semibold">
               {editingId ? t('editTitle') : connectionType === 'evolution' ? 'حفظ قالب محلي جديد' : t('newTitle')}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs text-muted-foreground">
               {connectionType === 'evolution'
                 ? 'أدخل بيانات القالب لحفظه محلياً واستخدامه مباشرة كرسالة جاهزة.'
                 : t('newDesc')}
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+            <div>
+              <Label htmlFor="name" className="text-sm font-medium">Template Name</Label>
+              <Input
+                id="name"
+                value={form.name}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, name: e.target.value }))
+                }
+                placeholder="e.g. order_update"
+                disabled={!!editingId}
+                required
+                className="mt-1"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Lowercase letters, digits, and underscores only.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name">Template Name</Label>
-                <Input
-                  id="name"
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, name: e.target.value }))
-                  }
-                  placeholder="e.g. order_update"
-                  disabled={!!editingId}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category" className="text-sm font-medium">Category</Label>
                 <Select
                   value={form.category}
                   onValueChange={(val) =>
@@ -582,7 +584,7 @@ export function TemplateManager() {
                     }))
                   }
                 >
-                  <SelectTrigger id="category">
+                  <SelectTrigger id="category" className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -594,30 +596,34 @@ export function TemplateManager() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div>
+                <Label htmlFor="language" className="text-sm font-medium">Language</Label>
+                <Input
+                  id="language"
+                  value={form.language}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, language: e.target.value }))
+                  }
+                  placeholder="en_US"
+                  required
+                  className="mt-1"
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Must match the exact code on Meta — en_US and en are distinct.
+                </p>
+              </div>
             </div>
 
             <div>
-              <Label htmlFor="language">Language Code</Label>
-              <Input
-                id="language"
-                value={form.language}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, language: e.target.value }))
-                }
-                placeholder="en_US or ar"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="header_format">Header Type</Label>
+              <Label htmlFor="header_format" className="text-sm font-medium">Header</Label>
               <Select
                 value={form.header_format}
                 onValueChange={(val) =>
                   setForm((f) => ({ ...f, header_format: val as HeaderFormat }))
                 }
               >
-                <SelectTrigger id="header_format">
+                <SelectTrigger id="header_format" className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -632,7 +638,6 @@ export function TemplateManager() {
 
             {form.header_format === 'text' && (
               <div>
-                <Label htmlFor="header_content">Header Text</Label>
                 <Input
                   id="header_content"
                   value={form.header_content}
@@ -640,14 +645,15 @@ export function TemplateManager() {
                     setForm((f) => ({ ...f, header_content: e.target.value }))
                   }
                   placeholder="Header text..."
+                  className="mt-1"
                 />
               </div>
             )}
 
             {['image', 'video', 'document'].includes(form.header_format) && (
               <div>
-                <Label htmlFor="header_media_url">Header Media URL</Label>
-                <div className="flex gap-2">
+                <Label htmlFor="header_media_url" className="text-sm font-medium">Header Media URL</Label>
+                <div className="flex gap-2 mt-1">
                   <Input
                     id="header_media_url"
                     value={form.header_media_url}
@@ -687,7 +693,7 @@ export function TemplateManager() {
             )}
 
             <div>
-              <Label htmlFor="body_text">Body Text</Label>
+              <Label htmlFor="body_text" className="text-sm font-medium">Body Text</Label>
               <Textarea
                 id="body_text"
                 rows={4}
@@ -697,22 +703,27 @@ export function TemplateManager() {
                 }
                 placeholder="Hello {{1}}, your order {{2}} is ready."
                 required
+                className="mt-1"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Use {'{{1}}'}, {'{{2}}'} for variables (must be contiguous starting at {'{{1}}'}).
+              </p>
             </div>
 
             <div>
-              <Label htmlFor="footer_text">Footer Text (Optional)</Label>
+              <Label htmlFor="footer_text" className="text-sm font-medium">Footer (optional)</Label>
               <Input
                 id="footer_text"
                 value={form.footer_text}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, footer_text: e.target.value }))
                 }
-                placeholder="Reply STOP to unsubscribe"
+                placeholder="Optional footer text (max 60 chars)"
+                className="mt-1"
               />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="pt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -720,7 +731,7 @@ export function TemplateManager() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={submitting}>
+              <Button type="submit" disabled={submitting} className="bg-primary text-primary-foreground hover:bg-primary/90">
                 {submitting && <Loader2 className="size-4 animate-spin mr-2" />}
                 {editingId
                   ? 'Update Template'
