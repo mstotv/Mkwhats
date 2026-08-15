@@ -12,6 +12,12 @@ import {
   Pencil,
   RotateCcw,
   Upload,
+  Tag,
+  LayoutGrid,
+  Globe,
+  Type,
+  MessageSquare,
+  Send,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -541,99 +547,132 @@ export function TemplateManager() {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold">
-              {editingId ? t('editTitle') : connectionType === 'evolution' ? 'حفظ قالب محلي جديد' : t('newTitle')}
+        <DialogContent className="max-w-2xl sm:max-w-3xl max-h-[90vh] overflow-y-auto p-6 border-border/60 bg-card">
+          <DialogHeader className="space-y-1 text-left">
+            <DialogTitle className="text-xl font-bold text-foreground">
+              {editingId
+                ? t('dialogEditTitle')
+                : connectionType === 'evolution'
+                  ? 'New Message Template (Local)'
+                  : t('dialogNewTitle')}
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              {connectionType === 'evolution'
-                ? 'أدخل بيانات القالب لحفظه محلياً واستخدامه مباشرة كرسالة جاهزة.'
-                : t('newDesc')}
+            <DialogDescription className="text-sm text-muted-foreground">
+              {editingId
+                ? t('dialogEditDesc')
+                : connectionType === 'evolution'
+                  ? 'Build a template and save it locally for your Evolution API connection. You can use it in broadcasts and inbox.'
+                  : t('dialogNewDesc')}
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <form onSubmit={handleSubmit} className="space-y-5 pt-3">
+            {/* Template Name */}
             <div>
-              <Label htmlFor="name" className="text-sm font-medium">Template Name</Label>
-              <Input
-                id="name"
-                value={form.name}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, name: e.target.value }))
-                }
-                placeholder="e.g. order_update"
-                disabled={!!editingId}
-                required
-                className="mt-1"
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Lowercase letters, digits, and underscores only.
+              <Label htmlFor="name" className="text-sm font-medium text-foreground">
+                {t('templateName')}
+              </Label>
+              <div className="relative mt-1.5">
+                <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />
+                <Input
+                  id="name"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  placeholder={t('namePlaceholder')}
+                  disabled={!!editingId}
+                  required
+                  className="pl-9 bg-background/50 border-border/80 focus-visible:ring-emerald-500"
+                />
+              </div>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {t('nameHint')}
               </p>
             </div>
 
+            {/* Category & Language */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="category" className="text-sm font-medium">Category</Label>
-                <Select
-                  value={form.category}
-                  onValueChange={(val) =>
-                    setForm((f) => ({
-                      ...f,
-                      category: val as MessageTemplate['category'],
-                    }))
-                  }
-                >
-                  <SelectTrigger id="category" className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="category" className="text-sm font-medium text-foreground">
+                  {t('category')}
+                </Label>
+                <div className="relative mt-1.5">
+                  <Select
+                    value={form.category}
+                    onValueChange={(val) =>
+                      setForm((f) => ({
+                        ...f,
+                        category: val as MessageTemplate['category'],
+                      }))
+                    }
+                  >
+                    <SelectTrigger id="category" className="w-full bg-background/50 border-border/80 focus:ring-emerald-500 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <LayoutGrid className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <SelectValue />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div>
-                <Label htmlFor="language" className="text-sm font-medium">Language</Label>
-                <Input
-                  id="language"
-                  value={form.language}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, language: e.target.value }))
-                  }
-                  placeholder="en_US"
-                  required
-                  className="mt-1"
-                />
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <Label htmlFor="language" className="text-sm font-medium text-foreground">
+                  {t('language')}
+                </Label>
+                <div className="relative mt-1.5">
+                  <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500" />
+                  <Input
+                    id="language"
+                    value={form.language}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, language: e.target.value }))
+                    }
+                    placeholder="en_US"
+                    required
+                    className="pl-9 w-full bg-background/50 border-border/80 focus-visible:ring-emerald-500"
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
                   Must match the exact code on Meta — en_US and en are distinct.
                 </p>
               </div>
             </div>
 
+            {/* Header */}
             <div>
-              <Label htmlFor="header_format" className="text-sm font-medium">Header</Label>
-              <Select
-                value={form.header_format}
-                onValueChange={(val) =>
-                  setForm((f) => ({ ...f, header_format: val as HeaderFormat }))
-                }
-              >
-                <SelectTrigger id="header_format" className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {HEADER_FORMATS.map((fmt) => (
-                    <SelectItem key={fmt} value={fmt}>
-                      {fmt.toUpperCase()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="header_format" className="text-sm font-medium text-foreground">
+                {t('header')}
+              </Label>
+              <div className="relative mt-1.5">
+                <Select
+                  value={form.header_format}
+                  onValueChange={(val) =>
+                    setForm((f) => ({ ...f, header_format: val as HeaderFormat }))
+                  }
+                >
+                  <SelectTrigger id="header_format" className="w-full bg-background/50 border-border/80 focus:ring-emerald-500 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Type className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <SelectValue />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {HEADER_FORMATS.map((fmt) => (
+                      <SelectItem key={fmt} value={fmt}>
+                        {fmt.charAt(0).toUpperCase() + fmt.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {form.header_format === 'text' && (
@@ -644,16 +683,16 @@ export function TemplateManager() {
                   onChange={(e) =>
                     setForm((f) => ({ ...f, header_content: e.target.value }))
                   }
-                  placeholder="Header text..."
-                  className="mt-1"
+                  placeholder={t('headerTextPlaceholder')}
+                  className="mt-1.5 bg-background/50 border-border/80 focus-visible:ring-emerald-500"
                 />
               </div>
             )}
 
             {['image', 'video', 'document'].includes(form.header_format) && (
               <div>
-                <Label htmlFor="header_media_url" className="text-sm font-medium">Header Media URL</Label>
-                <div className="flex gap-2 mt-1">
+                <Label htmlFor="header_media_url" className="text-sm font-medium text-foreground">Header Media URL</Label>
+                <div className="flex gap-2 mt-1.5">
                   <Input
                     id="header_media_url"
                     value={form.header_media_url}
@@ -661,6 +700,7 @@ export function TemplateManager() {
                       setForm((f) => ({ ...f, header_media_url: e.target.value }))
                     }
                     placeholder="https://..."
+                    className="bg-background/50 border-border/80 focus-visible:ring-emerald-500"
                   />
                   {form.header_format === 'image' && (
                     <>
@@ -692,51 +732,129 @@ export function TemplateManager() {
               </div>
             )}
 
+            {/* Body Text */}
             <div>
-              <Label htmlFor="body_text" className="text-sm font-medium">Body Text</Label>
-              <Textarea
-                id="body_text"
-                rows={4}
-                value={form.body_text}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, body_text: e.target.value }))
-                }
-                placeholder="Hello {{1}}, your order {{2}} is ready."
-                required
-                className="mt-1"
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <Label htmlFor="body_text" className="text-sm font-medium text-foreground">
+                {t('bodyText')}
+              </Label>
+              <div className="relative mt-1.5">
+                <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-emerald-500" />
+                <Textarea
+                  id="body_text"
+                  rows={3}
+                  value={form.body_text}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, body_text: e.target.value }))
+                  }
+                  placeholder={t('bodyPlaceholder')}
+                  required
+                  className="pl-9 bg-background/50 border-border/80 focus-visible:ring-emerald-500 font-sans text-sm resize-y"
+                />
+              </div>
+              <p className="mt-1.5 text-xs text-muted-foreground">
                 Use {'{{1}}'}, {'{{2}}'} for variables (must be contiguous starting at {'{{1}}'}).
               </p>
             </div>
 
+            {/* Footer Text */}
             <div>
-              <Label htmlFor="footer_text" className="text-sm font-medium">Footer (optional)</Label>
+              <Label htmlFor="footer_text" className="text-sm font-medium text-foreground">
+                {t('footer')}
+              </Label>
               <Input
                 id="footer_text"
                 value={form.footer_text}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, footer_text: e.target.value }))
                 }
-                placeholder="Optional footer text (max 60 chars)"
-                className="mt-1"
+                placeholder={t('footerPlaceholder')}
+                className="mt-1.5 bg-background/50 border-border/80 focus-visible:ring-emerald-500"
               />
             </div>
 
-            <DialogFooter className="pt-2">
+            {/* Buttons Section */}
+            <div>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium text-foreground">
+                  {t('buttons')}
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addButton('QUICK_REPLY')}
+                  className="h-8 text-xs font-medium border-border/80 hover:bg-muted"
+                >
+                  <Plus className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
+                  {t('addButton')}
+                </Button>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Up to 10 buttons. QUICK_REPLY buttons must come before URL / phone / copy-code buttons.
+              </p>
+
+              {form.buttons.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {form.buttons.map((btn, idx) => (
+                    <div key={idx} className="flex items-center gap-2 rounded-lg border border-border/60 p-2.5 bg-background/30">
+                      <Select
+                        value={btn.type}
+                        onValueChange={(v) => changeButtonType(idx, v as TemplateButton['type'])}
+                      >
+                        <SelectTrigger className="w-32 h-8 text-xs bg-background">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="QUICK_REPLY">Quick Reply</SelectItem>
+                          <SelectItem value="URL">URL</SelectItem>
+                          <SelectItem value="PHONE_NUMBER">Phone</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        value={btn.text}
+                        onChange={(e) => updateButton(idx, { text: e.target.value })}
+                        placeholder="Button label"
+                        className="h-8 text-xs bg-background"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeButton(idx)}
+                        className="h-8 w-8 text-muted-foreground hover:text-red-400"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer Actions */}
+            <DialogFooter className="pt-4 border-t border-border/60 flex items-center justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
+                className="bg-muted/40 border-border/80 hover:bg-muted text-foreground font-medium"
               >
-                Cancel
+                {t('cancel')}
               </Button>
-              <Button type="submit" disabled={submitting} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                {submitting && <Loader2 className="size-4 animate-spin mr-2" />}
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-5 flex items-center gap-2"
+              >
+                {submitting ? (
+                  <Loader2 className="size-4 animate-spin mr-1" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
                 {editingId
                   ? 'Update Template'
                   : connectionType === 'evolution'
-                    ? 'حفظ القالب'
+                    ? 'Save Template'
                     : 'Submit for Approval'}
               </Button>
             </DialogFooter>
