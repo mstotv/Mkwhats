@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { MessageTemplate } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Loader2, FileText, ArrowRight } from 'lucide-react';
+import { Loader2, FileText, ArrowRight, MessageSquareText } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 const categoryColors: Record<string, string> = {
@@ -14,25 +14,35 @@ const categoryColors: Record<string, string> = {
 };
 
 interface Step1Props {
+  connectionType: 'meta' | 'evolution';
   selectedTemplate: MessageTemplate | null;
   onSelect: (template: MessageTemplate) => void;
+  freeText: string;
+  onFreeTextChange: (text: string) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-export function Step1ChooseTemplate({ selectedTemplate, onSelect, onNext, onBack }: Step1Props) {
+export function Step1ChooseTemplate({
+  connectionType,
+  selectedTemplate,
+  onSelect,
+  freeText,
+  onFreeTextChange,
+  onNext,
+  onBack,
+}: Step1Props) {
   const t = useTranslations('Broadcasts.wizard');
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(connectionType === 'meta');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (connectionType !== 'meta') return;
+
     async function fetchTemplates() {
       try {
         const supabase = createClient();
-        // Only APPROVED templates can be sent via Meta — anything else
-        // would 400 at broadcast time. Hide them rather than letting
-        // the user pick a template that will fail.
         const { data, error: fetchError } = await supabase
           .from('message_templates')
           .select('*')
@@ -49,7 +59,7 @@ export function Step1ChooseTemplate({ selectedTemplate, onSelect, onNext, onBack
     }
 
     fetchTemplates();
-  }, []);
+  }, [connectionType, t]);
 
   if (loading) {
     return (
@@ -67,6 +77,56 @@ export function Step1ChooseTemplate({ selectedTemplate, onSelect, onNext, onBack
     );
   }
 
+  // ══════════════════════════════════════════════════════════════════
+  // EVOLUTION PATH — Custom free text area
+  // ══════════════════════════════════════════════════════════════════
+  if (connectionType === 'evolution') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <MessageSquareText className="h-5 w-5 text-primary" />
+            صياغة رسالة البرودكاست (Evolution API)
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            أدخل نص الرسالة التي تريد إرسالها لجميع المستلمين. لا تتطلب حسابات Evolution موافقة قوالب مسبقة.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card/50 p-4 space-y-3">
+          <label className="block text-sm font-medium text-foreground">نص الرسالة</label>
+          <textarea
+            value={freeText}
+            onChange={(e) => onFreeTextChange(e.target.value)}
+            placeholder="اكتب رسالتك هنا..."
+            rows={6}
+            className="w-full rounded-lg border border-border bg-muted p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <p className="text-xs text-muted-foreground">
+            سيتم إرسال هذا النص المباشر لكافة أرقام المستلمين المحددين بالخطوة التالية.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-border pt-4">
+          <Button variant="outline" onClick={onBack} className="border-border text-muted-foreground">
+            {t('back')}
+          </Button>
+          <Button
+            onClick={onNext}
+            disabled={!freeText.trim()}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {t('next')}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // META PATH — Choose approved template
+  // ══════════════════════════════════════════════════════════════════
   return (
     <div className="space-y-6">
       <div>
@@ -109,9 +169,6 @@ export function Step1ChooseTemplate({ selectedTemplate, onSelect, onNext, onBack
                 <p className="line-clamp-3 text-xs text-muted-foreground">{template.body_text}</p>
                 <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                   <span>{template.language ?? 'en_US'}</span>
-                  {/* Status is omitted on purpose — every template
-                      shown here is already filtered to APPROVED,
-                      so the chip carried no information. */}
                 </div>
               </button>
             );

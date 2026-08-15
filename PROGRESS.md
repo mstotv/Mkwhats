@@ -4,6 +4,12 @@
 - multi-tenant migration (017-036) مطبق ومختبر يدوياً بحسابين حقيقيين
 - RLS شغال على كل الجداول، بدون تداخل بيانات بين الحسابات
 - ✅ Evolution API integration مكتمل ومختبر على production (استقبال + إرسال). التفاصيل الكاملة بملف docs/evolution-integration-report.md
+- ✅ دعم إرسال البرودكاست (Broadcasts) عبر Evolution API بجانب Meta Cloud API الرسمية:
+  - مسار إرسال مخصص لنص حر بدون قوالب Meta لحسابات Evolution API.
+  - فحص محمي موحد لحدود خطة الاشتراك الشهيرة (الرسائل والبرودكاست).
+  - معدل إرسال آمن متدرج لـ Evolution لحماية أرقام واتساب من الحظر.
+  - مؤشر التقدم والوقت المتبقي التقديري المباشر في الواجهة أثناء الإرسال.
+  - معالجة وإظهار أخطاء تفصيلية واضحة في واجهة النتيجة بدلاً من الفشل الصامت.
 - ✅ Admin Panel Authentication مكتمل ومختبر محلياً (platform_admins + rate limiting + middleware protection)
 - ✅ مايقريشن 040 (إضافة حالة الحساب status إلى جدول accounts)
 - ✅ لوحة الأدمن Dashboard (/admin/dashboard) وقائمة الحسابات (/admin/accounts) بالبحث والإحصائيات

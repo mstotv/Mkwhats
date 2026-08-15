@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
@@ -11,24 +11,21 @@ import { Step2SelectAudience } from '@/components/broadcasts/step2-select-audien
 import { Step3Personalize } from '@/components/broadcasts/step3-personalize';
 import { Step4ScheduleSend } from '@/components/broadcasts/step4-schedule-send';
 import { useBroadcastSending } from '@/hooks/use-broadcast-sending';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-
-const steps = [
-  { label: 'template', key: 'template' },
-  { label: 'audience', key: 'audience' },
-  { label: 'personalize', key: 'personalize' },
-  { label: 'send', key: 'send' },
-] as const;
 
 export default function NewBroadcastPage() {
   const router = useRouter();
   const t = useTranslations('Broadcasts.new');
   const { accountId } = useAuth();
-  const { createAndSendBroadcast, isProcessing, progress } = useBroadcastSending();
+  const { createAndSendBroadcast, isProcessing, progress, estimatedSecondsRemaining } = useBroadcastSending();
+
+  const [connectionType, setConnectionType] = useState<'meta' | 'evolution'>('meta');
+  const [loadingConfig, setLoadingConfig] = useState(true);
 
   const [currentStep, setCurrentStep] = useState(0);
   const [template, setTemplate] = useState<MessageTemplate | null>(null);
+  const [freeText, setFreeText] = useState('');
   const [audience, setAudience] = useState<{
     type: 'all' | 'tags' | 'custom_field' | 'csv';
     tagIds?: string[];
@@ -46,13 +43,55 @@ export default function NewBroadcastPage() {
   const [headerMediaUrl, setHeaderMediaUrl] = useState('');
   const [name, setName] = useState('');
 
+  // Fetch account WhatsApp connection type on load
+  useEffect(() => {
+    async function loadConfig() {
+      if (!accountId) return;
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('whatsapp_config')
+          .select('connection_type')
+          .eq('account_id', accountId)
+          .maybeSingle();
+
+        if (data?.connection_type === 'evolution') {
+          setConnectionType('evolution');
+        } else {
+          setConnectionType('meta');
+        }
+      } catch (err) {
+        console.error('Failed to load whatsapp config:', err);
+      } finally {
+        setLoadingConfig(false);
+      }
+    }
+
+    loadConfig();
+  }, [accountId]);
+
+  const steps = connectionType === 'evolution'
+    ? [
+        { label: 'template', key: 'message' },
+        { label: 'audience', key: 'audience' },
+        { label: 'send', key: 'send' },
+      ]
+    : [
+        { label: 'template', key: 'template' },
+        { label: 'audience', key: 'audience' },
+        { label: 'personalize', key: 'personalize' },
+        { label: 'send', key: 'send' },
+      ];
+
   async function handleSend() {
-    if (!template) return;
+    if (connectionType === 'meta' && !template) return;
+    if (connectionType === 'evolution' && !freeText.trim()) return;
 
     try {
       const broadcastId = await createAndSendBroadcast({
         name,
         template,
+        freeText,
         audience: {
           type: audience.type,
           tagIds: audience.tagIds,
@@ -65,39 +104,33 @@ export default function NewBroadcastPage() {
       });
       router.push(`/broadcasts/${broadcastId}`);
     } catch (err) {
-      // Previously swallowed with console.error — the wizard would
-      // just no-op, leaving the user confused. Surface the reason.
       const message = err instanceof Error ? err.message : 'Broadcast failed';
       console.error('Broadcast failed:', err);
       toast.error(message);
     }
   }
 
-  /**
-   * Writes a draft broadcast row — no recipients, no sending. The user
-   * can revisit it via the list page to finish the flow later. We
-   * don't persist the in-progress audience/variable config here
-   * because the current schema doesn't carry it past `audience_filter`
-   * and `template_variables`; those are enough for the user to
-   * recognize the draft but not to exactly round-trip into the wizard.
-   * A full resume-draft UX is a future polish.
-   */
   async function handleSaveDraft() {
-    if (!template || !name.trim()) {
+    if (!name.trim()) {
       toast.error(t('toastGiveName'));
       return;
     }
+    if (connectionType === 'meta' && !template) {
+      toast.error(t('toastChooseTemplate'));
+      return;
+    }
+    if (connectionType === 'evolution' && !freeText.trim()) {
+      toast.error('يرجى كتابة نص الرسالة لحفظ المسودة');
+      return;
+    }
+
     const supabase = createClient();
     const {
       data: { session },
     } = await supabase.auth.getSession();
     const user = session?.user;
-    if (!user) {
+    if (!user || !accountId) {
       toast.error(t('toastNotSignedIn'));
-      return;
-    }
-    if (!accountId) {
-      toast.error(t('toastNotLinked'));
       return;
     }
 
@@ -105,9 +138,9 @@ export default function NewBroadcastPage() {
       user_id: user.id,
       account_id: accountId,
       name: name.trim(),
-      template_name: template.name,
-      template_language: template.language ?? 'en_US',
-      template_variables: variables,
+      template_name: connectionType === 'meta' ? template?.name : 'Evolution Text',
+      template_language: connectionType === 'meta' ? template?.language ?? 'en_US' : 'ar',
+      template_variables: connectionType === 'evolution' ? { free_text: freeText } : variables,
       audience_filter: {
         type: audience.type,
         tagIds: audience.tagIds,
@@ -127,6 +160,14 @@ export default function NewBroadcastPage() {
     }
     toast.success(t('toastDraftSaved'));
     router.push('/broadcasts');
+  }
+
+  if (loadingConfig) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
@@ -190,21 +231,27 @@ export default function NewBroadcastPage() {
         >
           {currentStep === 0 && (
             <Step1ChooseTemplate
+              connectionType={connectionType}
               selectedTemplate={template}
               onSelect={setTemplate}
+              freeText={freeText}
+              onFreeTextChange={setFreeText}
               onNext={() => setCurrentStep(1)}
               onBack={() => router.push('/broadcasts')}
             />
           )}
+
           {currentStep === 1 && (
             <Step2SelectAudience
               audience={audience}
               onUpdate={setAudience}
-              onNext={() => setCurrentStep(2)}
+              onNext={() => setCurrentStep(connectionType === 'evolution' ? 2 : 2)}
               onBack={() => setCurrentStep(0)}
             />
           )}
-          {currentStep === 2 && template && (
+
+          {/* Meta Only: Personalize Step */}
+          {connectionType === 'meta' && currentStep === 2 && template && (
             <Step3Personalize
               template={template}
               variables={variables}
@@ -215,17 +262,23 @@ export default function NewBroadcastPage() {
               onBack={() => setCurrentStep(1)}
             />
           )}
-          {currentStep === 3 && template && (
+
+          {/* Send Step */}
+          {((connectionType === 'meta' && currentStep === 3) ||
+            (connectionType === 'evolution' && currentStep === 2)) && (
             <Step4ScheduleSend
+              connectionType={connectionType}
               name={name}
               onNameChange={setName}
               template={template}
+              freeText={freeText}
               audience={audience}
               onSend={handleSend}
               onSaveDraft={handleSaveDraft}
-              onBack={() => setCurrentStep(2)}
+              onBack={() => setCurrentStep(connectionType === 'evolution' ? 1 : 2)}
               isProcessing={isProcessing}
               progress={progress}
+              estimatedSecondsRemaining={estimatedSecondsRemaining}
             />
           )}
         </div>
