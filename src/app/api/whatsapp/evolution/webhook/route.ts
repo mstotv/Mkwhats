@@ -12,6 +12,7 @@ import {
   type EvolutionConnectionUpdateData,
   type EvolutionInboundMessage,
   fetchEvolutionProfilePictureUrl,
+  fetchEvolutionMediaBase64,
 } from '@/lib/whatsapp/evolution-api'
 
 // Same max-duration approach as the Meta webhook — Evolution events
@@ -116,7 +117,7 @@ async function processEvolutionEvent(body: EvolutionWebhookPayload) {
   // Resolve the account_id from the instance name
   const { data: configRow, error: configError } = await supabaseAdmin()
     .from('whatsapp_config')
-    .select('account_id, user_id, status, evolution_instance_name')
+    .select('account_id, user_id, status, evolution_instance_name, evolution_api_key')
     .eq('evolution_instance_name', instanceName)
     .eq('connection_type', 'evolution')
     .maybeSingle()
@@ -135,6 +136,14 @@ async function processEvolutionEvent(body: EvolutionWebhookPayload) {
 
   const accountId: string = configRow.account_id
   const configOwnerUserId: string = configRow.user_id
+  let instanceApiKey = configRow.evolution_api_key
+  if (instanceApiKey) {
+    try {
+      instanceApiKey = decrypt(instanceApiKey)
+    } catch {
+      // ignore decryption errors if unencrypted or invalid
+    }
+  }
 
   switch (event) {
     case 'QRCODE_UPDATED':
@@ -158,14 +167,13 @@ async function processEvolutionEvent(body: EvolutionWebhookPayload) {
 
       for (const msg of messageList) {
         if (!msg) continue
-        // Skip messages sent by us (fromMe = true).
-        if (msg.key?.fromMe) continue
+        console.log('[DIAG][evolution/webhook] Received message event | fromMe:', msg.key?.fromMe, '| id:', msg.key?.id, '| remoteJid:', msg.key?.remoteJid)
         await processInboundMessage(
           msg,
           accountId,
           configOwnerUserId,
           configRow.evolution_instance_name,
-          configRow.evolution_api_key,
+          instanceApiKey,
         )
       }
       break
@@ -229,7 +237,7 @@ async function handleConnectionUpdate(
   // 'connecting' state — no DB update needed, status stays as-is.
 }
 
-// ─── MESSAGES_UPSERT (inbound) ────────────────────────────────
+// ─── MESSAGES_UPSERT (inbound & fromMe) ────────────────────────
 
 async function processInboundMessage(
   msg: EvolutionInboundMessage,
@@ -238,20 +246,29 @@ async function processInboundMessage(
   instanceName?: string,
   instanceApiKey?: string,
 ) {
-  // Extract sender phone from remoteJid ("5511999998888@s.whatsapp.net")
+  const isFromMe = Boolean(msg.key?.fromMe)
+
+  // Extract sender/recipient phone from remoteJid ("5511999998888@s.whatsapp.net")
   const rawJid = msg.key?.remoteJid ?? ''
   const rawPhone = rawJid.split('@')[0]
   if (!rawPhone) {
-    console.warn('[evolution/webhook] inbound message has no remoteJid; skipping')
+    console.warn('[evolution/webhook] message has no remoteJid; skipping')
     return
   }
 
   const senderPhone = normalizePhone(`+${rawPhone}`)
-  const contactName = msg.pushName ?? ''
+  const contactName = isFromMe ? '' : (msg.pushName ?? '')
   const whatsappMessageId = msg.key?.id ?? null
 
-  // Extract message content
-  const { contentType, contentText, mediaUrl } = extractMessageContent(msg)
+  console.log('[DIAG][evolution/webhook] processInboundMessage | isFromMe:', isFromMe, '| phone:', senderPhone, '| msgId:', whatsappMessageId)
+
+  // Extract and process media (uploads to Supabase Storage if base64/media present)
+  const { contentType, contentText, mediaUrl } = await extractAndProcessMedia(
+    msg,
+    accountId,
+    instanceName,
+    instanceApiKey
+  )
 
   // ── Find or create contact ────────────────────────────────
   const contactOutcome = await findOrCreateEvolutionContact(
@@ -282,11 +299,61 @@ async function processInboundMessage(
     })
   }
 
-  // ── Persist the inbound message ───────────────────────────
   const messageTs = msg.messageTimestamp
     ? new Date(msg.messageTimestamp * 1000).toISOString()
     : new Date().toISOString()
 
+  // ── Handle outbound message from phone (fromMe = true) ─────
+  if (isFromMe) {
+    if (whatsappMessageId) {
+      const { data: existingMsg } = await supabaseAdmin()
+        .from('messages')
+        .select('id')
+        .eq('message_id', whatsappMessageId)
+        .maybeSingle()
+
+      if (existingMsg) {
+        console.log('[DIAG][evolution/webhook] Outbound message (fromMe: true) already exists in DB; skipping insert. msgId:', whatsappMessageId)
+        return
+      }
+    }
+
+    const { error: msgInsertError } = await supabaseAdmin()
+      .from('messages')
+      .insert({
+        conversation_id: conversation.id,
+        sender_type: 'agent',
+        sender_id: configOwnerUserId,
+        content_type: contentType,
+        content_text: contentText ?? null,
+        media_url: mediaUrl ?? null,
+        message_id: whatsappMessageId,
+        status: 'delivered',
+        created_at: messageTs,
+      })
+
+    if (msgInsertError) {
+      if (isUniqueViolation(msgInsertError)) return
+      console.error('[evolution/webhook] fromMe message insert failed:', msgInsertError)
+      return
+    }
+
+    console.log('[DIAG][evolution/webhook] Successfully saved outbound fromMe message | conv:', conversation.id, '| contentText:', contentText?.slice(0, 40))
+
+    await supabaseAdmin()
+      .from('conversations')
+      .update({
+        last_message_text: contentText ?? `[${contentType}]`,
+        last_message_at: messageTs,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', conversation.id)
+
+    // Skip automations/flows/AI for fromMe messages
+    return
+  }
+
+  // ── Persist inbound customer message ──────────────────────
   const { data: insertedMessage, error: msgInsertError } = await supabaseAdmin()
     .from('messages')
     .insert({
@@ -304,7 +371,6 @@ async function processInboundMessage(
     .single()
 
   if (msgInsertError) {
-    // Duplicate wamid — already processed (webhook retry). Safe to skip.
     if (isUniqueViolation(msgInsertError)) return
     console.error('[evolution/webhook] message insert failed:', msgInsertError)
     return
@@ -317,6 +383,7 @@ async function processInboundMessage(
       last_message_text: contentText ?? `[${contentType}]`,
       last_message_at: messageTs,
       status: 'open',
+      unread_count: (conversation.unread_count || 0) + 1,
       updated_at: new Date().toISOString(),
     })
     .eq('id', conversation.id)
@@ -413,13 +480,18 @@ async function handleMessageStatusUpdate(
     .eq('message_id', whatsappMessageId)
 }
 
-// ─── Helpers ──────────────────────────────────────────────────
+// ─── Media Extraction & Processing ─────────────────────────────
 
-function extractMessageContent(msg: EvolutionInboundMessage): {
+async function extractAndProcessMedia(
+  msg: EvolutionInboundMessage,
+  accountId: string,
+  instanceName?: string,
+  instanceApiKey?: string,
+): Promise<{
   contentType: string
   contentText: string | null
   mediaUrl: string | null
-} {
+}> {
   const m = msg.message
   if (!m) return { contentType: 'text', contentText: null, mediaUrl: null }
 
@@ -429,39 +501,120 @@ function extractMessageContent(msg: EvolutionInboundMessage): {
   if (m.extendedTextMessage?.text)
     return { contentType: 'text', contentText: m.extendedTextMessage.text, mediaUrl: null }
 
-  if (m.imageMessage)
-    return {
-      contentType: 'image',
-      contentText: m.imageMessage.caption ?? null,
-      mediaUrl: m.imageMessage.url ?? null,
-    }
+  let mediaType: 'image' | 'video' | 'document' | 'audio' | null = null
+  let caption: string | null = null
+  let fileName: string | null = null
+  let directUrl: string | null = null
+  let mimetype: string | null = null
+  let payloadBase64: string | null = null
 
-  if (m.videoMessage)
-    return {
-      contentType: 'video',
-      contentText: m.videoMessage.caption ?? null,
-      mediaUrl: m.videoMessage.url ?? null,
-    }
-
-  if (m.documentMessage)
-    return {
-      contentType: 'document',
-      contentText: m.documentMessage.fileName ?? null,
-      mediaUrl: m.documentMessage.url ?? null,
-    }
-
-  if (m.audioMessage)
-    return { contentType: 'audio', contentText: null, mediaUrl: m.audioMessage.url ?? null }
-
-  if (m.locationMessage)
+  if (m.imageMessage) {
+    mediaType = 'image'
+    caption = m.imageMessage.caption ?? null
+    directUrl = m.imageMessage.url ?? null
+    mimetype = m.imageMessage.mimetype ?? 'image/jpeg'
+    payloadBase64 = (m.imageMessage as any).base64 ?? (m as any).base64 ?? null
+  } else if (m.videoMessage) {
+    mediaType = 'video'
+    caption = m.videoMessage.caption ?? null
+    directUrl = m.videoMessage.url ?? null
+    mimetype = m.videoMessage.mimetype ?? 'video/mp4'
+    payloadBase64 = (m.videoMessage as any).base64 ?? (m as any).base64 ?? null
+  } else if (m.documentMessage) {
+    mediaType = 'document'
+    caption = m.documentMessage.fileName ?? null
+    fileName = m.documentMessage.fileName ?? null
+    directUrl = m.documentMessage.url ?? null
+    mimetype = m.documentMessage.mimetype ?? 'application/pdf'
+    payloadBase64 = (m.documentMessage as any).base64 ?? (m as any).base64 ?? null
+  } else if (m.audioMessage) {
+    mediaType = 'audio'
+    directUrl = m.audioMessage.url ?? null
+    mimetype = m.audioMessage.mimetype ?? 'audio/ogg'
+    payloadBase64 = (m.audioMessage as any).base64 ?? (m as any).base64 ?? null
+  } else if (m.locationMessage) {
     return {
       contentType: 'location',
       contentText: `${m.locationMessage.degreesLatitude ?? 0},${m.locationMessage.degreesLongitude ?? 0}`,
       mediaUrl: null,
     }
+  }
 
-  return { contentType: 'text', contentText: null, mediaUrl: null }
+  if (!mediaType) {
+    return { contentType: 'text', contentText: null, mediaUrl: null }
+  }
+
+  console.log(`[DIAG][evolution/webhook] Media message detected | type: ${mediaType} | directUrl: ${directUrl?.slice(0, 60)} | payloadHasBase64: ${Boolean(payloadBase64)}`)
+
+  let base64Data = payloadBase64
+  if (!base64Data && instanceName && instanceApiKey && msg.key) {
+    console.log('[DIAG][evolution/webhook] Fetching media base64 from Evolution API...')
+    const res = await fetchEvolutionMediaBase64({
+      instanceName,
+      instanceApiKey,
+      messageKey: msg.key,
+      message: m as Record<string, unknown>,
+    })
+    if (res?.base64) {
+      base64Data = res.base64
+      if (res.mimetype) mimetype = res.mimetype
+      console.log('[DIAG][evolution/webhook] Successfully fetched media base64 | length:', base64Data.length)
+    } else {
+      console.warn('[DIAG][evolution/webhook] Could not retrieve base64 for media message')
+    }
+  }
+
+  let finalMediaUrl: string | null = directUrl
+
+  if (base64Data) {
+    try {
+      let cleanBase64 = base64Data
+      const dataUriMatch = base64Data.match(/^data:([^;]+);base64,(.*)$/)
+      if (dataUriMatch) {
+        mimetype = dataUriMatch[1]
+        cleanBase64 = dataUriMatch[2]
+      }
+
+      const buffer = Buffer.from(cleanBase64, 'base64')
+      const ext = mimetype ? mimetype.split('/')[1]?.replace('jpeg', 'jpg').replace(/;.*$/, '') || 'bin' : 'bin'
+      const filePath = `account-${accountId}/evo-${Date.now()}-${msg.key?.id || 'media'}.${ext}`
+
+      console.log('[DIAG][evolution/webhook] Uploading media to Supabase Storage chat-media bucket | path:', filePath)
+
+      const { error: uploadErr } = await supabaseAdmin()
+        .storage
+        .from('chat-media')
+        .upload(filePath, buffer, {
+          contentType: mimetype || 'application/octet-stream',
+          cacheControl: '3600',
+          upsert: true,
+        })
+
+      if (uploadErr) {
+        console.error('[DIAG][evolution/webhook] Supabase Storage upload failed:', uploadErr)
+      } else {
+        const { data: publicUrlData } = supabaseAdmin()
+          .storage
+          .from('chat-media')
+          .getPublicUrl(filePath)
+
+        if (publicUrlData?.publicUrl) {
+          finalMediaUrl = publicUrlData.publicUrl
+          console.log('[DIAG][evolution/webhook] Permanent Supabase Storage URL generated:', finalMediaUrl)
+        }
+      }
+    } catch (err) {
+      console.error('[DIAG][evolution/webhook] Exception during media upload process:', err)
+    }
+  }
+
+  return {
+    contentType: mediaType,
+    contentText: caption || fileName || null,
+    mediaUrl: finalMediaUrl,
+  }
 }
+
 
 async function findOrCreateEvolutionContact(
   accountId: string,

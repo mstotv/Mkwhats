@@ -471,7 +471,49 @@ export async function fetchEvolutionProfilePictureUrl(args: {
   }
 }
 
+/**
+ * Fetches base64 representation of a media message from Evolution API.
+ */
+export async function fetchEvolutionMediaBase64(args: {
+  instanceName: string
+  instanceApiKey: string
+  messageKey: { remoteJid: string; fromMe: boolean; id: string }
+  message: Record<string, unknown>
+}): Promise<{ base64: string; mimetype?: string } | null> {
+  try {
+    let apiKey = args.instanceApiKey
+    try {
+      apiKey = getEvolutionGlobalApiKey()
+    } catch {
+      // fallback to instance key if global key not set
+    }
+
+    const data = await evolutionFetch<{ base64?: string; mimetype?: string }>(
+      `/chat/getBase64FromMediaMessage/${args.instanceName}`,
+      {
+        method: 'POST',
+        apiKey,
+        body: JSON.stringify({
+          message: {
+            key: args.messageKey,
+            message: args.message,
+          },
+          convertToMp4: false,
+        }),
+      }
+    )
+    if (data?.base64) {
+      return { base64: data.base64, mimetype: data.mimetype }
+    }
+    return null
+  } catch (err) {
+    console.warn('[fetchEvolutionMediaBase64] failed:', err)
+    return null
+  }
+}
+
 // ─── Webhook payload types ────────────────────────────────────
+
 
 /**
  * Top-level shape of every webhook POST from Evolution.
