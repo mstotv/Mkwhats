@@ -85,7 +85,9 @@ export default function AdminAccountsPage() {
       const supabase = createClient();
 
       const [accountsRes, plansRes] = await Promise.all([
-        fetch('/api/admin/accounts').then((r) => r.json()),
+        fetch('/api/admin/accounts')
+          .then((r) => (r.ok ? r.json() : { accounts: [] }))
+          .catch(() => ({ accounts: [] })),
         supabase.from('plans').select('id, name, slug').eq('is_active', true),
       ]);
 

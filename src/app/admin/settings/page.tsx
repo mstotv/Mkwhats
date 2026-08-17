@@ -57,8 +57,12 @@ export default function AdminSettingsPage() {
     try {
       setLoading(true);
       const [settingsRes, partnersRes] = await Promise.all([
-        fetch('/api/admin/site-settings').then((r) => r.json()),
-        fetch('/api/admin/partners').then((r) => r.json()),
+        fetch('/api/admin/site-settings')
+          .then((r) => (r.ok ? r.json() : { settings: {} }))
+          .catch(() => ({ settings: {} })),
+        fetch('/api/admin/partners')
+          .then((r) => (r.ok ? r.json() : { partners: [] }))
+          .catch(() => ({ partners: [] })),
       ]);
 
       const s = settingsRes.settings || {};

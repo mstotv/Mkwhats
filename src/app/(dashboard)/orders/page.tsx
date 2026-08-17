@@ -61,14 +61,18 @@ export default function OrdersPage() {
         const res = await fetch("/api/account/subscription");
         if (res.ok) {
           const text = await res.text();
-          if (text) {
-            const data = JSON.parse(text);
-            const hasExcelFeature = Boolean(
-              data?.features?.excel_export ?? data?.plan?.features?.excel_export,
-            );
-            setExcelFeatureAllowed(hasExcelFeature);
-            if (!hasExcelFeature) {
-              setFeatureReason(t("featureReason"));
+          if (text && text.trim().length > 0) {
+            try {
+              const data = JSON.parse(text);
+              const hasExcelFeature = Boolean(
+                data?.features?.excel_export ?? data?.plan?.features?.excel_export,
+              );
+              setExcelFeatureAllowed(hasExcelFeature);
+              if (!hasExcelFeature) {
+                setFeatureReason(t("featureReason"));
+              }
+            } catch {
+              setExcelFeatureAllowed(true);
             }
           }
         }
