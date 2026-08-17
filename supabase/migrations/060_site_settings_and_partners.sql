@@ -55,8 +55,15 @@ VALUES
   ('Stripe', 'https://cdn.simpleicons.org/stripe/635BFF', 4),
   ('WhatsApp', 'https://cdn.simpleicons.org/whatsapp/25D366', 5),
   ('Telegram', 'https://cdn.simpleicons.org/telegram/26A5E4', 6),
-  ('Google', 'https://cdn.simpleicons.org/google/4285F4', 7),
-  ('Amazon', 'https://cdn.simpleicons.org/amazon/FF9900', 8),
-  ('Salesforce', 'https://cdn.simpleicons.org/salesforce/00A1E0', 9),
-  ('PayPal', 'https://cdn.simpleicons.org/paypal/003087', 10)
+  ('n8n', 'https://cdn.simpleicons.org/n8n/FF6D5A', 7),
+  ('Zapier', 'https://cdn.simpleicons.org/zapier/FF4A00', 8),
+  ('AliExpress', 'https://cdn.simpleicons.org/aliexpress/FF4747', 9),
+  ('Alibaba', 'https://cdn.simpleicons.org/alibaba/FF6A00', 10),
+  ('Instagram', 'https://cdn.simpleicons.org/instagram/E4405F', 11),
+  ('Facebook', 'https://cdn.simpleicons.org/facebook/1877F2', 12),
+  ('Google', 'https://cdn.simpleicons.org/google/4285F4', 13),
+  ('Amazon', 'https://cdn.simpleicons.org/amazon/FF9900', 14),
+  ('Salesforce', 'https://cdn.simpleicons.org/salesforce/00A1E0', 15),
+  ('PayPal', 'https://cdn.simpleicons.org/paypal/003087', 16)
 ON CONFLICT DO NOTHING;
+
