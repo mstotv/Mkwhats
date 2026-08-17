@@ -30,16 +30,23 @@ interface PlanData {
   name: string
   slug: string
   price_monthly: number
+  price_monthly_discounted?: number
   price_yearly: number
+  price_yearly_discounted?: number
   max_users: number
   max_whatsapp_instances: number
   max_contacts: number
   max_messages_monthly: number
   max_broadcasts_monthly: number
+  max_orders_monthly?: number
+  is_popular?: boolean
   features: {
     ai_assistant?: boolean
+    automations?: boolean
+    flows_builder?: boolean
     excel_export?: boolean
     telegram_bot?: boolean
+    custom_webhooks?: boolean
   }
 }
 
@@ -55,12 +62,22 @@ interface UsageData {
   messages_count: number
   max_messages: number
   messages_percentage: number
+  messages_remaining?: number
+  contacts_count?: number
+  max_contacts?: number
+  contacts_percentage?: number
+  contacts_remaining?: number
   broadcasts_count: number
   max_broadcasts: number
   broadcasts_percentage: number
   members_count: number
   max_users: number
   members_percentage: number
+  members_remaining?: number
+  orders_count?: number
+  max_orders_monthly?: number
+  orders_percentage?: number
+  orders_remaining?: number
 }
 
 export function PlanUsagePanel() {
