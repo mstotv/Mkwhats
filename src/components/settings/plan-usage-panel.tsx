@@ -142,6 +142,8 @@ export function PlanUsagePanel() {
       setUpgradingPlanId(null)
       setUpgradingGateway(null)
     }
+  }
+
   const handleFreeActivate = async (planItem: any) => {
     try {
       setUpgradingPlanId(planItem.id)
