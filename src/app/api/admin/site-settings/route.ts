@@ -23,6 +23,10 @@ export async function GET() {
         plisio_enabled: false,
         plisio_secret_key: '',
         plisio_merchant_id: '',
+        stripe_enabled: false,
+        stripe_publishable_key: '',
+        stripe_secret_key: '',
+        stripe_webhook_secret: '',
       },
     });
   } catch (err) {
@@ -65,6 +69,10 @@ export async function POST(req: Request) {
     if (payload.plisio_enabled !== undefined) updateObj.plisio_enabled = Boolean(payload.plisio_enabled);
     if (payload.plisio_secret_key !== undefined) updateObj.plisio_secret_key = payload.plisio_secret_key;
     if (payload.plisio_merchant_id !== undefined) updateObj.plisio_merchant_id = payload.plisio_merchant_id;
+    if (payload.stripe_enabled !== undefined) updateObj.stripe_enabled = Boolean(payload.stripe_enabled);
+    if (payload.stripe_publishable_key !== undefined) updateObj.stripe_publishable_key = payload.stripe_publishable_key;
+    if (payload.stripe_secret_key !== undefined) updateObj.stripe_secret_key = payload.stripe_secret_key;
+    if (payload.stripe_webhook_secret !== undefined) updateObj.stripe_webhook_secret = payload.stripe_webhook_secret;
 
     const { error } = await supabase
       .from('site_settings')
@@ -83,10 +91,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'تم حفظ إعدادات النظام العامة وبوابة Plisio بنجاح 🎉',
+      message: 'تم حفظ إعدادات النظام العامة وبوابات الدفع (Stripe & Plisio) بنجاح 🎉',
     });
   } catch (err) {
     console.error('[SiteSettingsAPI] POST exception:', err);
     return NextResponse.json({ error: 'Failed to update site settings' }, { status: 500 });
   }
 }
+

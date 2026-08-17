@@ -24,6 +24,8 @@ import {
   Pencil,
   Check,
   X,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -46,6 +48,13 @@ export default function AdminSettingsPage() {
   const [plisioEnabled, setPlisioEnabled] = useState(false);
   const [plisioSecretKey, setPlisioSecretKey] = useState('');
   const [plisioMerchantId, setPlisioMerchantId] = useState('');
+
+  // Stripe Gateway State
+  const [stripeEnabled, setStripeEnabled] = useState(false);
+  const [stripePublishableKey, setStripePublishableKey] = useState('');
+  const [stripeSecretKey, setStripeSecretKey] = useState('');
+  const [stripeWebhookSecret, setStripeWebhookSecret] = useState('');
+  const [showStripeSecret, setShowStripeSecret] = useState(false);
 
   // Partners State
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -128,6 +137,11 @@ export default function AdminSettingsPage() {
       setPlisioSecretKey(s.plisio_secret_key || '');
       setPlisioMerchantId(s.plisio_merchant_id || '');
 
+      setStripeEnabled(Boolean(s.stripe_enabled));
+      setStripePublishableKey(s.stripe_publishable_key || '');
+      setStripeSecretKey(s.stripe_secret_key || '');
+      setStripeWebhookSecret(s.stripe_webhook_secret || '');
+
       setPartners((partnersRes.partners as Partner[]) ?? []);
     } catch (err) {
       console.error('[AdminSettings] Error fetching settings:', err);
@@ -158,13 +172,17 @@ export default function AdminSettingsPage() {
           plisio_enabled: plisioEnabled,
           plisio_secret_key: plisioSecretKey,
           plisio_merchant_id: plisioMerchantId,
+          stripe_enabled: stripeEnabled,
+          stripe_publishable_key: stripePublishableKey,
+          stripe_secret_key: stripeSecretKey,
+          stripe_webhook_secret: stripeWebhookSecret,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'فشل حفظ الإعدادات');
 
-      toast.success(data.message || 'تم حفظ إعدادات النظام العامة وبوابة Plisio بنجاح ✅');
+      toast.success(data.message || 'تم حفظ إعدادات النظام العامة وبوابات الدفع (Stripe & Plisio) بنجاح ✅');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'فشل حفظ الإعدادات العامة';
       toast.error(msg);
@@ -412,6 +430,100 @@ export default function AdminSettingsPage() {
                 </div>
               )}
             </div>
+          </Card>
+
+          {/* 3. Stripe Credit/Debit Card Payment Gateway Settings Card */}
+          <Card className="border border-indigo-500/40 bg-card p-6 space-y-6 shadow-lg">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-indigo-400" />
+                <div>
+                  <h2 className="text-base font-bold text-foreground">بوابة دفع بطاقات الائتمان Stripe (Credit / Debit Card Gateway)</h2>
+                  <p className="text-xs text-muted-foreground">تتيح للعملاء سداد الاشتراكات عبر Visa / MasterCard / Apple Pay مباشرة من حسابك في Stripe (dashboard.stripe.com/apikeys)</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {stripePublishableKey && stripeSecretKey ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">
+                    🟢 مفعلة ومستعدة لتلقي الدفع
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-bold text-indigo-300">
+                    🛑 معطلة (تتطلب تفعيل الـ Secret & Publishable Key)
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-xs">
+              <div className="space-y-1.5">
+                <label className="font-bold text-foreground flex items-center justify-between">
+                  <span>Stripe Publishable Key (الببليش كي)</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">pk_test_... أو pk_live_...</span>
+                </label>
+                <div className="relative">
+                  <CreditCard className="absolute start-3 top-2.5 h-4 w-4 text-indigo-400" />
+                  <Input
+                    type="text"
+                    placeholder="pk_test_..."
+                    value={stripePublishableKey}
+                    onChange={(e) => {
+                      setStripePublishableKey(e.target.value);
+                      setStripeEnabled(Boolean(e.target.value && stripeSecretKey));
+                    }}
+                    className="ps-9 bg-background border-border font-mono text-xs dir-ltr"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="font-bold text-foreground flex items-center justify-between">
+                  <span>Stripe Secret Key (السكاي السري)</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">sk_test_... أو sk_live_...</span>
+                </label>
+                <div className="relative">
+                  <CreditCard className="absolute start-3 top-2.5 h-4 w-4 text-indigo-400" />
+                  <Input
+                    type={showStripeSecret ? 'text' : 'password'}
+                    placeholder="sk_test_..."
+                    value={stripeSecretKey}
+                    onChange={(e) => {
+                      setStripeSecretKey(e.target.value);
+                      setStripeEnabled(Boolean(stripePublishableKey && e.target.value));
+                    }}
+                    className="ps-9 pe-9 bg-background border-border font-mono text-xs dir-ltr"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowStripeSecret(!showStripeSecret)}
+                    className="absolute end-3 top-2.5 text-muted-foreground hover:text-foreground"
+                  >
+                    {showStripeSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="font-bold text-foreground flex items-center justify-between">
+                  <span>Stripe Webhook Secret (مفتاح الويب هوك - اختياري للتأكيد التلقائي)</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">whsec_...</span>
+                </label>
+                <Input
+                  type="text"
+                  placeholder="whsec_..."
+                  value={stripeWebhookSecret}
+                  onChange={(e) => setStripeWebhookSecret(e.target.value)}
+                  className="bg-background border-border font-mono text-xs dir-ltr"
+                />
+              </div>
+            </div>
+
+            {(!stripePublishableKey || !stripeSecretKey) && (
+              <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-3 text-indigo-200 text-xs">
+                💳 <strong>تنبيه Stripe:</strong> بمجرد إدخال الـ <strong>Publishable Key</strong> والـ <strong>Secret Key</strong> والضغط على "حفظ"، سيظهر زر الدفع الفوري بالبطاقات البنكية لدى جميع المستخدمين عند اختيار خطط الاشتراك!
+              </div>
+            )}
           </Card>
 
           {/* 3. Partners & Sponsors Manager Card */}

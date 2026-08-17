@@ -71,10 +71,48 @@ export function PlanUsagePanel() {
   const [limitsExceeded, setLimitsExceeded] = useState(false)
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
   const [upgradingPlanId, setUpgradingPlanId] = useState<string | null>(null)
+  const [upgradingGateway, setUpgradingGateway] = useState<'stripe' | 'plisio' | null>(null)
 
-  const handleDirectUpgrade = async (planItem: any) => {
+  // Gateways settings
+  const [stripeEnabled, setStripeEnabled] = useState(false)
+  const [plisioEnabled, setPlisioEnabled] = useState(false)
+
+  const handleStripeCheckout = async (planItem: any) => {
     try {
       setUpgradingPlanId(planItem.id)
+      setUpgradingGateway('stripe')
+      const res = await fetch('/api/billing/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan_id: planItem.id,
+          billing_cycle: 'monthly',
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || data.error) {
+        toast.error(data.error || 'حدث خطأ أثناء الإنشاء عبر سترايب')
+        return
+      }
+
+      if (data.url) {
+        toast.success(`جاري التوجيه لبوابة الدفع الآمنة لـ Stripe (Visa / MasterCard)... 💳`)
+        window.location.href = data.url
+      }
+    } catch (err) {
+      toast.error('فشل التوجيه لـ Stripe')
+    } finally {
+      setUpgradingPlanId(null)
+      setUpgradingGateway(null)
+    }
+  }
+
+  const handlePlisioUpgrade = async (planItem: any) => {
+    try {
+      setUpgradingPlanId(planItem.id)
+      setUpgradingGateway('plisio')
       const res = await fetch('/api/account/upgrade-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -93,7 +131,7 @@ export function PlanUsagePanel() {
 
       const targetUrl = data.checkout_url || data.whatsapp_url
       if (targetUrl) {
-        toast.success(`جاري التوجيه المباشر لبوابة الدفع لخطة "${planItem.name}"... 🚀`)
+        toast.success(`جاري التوجيه لموجّه الدفع لخطة "${planItem.name}"... 🚀`)
         window.location.href = targetUrl
       } else {
         setIsUpgradeModalOpen(true)
@@ -102,35 +140,72 @@ export function PlanUsagePanel() {
       toast.error('فشل التوجيه لبوابة الدفع')
     } finally {
       setUpgradingPlanId(null)
+      setUpgradingGateway(null)
+    }
+  }
+
+  // Handle Stripe Payment Success Verification Return
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const urlParams = new URLSearchParams(window.location.search)
+    const paymentStatus = urlParams.get('payment')
+    const sessionId = urlParams.get('session_id')
+
+    if (paymentStatus === 'success' && sessionId) {
+      async function verifyStripe() {
+        try {
+          const res = await fetch('/api/billing/stripe/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId }),
+          })
+          const data = await res.json()
+          if (data.success && data.paid) {
+            toast.success('تم التأكد من عملية الدفع وترقية باقة اشتراكك بنجاح! 🎉')
+            // Refresh subscription
+            fetchSubscriptionInfo()
+          }
+        } catch (err) {
+          console.error('Failed to verify Stripe session:', err)
+        }
+      }
+      verifyStripe()
+    }
+  }, [])
+
+  async function fetchSubscriptionInfo() {
+    try {
+      setLoading(true)
+      const [subRes, settingsRes] = await Promise.all([
+        fetch('/api/account/subscription').then((r) => r.json()),
+        fetch('/api/site-settings').then((r) => (r.ok ? r.json() : { settings: {} })),
+      ])
+
+      if (!subRes || subRes.error) {
+        setError(subRes?.error || t('fetchFailed'))
+        return
+      }
+
+      setPlan(subRes.plan)
+      setSubscription(subRes.subscription)
+      setUsage(subRes.usage)
+      setLimitsExceeded(Boolean(subRes.limits_exceeded))
+      setAvailablePlans(subRes.available_plans || [])
+
+      const st = settingsRes.settings || {}
+      setStripeEnabled(Boolean(st.stripe_enabled))
+      setPlisioEnabled(Boolean(st.plisio_enabled))
+    } catch (err: any) {
+      setError(err.message || t('unexpectedError'))
+    } finally {
+      setLoading(false)
     }
   }
 
   useEffect(() => {
-    async function fetchSubscriptionInfo() {
-      try {
-        setLoading(true)
-        const res = await fetch('/api/account/subscription')
-        const data = await res.json()
-
-        if (!res.ok || data.error) {
-          setError(data.error || t('fetchFailed'))
-          return
-        }
-
-        setPlan(data.plan)
-        setSubscription(data.subscription)
-        setUsage(data.usage)
-        setLimitsExceeded(Boolean(data.limits_exceeded))
-        setAvailablePlans(data.available_plans || [])
-      } catch (err: any) {
-        setError(err.message || t('unexpectedError'))
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchSubscriptionInfo()
   }, [t])
+
 
   if (loading) {
     return (
@@ -622,25 +697,61 @@ export function PlanUsagePanel() {
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-border/60">
-                  <Button
-                    onClick={() => handleDirectUpgrade(p)}
-                    disabled={isCurrent || upgradingPlanId === p.id}
-                    className={`w-full text-xs font-bold ${
-                      isCurrent
-                        ? 'bg-muted text-muted-foreground border-border'
-                        : 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 hover:from-amber-400 hover:to-orange-500 shadow-md'
-                    }`}
-                  >
-                    {upgradingPlanId === p.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                    ) : isCurrent ? (
-                      'باقتك الحالية'
-                    ) : (
-                      'اختيار هذه الباقة / الترقية 🚀'
-                    )}
-                  </Button>
+                <div className="mt-6 pt-4 border-t border-border/60 space-y-2">
+                  {isCurrent ? (
+                    <Button
+                      disabled
+                      className="w-full text-xs font-bold bg-muted text-muted-foreground border-border"
+                    >
+                      باقتك الحالية ✓
+                    </Button>
+                  ) : (
+                    <>
+                      {stripeEnabled && (
+                        <Button
+                          onClick={() => handleStripeCheckout(p)}
+                          disabled={upgradingPlanId === p.id}
+                          className="w-full text-xs font-bold bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 shadow-md shadow-indigo-500/20"
+                        >
+                          {upgradingPlanId === p.id && upgradingGateway === 'stripe' ? (
+                            <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                          ) : (
+                            '💳 الدفع بطاقة بنكية (Visa / MasterCard)'
+                          )}
+                        </Button>
+                      )}
+
+                      {plisioEnabled && (
+                        <Button
+                          onClick={() => handlePlisioUpgrade(p)}
+                          disabled={upgradingPlanId === p.id}
+                          className="w-full text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 hover:from-amber-400 hover:to-orange-500 shadow-md"
+                        >
+                          {upgradingPlanId === p.id && upgradingGateway === 'plisio' ? (
+                            <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                          ) : (
+                            '🪙 الدفع كريبتو (USDT / Bitcoin)'
+                          )}
+                        </Button>
+                      )}
+
+                      {!stripeEnabled && !plisioEnabled && (
+                        <Button
+                          onClick={() => handlePlisioUpgrade(p)}
+                          disabled={upgradingPlanId === p.id}
+                          className="w-full text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 hover:from-amber-400 hover:to-orange-500 shadow-md"
+                        >
+                          {upgradingPlanId === p.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                          ) : (
+                            'اختيار هذه الباقة / الترقية 🚀'
+                          )}
+                        </Button>
+                      )}
+                    </>
+                  )}
                 </div>
+
               </Card>
             );
           })}
