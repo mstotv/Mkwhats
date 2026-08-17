@@ -1,6 +1,13 @@
-# حالة المشروع - آخر تحديث: [3/8/2026]
+# حالة المشروع - آخر تحديث: [17/8/2026]
 
 ## آخر شي خلص وشغال 100%
+- ✅ نظام محرك الأوتوميشن وجدولة خطوات الانتظار (Automation Wait Step Engine & Scheduler):
+  - **التشخيص الدقيق وفحص الجدول**: فحص وحل مشكلة توقف خطوات الانتظار (`Wait`) التي كانت تتوقف عند حالة `pending` في جدول `automation_pending_executions`.
+  - **الدعم الشامل لوحدات الوقت (دقائق، ساعات، وأيام)**: احتساب وحفظ الوقت المستهدف بـ UTC الدقيق (`run_at = NOW() + duration`) ومقارنته بـ `run_at <= NOW()` ليعمل بسلاسة مع أي مدة إمهال (سواء كانت دقيقة واحدة، عدة ساعات، أو أيام).
+  - **العمل في التطوير المحلي (Local Dev Background Poller)**: وحدة استطلاع دورية محددة بـ 15 ثانية في [`src/lib/automations/local-poller.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/automations/local-poller.ts) ومدمجة بـ Engine لتشغيل الأوتوميشن تلقائياً على الجهاز المحلي أثناء التطوير دون الحاجة لخدمات خارجية.
+  - **الجدولة في الإنتاج (Vercel Cron)**: تهيئة ملف [`vercel.json`](file:///c:/Users/Mustafa/Desktop/mk%20whats/vercel.json) لجدولة استدعاء المسار `/api/automations/cron` كل دقيقة تلقائياً في السيرفر الإنتاجي مع حماية المفتاح السري `AUTOMATION_CRON_SECRET`.
+  - **الفهرسة وتسريع الاستعلامات**: مايقريشن `052_automation_wait_indexing.sql` لإضافة فهرس جزئي `idx_automation_pending_run_at` لاسترجاع الصفوف المستحقة بأقل من ملي ثانية.
+  - **أداة تفريغ التنفيذات المعلقة**: سكربت [`scripts/drain-pending-automations.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/scripts/drain-pending-automations.ts) الذي قام بتفريغ واستكمال الـ 20 صفاً المعلقة السابقة بنجاح وترحيل الرسائل للجوال.
 - multi-tenant migration (017-036) مطبق ومختبر يدوياً بحسابين حقيقيين
 - RLS شغال على كل الجداول، بدون تداخل بيانات بين الحسابات
 - ✅ Evolution API integration مكتمل ومختبر على production (استقبال + إرسال). التفاصيل الكاملة بملف docs/evolution-integration-report.md
