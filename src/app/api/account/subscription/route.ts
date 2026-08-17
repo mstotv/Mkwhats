@@ -27,6 +27,7 @@ export async function GET() {
     const accountId = profile.account_id;
 
     const [
+      accountRes,
       subRes,
       allPlansRes,
       msgCountRes,
@@ -36,10 +37,16 @@ export async function GET() {
       broadcastsCountRes,
     ] = await Promise.all([
       service
+        .from('accounts')
+        .select('id, plan_id, plans(*)')
+        .eq('id', accountId)
+        .maybeSingle(),
+      service
         .from('subscriptions')
         .select('status, billing_cycle, current_period_end, trial_ends_at, plans(*)')
         .eq('account_id', accountId)
         .in('status', ['active', 'trialing'])
+        .order('created_at', { ascending: false })
         .maybeSingle(),
       service
         .from('plans')
@@ -68,8 +75,9 @@ export async function GET() {
         .eq('account_id', accountId),
     ]);
 
+    const accountPlan = accountRes.data?.plans ? (Array.isArray(accountRes.data.plans) ? accountRes.data.plans[0] : accountRes.data.plans) : null;
     const sub = subRes.data;
-    const plan = sub?.plans ? (Array.isArray(sub.plans) ? sub.plans[0] : sub.plans) : null;
+    const subPlan = sub?.plans ? (Array.isArray(sub.plans) ? sub.plans[0] : sub.plans) : null;
     const availablePlans = (allPlansRes.data || []).map((p: any) => ({
       id: p.id,
       name: p.name,
@@ -87,7 +95,7 @@ export async function GET() {
       features: p.features || {},
     }));
 
-    const currentPlanObj = plan || availablePlans[0] || {
+    const currentPlanObj = accountPlan || subPlan || availablePlans[0] || {
       name: 'المجانية / Free',
       slug: 'free',
       price_monthly: 0,

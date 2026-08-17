@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       await Promise.all([
         serviceClient
           .from('plans')
-          .select('id, name, slug, price_monthly, price_yearly')
+          .select('id, name, slug, price_monthly, price_monthly_discounted, price_yearly, price_yearly_discounted')
           .eq('id', target_plan_id)
           .maybeSingle(),
         serviceClient
@@ -88,8 +88,8 @@ export async function POST(request: Request) {
 
     const planPrice =
       billing_cycle === 'yearly'
-        ? Number(targetPlan.price_yearly)
-        : Number(targetPlan.price_monthly)
+        ? (Number(targetPlan.price_yearly_discounted) > 0 ? Number(targetPlan.price_yearly_discounted) : Number(targetPlan.price_yearly))
+        : (Number(targetPlan.price_monthly_discounted) > 0 ? Number(targetPlan.price_monthly_discounted) : Number(targetPlan.price_monthly))
 
     // 5. Insert upgrade request into database (status = 'pending')
     const { data: requestRow, error: insertError } = await serviceClient

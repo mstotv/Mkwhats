@@ -161,8 +161,8 @@ export async function POST(request: NextRequest) {
     const targetPlan = upgradeReq.plans
     const expectedPrice =
       upgradeReq.billing_cycle === 'yearly'
-        ? Number(targetPlan?.price_yearly || 0)
-        : Number(targetPlan?.price_monthly || 0)
+        ? (Number(targetPlan?.price_yearly_discounted) > 0 ? Number(targetPlan?.price_yearly_discounted) : Number(targetPlan?.price_yearly || 0))
+        : (Number(targetPlan?.price_monthly_discounted) > 0 ? Number(targetPlan?.price_monthly_discounted) : Number(targetPlan?.price_monthly || 0))
 
     // Small floating point tolerance if needed
     if (amountPaid > 0 && amountPaid < expectedPrice - 0.5) {

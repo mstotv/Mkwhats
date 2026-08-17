@@ -64,11 +64,36 @@ export async function POST(req: Request) {
       }
 
       if (planId && accountId) {
-        // Upgrade account plan in DB
+        const now = new Date();
+        const periodEnd = new Date(now);
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+        // 1. Upgrade account plan in DB
         await supabase
           .from('accounts')
-          .update({ plan_id: planId, updated_at: new Date().toISOString() })
+          .update({ plan_id: planId, updated_at: now.toISOString() })
           .eq('id', accountId);
+
+        // 2. Cancel existing active subscriptions
+        await supabase
+          .from('subscriptions')
+          .update({ status: 'canceled', canceled_at: now.toISOString(), updated_at: now.toISOString() })
+          .eq('account_id', accountId)
+          .in('status', ['active', 'trialing']);
+
+        // 3. Insert active subscription record
+        await supabase
+          .from('subscriptions')
+          .insert({
+            account_id: accountId,
+            plan_id: planId,
+            status: 'active',
+            billing_cycle: 'monthly',
+            current_period_start: now.toISOString(),
+            current_period_end: periodEnd.toISOString(),
+            created_at: now.toISOString(),
+            updated_at: now.toISOString(),
+          });
 
         return NextResponse.json({
           success: true,

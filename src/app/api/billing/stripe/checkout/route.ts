@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'يرجى اختيار الخطة المطلوبة' }, { status: 400 });
     }
 
-    // 2. Fetch plan details
+    // 2. Fetch plan details including discounted prices
     const { data: plan } = await supabase
       .from('plans')
       .select('*')
@@ -38,8 +38,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'الخطة غير موجودة' }, { status: 404 });
     }
 
-    const price = billing_cycle === 'yearly' ? plan.price_yearly : plan.price_monthly;
-    const unitAmountCents = Math.round(Number(price) * 100);
+    const price =
+      billing_cycle === 'yearly'
+        ? Number(plan.price_yearly_discounted) > 0
+          ? Number(plan.price_yearly_discounted)
+          : Number(plan.price_yearly)
+        : Number(plan.price_monthly_discounted) > 0
+          ? Number(plan.price_monthly_discounted)
+          : Number(plan.price_monthly);
+
+    const unitAmountCents = Math.round(price * 100);
 
     if (unitAmountCents <= 0) {
       return NextResponse.json({ error: 'هذه الخطة مجانية أو السعر 0' }, { status: 400 });
