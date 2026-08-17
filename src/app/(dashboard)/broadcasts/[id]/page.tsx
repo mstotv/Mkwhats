@@ -75,34 +75,41 @@ interface FunnelStep {
  * Width is relative to the largest step (typically Sent) so we
  * always render a full bar at the top and proportional tails.
  */
-function FunnelChart({ steps }: { steps: FunnelStep[] }) {
+function FunnelChart({ steps, title }: { steps: FunnelStep[]; title: string }) {
   const max = Math.max(...steps.map((s) => s.value), 1);
   return (
     <div className="rounded-xl border border-border bg-card p-4">
-      <h3 className="mb-4 text-sm font-medium text-foreground">Funnel</h3>
-      <div className="space-y-2">
+      <h3 className="mb-4 text-sm font-medium text-foreground">{title}</h3>
+      <div className="space-y-3">
         {steps.map((step) => {
-          const pctOfMax = Math.max(5, Math.round((step.value / max) * 100));
+          const pctOfMax = Math.max(4, Math.round((step.value / max) * 100));
           const pctOfSent =
             steps[0].value > 0
               ? Math.round((step.value / steps[0].value) * 100)
               : 0;
+          const isWide = pctOfMax >= 18;
+
           return (
             <div key={step.label} className="flex items-center gap-3">
-              <span className="w-20 shrink-0 text-xs text-muted-foreground">
+              <span className="w-24 shrink-0 text-xs font-medium text-muted-foreground">
                 {step.label}
               </span>
-              <div className="relative h-7 flex-1 rounded-full bg-muted">
+              <div className="relative flex h-8 flex-1 items-center rounded-full bg-muted/50 px-1 overflow-hidden">
                 <div
-                  className={`h-7 rounded-full ${step.color} transition-[width] duration-500`}
+                  className={`h-6 rounded-full ${step.color} transition-all duration-500 flex items-center px-3`}
                   style={{ width: `${pctOfMax}%` }}
-                />
-                <span className="absolute inset-0 flex items-center px-3 text-xs font-medium text-foreground">
-                  {step.value.toLocaleString()}
-                  <span className="ml-2 text-muted-foreground/80">
-                    ({pctOfSent}%)
+                >
+                  {isWide && (
+                    <span className="text-xs font-bold text-white drop-shadow-sm whitespace-nowrap">
+                      {step.value.toLocaleString()} ({pctOfSent}%)
+                    </span>
+                  )}
+                </div>
+                {!isWide && (
+                  <span className="ms-3 text-xs font-bold text-foreground whitespace-nowrap">
+                    {step.value.toLocaleString()} <span className="text-muted-foreground font-normal">({pctOfSent}%)</span>
                   </span>
-                </span>
+                )}
               </div>
             </div>
           );
@@ -394,7 +401,7 @@ export default function BroadcastDetailPage() {
         />
       </div>
 
-      <FunnelChart steps={funnelSteps} />
+      <FunnelChart steps={funnelSteps} title={t('funnel')} />
 
       {/* Recipients Table */}
       <div className="rounded-xl border border-border bg-card">
@@ -472,49 +479,52 @@ export default function BroadcastDetailPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="text-muted-foreground">{t('table.contact')}</TableHead>
-                  <TableHead className="text-muted-foreground">{t('table.phone')}</TableHead>
-                  <TableHead className="text-muted-foreground">{t('table.status')}</TableHead>
-                  <TableHead className="text-muted-foreground">{t('table.sent')}</TableHead>
-                  <TableHead className="text-muted-foreground">{t('table.delivered')}</TableHead>
-                  <TableHead className="text-muted-foreground">{t('table.read')}</TableHead>
-                  <TableHead className="text-muted-foreground">{t('table.error')}</TableHead>
+                  <TableHead className="text-start text-muted-foreground">{t('table.contact')}</TableHead>
+                  <TableHead className="text-start text-muted-foreground">{t('table.phone')}</TableHead>
+                  <TableHead className="text-start text-muted-foreground">{t('table.status')}</TableHead>
+                  <TableHead className="text-start text-muted-foreground">{t('table.sent')}</TableHead>
+                  <TableHead className="text-start text-muted-foreground">{t('table.delivered')}</TableHead>
+                  <TableHead className="text-start text-muted-foreground">{t('table.read')}</TableHead>
+                  <TableHead className="text-start text-muted-foreground">{t('table.error')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRecipients.map((recipient) => {
                   const rStatus = getRecipientStatus(recipient.status);
+                  const displayName = recipient.contact?.name?.trim() || recipient.contact?.phone || t('unknownContact');
+                  const displayPhone = recipient.contact?.phone ?? '-';
+
                   return (
                     <TableRow key={recipient.id} className="border-border">
-                      <TableCell className="font-medium text-foreground">
-                        {recipient.contact?.name ?? 'Unknown'}
+                      <TableCell className="text-start font-medium text-foreground">
+                        {displayName}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {recipient.contact?.phone ?? '-'}
+                      <TableCell className="text-start text-muted-foreground">
+                        {displayPhone}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-start">
                         <span
                           className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${rStatus.classes}`}
                         >
                           {tStatus(rStatus.label)}
                         </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="text-start text-muted-foreground">
                         {recipient.sent_at
                           ? new Date(recipient.sent_at).toLocaleString()
                           : '-'}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="text-start text-muted-foreground">
                         {recipient.delivered_at
                           ? new Date(recipient.delivered_at).toLocaleString()
                           : '-'}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="text-start text-muted-foreground">
                         {recipient.read_at
                           ? new Date(recipient.read_at).toLocaleString()
                           : '-'}
                       </TableCell>
-                      <TableCell className="max-w-xs truncate text-xs text-red-400">
+                      <TableCell className="text-start max-w-xs truncate text-xs text-red-400">
                         {recipient.error_message ?? '-'}
                       </TableCell>
                     </TableRow>
