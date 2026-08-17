@@ -227,7 +227,7 @@ export async function createBroadcast(
       account_id: accountId,
       user_id: auditUserId,
       name: name || (connectionType === 'evolution' ? `Evolution API broadcast` : `API broadcast (${templateName})`),
-      template_name: templateName ?? null,
+      template_name: templateName || 'free_text',
       template_language: templateLanguage ?? 'en_US',
       status: 'sending',
       total_recipients: deduped.length,

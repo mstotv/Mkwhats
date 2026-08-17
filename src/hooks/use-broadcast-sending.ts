@@ -340,7 +340,7 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
           user_id: user.id,
           account_id: accountId,
           name: payload.name,
-          template_name: payload.template?.name ?? null,
+          template_name: payload.template?.name || 'free_text',
           template_language: payload.template?.language ?? 'en_US',
           template_variables: payload.variables ?? {},
           audience_filter: {
