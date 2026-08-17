@@ -338,7 +338,7 @@ export default async function LandingPage() {
             display: flex !important;
             width: max-content !important;
             gap: 1.25rem !important;
-            animation: marqueeSeamless 35s linear infinite !important;
+            animation: marqueeSeamless 30s linear infinite !important;
             will-change: transform;
           }
           .marquee-track-seamless:hover {
@@ -348,7 +348,7 @@ export default async function LandingPage() {
 
         <div className="relative w-full flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_10%,white_90%,transparent)]">
           <div className="marquee-track-seamless py-1">
-            {[...partners, ...partners, ...partners].map((p, idx) => (
+            {[...partners, ...partners, ...partners, ...partners].map((p, idx) => (
               <div
                 key={`p-${idx}`}
                 className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800/80 px-4 py-2 rounded-lg shadow-sm hover:border-emerald-500/50 hover:bg-slate-800 transition-all shrink-0"
@@ -365,6 +365,7 @@ export default async function LandingPage() {
             ))}
           </div>
         </div>
+
       </section>
 
 
