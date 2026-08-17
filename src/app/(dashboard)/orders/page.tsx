@@ -63,7 +63,9 @@ export default function OrdersPage() {
           const text = await res.text();
           if (text) {
             const data = JSON.parse(text);
-            const hasExcelFeature = Boolean(data?.plan?.features?.excel_export);
+            const hasExcelFeature = Boolean(
+              data?.features?.excel_export ?? data?.plan?.features?.excel_export,
+            );
             setExcelFeatureAllowed(hasExcelFeature);
             if (!hasExcelFeature) {
               setFeatureReason(t("featureReason"));

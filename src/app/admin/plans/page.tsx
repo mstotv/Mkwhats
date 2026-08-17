@@ -16,7 +16,9 @@ import {
   Sparkles,
   Plus,
   Flame,
-  Star,
+  Bot,
+  Send,
+  FileSpreadsheet,
   Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,12 +28,15 @@ interface PlanRow {
   name: string;
   slug: string;
   price_monthly: number;
+  price_monthly_discounted?: number;
   price_yearly: number;
+  price_yearly_discounted?: number;
   max_users: number;
   max_whatsapp_instances: number;
   max_contacts: number;
   max_messages_monthly: number;
   max_broadcasts_monthly: number;
+  max_orders_monthly: number;
   is_popular: boolean;
   features: {
     ai_assistant?: boolean;
@@ -54,13 +59,16 @@ export default function AdminPlansPage() {
   const [newPlan, setNewPlan] = useState<Partial<PlanRow>>({
     name: '',
     slug: '',
-    price_monthly: 19,
-    price_yearly: 190,
+    price_monthly: 29,
+    price_monthly_discounted: 19,
+    price_yearly: 290,
+    price_yearly_discounted: 190,
     max_users: 3,
     max_whatsapp_instances: 1,
     max_contacts: 5000,
     max_messages_monthly: 5000,
     max_broadcasts_monthly: 50,
+    max_orders_monthly: 1000,
     is_popular: false,
     is_active: true,
     features: {
@@ -105,7 +113,7 @@ export default function AdminPlansPage() {
 
       if (!res.ok) throw new Error('فشل التعيين');
 
-      toast.success('تم تعيين هذه الباقة كـ "الأكثر شيوعاً" 🔥');
+      toast.success('تم تعيين هذه الباقة كـ "الأكثر شيوعاً ومبيعاً" 🔥');
       setPlans((prev) => prev.map((p) => ({ ...p, is_popular: p.id === planId })));
     } catch (err) {
       console.error('[handleTogglePopular] Error:', err);
@@ -124,12 +132,15 @@ export default function AdminPlansPage() {
         .update({
           name: editingPlan.name,
           price_monthly: editingPlan.price_monthly,
+          price_monthly_discounted: editingPlan.price_monthly_discounted || 0,
           price_yearly: editingPlan.price_yearly,
+          price_yearly_discounted: editingPlan.price_yearly_discounted || 0,
           max_users: editingPlan.max_users,
           max_contacts: editingPlan.max_contacts,
           max_whatsapp_instances: editingPlan.max_whatsapp_instances,
           max_messages_monthly: editingPlan.max_messages_monthly,
           max_broadcasts_monthly: editingPlan.max_broadcasts_monthly,
+          max_orders_monthly: editingPlan.max_orders_monthly || 500,
           features: editingPlan.features,
           updated_at: new Date().toISOString(),
         })
@@ -162,12 +173,15 @@ export default function AdminPlansPage() {
         name: newPlan.name,
         slug: newPlan.slug.toLowerCase().trim(),
         price_monthly: newPlan.price_monthly ?? 0,
+        price_monthly_discounted: newPlan.price_monthly_discounted ?? 0,
         price_yearly: newPlan.price_yearly ?? 0,
+        price_yearly_discounted: newPlan.price_yearly_discounted ?? 0,
         max_users: newPlan.max_users ?? 1,
         max_contacts: newPlan.max_contacts ?? 1000,
         max_whatsapp_instances: newPlan.max_whatsapp_instances ?? 1,
         max_messages_monthly: newPlan.max_messages_monthly ?? 1000,
         max_broadcasts_monthly: newPlan.max_broadcasts_monthly ?? 10,
+        max_orders_monthly: newPlan.max_orders_monthly ?? 500,
         is_popular: newPlan.is_popular ?? false,
         is_active: true,
         features: newPlan.features ?? {},
@@ -195,7 +209,7 @@ export default function AdminPlansPage() {
             إدارة باقات المنصة والاشتراكات (SaaS Pricing Manager)
           </h1>
           <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            إضافة خطط جديدة، تحديد الباقة الأكثر رواجاً، وتعديل حدود استخدام الرسائل والمستشارين
+            تحديد الأسعار والخصومات، سقف الرسائل وأعضاء الفريق (-1 لغير محدود)، وتفعيل مميزات الذكاء الاصطناعي والتليغرام والتصدير
           </p>
         </div>
 
@@ -259,7 +273,7 @@ export default function AdminPlansPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-foreground">السعر الشهري ($)</label>
+              <label className="font-semibold text-foreground">السعر الشهري الأصلي ($)</label>
               <Input
                 type="number"
                 value={newPlan.price_monthly || 0}
@@ -269,7 +283,17 @@ export default function AdminPlansPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-foreground">السعر السنوي ($)</label>
+              <label className="font-semibold text-foreground text-emerald-400">السعر الشهري مع الخصم ($)</label>
+              <Input
+                type="number"
+                value={newPlan.price_monthly_discounted || 0}
+                onChange={(e) => setNewPlan({ ...newPlan, price_monthly_discounted: parseFloat(e.target.value) || 0 })}
+                className="bg-background border-border"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-foreground">السعر السنوي الأصلي ($)</label>
               <Input
                 type="number"
                 value={newPlan.price_yearly || 0}
@@ -279,7 +303,17 @@ export default function AdminPlansPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-foreground">سقف المستشارين (Agents)</label>
+              <label className="font-semibold text-foreground text-emerald-400">السعر السنوي مع الخصم ($)</label>
+              <Input
+                type="number"
+                value={newPlan.price_yearly_discounted || 0}
+                onChange={(e) => setNewPlan({ ...newPlan, price_yearly_discounted: parseFloat(e.target.value) || 0 })}
+                className="bg-background border-border"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-foreground">أعضاء الفريق (-1 = غير محدود)</label>
               <Input
                 type="number"
                 placeholder="-1 لغير محدود"
@@ -290,9 +324,10 @@ export default function AdminPlansPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-foreground">سقف جهات الاتصال</label>
+              <label className="font-semibold text-foreground">جهات الاتصال (-1 = غير محدود)</label>
               <Input
                 type="number"
+                placeholder="-1 لغير محدود"
                 value={newPlan.max_contacts || 0}
                 onChange={(e) => setNewPlan({ ...newPlan, max_contacts: parseInt(e.target.value) || 0 })}
                 className="bg-background border-border"
@@ -300,7 +335,7 @@ export default function AdminPlansPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-foreground">الرسائل الشهرية</label>
+              <label className="font-semibold text-foreground">الرسائل الشهرية (-1 = غير محدود)</label>
               <Input
                 type="number"
                 placeholder="-1 لغير محدود"
@@ -311,11 +346,23 @@ export default function AdminPlansPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-foreground">أرقام واتساب (Instances)</label>
+              <label className="font-semibold text-foreground">الطلبات والمبيعات (-1 = غير محدود)</label>
               <Input
                 type="number"
-                value={newPlan.max_whatsapp_instances || 1}
-                onChange={(e) => setNewPlan({ ...newPlan, max_whatsapp_instances: parseInt(e.target.value) || 1 })}
+                placeholder="-1 لغير محدود"
+                value={newPlan.max_orders_monthly || 0}
+                onChange={(e) => setNewPlan({ ...newPlan, max_orders_monthly: parseInt(e.target.value) || 0 })}
+                className="bg-background border-border"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-foreground">حملات البرودكاست (-1 = غير محدود)</label>
+              <Input
+                type="number"
+                placeholder="-1 لغير محدود"
+                value={newPlan.max_broadcasts_monthly || 0}
+                onChange={(e) => setNewPlan({ ...newPlan, max_broadcasts_monthly: parseInt(e.target.value) || 0 })}
                 className="bg-background border-border"
               />
             </div>
@@ -325,7 +372,7 @@ export default function AdminPlansPage() {
           <div className="space-y-2 border-t border-border pt-4">
             <h4 className="text-xs font-bold text-foreground">تفعيل المميزات المتاحة بالباقة:</h4>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
                 <input
                   type="checkbox"
                   checked={!!newPlan.features?.ai_assistant}
@@ -337,25 +384,25 @@ export default function AdminPlansPage() {
                   }
                   className="rounded border-border text-amber-500 focus:ring-amber-500"
                 />
-                <span>مساعد الذكاء الاصطناعي (AI)</span>
+                <span className="font-semibold text-foreground">🤖 الذكاء الاصطناعي (AI)</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
                 <input
                   type="checkbox"
-                  checked={!!newPlan.features?.automations}
+                  checked={!!newPlan.features?.telegram_bot}
                   onChange={(e) =>
                     setNewPlan({
                       ...newPlan,
-                      features: { ...newPlan.features, automations: e.target.checked },
+                      features: { ...newPlan.features, telegram_bot: e.target.checked },
                     })
                   }
                   className="rounded border-border text-amber-500 focus:ring-amber-500"
                 />
-                <span>منشئ الأتمتة الشجرية</span>
+                <span className="font-semibold text-foreground">✈️ ربط بوت التلغرام</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
                 <input
                   type="checkbox"
                   checked={!!newPlan.features?.excel_export}
@@ -367,22 +414,22 @@ export default function AdminPlansPage() {
                   }
                   className="rounded border-border text-amber-500 focus:ring-amber-500"
                 />
-                <span>تصدير Excel/CSV</span>
+                <span className="font-semibold text-foreground">📊 تصدير الطلبات إلى Excel</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
                 <input
                   type="checkbox"
-                  checked={!!newPlan.features?.custom_webhooks}
+                  checked={!!newPlan.features?.automations}
                   onChange={(e) =>
                     setNewPlan({
                       ...newPlan,
-                      features: { ...newPlan.features, custom_webhooks: e.target.checked },
+                      features: { ...newPlan.features, automations: e.target.checked },
                     })
                   }
                   className="rounded border-border text-amber-500 focus:ring-amber-500"
                 />
-                <span>ربط Webhooks الخارجية</span>
+                <span className="font-semibold text-foreground">⚡ الأتمتة والرد الآلي</span>
               </label>
             </div>
           </div>
@@ -437,42 +484,75 @@ export default function AdminPlansPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black text-foreground dir-ltr">
-                      ${plan.price_monthly}
-                    </span>
-                    <span className="text-xs text-muted-foreground">/ شهر</span>
-                    <span className="ms-auto text-xs text-muted-foreground dir-ltr font-mono">
-                      (${plan.price_yearly}/سنة)
-                    </span>
+                  {/* Prices & Discounts Display */}
+                  <div className="space-y-1">
+                    <div className="flex items-baseline gap-2">
+                      {plan.price_monthly_discounted && plan.price_monthly_discounted > 0 ? (
+                        <>
+                          <span className="text-3xl font-black text-emerald-400 dir-ltr">
+                            ${plan.price_monthly_discounted}
+                          </span>
+                          <span className="text-sm font-semibold text-muted-foreground line-through dir-ltr">
+                            ${plan.price_monthly}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-3xl font-black text-foreground dir-ltr">
+                          ${plan.price_monthly}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground">/ شهر</span>
+                    </div>
+
+                    {plan.price_yearly > 0 && (
+                      <div className="text-xs text-muted-foreground flex items-center gap-1 font-mono">
+                        <span>السنوي:</span>
+                        {plan.price_yearly_discounted && plan.price_yearly_discounted > 0 ? (
+                          <>
+                            <strong className="text-emerald-400">${plan.price_yearly_discounted}</strong>
+                            <span className="line-through text-muted-foreground">${plan.price_yearly}</span>
+                          </>
+                        ) : (
+                          <strong className="text-foreground">${plan.price_yearly}</strong>
+                        )}
+                      </div>
+                    )}
                   </div>
 
+                  {/* Quotas & Limits checklist */}
                   <div className="space-y-2 border-t border-border/60 pt-4 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">سقف المستشارين:</span>
+                      <span className="text-muted-foreground">أعضاء الفريق (MEMBER):</span>
                       <span className="font-bold text-foreground">
-                        {plan.max_users === -1 ? 'غير محدود' : plan.max_users}
+                        {plan.max_users === -1 ? 'غير محدود ♾️' : plan.max_users}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">سقف جهات الاتصال:</span>
                       <span className="font-bold text-foreground">
-                        {plan.max_contacts === -1 ? 'غير محدود' : plan.max_contacts.toLocaleString()}
+                        {plan.max_contacts === -1 ? 'غير محدود ♾️' : plan.max_contacts.toLocaleString()}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">الرسائل الشهرية:</span>
                       <span className="font-bold text-foreground">
-                        {plan.max_messages_monthly === -1 ? 'غير محدود' : (plan.max_messages_monthly ?? 1000).toLocaleString()}
+                        {plan.max_messages_monthly === -1 ? 'غير محدود ♾️' : (plan.max_messages_monthly ?? 1000).toLocaleString()}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">أرقام واتساب:</span>
+                      <span className="text-muted-foreground">الطلبات والمبيعات:</span>
                       <span className="font-bold text-foreground">
-                        {plan.max_whatsapp_instances}
+                        {plan.max_orders_monthly === -1 ? 'غير محدود ♾️' : (plan.max_orders_monthly ?? 500).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">حملات البرودكاست:</span>
+                      <span className="font-bold text-foreground">
+                        {plan.max_broadcasts_monthly === -1 ? 'غير محدود ♾️' : plan.max_broadcasts_monthly}
                       </span>
                     </div>
                   </div>
@@ -481,9 +561,9 @@ export default function AdminPlansPage() {
                   <div className="space-y-2 border-t border-border/60 pt-4 text-xs">
                     <div className="flex items-center gap-2">
                       {plan.features?.ai_assistant ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-muted-foreground/40" />
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                       )}
                       <span className={plan.features?.ai_assistant ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
                         مساعد الذكاء الاصطناعي (AI)
@@ -491,35 +571,35 @@ export default function AdminPlansPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {plan.features?.automations ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      {plan.features?.telegram_bot ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-muted-foreground/40" />
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                       )}
-                      <span className={plan.features?.automations ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
-                        منشئ الأتمتة الشجرية
+                      <span className={plan.features?.telegram_bot ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
+                        ربط بوت التلغرام للإشعارات
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       {plan.features?.excel_export ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-muted-foreground/40" />
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                       )}
                       <span className={plan.features?.excel_export ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
-                        تصدير Excel/CSV
+                        تصدير الطلبات والمعلومات إلى Excel
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {plan.features?.custom_webhooks ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      {plan.features?.automations ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-muted-foreground/40" />
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                       )}
-                      <span className={plan.features?.custom_webhooks ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
-                        ربط الـ Webhooks الخارجية
+                      <span className={plan.features?.automations ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
+                        منشئ الأتمتة والردود الآلية
                       </span>
                     </div>
                   </div>
@@ -543,7 +623,7 @@ export default function AdminPlansPage() {
                     onClick={() => setEditingPlan(plan)}
                   >
                     <Edit className="h-3.5 w-3.5 ms-1 text-amber-500" />
-                    تعديل خصائص الباقة بالكامل
+                    تعديل الأسعار والحدود والمميزات
                   </Button>
                 </div>
               </Card>
@@ -576,7 +656,7 @@ export default function AdminPlansPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-foreground">السعر الشهري ($)</label>
+              <label className="font-semibold text-foreground">السعر الشهري الأصلي ($)</label>
               <Input
                 type="number"
                 value={editingPlan.price_monthly}
@@ -588,7 +668,19 @@ export default function AdminPlansPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-foreground">السعر السنوي ($)</label>
+              <label className="font-semibold text-foreground text-emerald-400">السعر الشهري بعد الخصم ($)</label>
+              <Input
+                type="number"
+                value={editingPlan.price_monthly_discounted || 0}
+                onChange={(e) =>
+                  setEditingPlan({ ...editingPlan, price_monthly_discounted: parseFloat(e.target.value) || 0 })
+                }
+                className="bg-background border-border"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-foreground">السعر السنوي الأصلي ($)</label>
               <Input
                 type="number"
                 value={editingPlan.price_yearly}
@@ -600,7 +692,19 @@ export default function AdminPlansPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-foreground">سقف المستشارين (-1 لغير محدود)</label>
+              <label className="font-semibold text-foreground text-emerald-400">السعر السنوي بعد الخصم ($)</label>
+              <Input
+                type="number"
+                value={editingPlan.price_yearly_discounted || 0}
+                onChange={(e) =>
+                  setEditingPlan({ ...editingPlan, price_yearly_discounted: parseFloat(e.target.value) || 0 })
+                }
+                className="bg-background border-border"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-foreground">أعضاء الفريق (-1 = غير محدود)</label>
               <Input
                 type="number"
                 value={editingPlan.max_users}
@@ -612,7 +716,7 @@ export default function AdminPlansPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-foreground">سقف جهات الاتصال (-1 لغير محدود)</label>
+              <label className="font-semibold text-foreground">سقف جهات الاتصال (-1 = غير محدود)</label>
               <Input
                 type="number"
                 value={editingPlan.max_contacts}
@@ -624,7 +728,7 @@ export default function AdminPlansPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-foreground">الرسائل الشهرية (-1 لغير محدود)</label>
+              <label className="font-semibold text-foreground">الرسائل الشهرية (-1 = غير محدود)</label>
               <Input
                 type="number"
                 value={editingPlan.max_messages_monthly}
@@ -634,12 +738,36 @@ export default function AdminPlansPage() {
                 className="bg-background border-border"
               />
             </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-foreground">الطلبات والمبيعات (-1 = غير محدود)</label>
+              <Input
+                type="number"
+                value={editingPlan.max_orders_monthly || 500}
+                onChange={(e) =>
+                  setEditingPlan({ ...editingPlan, max_orders_monthly: parseInt(e.target.value) || 0 })
+                }
+                className="bg-background border-border"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-foreground">حملات البرودكاست (-1 = غير محدود)</label>
+              <Input
+                type="number"
+                value={editingPlan.max_broadcasts_monthly}
+                onChange={(e) =>
+                  setEditingPlan({ ...editingPlan, max_broadcasts_monthly: parseInt(e.target.value) || 0 })
+                }
+                className="bg-background border-border"
+              />
+            </div>
           </div>
 
           <div className="space-y-2 border-t border-border pt-4">
             <h4 className="text-xs font-bold text-foreground">تعديل مميزات الباقة المفعلة:</h4>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
                 <input
                   type="checkbox"
                   checked={!!editingPlan.features?.ai_assistant}
@@ -651,25 +779,25 @@ export default function AdminPlansPage() {
                   }
                   className="rounded border-border text-amber-500"
                 />
-                <span>مساعد الذكاء الاصطناعي (AI)</span>
+                <span className="font-semibold text-foreground">🤖 الذكاء الاصطناعي (AI)</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
                 <input
                   type="checkbox"
-                  checked={!!editingPlan.features?.automations}
+                  checked={!!editingPlan.features?.telegram_bot}
                   onChange={(e) =>
                     setEditingPlan({
                       ...editingPlan,
-                      features: { ...editingPlan.features, automations: e.target.checked },
+                      features: { ...editingPlan.features, telegram_bot: e.target.checked },
                     })
                   }
                   className="rounded border-border text-amber-500"
                 />
-                <span>منشئ الأتمتة الشجرية</span>
+                <span className="font-semibold text-foreground">✈️ ربط بوت التلغرام</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
                 <input
                   type="checkbox"
                   checked={!!editingPlan.features?.excel_export}
@@ -681,22 +809,22 @@ export default function AdminPlansPage() {
                   }
                   className="rounded border-border text-amber-500"
                 />
-                <span>تصدير Excel/CSV</span>
+                <span className="font-semibold text-foreground">📊 تصدير الطلبات إلى Excel</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
                 <input
                   type="checkbox"
-                  checked={!!editingPlan.features?.custom_webhooks}
+                  checked={!!editingPlan.features?.automations}
                   onChange={(e) =>
                     setEditingPlan({
                       ...editingPlan,
-                      features: { ...editingPlan.features, custom_webhooks: e.target.checked },
+                      features: { ...editingPlan.features, automations: e.target.checked },
                     })
                   }
                   className="rounded border-border text-amber-500"
                 />
-                <span>ربط Webhooks الخارجية</span>
+                <span className="font-semibold text-foreground">⚡ الأتمتة والرد الآلي</span>
               </label>
             </div>
           </div>
