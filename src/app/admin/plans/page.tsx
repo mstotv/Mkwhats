@@ -97,9 +97,13 @@ export default function AdminPlansPage() {
 
   async function handleTogglePopular(planId: string) {
     try {
-      const supabase = createClient();
-      const { error } = await supabase.rpc('set_popular_plan', { target_plan_id: planId });
-      if (error) throw error;
+      const res = await fetch('/api/admin/plans/popular', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_plan_id: planId }),
+      });
+
+      if (!res.ok) throw new Error('فشل التعيين');
 
       toast.success('تم تعيين هذه الباقة كـ "الأكثر شيوعاً" 🔥');
       setPlans((prev) => prev.map((p) => ({ ...p, is_popular: p.id === planId })));
