@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { UpgradePlanModal, type PlanItem } from './upgrade-plan-modal'
 import { useTranslations } from 'next-intl'
+import { toast } from 'sonner'
 
 interface PlanData {
   id: string
