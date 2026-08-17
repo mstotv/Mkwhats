@@ -656,9 +656,13 @@
     },
     "status": {
       "draft": "مسودة",
+      "pending": "معلقة",
       "scheduled": "مجدولة",
       "sending": "جاري الإرسال…",
       "sent": "تم الإرسال",
+      "delivered": "تم التسليم",
+      "read": "تمت القراءة",
+      "replied": "تم الرد",
       "failed": "فشلت",
       "paused": "متوقفة مؤقتاً",
       "canceled": "ملغاة"

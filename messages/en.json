@@ -640,15 +640,16 @@
     },
     "status": {
       "draft": "Draft",
+      "pending": "Pending",
       "scheduled": "Scheduled",
       "sending": "Sending",
       "sent": "Sent",
-      "failed": "Failed",
-      "pending": "Pending",
       "delivered": "Delivered",
       "read": "Read",
       "replied": "Replied",
-      "unknown": "Unknown"
+      "failed": "Failed",
+      "paused": "Paused",
+      "canceled": "Canceled"
     },
     "detail": {
       "backToBroadcasts": "Back to Broadcasts",
