@@ -29,7 +29,8 @@ import {
   MessageSquare,
   Loader2,
   RefreshCw,
-  Sliders,
+  CreditCard,
+  Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -38,6 +39,7 @@ interface AdminAccountRow {
   account_name: string;
   created_at: string;
   is_suspended: boolean;
+  plan_id?: string;
   plan_name: string;
   plan_slug: string;
   subscription_status: string;
@@ -46,31 +48,48 @@ interface AdminAccountRow {
   owner_email: string;
 }
 
+interface PlanOption {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export default function AdminAccountsPage() {
   const [accounts, setAccounts] = useState<AdminAccountRow[]>([]);
+  const [plans, setPlans] = useState<PlanOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended'>('all');
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  async function fetchAccounts() {
+  // Change Plan Modal State
+  const [changingAccount, setChangingAccount] = useState<AdminAccountRow | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  const [savingPlan, setSavingPlan] = useState(false);
+
+  async function fetchAccountsAndPlans() {
     try {
       setLoading(true);
       const supabase = createClient();
-      const { data, error } = await supabase.rpc('get_admin_accounts_list');
 
-      if (error) throw error;
-      setAccounts((data as AdminAccountRow[]) ?? []);
+      const [accountsRes, plansRes] = await Promise.all([
+        supabase.rpc('get_admin_accounts_list'),
+        supabase.from('plans').select('id, name, slug').eq('is_active', true),
+      ]);
+
+      if (accountsRes.error) throw accountsRes.error;
+      setAccounts((accountsRes.data as AdminAccountRow[]) ?? []);
+      setPlans((plansRes.data as PlanOption[]) ?? []);
     } catch (err) {
-      console.error('[AdminAccounts] Error fetching accounts:', err);
-      toast.error('تعذر تحميل قائمة الشركات');
+      console.error('[AdminAccounts] Error fetching data:', err);
+      toast.error('تعذر تحميل بيانات الشركات والخطط');
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchAccounts();
+    fetchAccountsAndPlans();
   }, []);
 
   async function handleToggleSuspension(accountId: string, currentSuspended: boolean) {
@@ -98,6 +117,39 @@ export default function AdminAccountsPage() {
     }
   }
 
+  async function handleConfirmPlanChange() {
+    if (!changingAccount || !selectedPlanId) return;
+
+    try {
+      setSavingPlan(true);
+      const supabase = createClient();
+
+      const { error } = await supabase.rpc('change_account_subscription_plan', {
+        target_account_id: changingAccount.account_id,
+        new_plan_id: selectedPlanId,
+      });
+
+      if (error) throw error;
+
+      const targetPlan = plans.find((p) => p.id === selectedPlanId);
+      toast.success(`تمت ترقية/تغيير باقة الشركة إلى "${targetPlan?.name}" بنجاح 🎉`);
+
+      setAccounts((prev) =>
+        prev.map((a) =>
+          a.account_id === changingAccount.account_id
+            ? { ...a, plan_id: selectedPlanId, plan_name: targetPlan?.name || a.plan_name }
+            : a,
+        ),
+      );
+      setChangingAccount(null);
+    } catch (err) {
+      console.error('[handleConfirmPlanChange] Error:', err);
+      toast.error('فشلت عملية تغيير باقة الشركة');
+    } finally {
+      setSavingPlan(false);
+    }
+  }
+
   const filteredAccounts = useMemo(() => {
     return accounts.filter((acc) => {
       const matchesSearch =
@@ -118,17 +170,17 @@ export default function AdminAccountsPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            إدارة الشركات والحسابات (Tenants)
+            إدارة الشركات والحسابات (Tenants Directory)
           </h1>
           <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            عرض الشركات المسجلة على المنصة، حظر أو تفعيل الحسابات، ومراقبة حجم الاستهلاك
+            عرض وحظر تفعيل الحسابات، تغيير باقات الشركات فورياً، ومراقبة حجم الرسائل والمستخدمين
           </p>
         </div>
 
         <Button
           variant="outline"
           size="sm"
-          onClick={fetchAccounts}
+          onClick={fetchAccountsAndPlans}
           disabled={loading}
           className="border-border text-xs font-semibold"
         >
@@ -136,6 +188,58 @@ export default function AdminAccountsPage() {
           تحديث القائمة
         </Button>
       </div>
+
+      {/* Change Plan Modal */}
+      {changingAccount && (
+        <div className="rounded-2xl border border-amber-500/40 bg-card p-6 shadow-xl space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <h3 className="text-base font-bold text-foreground">
+              تغيير باقة شركة: <span className="text-amber-500">{changingAccount.account_name}</span>
+            </h3>
+            <Button variant="ghost" size="sm" onClick={() => setChangingAccount(null)} className="text-xs">
+              إلغاء
+            </Button>
+          </div>
+
+          <div className="space-y-3 text-xs">
+            <label className="font-semibold text-foreground">اختر الباقة الجديدة للشركة:</label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {plans.map((p) => (
+                <div
+                  key={p.id}
+                  onClick={() => setSelectedPlanId(p.id)}
+                  className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                    selectedPlanId === p.id
+                      ? 'border-2 border-amber-500 bg-amber-500/10'
+                      : 'border-border bg-background hover:border-border/80'
+                  }`}
+                >
+                  <div className="flex items-center justify-between font-bold text-foreground">
+                    <span>{p.name}</span>
+                    {selectedPlanId === p.id && <Check className="h-4 w-4 text-amber-500" />}
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground font-mono">{p.slug}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" size="sm" onClick={() => setChangingAccount(null)}>
+              إلغاء
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleConfirmPlanChange}
+              disabled={savingPlan || !selectedPlanId}
+              className="bg-amber-500 font-bold text-slate-950 hover:bg-amber-400"
+            >
+              {savingPlan ? <Loader2 className="h-4 w-4 animate-spin me-1.5" /> : null}
+              تأكيد تغيير الباقة
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Filters Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
@@ -196,7 +300,6 @@ export default function AdminAccountsPage() {
               <TableHeader>
                 <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="text-start text-xs font-bold text-muted-foreground">اسم الشركة</TableHead>
-
                   <TableHead className="text-start text-xs font-bold text-muted-foreground">مالك الحساب</TableHead>
                   <TableHead className="text-start text-xs font-bold text-muted-foreground">الباقة الحالية</TableHead>
                   <TableHead className="text-start text-xs font-bold text-muted-foreground">المستخدمون</TableHead>
@@ -258,9 +361,20 @@ export default function AdminAccountsPage() {
                         />
                         <DropdownMenuContent align="end" className="border-border bg-popover">
                           <DropdownMenuItem
+                            onClick={() => {
+                              setChangingAccount(acc);
+                              setSelectedPlanId(acc.plan_id || '');
+                            }}
+                            className="text-amber-500 font-medium"
+                          >
+                            <CreditCard className="h-4 w-4 me-2" />
+                            تغيير باقة الشركة
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
                             onClick={() => handleToggleSuspension(acc.account_id, acc.is_suspended)}
                             disabled={processingId === acc.account_id}
-                            className={acc.is_suspended ? 'text-emerald-400' : 'text-red-400'}
+                            className={acc.is_suspended ? 'text-emerald-400 font-medium' : 'text-red-400 font-medium'}
                           >
                             {acc.is_suspended ? (
                               <>
