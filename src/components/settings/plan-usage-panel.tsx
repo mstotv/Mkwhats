@@ -630,11 +630,11 @@ export function PlanUsagePanel() {
           </div>
 
           {/* Monthly / Yearly Toggle Switch */}
-          <div className="flex items-center gap-1 p-1 bg-muted rounded-xl border border-border self-start sm:self-auto">
+          <div className="grid grid-cols-2 sm:flex items-center gap-1 p-1 bg-muted rounded-xl border border-border w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setBillingCycle('monthly')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 sm:px-4 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all text-center justify-center ${
                 billingCycle === 'monthly'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -645,19 +645,19 @@ export function PlanUsagePanel() {
             <button
               type="button"
               onClick={() => setBillingCycle('yearly')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-3 sm:px-4 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 billingCycle === 'yearly'
                   ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
                   : 'text-amber-400 hover:text-amber-300'
               }`}
             >
               <span>🎁 فوترة سنوية</span>
-              <span className="text-[10px] bg-slate-950/20 px-1.5 py-0.5 rounded font-mono">توفير سنوي</span>
+              <span className="text-[10px] bg-slate-950/20 px-1.5 py-0.5 rounded font-mono hidden xs:inline">توفير</span>
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
           {availablePlans.map((p: any) => {
             const isCurrent = p.id === plan.id;
             const isYearly = billingCycle === 'yearly';
@@ -677,11 +677,11 @@ export function PlanUsagePanel() {
             return (
               <Card
                 key={p.id}
-                className={`relative flex flex-col justify-between p-6 rounded-2xl transition-all duration-300 ${
+                className={`relative flex flex-col justify-between p-5 sm:p-6 rounded-2xl transition-all duration-300 ${
                   isCurrent
                     ? 'border-2 border-emerald-500/80 bg-emerald-950/10 shadow-xl shadow-emerald-500/10 ring-1 ring-emerald-500/30'
                     : p.is_popular
-                      ? 'border-2 border-amber-500/80 bg-amber-950/10 shadow-xl shadow-amber-500/10 ring-1 ring-amber-500/30 scale-[1.02] z-10'
+                      ? 'border-2 border-amber-500/80 bg-amber-950/10 shadow-xl shadow-amber-500/10 ring-1 ring-amber-500/30 scale-100 md:scale-[1.02] z-10'
                       : 'border border-border/80 bg-card hover:border-muted-foreground/30 hover:shadow-lg'
                 }`}
               >
@@ -693,41 +693,41 @@ export function PlanUsagePanel() {
                   </div>
                 )}
 
-                <div className="space-y-5">
+                <div className="space-y-4 sm:space-y-5">
                   {/* Card Header & Title */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-xl font-black text-foreground tracking-tight">{p.name}</h4>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
+                      <h4 className="text-lg sm:text-xl font-black text-foreground tracking-tight">{p.name}</h4>
+                      <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 font-mono">
                         {p.slug?.toUpperCase()}
                       </p>
                     </div>
                     {isCurrent && (
-                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-xs font-bold px-2.5 py-1">
+                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1">
                         باقتك الحالية ✓
                       </Badge>
                     )}
                   </div>
 
                   {/* Pricing Box */}
-                  <div className="rounded-xl bg-muted/40 p-3.5 border border-border/50">
-                    <div className="flex items-baseline justify-between">
-                      <div className="flex items-baseline gap-2 dir-ltr">
+                  <div className="rounded-xl bg-muted/40 p-3 sm:p-3.5 border border-border/50">
+                    <div className="flex items-baseline justify-between flex-wrap gap-2">
+                      <div className="flex items-baseline gap-1.5 sm:gap-2 dir-ltr">
                         {hasDiscount ? (
                           <>
-                            <span className="text-4xl font-black text-emerald-400 tracking-tight">
+                            <span className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight">
                               ${priceActive}
                             </span>
-                            <span className="text-sm font-semibold text-muted-foreground/60 line-through">
+                            <span className="text-xs sm:text-sm font-semibold text-muted-foreground/60 line-through">
                               ${priceOriginal}
                             </span>
                           </>
                         ) : (
-                          <span className="text-4xl font-black text-foreground tracking-tight">
+                          <span className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
                             ${priceActive}
                           </span>
                         )}
-                        <span className="text-xs font-medium text-muted-foreground dir-rtl">
+                        <span className="text-[11px] sm:text-xs font-medium text-muted-foreground dir-rtl">
                           /{isYearly ? 'سنوياً' : 'شهرياً'}
                         </span>
                       </div>
