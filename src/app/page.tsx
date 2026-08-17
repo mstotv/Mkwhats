@@ -70,48 +70,28 @@ export default async function LandingPage() {
   const platformName = settings?.platform_name || 'MK Whats'
   const logoUrl = settings?.logo_url
 
-  const DEFAULT_PARTNERS = [
-    { name: 'Shopify', logo_url: 'https://cdn.simpleicons.org/shopify/96bf48' },
-    { name: 'WooCommerce', logo_url: 'https://cdn.simpleicons.org/woocommerce/96588a' },
-    { name: 'Meta', logo_url: 'https://cdn.simpleicons.org/meta/0668E1' },
-    { name: 'Stripe', logo_url: 'https://cdn.simpleicons.org/stripe/635BFF' },
-    { name: 'WordPress', logo_url: 'https://cdn.simpleicons.org/wordpress/21759B' },
-    { name: 'Salesforce', logo_url: 'https://cdn.simpleicons.org/salesforce/00A1E0' },
-    { name: 'Zendesk', logo_url: 'https://cdn.simpleicons.org/zendesk/03363D' },
-    { name: 'WhatsApp', logo_url: 'https://cdn.simpleicons.org/whatsapp/25D366' },
-    { name: 'Telegram', logo_url: 'https://cdn.simpleicons.org/telegram/26A5E4' },
-    { name: 'Google', logo_url: 'https://cdn.simpleicons.org/google/4285F4' },
-    { name: 'Amazon', logo_url: 'https://cdn.simpleicons.org/amazon/FF9900' },
-    { name: 'Microsoft', logo_url: 'https://cdn.simpleicons.org/microsoft/00A4EF' },
-    { name: 'PayPal', logo_url: 'https://cdn.simpleicons.org/paypal/003087' },
-    { name: 'Mailchimp', logo_url: 'https://cdn.simpleicons.org/mailchimp/FFE01B' },
-    { name: 'Zapier', logo_url: 'https://cdn.simpleicons.org/zapier/FF4A00' },
-    { name: 'HubSpot', logo_url: 'https://cdn.simpleicons.org/hubspot/FF7A59' },
-    { name: 'Slack', logo_url: 'https://cdn.simpleicons.org/slack/4A154B' },
-    { name: 'Notion', logo_url: 'https://cdn.simpleicons.org/notion/ffffff' },
-    { name: 'TikTok', logo_url: 'https://cdn.simpleicons.org/tiktok/ffffff' },
-    { name: 'Instagram', logo_url: 'https://cdn.simpleicons.org/instagram/E4405F' },
-  ]
-
   const rawPartners = (dbPartners && dbPartners.length > 0) ? dbPartners : (settings?.partners as any[]) || []
-  const partners = rawPartners.length > 0
-    ? rawPartners.map((p) => {
-        let logo = p.logo_url
-        if (!logo || logo.startsWith('/partners/')) {
-          const lower = (p.name || '').toLowerCase()
-          if (lower.includes('shopify')) logo = 'https://cdn.simpleicons.org/shopify/96bf48'
-          else if (lower.includes('woocommerce')) logo = 'https://cdn.simpleicons.org/woocommerce/96588a'
-          else if (lower.includes('meta')) logo = 'https://cdn.simpleicons.org/meta/0668E1'
-          else if (lower.includes('stripe')) logo = 'https://cdn.simpleicons.org/stripe/635BFF'
-          else if (lower.includes('wordpress')) logo = 'https://cdn.simpleicons.org/wordpress/21759B'
-          else if (lower.includes('salla')) logo = 'https://cdn.simpleicons.org/shopify/10b981'
-          else logo = ''
-        }
-        return { name: p.name, logo_url: logo }
-      })
-    : DEFAULT_PARTNERS
+  const partners = rawPartners.map((p) => {
+    let logo = p.logo_url
+    if (!logo || logo.startsWith('/partners/')) {
+      const lower = (p.name || '').toLowerCase()
+      if (lower.includes('shopify')) logo = 'https://cdn.simpleicons.org/shopify/96bf48'
+      else if (lower.includes('woocommerce')) logo = 'https://cdn.simpleicons.org/woocommerce/96588a'
+      else if (lower.includes('meta')) logo = 'https://cdn.simpleicons.org/meta/0668E1'
+      else if (lower.includes('stripe')) logo = 'https://cdn.simpleicons.org/stripe/635BFF'
+      else if (lower.includes('whatsapp')) logo = 'https://cdn.simpleicons.org/whatsapp/25D366'
+      else if (lower.includes('telegram')) logo = 'https://cdn.simpleicons.org/telegram/26A5E4'
+      else if (lower.includes('google')) logo = 'https://cdn.simpleicons.org/google/4285F4'
+      else if (lower.includes('amazon')) logo = 'https://cdn.simpleicons.org/amazon/FF9900'
+      else if (lower.includes('salesforce')) logo = 'https://cdn.simpleicons.org/salesforce/00A1E0'
+      else if (lower.includes('paypal')) logo = 'https://cdn.simpleicons.org/paypal/003087'
+      else logo = ''
+    }
+    return { name: p.name, logo_url: logo }
+  })
 
   const socialLinks = (settings?.social_links as any[]) || []
+
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans dir-rtl selection:bg-emerald-500 selection:text-white relative overflow-x-hidden">
