@@ -41,6 +41,7 @@ interface PlanRow {
   features: {
     ai_assistant?: boolean;
     automations?: boolean;
+    flows_builder?: boolean;
     excel_export?: boolean;
     telegram_bot?: boolean;
     custom_webhooks?: boolean;
@@ -74,6 +75,7 @@ export default function AdminPlansPage() {
     features: {
       ai_assistant: true,
       automations: true,
+      flows_builder: true,
       excel_export: true,
       telegram_bot: false,
       custom_webhooks: false,
@@ -429,7 +431,22 @@ export default function AdminPlansPage() {
                   }
                   className="rounded border-border text-amber-500 focus:ring-amber-500"
                 />
-                <span className="font-semibold text-foreground">⚡ الأتمتة والرد الآلي</span>
+                <span className="font-semibold text-foreground">⚡ الأتمتة والردود الآلية</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
+                <input
+                  type="checkbox"
+                  checked={!!newPlan.features?.flows_builder}
+                  onChange={(e) =>
+                    setNewPlan({
+                      ...newPlan,
+                      features: { ...newPlan.features, flows_builder: e.target.checked },
+                    })
+                  }
+                  className="rounded border-border text-amber-500 focus:ring-amber-500"
+                />
+                <span className="font-semibold text-foreground">🔀 منشئ مسارات العمل (Flows)</span>
               </label>
             </div>
           </div>
@@ -600,7 +617,18 @@ export default function AdminPlansPage() {
                         <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                       )}
                       <span className={plan.features?.automations ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
-                        منشئ الأتمتة والردود الآلية
+                        الأتمتة والردود الآلية
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {plan.features?.flows_builder ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      )}
+                      <span className={plan.features?.flows_builder ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
+                        منشئ الأتمتة ومسارات العمل (Flows)
                       </span>
                     </div>
                   </div>
@@ -825,7 +853,22 @@ export default function AdminPlansPage() {
                   }
                   className="rounded border-border text-amber-500"
                 />
-                <span className="font-semibold text-foreground">⚡ الأتمتة والرد الآلي</span>
+                <span className="font-semibold text-foreground">⚡ الأتمتة والردود الآلية</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
+                <input
+                  type="checkbox"
+                  checked={!!editingPlan.features?.flows_builder}
+                  onChange={(e) =>
+                    setEditingPlan({
+                      ...editingPlan,
+                      features: { ...editingPlan.features, flows_builder: e.target.checked },
+                    })
+                  }
+                  className="rounded border-border text-amber-500"
+                />
+                <span className="font-semibold text-foreground">🔀 منشئ مسارات العمل (Flows)</span>
               </label>
             </div>
           </div>

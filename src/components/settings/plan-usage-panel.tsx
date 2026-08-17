@@ -268,19 +268,31 @@ export function PlanUsagePanel() {
   const featuresList = [
     {
       key: 'ai_assistant',
-      label: t('featureAiAssistant'),
+      label: 'مساعد الذكاء الاصطناعي (AI Assistant)',
       icon: Bot,
       enabled: Boolean(plan.features?.ai_assistant),
     },
     {
+      key: 'automations',
+      label: 'الأتمتة والردود الآلية',
+      icon: Zap,
+      enabled: Boolean(plan.features?.automations),
+    },
+    {
+      key: 'flows_builder',
+      label: 'منشئ الأتمتة ومسارات العمل (Flows)',
+      icon: Sparkles,
+      enabled: Boolean(plan.features?.flows_builder),
+    },
+    {
       key: 'excel_export',
-      label: t('featureExcelExport'),
+      label: 'تصدير البيانات إلى Excel',
       icon: FileSpreadsheet,
       enabled: Boolean(plan.features?.excel_export),
     },
     {
       key: 'telegram_bot',
-      label: t('featureTelegramBot'),
+      label: 'ربط بوت التلغرام للإشعارات',
       icon: Send,
       enabled: Boolean(plan.features?.telegram_bot),
     },
@@ -705,6 +717,28 @@ export function PlanUsagePanel() {
                       )}
                       <span className={p.features?.ai_assistant ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
                         مساعد الذكاء الاصطناعي (AI)
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {p.features?.automations ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      )}
+                      <span className={p.features?.automations ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
+                        الأتمتة والردود الآلية
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {p.features?.flows_builder ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      )}
+                      <span className={p.features?.flows_builder ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
+                        منشئ مسارات العمل (Flows)
                       </span>
                     </div>
 
