@@ -45,24 +45,6 @@ const NAV_ITEMS = [
     icon: CreditCard,
   },
   {
-    href: '/admin/whatsapp',
-    label: 'سيرفر الواتساب والـ Webhooks',
-    labelEn: 'WhatsApp & Webhooks',
-    icon: MessageSquare,
-  },
-  {
-    href: '/admin/ai',
-    label: 'الذكاء الاصطناعي والمصادر',
-    labelEn: 'AI & Knowledge',
-    icon: Bot,
-  },
-  {
-    href: '/admin/security',
-    label: 'سجلات الأمان والـ API Keys',
-    labelEn: 'Security & Audit',
-    icon: ShieldCheck,
-  },
-  {
     href: '/admin/settings',
     label: 'إعدادات النظام العامة',
     labelEn: 'System Settings',

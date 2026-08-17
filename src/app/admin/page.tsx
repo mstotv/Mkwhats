@@ -250,14 +250,14 @@ export default function AdminDashboardPage() {
           </Card>
         </Link>
 
-        <Link href="/admin/whatsapp" className="group">
+        <Link href="/admin/settings" className="group">
           <Card className="border border-border bg-card p-5 space-y-3 transition-all hover:border-amber-500/50 hover:bg-card/80">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-foreground">سيرفر الواتساب والـ Webhooks</span>
+              <span className="text-sm font-bold text-foreground">إعدادات النظام العامة</span>
               <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-amber-500" />
             </div>
             <p className="text-xs text-muted-foreground">
-              مراقبة جميع جلسات الواتساب النشطة على السيرفر وسجلات تسليم الـ Webhooks.
+              التحكم بهوية المنصة، وضع الصيانة، والخيارات الكلية للسيرفر.
             </p>
           </Card>
         </Link>
