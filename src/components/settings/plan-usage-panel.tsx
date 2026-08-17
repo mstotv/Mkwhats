@@ -69,6 +69,40 @@ export function PlanUsagePanel() {
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [limitsExceeded, setLimitsExceeded] = useState(false)
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
+  const [upgradingPlanId, setUpgradingPlanId] = useState<string | null>(null)
+
+  const handleDirectUpgrade = async (planItem: any) => {
+    try {
+      setUpgradingPlanId(planItem.id)
+      const res = await fetch('/api/account/upgrade-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          target_plan_id: planItem.id,
+          billing_cycle: 'monthly',
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || data.error) {
+        toast.error(data.error || 'حدث خطأ أثناء الاتصال بالخادم')
+        return
+      }
+
+      const targetUrl = data.checkout_url || data.whatsapp_url
+      if (targetUrl) {
+        toast.success(`جاري التوجيه المباشر لبوابة الدفع لخطة "${planItem.name}"... 🚀`)
+        window.location.href = targetUrl
+      } else {
+        setIsUpgradeModalOpen(true)
+      }
+    } catch (err) {
+      toast.error('فشل التوجيه لبوابة الدفع')
+    } finally {
+      setUpgradingPlanId(null)
+    }
+  }
 
   useEffect(() => {
     async function fetchSubscriptionInfo() {
@@ -497,15 +531,21 @@ export function PlanUsagePanel() {
 
                 <div className="mt-6 pt-4 border-t border-border/60">
                   <Button
-                    onClick={() => setIsUpgradeModalOpen(true)}
-                    disabled={isCurrent}
+                    onClick={() => handleDirectUpgrade(p)}
+                    disabled={isCurrent || upgradingPlanId === p.id}
                     className={`w-full text-xs font-bold ${
                       isCurrent
                         ? 'bg-muted text-muted-foreground border-border'
                         : 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 hover:from-amber-400 hover:to-orange-500 shadow-md'
                     }`}
                   >
-                    {isCurrent ? 'باقتك الحالية' : 'اختيار هذه الباقة / الترقية 🚀'}
+                    {upgradingPlanId === p.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                    ) : isCurrent ? (
+                      'باقتك الحالية'
+                    ) : (
+                      'اختيار هذه الباقة / الترقية 🚀'
+                    )}
                   </Button>
                 </div>
               </Card>
