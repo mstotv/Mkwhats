@@ -330,25 +330,34 @@ export default async function LandingPage() {
         </div>
 
         <style>{`
-          @keyframes marqueeInfinite {
+          @keyframes marqueeSeamless8 {
             0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
+            100% { transform: translateX(-25%); }
           }
-          .marquee-track-continuous {
+          .marquee-track-seamless-8 {
             display: flex !important;
             width: max-content !important;
             gap: 1rem !important;
-            animation: marqueeInfinite 45s linear infinite !important;
+            animation: marqueeSeamless8 30s linear infinite !important;
             will-change: transform;
           }
-          .marquee-track-continuous:hover {
+          .marquee-track-seamless-8:hover {
             animation-play-state: paused;
           }
         `}</style>
 
         <div className="relative w-full flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_5%,white_95%,transparent)]">
-          <div className="marquee-track-continuous py-1">
-            {[...partners, ...partners, ...partners, ...partners].map((p, idx) => (
+          <div className="marquee-track-seamless-8 py-1">
+            {[
+              ...partners,
+              ...partners,
+              ...partners,
+              ...partners,
+              ...partners,
+              ...partners,
+              ...partners,
+              ...partners
+            ].map((p, idx) => (
               <div
                 key={`p-${idx}`}
                 className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800/80 px-4 py-2 rounded-lg shadow-sm hover:border-emerald-500/50 hover:bg-slate-800 transition-all shrink-0"
@@ -366,6 +375,7 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+
 
 
       {/* ── 5. Features Showcase ────────────────────────────── */}
