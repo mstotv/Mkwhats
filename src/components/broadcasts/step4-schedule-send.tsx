@@ -20,7 +20,13 @@ import { useTranslations } from 'next-intl';
 interface AudienceConfig {
   type: string;
   tagIds?: string[];
+  customField?: {
+    fieldId: string;
+    operator: 'is' | 'is_not' | 'contains';
+    value: string;
+  };
   csvContacts?: { phone: string; name?: string }[];
+  manualContactIds?: string[];
 }
 
 interface Step4Props {
@@ -87,6 +93,21 @@ export function Step4ScheduleSend({
           setEstimatedReach(uniqueIds.size);
         } else if (audience.type === 'csv' && audience.csvContacts) {
           setEstimatedReach(audience.csvContacts.length);
+        } else if (audience.type === 'manual' && audience.manualContactIds) {
+          setEstimatedReach(audience.manualContactIds.length);
+        } else if (audience.type === 'custom_field' && audience.customField) {
+          let query = supabase.from('contacts').select('id', { count: 'exact', head: true });
+          if (audience.customField.fieldId) {
+            if (audience.customField.operator === 'is') {
+              query = query.eq(`custom_fields->>${audience.customField.fieldId}`, audience.customField.value);
+            } else if (audience.customField.operator === 'is_not') {
+              query = query.neq(`custom_fields->>${audience.customField.fieldId}`, audience.customField.value);
+            } else if (audience.customField.operator === 'contains') {
+              query = query.ilike(`custom_fields->>${audience.customField.fieldId}`, `%${audience.customField.value}%`);
+            }
+          }
+          const { count } = await query;
+          setEstimatedReach(count ?? 0);
         } else {
           setEstimatedReach(0);
         }
@@ -105,7 +126,9 @@ export function Step4ScheduleSend({
         ? t('scheduleSend.audienceTags')
         : audience.type === 'csv'
           ? t('scheduleSend.audienceCsv')
-          : t('scheduleSend.audienceField');
+          : audience.type === 'manual'
+            ? t('scheduleSend.audienceManual')
+            : t('scheduleSend.audienceField');
 
   return (
     <div className="space-y-6">
