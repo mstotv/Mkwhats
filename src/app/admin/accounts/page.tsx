@@ -73,12 +73,11 @@ export default function AdminAccountsPage() {
       const supabase = createClient();
 
       const [accountsRes, plansRes] = await Promise.all([
-        supabase.rpc('get_admin_accounts_list'),
+        fetch('/api/admin/accounts').then((r) => r.json()),
         supabase.from('plans').select('id, name, slug').eq('is_active', true),
       ]);
 
-      if (accountsRes.error) throw accountsRes.error;
-      setAccounts((accountsRes.data as AdminAccountRow[]) ?? []);
+      setAccounts((accountsRes.accounts as AdminAccountRow[]) ?? []);
       setPlans((plansRes.data as PlanOption[]) ?? []);
     } catch (err) {
       console.error('[AdminAccounts] Error fetching data:', err);

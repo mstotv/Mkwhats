@@ -41,10 +41,9 @@ export default function AdminDashboardPage() {
   async function fetchGlobalMetrics() {
     try {
       setRefreshing(true);
-      const supabase = createClient();
-      const { data, error } = await supabase.rpc('get_system_global_metrics');
-
-      if (error) throw error;
+      const res = await fetch('/api/admin/metrics');
+      if (!res.ok) throw new Error('فشل جلب الإحصائيات');
+      const data = await res.json();
       setMetrics(data as GlobalMetrics);
     } catch (err) {
       console.error('[AdminDashboard] Error fetching metrics:', err);
