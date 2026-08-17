@@ -64,6 +64,27 @@ const SECURITY_HEADERS = [
 ] as const;
 
 const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  compress: true,
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "recharts",
+      "date-fns",
+      "@xyflow/react",
+      "@dnd-kit/core",
+      "sonner"
+    ],
+  },
+  images: {
+    formats: ["image/avif", "image/webp"],
+    remotePatterns: [
+      { protocol: "https", hostname: "cdn.simpleicons.org" },
+      { protocol: "https", hostname: "www.vectorlogo.zone" },
+      { protocol: "https", hostname: "*.supabase.co" },
+    ],
+  },
+
   /**
    * Inject build-time identifiers so `instrumentation.ts` can log the
    * exact commit SHA and build timestamp when the server starts. This
