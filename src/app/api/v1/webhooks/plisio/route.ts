@@ -202,7 +202,13 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', upgradeReq.id)
 
-    // 10. Cancel current active subscription if exists
+    // 10. Update accounts table plan_id
+    await serviceClient
+      .from('accounts')
+      .update({ plan_id: upgradeReq.target_plan_id, updated_at: now.toISOString() })
+      .eq('id', upgradeReq.account_id)
+
+    // 11. Cancel current active subscription if exists
     const { data: currentSub } = await serviceClient
       .from('subscriptions')
       .select('id')

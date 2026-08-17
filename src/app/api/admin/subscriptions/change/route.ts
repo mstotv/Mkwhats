@@ -120,7 +120,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 7. Insert NEW subscription row (preserving history)
+    // 7. Update accounts table plan_id
+    await serviceClient
+      .from('accounts')
+      .update({ plan_id, updated_at: now.toISOString() })
+      .eq('id', account_id)
+
+    // 8. Insert NEW subscription row (preserving history)
     const { data: newSub, error: insertError } = await serviceClient
       .from('subscriptions')
       .insert({

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -145,13 +145,25 @@ export function PlanUsagePanel() {
   }
 
   // Handle Stripe Payment Success Verification Return
+  const verifiedSessionRef = useRef<string | null>(null)
+
   useEffect(() => {
     if (typeof window === 'undefined') return
     const urlParams = new URLSearchParams(window.location.search)
     const paymentStatus = urlParams.get('payment')
     const sessionId = urlParams.get('session_id')
 
-    if (paymentStatus === 'success' && sessionId) {
+    if (paymentStatus === 'success' && sessionId && verifiedSessionRef.current !== sessionId) {
+      verifiedSessionRef.current = sessionId
+
+      // Clean URL parameters immediately so reloading or re-rendering never re-triggers toasts or re-verifies old session IDs
+      const cleanParams = new URLSearchParams(window.location.search)
+      cleanParams.delete('payment')
+      cleanParams.delete('session_id')
+      cleanParams.delete('gateway')
+      const cleanUrl = window.location.pathname + (cleanParams.toString() ? '?' + cleanParams.toString() : '')
+      window.history.replaceState(null, '', cleanUrl)
+
       async function verifyStripe() {
         try {
           const res = await fetch('/api/billing/stripe/verify', {
