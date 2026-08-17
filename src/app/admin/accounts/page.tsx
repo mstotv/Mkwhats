@@ -475,22 +475,32 @@ export default function AdminAccountsPage() {
                             </Button>
                           }
                         />
-                        <DropdownMenuContent align="end" className="border-border bg-popover">
+                        <DropdownMenuContent align="end" className="w-72 border-border/80 bg-card/95 backdrop-blur-md p-2 shadow-2xl space-y-1">
                           <DropdownMenuItem
                             onClick={() => handleImpersonateAccount(acc)}
                             disabled={impersonatingId === acc.account_id}
-                            className="text-blue-400 font-semibold"
+                            className="flex items-center justify-between gap-3 p-2.5 rounded-lg text-blue-400 hover:bg-blue-500/10 cursor-pointer font-bold"
                           >
-                            <LogIn className="h-4 w-4 me-2 text-blue-400" />
-                            الدخول لحساب الشركة (المساعدة في السيت اب)
+                            <div className="flex items-center gap-2.5">
+                              <LogIn className="h-4 w-4 text-blue-400 shrink-0" />
+                              <div className="flex flex-col text-start">
+                                <span className="text-xs font-bold text-blue-400">الدخول لحساب الشركة</span>
+                                <span className="text-[10px] font-normal text-muted-foreground">تقديم الدعم الفني وتسهيل التكوين</span>
+                              </div>
+                            </div>
                           </DropdownMenuItem>
 
                           <DropdownMenuItem
                             onClick={() => setResettingAccount(acc)}
-                            className="text-amber-400 font-semibold"
+                            className="flex items-center justify-between gap-3 p-2.5 rounded-lg text-amber-400 hover:bg-amber-500/10 cursor-pointer font-bold"
                           >
-                            <Key className="h-4 w-4 me-2 text-amber-400" />
-                            تغيير كلمة المرور للمالك
+                            <div className="flex items-center gap-2.5">
+                              <Key className="h-4 w-4 text-amber-400 shrink-0" />
+                              <div className="flex flex-col text-start">
+                                <span className="text-xs font-bold text-amber-400">تغيير كلمة المرور</span>
+                                <span className="text-[10px] font-normal text-muted-foreground">تعيين كلمة مرور جديدة للمالك</span>
+                              </div>
+                            </div>
                           </DropdownMenuItem>
 
                           <DropdownMenuItem
@@ -498,28 +508,41 @@ export default function AdminAccountsPage() {
                               setChangingAccount(acc);
                               setSelectedPlanId(acc.plan_id || '');
                             }}
-                            className="text-amber-500 font-semibold"
+                            className="flex items-center justify-between gap-3 p-2.5 rounded-lg text-amber-500 hover:bg-amber-500/10 cursor-pointer font-bold"
                           >
-                            <CreditCard className="h-4 w-4 me-2 text-amber-500" />
-                            تغيير الخطة والباقة
+                            <div className="flex items-center gap-2.5">
+                              <CreditCard className="h-4 w-4 text-amber-500 shrink-0" />
+                              <div className="flex flex-col text-start">
+                                <span className="text-xs font-bold text-amber-500">تغيير الباقة والاشتراك</span>
+                                <span className="text-[10px] font-normal text-muted-foreground">ترقية أو تعديل خطة الاشتراك</span>
+                              </div>
+                            </div>
                           </DropdownMenuItem>
 
                           <DropdownMenuItem
                             onClick={() => handleToggleSuspension(acc.account_id, acc.is_suspended)}
                             disabled={processingId === acc.account_id}
-                            className={acc.is_suspended ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold'}
+                            className={`flex items-center justify-between gap-3 p-2.5 rounded-lg cursor-pointer font-bold ${
+                              acc.is_suspended
+                                ? 'text-emerald-400 hover:bg-emerald-500/10'
+                                : 'text-red-400 hover:bg-red-500/10'
+                            }`}
                           >
-                            {acc.is_suspended ? (
-                              <>
-                                <ShieldCheck className="h-4 w-4 me-2" />
-                                رفع الحظر وإعادة التفعيل
-                              </>
-                            ) : (
-                              <>
-                                <ShieldBan className="h-4 w-4 me-2" />
-                                حظر الحساب والمستخدم فوراً
-                              </>
-                            )}
+                            <div className="flex items-center gap-2.5">
+                              {acc.is_suspended ? (
+                                <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+                              ) : (
+                                <ShieldBan className="h-4 w-4 text-red-400 shrink-0" />
+                              )}
+                              <div className="flex flex-col text-start">
+                                <span className="text-xs font-bold">
+                                  {acc.is_suspended ? 'رفع الحظر عن الحساب' : 'حظر الحساب فوراً'}
+                                </span>
+                                <span className="text-[10px] font-normal text-muted-foreground">
+                                  {acc.is_suspended ? 'إعادة تفعيل صلاحيات الدخول' : 'إيقاف وتعطيل وصول العميل'}
+                                </span>
+                              </div>
+                            </div>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
