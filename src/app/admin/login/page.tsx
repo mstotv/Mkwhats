@@ -1,127 +1,139 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { ShieldCheck, Lock, AlertTriangle } from 'lucide-react'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ShieldAlert, Lock, Mail, Loader2, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+  async function handleAdminLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !password) {
+      toast.error('يرجى إدخال البريد الإلكتروني وكلمة المرور');
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg(null);
 
     try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
+      const supabase = createClient();
 
-      const data = await res.json()
+      // 1. Sign in with password
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-      if (!res.ok) {
-        setError(data.error || 'فشل تسجيل الدخول')
-        setLoading(false)
-        return
+      if (authError || !authData.user) {
+        throw new Error(authError?.message || 'بيانات الدخول غير صحيحة');
       }
 
-      // Hard redirect to clear browser state and ensure cookies are sent to middleware
-      window.location.href = data.redirect || '/admin/dashboard'
-    } catch {
-      setError('حدث خطأ غير متوقع في الاتصال بالسيرفر.')
-      setLoading(false)
+      // 2. Verify platform_admins membership
+      const { data: adminRow, error: adminErr } = await supabase
+        .from('platform_admins')
+        .select('user_id')
+        .eq('user_id', authData.user.id)
+        .maybeSingle();
+
+      if (adminErr || !adminRow) {
+        // Sign out immediately if not a super admin
+        await supabase.auth.signOut();
+        throw new Error('عذراً، هذا الحساب لا يملك صلاحيات مدير النظام الكلي (Super Admin).');
+      }
+
+      toast.success('مرحباً بك في لوحة تحكم السوبر أدمن');
+      router.push('/admin');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'فشل تسجيل الدخول';
+      setErrorMsg(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-      <Card className="w-full max-w-md border-slate-800 bg-slate-900 text-slate-100 shadow-2xl">
-        <CardHeader className="items-center text-center pb-2">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-            <ShieldCheck className="h-7 w-7" />
+    <div className="min-h-screen bg-background font-sans text-foreground flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-6 rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-xl">
+        <div className="text-center space-y-2">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20">
+            <ShieldAlert className="h-8 w-8 text-slate-950" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-slate-50">
-            لوحة تحكم المنصة (Super Admin)
-          </CardTitle>
-          <CardDescription className="text-slate-400 text-sm mt-1">
-            تسجيل الدخول مخصص فقط لإدارة المنصة كـ Super Admin
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            {error && (
-              <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
-                <AlertTriangle className="h-5 w-5 shrink-0 text-red-400 mt-0.5" />
-                <div className="flex-1 font-medium leading-relaxed">{error}</div>
-              </div>
-            )}
+          <h1 className="text-2xl font-black tracking-tight text-foreground">تسجيل دخول السوبر أدمن</h1>
+          <p className="text-xs text-muted-foreground">
+            لوحة التحكم الكلية وإدارة منظمات السيرفر
+          </p>
+        </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="admin-email" className="text-slate-300 text-xs font-semibold uppercase tracking-wider">
-                البريد الإلكتروني للأدمن
-              </Label>
+        {errorMsg && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-300 text-center">
+            {errorMsg}
+          </div>
+        )}
+
+        <form onSubmit={handleAdminLogin} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">البريد الإلكتروني للإدارة</label>
+            <div className="relative">
+              <Mail className="absolute start-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                id="admin-email"
                 type="email"
-                placeholder="admin@platform.com"
+                placeholder="admin@wacrm.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="ps-9 bg-background border-border"
                 required
-                dir="ltr"
-                className="border-slate-800 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:border-amber-500 focus-visible:ring-amber-500/20 h-11"
               />
             </div>
+          </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="admin-password" className="text-slate-300 text-xs font-semibold uppercase tracking-wider">
-                كلمة المرور
-              </Label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">كلمة المرور</label>
+            <div className="relative">
+              <Lock className="absolute start-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                id="admin-password"
                 type="password"
-                placeholder="••••••••••••"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="ps-9 bg-background border-border"
                 required
-                dir="ltr"
-                className="border-slate-800 bg-slate-950 text-slate-100 placeholder:text-slate-600 focus-visible:border-amber-500 focus-visible:ring-amber-500/20 h-11"
               />
             </div>
+          </div>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="mt-2 h-11 w-full bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 focus-visible:ring-amber-500/50 disabled:opacity-50 transition-all"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
-                  جاري التحقق...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <Lock className="h-4 w-4" />
-                  دخول لوحة الأدمن
-                </span>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-amber-500 to-orange-600 font-bold text-slate-950 hover:from-amber-400 hover:to-orange-500 shadow-md shadow-amber-500/20 py-2.5"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin me-2" /> : null}
+            دخول مركز الإدارة الكلية
+          </Button>
+        </form>
+
+        <div className="pt-2 text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push('/dashboard')}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-3.5 w-3.5 ms-1" />
+            العودة لتسجيل الدخول العادي
+          </Button>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
