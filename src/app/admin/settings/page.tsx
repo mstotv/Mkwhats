@@ -21,6 +21,9 @@ import {
   Palette,
   ShieldCheck,
   Coins,
+  Pencil,
+  Check,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -49,6 +52,53 @@ export default function AdminSettingsPage() {
   const [newPartnerName, setNewPartnerName] = useState('');
   const [newPartnerLogo, setNewPartnerLogo] = useState('');
   const [addingPartner, setAddingPartner] = useState(false);
+
+  // Edit Partner State
+  const [editingPartnerId, setEditingPartnerId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editLogoUrl, setEditLogoUrl] = useState('');
+  const [updatingPartner, setUpdatingPartner] = useState(false);
+
+  function startEditingPartner(partner: Partner) {
+    setEditingPartnerId(partner.id);
+    setEditName(partner.name);
+    setEditLogoUrl(partner.logo_url || '');
+  }
+
+  async function handleUpdatePartner(partnerId: string) {
+    if (!editName.trim()) {
+      toast.error('اسم الشريك لا يمكن أن يكون فارغاً');
+      return;
+    }
+
+    try {
+      setUpdatingPartner(true);
+      const res = await fetch('/api/admin/partners', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partner_id: partnerId,
+          name: editName,
+          logo_url: editLogoUrl,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'فشل تعديل بيانات الشريك');
+
+      toast.success('تم تعديل بيانات الشريك ورابط الصورة بنجاح ✏️');
+      setPartners((prev) =>
+        prev.map((p) => (p.id === partnerId ? { ...p, name: editName, logo_url: editLogoUrl } : p))
+      );
+      setEditingPartnerId(null);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'فشل تعديل بيانات الشريك';
+      toast.error(msg);
+    } finally {
+      setUpdatingPartner(false);
+    }
+  }
+
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -412,34 +462,113 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Partners List */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {partners.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background p-3 shadow-sm"
-                >
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    {p.logo_url ? (
-                      <img src={p.logo_url} alt={p.name} className="h-6 w-6 object-contain shrink-0" />
-                    ) : (
-                      <div className="h-6 w-6 rounded bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-xs shrink-0">
-                        {p.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <span className="text-xs font-bold text-foreground truncate">{p.name}</span>
-                  </div>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeletePartner(p.id)}
-                    className="h-7 w-7 text-muted-foreground hover:text-red-400"
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {partners.map((p) =>
+                editingPartnerId === p.id ? (
+                  <div
+                    key={p.id}
+                    className="col-span-1 sm:col-span-2 rounded-xl border border-amber-500/50 bg-amber-500/5 p-3 space-y-2 shadow-md"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              ))}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-amber-400">تعديل الشريك: {p.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingPartnerId(null)}
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div className="space-y-1">
+                        <label className="font-semibold text-foreground text-[11px]">اسم الشريك / الشركة</label>
+                        <Input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="h-8 bg-background border-border text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="font-semibold text-foreground text-[11px]">رابط اللوجو / الصورة</label>
+                        <Input
+                          type="text"
+                          value={editLogoUrl}
+                          onChange={(e) => setEditLogoUrl(e.target.value)}
+                          className="h-8 bg-background border-border text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditingPartnerId(null)}
+                        className="h-7 text-xs"
+                      >
+                        إلغاء
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleUpdatePartner(p.id)}
+                        disabled={updatingPartner || !editName.trim()}
+                        className="h-7 bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 text-xs"
+                      >
+                        {updatingPartner ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin me-1" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 ms-1" />
+                        )}
+                        حفظ التعديلات
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background p-3 shadow-sm hover:border-amber-500/30 transition-all"
+                  >
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      {p.logo_url ? (
+                        <img src={p.logo_url} alt={p.name} className="h-6 w-6 object-contain shrink-0" />
+                      ) : (
+                        <div className="h-6 w-6 rounded bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-xs shrink-0">
+                          {p.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-xs font-bold text-foreground truncate">{p.name}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => startEditingPartner(p)}
+                        className="h-7 w-7 text-muted-foreground hover:text-amber-400"
+                        title="تعديل الاسم أو رابط اللوجو"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeletePartner(p.id)}
+                        className="h-7 w-7 text-muted-foreground hover:text-red-400"
+                        title="حذف الشريك"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                )
+              )}
             </div>
+
           </Card>
 
           {/* Maintenance Mode Card */}

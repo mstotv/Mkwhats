@@ -52,6 +52,39 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PUT(req: Request) {
+  try {
+    const isAdmin = await checkIsSuperAdmin();
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const { partner_id, name, logo_url } = await req.json();
+    if (!partner_id) {
+      return NextResponse.json({ error: 'Missing partner_id' }, { status: 400 });
+    }
+
+    const updatePayload: Record<string, any> = {};
+    if (typeof name === 'string') updatePayload.name = name.trim();
+    if (typeof logo_url === 'string') updatePayload.logo_url = logo_url.trim();
+
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from('partners')
+      .update(updatePayload)
+      .eq('id', partner_id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, partner: data });
+  } catch (err) {
+    console.error('[PartnersAPI] PUT error:', err);
+    return NextResponse.json({ error: 'فشل تعديل بيانات الشريك' }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     const isAdmin = await checkIsSuperAdmin();
@@ -75,3 +108,4 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: 'فشل حذف الشريك' }, { status: 500 });
   }
 }
+
