@@ -48,58 +48,58 @@ export function encrypt(text: string): string {
 }
 
 export function decrypt(encryptedText: string): string {
+  if (!encryptedText) return ''
   const parts = encryptedText.split(':')
 
   if (parts.length === 3) {
-    // GCM — current format.
-    const [ivHex, ctHex, tagHex] = parts
-    const iv = Buffer.from(ivHex, 'hex')
-    if (iv.length !== GCM_IV_LENGTH) {
-      throw new Error(
-        `Encrypted token has unexpected GCM IV length ${iv.length}`,
+    try {
+      // GCM — current format.
+      const [ivHex, ctHex, tagHex] = parts
+      const iv = Buffer.from(ivHex, 'hex')
+      if (iv.length !== GCM_IV_LENGTH) {
+        return encryptedText
+      }
+      const authTag = Buffer.from(tagHex, 'hex')
+      if (authTag.length !== AUTH_TAG_LENGTH) {
+        return encryptedText
+      }
+      const decipher = crypto.createDecipheriv(
+        'aes-256-gcm',
+        Buffer.from(ENCRYPTION_KEY, 'hex'),
+        iv,
       )
+      decipher.setAuthTag(authTag)
+      let decrypted = decipher.update(ctHex, 'hex', 'utf8')
+      decrypted += decipher.final('utf8')
+      return decrypted
+    } catch {
+      return encryptedText
     }
-    const authTag = Buffer.from(tagHex, 'hex')
-    if (authTag.length !== AUTH_TAG_LENGTH) {
-      throw new Error(
-        `Encrypted token has unexpected GCM auth-tag length ${authTag.length}`,
-      )
-    }
-    const decipher = crypto.createDecipheriv(
-      'aes-256-gcm',
-      Buffer.from(ENCRYPTION_KEY, 'hex'),
-      iv,
-    )
-    decipher.setAuthTag(authTag)
-    let decrypted = decipher.update(ctHex, 'hex', 'utf8')
-    decrypted += decipher.final('utf8')
-    return decrypted
   }
 
   if (parts.length === 2) {
-    // CBC — legacy. Read-only; `encrypt()` never produces this shape.
-    const [ivHex, ctHex] = parts
-    const iv = Buffer.from(ivHex, 'hex')
-    if (iv.length !== CBC_IV_LENGTH) {
-      throw new Error(
-        `Encrypted token has unexpected CBC IV length ${iv.length}`,
+    try {
+      // CBC — legacy. Read-only; `encrypt()` never produces this shape.
+      const [ivHex, ctHex] = parts
+      const iv = Buffer.from(ivHex, 'hex')
+      if (iv.length !== CBC_IV_LENGTH) {
+        return encryptedText
+      }
+      const decipher = crypto.createDecipheriv(
+        'aes-256-cbc',
+        Buffer.from(ENCRYPTION_KEY, 'hex'),
+        iv,
       )
+      let decrypted = decipher.update(ctHex, 'hex', 'utf8')
+      decrypted += decipher.final('utf8')
+      return decrypted
+    } catch {
+      return encryptedText
     }
-    const decipher = crypto.createDecipheriv(
-      'aes-256-cbc',
-      Buffer.from(ENCRYPTION_KEY, 'hex'),
-      iv,
-    )
-    let decrypted = decipher.update(ctHex, 'hex', 'utf8')
-    decrypted += decipher.final('utf8')
-    return decrypted
   }
 
-  throw new Error(
-    `Encrypted token has unrecognised format (expected 1 or 2 colons, got ${
-      parts.length - 1
-    })`,
-  )
+  // Plaintext token without colons
+  return encryptedText
 }
 
 /**
