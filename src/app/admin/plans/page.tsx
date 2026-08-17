@@ -471,8 +471,9 @@ export default function AdminPlansPage() {
               >
                 {/* Popular Badge */}
                 {plan.is_popular && (
-                  <div className="absolute -top-3 start-1/2 -translate-x-1/2 rounded-full border border-amber-500/50 bg-gradient-to-r from-amber-500 to-orange-600 px-3 py-0.5 text-[10px] font-black text-slate-950 shadow-md">
-                    🔥 الأكثر رواجا ومبيعا (Most Popular)
+                  <div className="mb-2 flex items-center justify-center gap-1.5 rounded-lg border border-amber-500/40 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 px-3 py-1.5 text-xs font-black text-amber-400 shadow-sm">
+                    <span>🔥</span>
+                    <span>الأكثر رواجاً ومبيعاً (Most Popular)</span>
                   </div>
                 )}
 
