@@ -77,6 +77,8 @@ export function PlanUsagePanel() {
   const [stripeEnabled, setStripeEnabled] = useState(false)
   const [plisioEnabled, setPlisioEnabled] = useState(false)
 
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
+
   const handleStripeCheckout = async (planItem: any) => {
     try {
       setUpgradingPlanId(planItem.id)
@@ -86,7 +88,7 @@ export function PlanUsagePanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan_id: planItem.id,
-          billing_cycle: 'monthly',
+          billing_cycle: billingCycle,
         }),
       })
 
@@ -98,7 +100,7 @@ export function PlanUsagePanel() {
       }
 
       if (data.url) {
-        toast.success(`جاري التوجيه لبوابة الدفع الآمنة لـ Stripe (Visa / MasterCard)... 💳`)
+        toast.success(`جاري التوجيه لبوابة الدفع الآمنة لـ Stripe (${billingCycle === 'yearly' ? 'سنوي' : 'شهري'})... 💳`)
         window.location.href = data.url
       }
     } catch (err) {
@@ -118,7 +120,7 @@ export function PlanUsagePanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           target_plan_id: planItem.id,
-          billing_cycle: 'monthly',
+          billing_cycle: billingCycle,
         }),
       })
 
@@ -613,21 +615,62 @@ export function PlanUsagePanel() {
 
       {/* Available Plans Section */}
       <div className="space-y-4 pt-4 border-t border-border">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-extrabold text-foreground flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-amber-500" />
               باقات العضوية المتاحة والترقية (Available Plans)
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              اختر الباقة المناسبة لاحتياجات فريقك واستمتع بحدود أكبر ومميزات غير محدودة
+              اختر الباقة المناسبة لاحتياجات فريقك ودورة الفوترة (شهرياً أو سنوياً)
             </p>
+          </div>
+
+          {/* Monthly / Yearly Toggle Switch */}
+          <div className="flex items-center gap-1 p-1 bg-muted rounded-xl border border-border self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setBillingCycle('monthly')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                billingCycle === 'monthly'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              📅 فوترة شهرية
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingCycle('yearly')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                billingCycle === 'yearly'
+                  ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
+                  : 'text-amber-400 hover:text-amber-300'
+              }`}
+            >
+              <span>🎁 فوترة سنوية</span>
+              <span className="text-[10px] bg-slate-950/20 px-1.5 py-0.5 rounded font-mono">توفير سنوي</span>
+            </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {availablePlans.map((p: any) => {
             const isCurrent = p.id === plan.id;
+            const isYearly = billingCycle === 'yearly';
+            const priceActive = isYearly
+              ? p.price_yearly_discounted && p.price_yearly_discounted > 0
+                ? p.price_yearly_discounted
+                : p.price_yearly
+              : p.price_monthly_discounted && p.price_monthly_discounted > 0
+                ? p.price_monthly_discounted
+                : p.price_monthly;
+
+            const priceOriginal = isYearly ? p.price_yearly : p.price_monthly;
+            const hasDiscount = isYearly
+              ? Boolean(p.price_yearly_discounted && p.price_yearly_discounted > 0)
+              : Boolean(p.price_monthly_discounted && p.price_monthly_discounted > 0);
+
             return (
               <Card
                 key={p.id}
@@ -658,21 +701,23 @@ export function PlanUsagePanel() {
 
                   <div className="space-y-1">
                     <div className="flex items-baseline gap-2 dir-ltr">
-                      {p.price_monthly_discounted && p.price_monthly_discounted > 0 ? (
+                      {hasDiscount ? (
                         <>
                           <span className="text-3xl font-black text-emerald-400">
-                            ${p.price_monthly_discounted}
+                            ${priceActive}
                           </span>
                           <span className="text-sm font-semibold text-muted-foreground line-through">
-                            ${p.price_monthly}
+                            ${priceOriginal}
                           </span>
                         </>
                       ) : (
                         <span className="text-3xl font-black text-foreground">
-                          ${p.price_monthly}
+                          ${priceActive}
                         </span>
                       )}
-                      <span className="text-xs text-muted-foreground dir-rtl">/ شهرياً</span>
+                      <span className="text-xs text-muted-foreground dir-rtl">
+                        /{isYearly ? 'سنوياً' : 'شهرياً'}
+                      </span>
                     </div>
                   </div>
 
