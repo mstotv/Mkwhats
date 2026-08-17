@@ -239,33 +239,33 @@ export function PlanUsagePanel() {
           </div>
         </CardHeader>
 
-        <CardContent className="pt-6 space-y-6">
-          {/* Clean Modern 3-Quotas Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <CardContent className="pt-5 space-y-5">
+          {/* Clean Compact 4-Quotas Dashboard Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* 1. Messages Quota Box */}
-            <div className="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm hover:border-indigo-500/30 transition-all">
+            <div className="rounded-xl border border-border bg-card p-4 space-y-2.5 shadow-sm hover:border-indigo-500/30 transition-all">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-indigo-500" /> الرسائل الشهرية
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 truncate">
+                  <MessageSquare className="h-3.5 w-3.5 text-indigo-500 shrink-0" /> الرسائل الشهرية
                 </span>
                 {plan.max_messages_monthly === -1 ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[11px] font-bold">
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-2 py-0">
                     غير محدود ♾️
                   </Badge>
                 ) : (
-                  <span className="text-xs font-mono font-bold text-foreground">
+                  <span className="text-[11px] font-mono font-bold text-foreground">
                     {usage?.messages_percentage}%
                   </span>
                 )}
               </div>
 
-              <div className="flex items-baseline justify-between pt-1">
-                <div className="space-y-0.5">
-                  <span className="text-2xl font-black text-foreground font-mono">
+              <div className="flex items-baseline justify-between pt-0.5">
+                <div className="space-y-0">
+                  <span className="text-xl font-black text-foreground font-mono">
                     {(usage?.messages_count || 0).toLocaleString()}
                   </span>
-                  <span className="text-xs text-muted-foreground font-medium block">
-                    {plan.max_messages_monthly === -1 ? 'رسائل مرسلة هذا الشهر' : `من إجمالي ${(plan.max_messages_monthly || 0).toLocaleString()}`}
+                  <span className="text-[11px] text-muted-foreground font-medium block">
+                    {plan.max_messages_monthly === -1 ? 'رسائل مرسلة' : `من ${(plan.max_messages_monthly || 0).toLocaleString()}`}
                   </span>
                 </div>
 
@@ -280,44 +280,96 @@ export function PlanUsagePanel() {
               </div>
 
               {plan.max_messages_monthly !== -1 ? (
-                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all ${getProgressColorClass(usage?.messages_percentage || 0)}`}
                     style={{ width: `${usage?.messages_percentage || 0}%` }}
                   />
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold pt-1">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>إرسال واستقبال رسائل غير محدود 🟢</span>
+                <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold pt-0.5 truncate">
+                  <CheckCircle2 className="h-3 w-3 shrink-0" />
+                  <span className="truncate">إرسال غير محدود 🟢</span>
                 </div>
               )}
             </div>
 
-            {/* 2. Team Members Quota Box */}
-            <div className="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm hover:border-indigo-500/30 transition-all">
+            {/* 2. Contacts Quota Box */}
+            <div className="rounded-xl border border-border bg-card p-4 space-y-2.5 shadow-sm hover:border-emerald-500/30 transition-all">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                  <Users className="h-4 w-4 text-indigo-500" /> أعضاء الفريق (Team)
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 truncate">
+                  <Users className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> جهات الاتصال والعملاء
                 </span>
-                {plan.max_users === -1 ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[11px] font-bold">
+                {plan.max_contacts === -1 ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-2 py-0">
                     غير محدود ♾️
                   </Badge>
                 ) : (
-                  <span className="text-xs font-mono font-bold text-foreground">
+                  <span className="text-[11px] font-mono font-bold text-foreground">
+                    {usage?.contacts_percentage}%
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-baseline justify-between pt-0.5">
+                <div className="space-y-0">
+                  <span className="text-xl font-black text-foreground font-mono">
+                    {(usage?.contacts_count || 0).toLocaleString()}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-medium block">
+                    {plan.max_contacts === -1 ? 'عملاء محفوظين' : `من ${(plan.max_contacts || 1000).toLocaleString()}`}
+                  </span>
+                </div>
+
+                {plan.max_contacts !== -1 && (
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-emerald-400 block font-mono">
+                      {(usage?.contacts_remaining ?? 0).toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">متبقي</span>
+                  </div>
+                )}
+              </div>
+
+              {plan.max_contacts !== -1 ? (
+                <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all ${getProgressColorClass(usage?.contacts_percentage || 0)}`}
+                    style={{ width: `${usage?.contacts_percentage || 0}%` }}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold pt-0.5 truncate">
+                  <CheckCircle2 className="h-3 w-3 shrink-0" />
+                  <span className="truncate">حفظ عملاء غير محدود 🟢</span>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Team Members Quota Box */}
+            <div className="rounded-xl border border-border bg-card p-4 space-y-2.5 shadow-sm hover:border-indigo-500/30 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 truncate">
+                  <Users className="h-3.5 w-3.5 text-indigo-500 shrink-0" /> أعضاء الفريق (Team)
+                </span>
+                {plan.max_users === -1 ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-2 py-0">
+                    غير محدود ♾️
+                  </Badge>
+                ) : (
+                  <span className="text-[11px] font-mono font-bold text-foreground">
                     {usage?.members_percentage}%
                   </span>
                 )}
               </div>
 
-              <div className="flex items-baseline justify-between pt-1">
-                <div className="space-y-0.5">
-                  <span className="text-2xl font-black text-foreground font-mono">
+              <div className="flex items-baseline justify-between pt-0.5">
+                <div className="space-y-0">
+                  <span className="text-xl font-black text-foreground font-mono">
                     {usage?.members_count || 1}
                   </span>
-                  <span className="text-xs text-muted-foreground font-medium block">
-                    {plan.max_users === -1 ? 'موظفين مضافين بالحساب' : `من إجمالي ${plan.max_users} مقاعد`}
+                  <span className="text-[11px] text-muted-foreground font-medium block">
+                    {plan.max_users === -1 ? 'موظفين بالحساب' : `من ${plan.max_users} مقاعد`}
                   </span>
                 </div>
 
@@ -326,50 +378,50 @@ export function PlanUsagePanel() {
                     <span className="text-xs font-bold text-emerald-400 block font-mono">
                       {usage?.members_remaining ?? 0}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">مقعد متبقي</span>
+                    <span className="text-[10px] text-muted-foreground">متبقي</span>
                   </div>
                 )}
               </div>
 
               {plan.max_users !== -1 ? (
-                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all ${getProgressColorClass(usage?.members_percentage || 0)}`}
                     style={{ width: `${usage?.members_percentage || 0}%` }}
                   />
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold pt-1">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>إضافة أعضاء فريق غير محدود 🟢</span>
+                <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold pt-0.5 truncate">
+                  <CheckCircle2 className="h-3 w-3 shrink-0" />
+                  <span className="truncate">أعضاء غير محدود 🟢</span>
                 </div>
               )}
             </div>
 
-            {/* 3. Orders & Sales Quota Box */}
-            <div className="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm hover:border-amber-500/30 transition-all">
+            {/* 4. Orders & Sales Quota Box */}
+            <div className="rounded-xl border border-border bg-card p-4 space-y-2.5 shadow-sm hover:border-amber-500/30 transition-all">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                  <FileSpreadsheet className="h-4 w-4 text-amber-500" /> الطلبات والمبيعات
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 truncate">
+                  <FileSpreadsheet className="h-3.5 w-3.5 text-amber-500 shrink-0" /> الطلبات والمبيعات
                 </span>
                 {plan.max_orders_monthly === -1 ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[11px] font-bold">
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-2 py-0">
                     غير محدود ♾️
                   </Badge>
                 ) : (
-                  <span className="text-xs font-mono font-bold text-foreground">
+                  <span className="text-[11px] font-mono font-bold text-foreground">
                     {usage?.orders_percentage}%
                   </span>
                 )}
               </div>
 
-              <div className="flex items-baseline justify-between pt-1">
-                <div className="space-y-0.5">
-                  <span className="text-2xl font-black text-foreground font-mono">
+              <div className="flex items-baseline justify-between pt-0.5">
+                <div className="space-y-0">
+                  <span className="text-xl font-black text-foreground font-mono">
                     {(usage?.orders_count || 0).toLocaleString()}
                   </span>
-                  <span className="text-xs text-muted-foreground font-medium block">
-                    {plan.max_orders_monthly === -1 ? 'طلبات مضافة هذا الشهر' : `من إجمالي ${(plan.max_orders_monthly || 500).toLocaleString()}`}
+                  <span className="text-[11px] text-muted-foreground font-medium block">
+                    {plan.max_orders_monthly === -1 ? 'طلبات مضافة' : `من ${(plan.max_orders_monthly || 500).toLocaleString()}`}
                   </span>
                 </div>
 
@@ -378,22 +430,22 @@ export function PlanUsagePanel() {
                     <span className="text-xs font-bold text-emerald-400 block font-mono">
                       {(usage?.orders_remaining ?? 0).toLocaleString()}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">طلب متبقي</span>
+                    <span className="text-[10px] text-muted-foreground">متبقي</span>
                   </div>
                 )}
               </div>
 
               {plan.max_orders_monthly !== -1 ? (
-                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all ${getProgressColorClass(usage?.orders_percentage || 0)}`}
                     style={{ width: `${usage?.orders_percentage || 0}%` }}
                   />
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold pt-1">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>إدارة طلبات ومبيعات غير محدودة 🟢</span>
+                <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold pt-0.5 truncate">
+                  <CheckCircle2 className="h-3 w-3 shrink-0" />
+                  <span className="truncate">مبيعات غير محدودة 🟢</span>
                 </div>
               )}
             </div>
