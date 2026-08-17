@@ -63,6 +63,7 @@ export async function GET() {
           user_count: (acc.profiles ?? []).length,
           message_count: msgCount ?? 0,
           owner_email: ownerProfile?.email ?? 'N/A',
+          owner_user_id: ownerProfile?.user_id || ownerProfile?.id || null,
         };
       }),
     );

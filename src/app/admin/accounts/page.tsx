@@ -21,7 +21,6 @@ import {
 import {
   Building2,
   Search,
-  Filter,
   MoreVertical,
   ShieldBan,
   ShieldCheck,
@@ -31,6 +30,10 @@ import {
   RefreshCw,
   CreditCard,
   Check,
+  Key,
+  LogIn,
+  Lock,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -46,6 +49,7 @@ interface AdminAccountRow {
   user_count: number;
   message_count: number;
   owner_email: string;
+  owner_user_id?: string;
 }
 
 interface PlanOption {
@@ -66,6 +70,14 @@ export default function AdminAccountsPage() {
   const [changingAccount, setChangingAccount] = useState<AdminAccountRow | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [savingPlan, setSavingPlan] = useState(false);
+
+  // Reset Password Modal State
+  const [resettingAccount, setResettingAccount] = useState<AdminAccountRow | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resettingPass, setResettingPass] = useState(false);
+
+  // Impersonating State
+  const [impersonatingId, setImpersonatingId] = useState<string | null>(null);
 
   async function fetchAccountsAndPlans() {
     try {
@@ -149,6 +161,62 @@ export default function AdminAccountsPage() {
     }
   }
 
+  async function handleConfirmResetPassword() {
+    if (!resettingAccount || !newPassword || newPassword.length < 6) {
+      toast.error('يرجى كتابة كلمة مرور لا تقل عن 6 أحرف');
+      return;
+    }
+
+    try {
+      setResettingPass(true);
+      const res = await fetch('/api/admin/accounts/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          account_id: resettingAccount.account_id,
+          new_password: newPassword,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'فشل تغيير كلمة المرور');
+
+      toast.success(data.message || 'تم تغيير كلمة المرور بنجاح ✅');
+      setResettingAccount(null);
+      setNewPassword('');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'فشل تغيير كلمة المرور';
+      toast.error(msg);
+    } finally {
+      setResettingPass(false);
+    }
+  }
+
+  async function handleImpersonateAccount(acc: AdminAccountRow) {
+    try {
+      setImpersonatingId(acc.account_id);
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          target_user_id: acc.owner_user_id || acc.account_id,
+          target_account_id: acc.account_id,
+          reason: 'دعم فني ومساعدة في الإعداد والتكوين',
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'فشل الدخول لحساب الشركة');
+
+      toast.success(`جاري الانتقال لوحة تحكم شركة "${acc.account_name}" لمساعدتهم... 🚀`);
+      window.location.href = '/dashboard';
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'فشل الدخول لحساب الشركة';
+      toast.error(msg);
+      setImpersonatingId(null);
+    }
+  }
+
   const filteredAccounts = useMemo(() => {
     return accounts.filter((acc) => {
       const matchesSearch =
@@ -172,7 +240,7 @@ export default function AdminAccountsPage() {
             إدارة الشركات والحسابات (Tenants Directory)
           </h1>
           <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            عرض وحظر تفعيل الحسابات، تغيير باقات الشركات فورياً، ومراقبة حجم الرسائل والمستخدمين
+            الدخول بحساب الشركة لمساعدتهم في الإعداد، حظر/تفعيل الحسابات، تغيير كلمات المرور، وتعديل الباقات
           </p>
         </div>
 
@@ -235,6 +303,55 @@ export default function AdminAccountsPage() {
             >
               {savingPlan ? <Loader2 className="h-4 w-4 animate-spin me-1.5" /> : null}
               تأكيد تغيير الباقة
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {resettingAccount && (
+        <div className="rounded-2xl border border-amber-500/40 bg-card p-6 shadow-xl space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+              <Key className="h-5 w-5 text-amber-500" />
+              تغيير كلمة المرور لمالك شركة: <span className="text-amber-500">{resettingAccount.account_name}</span>
+            </h3>
+            <Button variant="ghost" size="sm" onClick={() => setResettingAccount(null)} className="text-xs">
+              إلغاء
+            </Button>
+          </div>
+
+          <div className="space-y-3 text-xs">
+            <p className="text-muted-foreground">
+              البريد المستهدف: <strong className="text-foreground font-mono">{resettingAccount.owner_email}</strong>
+            </p>
+            <div className="space-y-1.5 max-w-md">
+              <label className="font-semibold text-foreground">كلمة المرور الجديدة</label>
+              <div className="relative">
+                <Lock className="absolute start-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="أدخل كلمة مرور جديدة (مثلاً: Abc@123456)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="ps-9 bg-background border-border"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
+            <Button variant="outline" size="sm" onClick={() => setResettingAccount(null)}>
+              إلغاء
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleConfirmResetPassword}
+              disabled={resettingPass || !newPassword}
+              className="bg-amber-500 font-bold text-slate-950 hover:bg-amber-400"
+            >
+              {resettingPass ? <Loader2 className="h-4 w-4 animate-spin me-1.5" /> : null}
+              تأكيد حفظ كلمة المرور
             </Button>
           </div>
         </div>
@@ -305,7 +422,7 @@ export default function AdminAccountsPage() {
                   <TableHead className="text-start text-xs font-bold text-muted-foreground">الرسائل</TableHead>
                   <TableHead className="text-start text-xs font-bold text-muted-foreground">حالة الحساب</TableHead>
                   <TableHead className="text-start text-xs font-bold text-muted-foreground">تاريخ التسجيل</TableHead>
-                  <TableHead className="text-end text-xs font-bold text-muted-foreground">إجراءات</TableHead>
+                  <TableHead className="text-end text-xs font-bold text-muted-foreground">إجراءات التحكم</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -360,30 +477,47 @@ export default function AdminAccountsPage() {
                         />
                         <DropdownMenuContent align="end" className="border-border bg-popover">
                           <DropdownMenuItem
+                            onClick={() => handleImpersonateAccount(acc)}
+                            disabled={impersonatingId === acc.account_id}
+                            className="text-blue-400 font-semibold"
+                          >
+                            <LogIn className="h-4 w-4 me-2 text-blue-400" />
+                            الدخول لحساب الشركة (المساعدة في السيت اب)
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={() => setResettingAccount(acc)}
+                            className="text-amber-400 font-semibold"
+                          >
+                            <Key className="h-4 w-4 me-2 text-amber-400" />
+                            تغيير كلمة المرور للمالك
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
                             onClick={() => {
                               setChangingAccount(acc);
                               setSelectedPlanId(acc.plan_id || '');
                             }}
-                            className="text-amber-500 font-medium"
+                            className="text-amber-500 font-semibold"
                           >
-                            <CreditCard className="h-4 w-4 me-2" />
-                            تغيير باقة الشركة
+                            <CreditCard className="h-4 w-4 me-2 text-amber-500" />
+                            تغيير الخطة والباقة
                           </DropdownMenuItem>
 
                           <DropdownMenuItem
                             onClick={() => handleToggleSuspension(acc.account_id, acc.is_suspended)}
                             disabled={processingId === acc.account_id}
-                            className={acc.is_suspended ? 'text-emerald-400 font-medium' : 'text-red-400 font-medium'}
+                            className={acc.is_suspended ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold'}
                           >
                             {acc.is_suspended ? (
                               <>
                                 <ShieldCheck className="h-4 w-4 me-2" />
-                                فك الحظر وإعادة التفعيل
+                                رفع الحظر وإعادة التفعيل
                               </>
                             ) : (
                               <>
                                 <ShieldBan className="h-4 w-4 me-2" />
-                                حظر الحساب فوراً
+                                حظر الحساب والمستخدم فوراً
                               </>
                             )}
                           </DropdownMenuItem>
