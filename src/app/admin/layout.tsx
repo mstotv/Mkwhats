@@ -25,15 +25,24 @@ export default async function AdminLayout({
     redirect('/admin/login');
   }
 
-  // Check if user is in platform_admins
-  const { data: adminRow } = await supabase
-    .from('platform_admins')
-    .select('user_id')
-    .eq('user_id', user.id)
-    .maybeSingle();
+  // Check if user is in platform_admins using service client (bypasses RLS)
+  let isAdmin = false;
+  try {
+    const { createServiceClient } = await import('@/lib/supabase/service');
+    const serviceClient = createServiceClient();
+    const { data: adminRow } = await serviceClient
+      .from('platform_admins')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-  // If signed in but not a super admin, show friendly Access Denied screen with SQL setup snippet
-  if (!adminRow) {
+    if (adminRow) isAdmin = true;
+  } catch (err) {
+    console.error('[AdminLayout] Service client admin check error:', err);
+  }
+
+  // If signed in but not a super admin, show friendly Access Denied screen
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-background font-sans text-foreground flex items-center justify-center p-4">
         <div className="w-full max-w-xl space-y-6 rounded-2xl border border-red-500/30 bg-card p-6 sm:p-8 shadow-xl text-center">
