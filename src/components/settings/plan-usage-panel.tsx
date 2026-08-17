@@ -363,6 +363,157 @@ export function PlanUsagePanel() {
         </CardContent>
       </Card>
 
+      {/* Available Plans Section */}
+      <div className="space-y-4 pt-4 border-t border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-extrabold text-foreground flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-amber-500" />
+              باقات العضوية المتاحة والترقية (Available Plans)
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              اختر الباقة المناسبة لاحتياجات فريقك واستمتع بحدود أكبر ومميزات غير محدودة
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {availablePlans.map((p: any) => {
+            const isCurrent = p.id === plan.id;
+            return (
+              <Card
+                key={p.id}
+                className={`relative flex flex-col justify-between p-6 border transition-all ${
+                  isCurrent
+                    ? 'border-2 border-emerald-500 bg-emerald-500/5 shadow-lg'
+                    : p.is_popular
+                      ? 'border-2 border-amber-500 bg-card shadow-amber-500/10'
+                      : 'border-border bg-card'
+                }`}
+              >
+                {p.is_popular && (
+                  <div className="absolute -top-3 start-1/2 -translate-x-1/2 rounded-full border border-amber-500/50 bg-gradient-to-r from-amber-500 to-orange-600 px-3 py-0.5 text-[10px] font-black text-slate-950 shadow-md">
+                    🔥 الأكثر شيوعاً (Popular)
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-base font-black text-foreground">{p.name}</h4>
+                    {isCurrent && (
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] font-bold">
+                        باقتك الحالية ✓
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-baseline gap-2 dir-ltr">
+                      {p.price_monthly_discounted && p.price_monthly_discounted > 0 ? (
+                        <>
+                          <span className="text-3xl font-black text-emerald-400">
+                            ${p.price_monthly_discounted}
+                          </span>
+                          <span className="text-sm font-semibold text-muted-foreground line-through">
+                            ${p.price_monthly}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-3xl font-black text-foreground">
+                          ${p.price_monthly}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground dir-rtl">/ شهرياً</span>
+                    </div>
+                  </div>
+
+                  {/* Limits checklist */}
+                  <div className="space-y-2 border-t border-border/60 pt-3 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">أعضاء الفريق:</span>
+                      <span className="font-bold text-foreground">
+                        {p.max_users === -1 ? 'غير محدود ♾️' : p.max_users}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">جهات الاتصال:</span>
+                      <span className="font-bold text-foreground">
+                        {p.max_contacts === -1 ? 'غير محدود ♾️' : (p.max_contacts || 1000).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">الرسائل الشهرية:</span>
+                      <span className="font-bold text-foreground">
+                        {p.max_messages_monthly === -1 ? 'غير محدود ♾️' : (p.max_messages_monthly || 1000).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">الطلبات والمبيعات:</span>
+                      <span className="font-bold text-foreground">
+                        {p.max_orders_monthly === -1 ? 'غير محدود ♾️' : (p.max_orders_monthly || 500).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Features */}
+                  <div className="space-y-2 border-t border-border/60 pt-3 text-xs">
+                    <div className="flex items-center gap-2">
+                      {p.features?.ai_assistant ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      )}
+                      <span className={p.features?.ai_assistant ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
+                        مساعد الذكاء الاصطناعي (AI)
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {p.features?.telegram_bot ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      )}
+                      <span className={p.features?.telegram_bot ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
+                        ربط بوت التلغرام للإشعارات
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {p.features?.excel_export ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      )}
+                      <span className={p.features?.excel_export ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
+                        تصدير البيانات إلى Excel
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-border/60">
+                  <Button
+                    onClick={() => setIsUpgradeModalOpen(true)}
+                    disabled={isCurrent}
+                    className={`w-full text-xs font-bold ${
+                      isCurrent
+                        ? 'bg-muted text-muted-foreground border-border'
+                        : 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 hover:from-amber-400 hover:to-orange-500 shadow-md'
+                    }`}
+                  >
+                    {isCurrent ? 'باقتك الحالية' : 'اختيار هذه الباقة / الترقية 🚀'}
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Upgrade Modal */}
       <UpgradePlanModal
         open={isUpgradeModalOpen}
@@ -371,5 +522,5 @@ export function PlanUsagePanel() {
         availablePlans={availablePlans}
       />
     </div>
-  )
+  );
 }
