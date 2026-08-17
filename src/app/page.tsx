@@ -71,7 +71,17 @@ export default async function LandingPage() {
   const logoUrl = settings?.logo_url
 
   const rawPartners = (dbPartners && dbPartners.length > 0) ? dbPartners : (settings?.partners as any[]) || []
-  const partners = rawPartners.map((p) => {
+  const uniquePartnersMap = new Map<string, any>()
+  for (const p of rawPartners) {
+    if (p && p.name) {
+      const key = p.name.trim().toLowerCase()
+      if (!uniquePartnersMap.has(key)) {
+        uniquePartnersMap.set(key, p)
+      }
+    }
+  }
+
+  const partners = Array.from(uniquePartnersMap.values()).map((p) => {
     let logo = p.logo_url
     if (!logo || logo.startsWith('/partners/')) {
       const lower = (p.name || '').toLowerCase()
@@ -89,6 +99,7 @@ export default async function LandingPage() {
     }
     return { name: p.name, logo_url: logo }
   })
+
 
   const socialLinks = (settings?.social_links as any[]) || []
 
