@@ -1075,12 +1075,12 @@ function StepRenderer({
   parentPath: StepPath
 } & Omit<StepListProps, "steps" | "parentPath">) {
   const t = useTranslations("Automations.builder")
-  const path: StepPath = [
-    ...parentPath,
+  const path: StepPath =
     parentScope.kind === "root"
-      ? { kind: "root", index }
-      : { kind: "branch", parentCid: parentScope.parentCid, branch: parentScope.branch, index },
-  ]
+      ? [{ kind: "root", index }]
+      : parentPath.map((item, idx) =>
+          idx === parentPath.length - 1 ? { ...item, index } : item,
+        )
   const meta = STEP_META[step.step_type]
   const Icon = meta.icon
   const expanded = props.expandedId === step.cid

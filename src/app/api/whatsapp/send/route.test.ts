@@ -52,6 +52,16 @@ function makeSupabaseMock() {
             },
             error: null,
           }
+        case 'subscriptions':
+          return {
+            data: {
+              status: 'active',
+              plans: { is_active: true, max_messages_monthly: 10000, max_broadcasts_monthly: 1000 },
+            },
+            error: null,
+          }
+        case 'monthly_usage_counters':
+          return { data: null, error: null }
         case 'message_templates':
           return { data: null, error: null }
         default:
@@ -115,6 +125,7 @@ function makeSupabaseMock() {
       })),
     },
     from: vi.fn((table: string) => builder(table)),
+    rpc: vi.fn(async () => ({ data: null, error: null })),
   }
 }
 
@@ -122,6 +133,10 @@ let supabaseMock = makeSupabaseMock()
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(async () => supabaseMock),
+}))
+
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceClient: () => supabaseMock,
 }))
 
 vi.mock('@/lib/flows/admin-client', () => ({
@@ -174,6 +189,8 @@ function postContactTemplate(overrides: Record<string, unknown> = {}) {
 
 describe('POST /api/whatsapp/send — contact_id template path', () => {
   beforeEach(() => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://localhost:54321'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key'
     conversationInserts.length = 0
     messageInserts.length = 0
     existingConversation = null
