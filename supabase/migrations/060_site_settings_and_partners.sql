@@ -1,26 +1,22 @@
 -- ============================================================
--- Migration 060: Plisio Gateway, Site Config & Partners Ticker
+-- Migration 060: Add site_settings columns & partners table
 -- ============================================================
 
-CREATE TABLE IF NOT EXISTS public.site_settings (
-  id TEXT PRIMARY KEY DEFAULT 'global_config',
-  platform_name TEXT NOT NULL DEFAULT 'wacrm',
-  support_email TEXT NOT NULL DEFAULT 'support@wacrm.com',
-  support_whatsapp TEXT DEFAULT '+966500000000',
-  support_telegram TEXT DEFAULT '@wacrm_support',
-  currency_symbol TEXT NOT NULL DEFAULT '$',
-  primary_color TEXT DEFAULT '#10b981',
-  maintenance_mode BOOLEAN NOT NULL DEFAULT false,
-  -- Plisio Crypto Gateway Config
-  plisio_enabled BOOLEAN NOT NULL DEFAULT false,
-  plisio_secret_key TEXT DEFAULT '',
-  plisio_merchant_id TEXT DEFAULT '',
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+ALTER TABLE public.site_settings
+  ADD COLUMN IF NOT EXISTS support_email TEXT DEFAULT 'support@wacrm.com',
+  ADD COLUMN IF NOT EXISTS support_whatsapp TEXT DEFAULT '+966500000000',
+  ADD COLUMN IF NOT EXISTS support_telegram TEXT DEFAULT '@wacrm_support',
+  ADD COLUMN IF NOT EXISTS currency_symbol TEXT DEFAULT '$',
+  ADD COLUMN IF NOT EXISTS primary_color TEXT DEFAULT '#10b981',
+  ADD COLUMN IF NOT EXISTS maintenance_mode BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS plisio_enabled BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS plisio_api_key TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS plisio_secret_key TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS plisio_merchant_id TEXT DEFAULT '';
 
--- Seed initial row if not present
-INSERT INTO public.site_settings (id, platform_name, support_email, currency_symbol)
-VALUES ('global_config', 'wacrm', 'support@wacrm.com', '$')
+-- Seed initial row id=1
+INSERT INTO public.site_settings (id, platform_name)
+VALUES (1, 'wacrm')
 ON CONFLICT (id) DO NOTHING;
 
 -- Table for Partners / Sponsors Ticker
@@ -36,7 +32,7 @@ CREATE TABLE IF NOT EXISTS public.partners (
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.partners ENABLE ROW LEVEL SECURITY;
 
--- Select policies: readable by everyone (public landing page)
+-- Select policies: readable by everyone
 DROP POLICY IF EXISTS site_settings_select ON public.site_settings;
 CREATE POLICY site_settings_select ON public.site_settings FOR SELECT USING (true);
 
