@@ -45,3 +45,4 @@ scratch/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+*.lnk
