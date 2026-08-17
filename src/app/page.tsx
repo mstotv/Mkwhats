@@ -322,50 +322,36 @@ export default async function LandingPage() {
       </section>
 
       {/* ── 4. Partners Infinite Marquee High-Contrast Container ─ */}
-      <section id="partners" className="py-5 border-y border-slate-800/80 bg-slate-950/80 backdrop-blur-xl overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 text-center mb-3">
+      <section id="partners" className="py-4 border-y border-slate-800/80 bg-slate-950/80 backdrop-blur-xl overflow-hidden dir-ltr">
+        <div className="mx-auto max-w-7xl px-4 text-center mb-2.5">
           <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest">
             الشركاء والمنصات التوافقية
           </p>
         </div>
 
         <style>{`
-          @keyframes marqueeLoop {
+          @keyframes marqueeSeamless {
             0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
+            100% { transform: translateX(calc(-50% - 0.625rem)); }
           }
-          .animate-marquee-track {
-            display: flex;
-            gap: 1.25rem;
-            animation: marqueeLoop 40s linear infinite;
+          .marquee-track-seamless {
+            display: flex !important;
+            width: max-content !important;
+            gap: 1.25rem !important;
+            animation: marqueeSeamless 35s linear infinite !important;
             will-change: transform;
+          }
+          .marquee-track-seamless:hover {
+            animation-play-state: paused;
           }
         `}</style>
 
-        <div className="relative w-full flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_10%,white_90%,transparent)] dir-ltr">
-          <div className="animate-marquee-track shrink-0 items-center py-1">
-            {partners.map((p, idx) => (
+        <div className="relative w-full flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_10%,white_90%,transparent)]">
+          <div className="marquee-track-seamless py-1">
+            {[...partners, ...partners, ...partners].map((p, idx) => (
               <div
-                key={`p1-${idx}`}
-                className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800/80 px-4 py-2 rounded-lg shadow-sm hover:border-emerald-500/40 hover:bg-slate-800 transition-all shrink-0"
-              >
-                {p.logo_url ? (
-                  <img src={p.logo_url} alt={p.name} className="h-5 w-5 object-contain" />
-                ) : (
-                  <div className="h-5 w-5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-[10px]">
-                    {p.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <span className="text-xs font-bold text-slate-200">{p.name}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="animate-marquee-track shrink-0 items-center py-1" aria-hidden="true">
-            {partners.map((p, idx) => (
-              <div
-                key={`p2-${idx}`}
-                className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800/80 px-4 py-2 rounded-lg shadow-sm hover:border-emerald-500/40 hover:bg-slate-800 transition-all shrink-0"
+                key={`p-${idx}`}
+                className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800/80 px-4 py-2 rounded-lg shadow-sm hover:border-emerald-500/50 hover:bg-slate-800 transition-all shrink-0"
               >
                 {p.logo_url ? (
                   <img src={p.logo_url} alt={p.name} className="h-5 w-5 object-contain" />
@@ -380,6 +366,7 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+
 
 
       {/* ── 5. Features Showcase ────────────────────────────── */}
