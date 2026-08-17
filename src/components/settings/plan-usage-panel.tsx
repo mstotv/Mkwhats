@@ -236,15 +236,6 @@ export function PlanUsagePanel() {
                 /{subscription?.billing_cycle === 'yearly' ? t('perYear') : t('perMonth')}
               </span>
             </div>
-
-            <Button
-              onClick={() => setIsUpgradeModalOpen(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm gap-1.5"
-            >
-              <Sparkles className="h-4 w-4" />
-              {t('upgradeOrViewAll')}
-              <ArrowUpRight className="h-3.5 w-3.5 rtl:rotate-180" />
-            </Button>
           </div>
         </CardHeader>
 
@@ -493,18 +484,10 @@ export function PlanUsagePanel() {
           </div>
 
           {/* Info Note */}
-          <div className="rounded-lg bg-muted/60 p-3 text-[11px] text-muted-foreground flex items-center justify-between border">
+          <div className="rounded-lg bg-muted/60 p-3 text-[11px] text-muted-foreground border">
             <span>
               {t('cycleNote', { period: usage?.year_month || '' })}
             </span>
-            <button
-              type="button"
-              onClick={() => setIsUpgradeModalOpen(true)}
-              className="font-bold text-indigo-500 hover:text-indigo-600 transition-colors flex items-center gap-1"
-            >
-              <span>{t('switchOrUpgrade')}</span>
-              <ArrowUpRight className="h-3 w-3 rtl:rotate-180" />
-            </button>
           </div>
         </CardContent>
       </Card>
@@ -665,14 +648,6 @@ export function PlanUsagePanel() {
           })}
         </div>
       </div>
-
-      {/* Upgrade Modal */}
-      <UpgradePlanModal
-        open={isUpgradeModalOpen}
-        onOpenChange={setIsUpgradeModalOpen}
-        currentPlanId={plan?.id}
-        availablePlans={availablePlans}
-      />
     </div>
   );
 }
