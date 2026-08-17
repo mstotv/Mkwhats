@@ -51,9 +51,10 @@ export default async function LandingPage() {
 
   const serviceClient = createServiceClient()
 
-  // Fetch site_settings, active plans, and published content pages in parallel
-  const [{ data: settings }, { data: plans }, { data: contentPages }] = await Promise.all([
-    serviceClient.from('site_settings').select('*').eq('id', 1).maybeSingle(),
+  // Fetch site_settings, partners, active plans, and published content pages in parallel
+  const [{ data: settings }, { data: dbPartners }, { data: plans }, { data: contentPages }] = await Promise.all([
+    serviceClient.from('site_settings').select('*').eq('id', 'global_config').maybeSingle(),
+    serviceClient.from('partners').select('*').order('display_order', { ascending: true }),
     serviceClient
       .from('plans')
       .select('*')
@@ -92,7 +93,7 @@ export default async function LandingPage() {
     { name: 'Instagram', logo_url: 'https://cdn.simpleicons.org/instagram/E4405F' },
   ]
 
-  const rawPartners = (settings?.partners as any[]) || []
+  const rawPartners = (dbPartners && dbPartners.length > 0) ? dbPartners : (settings?.partners as any[]) || []
   const partners = rawPartners.length > 0
     ? rawPartners.map((p) => {
         let logo = p.logo_url
@@ -332,8 +333,8 @@ export default async function LandingPage() {
       {/* ── 4. Partners Infinite Marquee High-Contrast Container ─ */}
       <section id="partners" className="py-12 border-b border-emerald-500/20 bg-slate-900/90 backdrop-blur-xl shadow-lg shadow-emerald-500/5 overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 text-center mb-6">
-          <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest">
-            متوافق ومربوط مع أشهر الأنظمة والمنصات العالمية والمحلية
+          <p className="text-sm font-black text-emerald-400 uppercase tracking-widest">
+            الشركاء
           </p>
         </div>
 
