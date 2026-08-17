@@ -63,11 +63,11 @@ export async function POST(request: NextRequest) {
     // 2. Fetch Plisio Secret Key from site_settings
     const { data: settings } = await serviceClient
       .from('site_settings')
-      .select('plisio_api_key, plisio_enabled')
-      .eq('id', 1)
+      .select('plisio_secret_key, plisio_api_key, plisio_enabled')
+      .limit(1)
       .maybeSingle()
 
-    const secretKey = settings?.plisio_api_key
+    const secretKey = settings?.plisio_secret_key || settings?.plisio_api_key
 
     if (!secretKey) {
       console.error('[PlisioWebhook] Missing plisio_api_key in site_settings')

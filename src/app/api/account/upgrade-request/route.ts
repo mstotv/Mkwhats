@@ -63,8 +63,8 @@ export async function POST(request: Request) {
           .maybeSingle(),
         serviceClient
           .from('site_settings')
-          .select('platform_name, plisio_api_key, plisio_enabled')
-          .eq('id', 1)
+          .select('platform_name, plisio_api_key, plisio_secret_key, plisio_enabled')
+          .limit(1)
           .maybeSingle(),
       ])
 
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
     console.log('[UpgradeRequestAPI] Debug siteSettings fetched:', siteSettings)
 
     const plisioEnabled = Boolean(siteSettings?.plisio_enabled)
-    const plisioApiKey = siteSettings?.plisio_api_key
+    const plisioApiKey = siteSettings?.plisio_secret_key || siteSettings?.plisio_api_key
 
     console.log('[UpgradeRequestAPI] Decision check:', {
       plisioEnabled,

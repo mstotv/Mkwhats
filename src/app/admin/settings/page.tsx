@@ -318,48 +318,49 @@ export default function AdminSettingsPage() {
                 <Coins className="h-5 w-5 text-amber-500" />
                 <div>
                   <h2 className="text-base font-bold text-foreground">بوابة دفع العملات الرقمية Plisio (Crypto Payment Gateway)</h2>
-                  <p className="text-xs text-muted-foreground">ربط وتفعيل الدفع التلقائي عبر USDT, Bitcoin, Ethereum من خلال Plisio</p>
+                  <p className="text-xs text-muted-foreground">تتطلب الـ Secret Key من حسابك في Plisio (account/api) لإنشاء فواتير الكريبتو وتأكيد الدفع</p>
                 </div>
               </div>
 
-              <Button
-                variant={plisioEnabled ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setPlisioEnabled(!plisioEnabled)}
-                className={`text-xs font-bold ${plisioEnabled ? 'bg-emerald-500 text-white hover:bg-emerald-600' : 'border-border text-muted-foreground'}`}
-              >
-                {plisioEnabled ? 'تفعيل بوابة Plisio للدفع 🟢' : 'بوابة Plisio معطلة 🛑'}
-              </Button>
+              <div className="flex items-center gap-2">
+                {plisioSecretKey ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400">
+                    🟢 مفعلة ومستعدة تلقائياً
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-400">
+                    🛑 معطلة (يرجى إدخال الـ Secret Key)
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-xs">
-              <div className="space-y-1.5">
-                <label className="font-semibold text-foreground">مفتاح API الخاص بـ Plisio (Plisio API Secret Key)</label>
+            <div className="space-y-3 text-xs">
+              <div className="space-y-1.5 max-w-xl">
+                <label className="font-bold text-foreground flex items-center justify-between">
+                  <span>Plisio API Secret Key</span>
+                  <span className="text-[11px] text-muted-foreground font-normal">احصل عليه من (plisio.net → account/api)</span>
+                </label>
                 <div className="relative">
                   <CreditCard className="absolute start-3 top-2.5 h-4 w-4 text-amber-500" />
                   <Input
                     type="password"
-                    placeholder="أدخل Plisio Secret API Key"
+                    placeholder="الصق الـ SECRET_KEY الخفي الخاص بك هنا..."
                     value={plisioSecretKey}
-                    onChange={(e) => setPlisioSecretKey(e.target.value)}
-                    className="ps-9 bg-background border-border font-mono"
+                    onChange={(e) => {
+                      setPlisioSecretKey(e.target.value);
+                      setPlisioEnabled(Boolean(e.target.value));
+                    }}
+                    className="ps-9 bg-background border-border font-mono text-xs"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="font-semibold text-foreground">معرّف التاجر في Plisio (Plisio Merchant ID)</label>
-                <div className="relative">
-                  <Building2 className="absolute start-3 top-2.5 h-4 w-4 text-amber-500" />
-                  <Input
-                    type="text"
-                    placeholder="أدخل Plisio Merchant ID"
-                    value={plisioMerchantId}
-                    onChange={(e) => setPlisioMerchantId(e.target.value)}
-                    className="ps-9 bg-background border-border font-mono"
-                  />
+              {!plisioSecretKey && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-amber-300 text-xs">
+                  ⚠️ <strong>ملاحظة هامة:</strong> بوابة الدفع بالكريبتو معطلة حالياً لأنك لم تدخل الـ <strong>Secret Key</strong>. بمجرد لصق المفتاح والضغط على "حفظ"، سيتمكن العملاء فوراً من سداد الاشتراكات بالعملات الرقمية (USDT / Bitcoin).
                 </div>
-              </div>
+              )}
             </div>
           </Card>
 
