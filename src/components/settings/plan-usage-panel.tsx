@@ -142,6 +142,26 @@ export function PlanUsagePanel() {
       setUpgradingPlanId(null)
       setUpgradingGateway(null)
     }
+  const handleFreeActivate = async (planItem: any) => {
+    try {
+      setUpgradingPlanId(planItem.id)
+      const res = await fetch('/api/account/activate-free-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan_id: planItem.id }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        toast.error(data.error || 'فشل الانتقال للخطة المجانية')
+        return
+      }
+      toast.success(data.message || 'تم الانتقال إلى الخطة المجانية بنجاح 🎁')
+      fetchSubscriptionInfo()
+    } catch (err) {
+      toast.error('فشل التفعيل')
+    } finally {
+      setUpgradingPlanId(null)
+    }
   }
 
   // Handle Stripe Payment Success Verification Return
@@ -716,6 +736,18 @@ export function PlanUsagePanel() {
                       className="w-full text-xs font-bold bg-muted text-muted-foreground border-border"
                     >
                       باقتك الحالية ✓
+                    </Button>
+                  ) : p.price_monthly === 0 || p.slug === 'free' ? (
+                    <Button
+                      onClick={() => handleFreeActivate(p)}
+                      disabled={upgradingPlanId === p.id}
+                      className="w-full text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                    >
+                      {upgradingPlanId === p.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                      ) : (
+                        'الانتقال للخطة المجانية (تفعيل مجاني) 🎁'
+                      )}
                     </Button>
                   ) : (
                     <>
