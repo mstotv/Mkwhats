@@ -92,16 +92,15 @@ export default function AdminDashboardPage() {
             <RefreshCw className={`h-3.5 w-3.5 ms-1.5 ${refreshing ? 'animate-spin' : ''}`} />
             تحديث البيانات
           </Button>
-          <Button
-            size="sm"
-            asChild
-            className="bg-gradient-to-r from-amber-500 to-orange-600 font-bold text-slate-950 hover:from-amber-400 hover:to-orange-500 shadow-md shadow-amber-500/20 text-xs"
-          >
-            <Link href="/admin/plans">
+          <Link href="/admin/plans">
+            <Button
+              size="sm"
+              className="bg-gradient-to-r from-amber-500 to-orange-600 font-bold text-slate-950 hover:from-amber-400 hover:to-orange-500 shadow-md shadow-amber-500/20 text-xs"
+            >
               <Plus className="h-4 w-4 ms-1" />
               إضافة باقة جديدة
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         </div>
       </div>
 

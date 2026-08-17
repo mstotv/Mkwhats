@@ -55,12 +55,12 @@ export default async function AdminLayout({
           </div>
 
           <div className="flex justify-center gap-3">
-            <Button variant="outline" asChild>
-              <Link href="/dashboard">
+            <Link href="/dashboard">
+              <Button variant="outline">
                 <ArrowRight className="h-4 w-4 ms-1" />
                 العودة للمنصة الرئيسية
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
