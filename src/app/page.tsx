@@ -330,27 +330,42 @@ export default async function LandingPage() {
         </div>
 
         <style>{`
-          @keyframes marqueeSeamless {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(calc(-50% - 0.625rem)); }
+          @keyframes marqueeInfiniteSlow {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-100%); }
           }
-          .marquee-track-seamless {
-            display: flex !important;
-            width: max-content !important;
-            gap: 1.25rem !important;
-            animation: marqueeSeamless 30s linear infinite !important;
+          .animate-marquee-slow {
+            animation: marqueeInfiniteSlow 65s linear infinite;
             will-change: transform;
           }
-          .marquee-track-seamless:hover {
+          .animate-marquee-slow:hover {
             animation-play-state: paused;
           }
         `}</style>
 
-        <div className="relative w-full flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_10%,white_90%,transparent)]">
-          <div className="marquee-track-seamless py-1">
-            {[...partners, ...partners, ...partners, ...partners].map((p, idx) => (
+        <div className="relative w-full flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_5%,white_95%,transparent)]">
+          <div className="flex shrink-0 items-center justify-around gap-5 min-w-full animate-marquee-slow py-1">
+            {partners.map((p, idx) => (
               <div
-                key={`p-${idx}`}
+                key={`p1-${idx}`}
+                className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800/80 px-4 py-2 rounded-lg shadow-sm hover:border-emerald-500/50 hover:bg-slate-800 transition-all shrink-0"
+              >
+                {p.logo_url ? (
+                  <img src={p.logo_url} alt={p.name} className="h-5 w-5 object-contain" />
+                ) : (
+                  <div className="h-5 w-5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-[10px]">
+                    {p.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-xs font-bold text-slate-200">{p.name}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex shrink-0 items-center justify-around gap-5 min-w-full animate-marquee-slow py-1" aria-hidden="true">
+            {partners.map((p, idx) => (
+              <div
+                key={`p2-${idx}`}
                 className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800/80 px-4 py-2 rounded-lg shadow-sm hover:border-emerald-500/50 hover:bg-slate-800 transition-all shrink-0"
               >
                 {p.logo_url ? (
@@ -365,12 +380,10 @@ export default async function LandingPage() {
             ))}
           </div>
         </div>
-
       </section>
 
-
-
       {/* ── 5. Features Showcase ────────────────────────────── */}
+
       <section id="features" className="py-24 border-b border-slate-800/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
