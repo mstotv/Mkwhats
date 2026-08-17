@@ -17,6 +17,7 @@ import {
   Send,
   Loader2,
   ArrowUpRight,
+  Zap,
 } from 'lucide-react'
 import { UpgradePlanModal, type PlanItem } from './upgrade-plan-modal'
 import { useTranslations } from 'next-intl'
