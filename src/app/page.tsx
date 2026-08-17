@@ -330,36 +330,45 @@ export default async function LandingPage() {
         </div>
 
         <style>{`
-          @keyframes marqueeSeamless8 {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-25%); }
+          @keyframes marqueeInfiniteLoop {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-100%); }
           }
-          .marquee-track-seamless-8 {
-            display: flex !important;
-            width: max-content !important;
-            gap: 1rem !important;
-            animation: marqueeSeamless8 30s linear infinite !important;
+          .animate-marquee-track {
+            display: flex;
+            shrink: 0;
+            gap: 1rem;
+            animation: marqueeInfiniteLoop 40s linear infinite;
             will-change: transform;
           }
-          .marquee-track-seamless-8:hover {
+          .animate-marquee-track:hover {
             animation-play-state: paused;
           }
         `}</style>
 
-        <div className="relative w-full flex overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_5%,white_95%,transparent)]">
-          <div className="marquee-track-seamless-8 py-1">
-            {[
-              ...partners,
-              ...partners,
-              ...partners,
-              ...partners,
-              ...partners,
-              ...partners,
-              ...partners,
-              ...partners
-            ].map((p, idx) => (
+        <div className="relative w-full flex gap-4 overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_5%,white_95%,transparent)]">
+          <div className="animate-marquee-track shrink-0 items-center py-1">
+            {[...partners, ...partners].map((p, idx) => (
               <div
-                key={`p-${idx}`}
+                key={`p1-${idx}`}
+                className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800/80 px-4 py-2 rounded-lg shadow-sm hover:border-emerald-500/50 hover:bg-slate-800 transition-all shrink-0"
+              >
+                {p.logo_url ? (
+                  <img src={p.logo_url} alt={p.name} className="h-5 w-5 object-contain" />
+                ) : (
+                  <div className="h-5 w-5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-[10px]">
+                    {p.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-xs font-bold text-slate-200">{p.name}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="animate-marquee-track shrink-0 items-center py-1" aria-hidden="true">
+            {[...partners, ...partners].map((p, idx) => (
+              <div
+                key={`p2-${idx}`}
                 className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800/80 px-4 py-2 rounded-lg shadow-sm hover:border-emerald-500/50 hover:bg-slate-800 transition-all shrink-0"
               >
                 {p.logo_url ? (
@@ -375,6 +384,7 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+
 
 
 
