@@ -1,15 +1,17 @@
-'use client'
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Sparkles,
   CheckCircle2,
@@ -22,6 +24,10 @@ import {
   ExternalLink,
   Check,
   Zap,
+  Landmark,
+  Upload,
+  CreditCard,
+  Building2,
 } from 'lucide-react'
 
 import { useLocale } from 'next-intl'
@@ -42,6 +48,15 @@ export interface PlanItem {
     excel_export?: boolean
     telegram_bot?: boolean
   }
+}
+
+interface OfflineMethod {
+  id: string
+  name: string
+  account_name?: string
+  account_number: string
+  logo_url?: string
+  instructions?: string
 }
 
 interface UpgradePlanModalProps {
@@ -66,12 +81,116 @@ export function UpgradePlanModal({
   const [error, setError] = useState<string | null>(null)
   const [successInfo, setSuccessInfo] = useState<{
     planName: string
-    paymentMethod: 'plisio' | 'whatsapp'
+    paymentMethod: 'offline' | 'plisio' | 'whatsapp'
     checkoutUrl?: string
     whatsappUrl?: string
   } | null>(null)
 
+  // Offline Payment Modal Step State
+  const [selectedPlanForOffline, setSelectedPlanForOffline] = useState<PlanItem | null>(null)
+  const [offlineMethods, setOfflineMethods] = useState<OfflineMethod[]>([])
+  const [selectedMethodId, setSelectedMethodId] = useState<string>('')
+  const [transactionRef, setTransactionRef] = useState('')
+  const [proofImageUrl, setProofImageUrl] = useState('')
+  const [userNotes, setUserNotes] = useState('')
+  const [uploadingReceipt, setUploadingReceipt] = useState(false)
+  const [submittingOffline, setSubmittingOffline] = useState(false)
+
+  useEffect(() => {
+    if (open) {
+      fetch('/api/offline-methods')
+        .then((r) => r.json())
+        .then((data) => {
+          const methods = data.methods || []
+          setOfflineMethods(methods)
+          if (methods.length > 0) setSelectedMethodId(methods[0].id)
+        })
+        .catch(() => {})
+    }
+  }, [open])
+
+  const handleOpenOfflineModal = (plan: PlanItem) => {
+    setSelectedPlanForOffline(plan)
+    setTransactionRef('')
+    setProofImageUrl('')
+    setUserNotes('')
+    setError(null)
+  }
+
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      setUploadingReceipt(true)
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/upload-receipt', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.url) throw new Error(data.error || 'Upload failed')
+
+      setProofImageUrl(data.url)
+    } catch (err: any) {
+      setError(err.message || (isAr ? 'فشل رفع صورة الوصل' : 'Receipt upload failed'))
+    } finally {
+      setUploadingReceipt(false)
+    }
+  }
+
+  const handleSubmitOfflinePayment = async () => {
+    if (!selectedPlanForOffline) return
+    if (!transactionRef.trim() && !proofImageUrl) {
+      setError(isAr ? 'يرجى تقديم إما رقم الحوالة/المرجع أو رفع صورة الوصل' : 'Please provide transaction ref code or upload receipt image')
+      return
+    }
+
+    try {
+      setSubmittingOffline(true)
+      setError(null)
+
+      const res = await fetch('/api/account/offline-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan_id: selectedPlanForOffline.id,
+          billing_cycle: billingCycle,
+          method_id: selectedMethodId || null,
+          transaction_ref: transactionRef,
+          proof_image_url: proofImageUrl,
+          user_notes: userNotes,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to submit payment proof')
+      }
+
+      setSuccessInfo({
+        planName: selectedPlanForOffline.name,
+        paymentMethod: 'offline',
+      })
+
+      setSelectedPlanForOffline(null)
+      if (onSuccess) onSuccess()
+    } catch (err: any) {
+      setError(err.message || (isAr ? 'حدث خطأ عند إرسال إثبات الدفع' : 'Submission failed'))
+    } finally {
+      setSubmittingOffline(false)
+    }
+  }
+
   const handleRequestUpgrade = async (plan: PlanItem) => {
+    // If offline payment methods are available, open offline payment modal directly
+    if (offlineMethods.length > 0) {
+      handleOpenOfflineModal(plan)
+      return
+    }
+
     try {
       setError(null)
       setSubmittingPlanId(plan.id)
@@ -99,7 +218,6 @@ export function UpgradePlanModal({
         whatsappUrl: data.whatsapp_url,
       })
 
-      // Try opening Plisio checkout or WhatsApp link in a new tab
       const targetUrl = data.checkout_url || data.whatsapp_url
       if (targetUrl) {
         window.open(targetUrl, '_blank')
@@ -377,6 +495,158 @@ export function UpgradePlanModal({
           })}
         </div>
       </DialogContent>
+
+      {/* Offline Payment Dialog Modal */}
+      {selectedPlanForOffline && (
+        <Dialog open={Boolean(selectedPlanForOffline)} onOpenChange={() => setSelectedPlanForOffline(null)}>
+          <DialogContent className="sm:max-w-xl w-full rounded-3xl bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 p-6 shadow-2xl">
+            <DialogHeader className="text-start space-y-1 pb-3 border-b border-slate-100 dark:border-zinc-800">
+              <DialogTitle className="text-lg font-black flex items-center gap-2 text-slate-900 dark:text-zinc-100">
+                <Landmark className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                {isAr ? `إتمام الترقية عبر الدفع المحلي: خطة ${selectedPlanForOffline.name}` : `Offline Local Payment: ${selectedPlanForOffline.name}`}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                {isAr ? 'يرجى تحويل المبلغ المطلوب لإحدى وسائل الدفع أدناه، ثم إرفاق رقم الحوالة أو صورة الوصل.' : 'Please transfer the required amount to one of the payment methods below and submit your receipt.'}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2 text-xs">
+              {/* Price Tag */}
+              <div className="flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                <span className="font-bold text-emerald-700 dark:text-emerald-300">
+                  {isAr ? 'المبلغ المطلوب تحويله:' : 'Required Amount:'}
+                </span>
+                <span className="font-mono font-black text-sm text-emerald-700 dark:text-emerald-300">
+                  ${billingCycle === 'yearly' ? selectedPlanForOffline.price_yearly : selectedPlanForOffline.price_monthly} USD ({billingCycle === 'yearly' ? (isAr ? 'اشتراك سنوي' : 'Yearly') : (isAr ? 'اشتراك شهري' : 'Monthly')})
+                </span>
+              </div>
+
+              {/* Payment Methods Selector */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold">{isAr ? 'اختر طريقة الدفع / البنك / المحفظة:' : 'Select Payment Method:'}</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {offlineMethods.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setSelectedMethodId(m.id)}
+                      className={`p-3 rounded-2xl border text-start flex items-center gap-3 transition-all cursor-pointer ${
+                        selectedMethodId === m.id
+                          ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20 font-bold'
+                          : 'border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900'
+                      }`}
+                    >
+                      {m.logo_url ? (
+                        <img src={m.logo_url} alt={m.name} className="h-7 w-7 object-contain rounded-lg shrink-0" />
+                      ) : (
+                        <div className="h-7 w-7 rounded-lg bg-emerald-500/20 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0">
+                          <Landmark className="h-4 w-4" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-bold text-xs truncate">{m.name}</div>
+                        {m.account_name && <div className="text-[10px] text-muted-foreground truncate">{m.account_name}</div>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Selected Method Details */}
+              {offlineMethods.find((m) => m.id === selectedMethodId) && (
+                <div className="p-4 bg-slate-50 dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground font-bold">{isAr ? 'رقم الحساب / IBAN / المحفظة:' : 'Account # / IBAN:'}</span>
+                    <span className="font-mono font-black text-xs dir-ltr select-all text-emerald-600 dark:text-emerald-400">
+                      {offlineMethods.find((m) => m.id === selectedMethodId)?.account_number}
+                    </span>
+                  </div>
+                  {offlineMethods.find((m) => m.id === selectedMethodId)?.account_name && (
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground">{isAr ? 'اسم المستفيد:' : 'Holder Name:'}</span>
+                      <span className="font-bold">{offlineMethods.find((m) => m.id === selectedMethodId)?.account_name}</span>
+                    </div>
+                  )}
+                  {offlineMethods.find((m) => m.id === selectedMethodId)?.instructions && (
+                    <p className="text-[11px] text-muted-foreground pt-1 border-t border-slate-200/60 dark:border-zinc-800 leading-relaxed">
+                      {offlineMethods.find((m) => m.id === selectedMethodId)?.instructions}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Transaction Ref Input */}
+              <div className="space-y-1">
+                <Label className="text-xs font-bold">{isAr ? 'رقم الحوالة / المرجع / Transaction Code *' : 'Reference / Transaction Code *'}</Label>
+                <Input
+                  placeholder={isAr ? 'مثال: #REF-98765432' : 'e.g. #REF-98765432'}
+                  value={transactionRef}
+                  onChange={(e) => setTransactionRef(e.target.value)}
+                  className="h-10 text-xs rounded-xl font-mono dir-ltr"
+                />
+              </div>
+
+              {/* Receipt Image Upload */}
+              <div className="space-y-1">
+                <Label className="text-xs font-bold">{isAr ? 'صورة وصل/إثبات الدفع (اختياري)' : 'Proof of Payment Receipt Screenshot'}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="https://... receipt.png"
+                    value={proofImageUrl}
+                    onChange={(e) => setProofImageUrl(e.target.value)}
+                    className="h-10 text-xs rounded-xl flex-1 dir-ltr"
+                  />
+                  <label className="cursor-pointer">
+                    <span className="h-10 px-3 bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl flex items-center justify-center text-xs font-bold text-slate-700 dark:text-zinc-300 hover:bg-slate-200 transition-colors">
+                      {uploadingReceipt ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    </span>
+                    <input type="file" accept="image/*" onChange={handleReceiptUpload} className="hidden" />
+                  </label>
+                </div>
+              </div>
+
+              {/* User Note */}
+              <div className="space-y-1">
+                <Label className="text-xs font-bold">{isAr ? 'ملاحظة إضافية للإدارة (اختياري)' : 'Additional Note (Optional)'}</Label>
+                <Input
+                  placeholder={isAr ? 'اكتب اسم الحساب المحول منه أو أي تفاصيل أخرى' : 'Enter sender name or notes'}
+                  value={userNotes}
+                  onChange={(e) => setUserNotes(e.target.value)}
+                  className="h-10 text-xs rounded-xl"
+                />
+              </div>
+
+              {/* Error banner inside dialog */}
+              {error && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold">
+                  ⚠️ {error}
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="pt-2 flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedPlanForOffline(null)}
+                className="rounded-2xl h-11 font-bold flex-1"
+              >
+                {isAr ? 'إلغاء' : 'Cancel'}
+              </Button>
+              <Button
+                onClick={handleSubmitOfflinePayment}
+                disabled={submittingOffline}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl h-11 px-5 flex-1 shadow-lg shadow-emerald-600/20"
+              >
+                {submittingOffline ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  isAr ? 'إرسال إثبات الدفع للمراجعة 🚀' : 'Submit Receipt Proof'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   )
 }

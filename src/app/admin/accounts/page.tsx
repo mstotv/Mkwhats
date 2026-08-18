@@ -34,7 +34,15 @@ import {
   LogIn,
   Lock,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
 import { useLocale } from 'next-intl';
@@ -79,6 +87,11 @@ export default function AdminAccountsPage() {
   const [resettingAccount, setResettingAccount] = useState<AdminAccountRow | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [resettingPass, setResettingPass] = useState(false);
+
+  // Delete Account Modal State
+  const [deletingAccount, setDeletingAccount] = useState<AdminAccountRow | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   // Impersonating State
   const [impersonatingId, setImpersonatingId] = useState<string | null>(null);
@@ -220,6 +233,30 @@ export default function AdminAccountsPage() {
       const msg = err instanceof Error ? err.message : 'فشل الدخول لحساب الشركة';
       toast.error(msg);
       setImpersonatingId(null);
+    }
+  }
+
+  async function handleDeleteAccountConfirm() {
+    if (!deletingAccount) return;
+    try {
+      setConfirmingDelete(true);
+      const res = await fetch('/api/admin/accounts/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account_id: deletingAccount.account_id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'فشل حذف الحساب');
+
+      toast.success(data.message || (isAr ? 'تم حذف الحساب بنجاح 🗑️' : 'Account deleted successfully'));
+      setDeleteModalOpen(false);
+      setDeletingAccount(null);
+      fetchAccountsAndPlans();
+    } catch (err: any) {
+      toast.error(err.message || (isAr ? 'حدث خطأ عند حذف الحساب' : 'Failed to delete account'));
+    } finally {
+      setConfirmingDelete(false);
     }
   }
 
@@ -572,6 +609,27 @@ export default function AdminAccountsPage() {
                               </div>
                             </div>
                           </DropdownMenuItem>
+
+                          {/* DELETE ACCOUNT ACTION */}
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setDeletingAccount(acc);
+                              setDeleteModalOpen(true);
+                            }}
+                            className="flex items-center justify-between gap-3 p-2.5 rounded-lg text-rose-500 hover:bg-rose-500/10 cursor-pointer font-bold border-t border-border/50"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Trash2 className="h-4 w-4 text-rose-500 shrink-0" />
+                              <div className="flex flex-col text-start">
+                                <span className="text-xs font-bold text-rose-500">
+                                  {isAr ? 'حذف الحساب نهائياً' : 'Delete Account Permanently'}
+                                </span>
+                                <span className="text-[10px] font-normal text-muted-foreground">
+                                  {isAr ? 'حذف الحساب ومستخدميه من DB' : 'Permanently delete account from DB'}
+                                </span>
+                              </div>
+                            </div>
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -582,6 +640,54 @@ export default function AdminAccountsPage() {
           </div>
         )}
       </div>
+
+      {/* DELETE ACCOUNT CONFIRMATION DIALOG */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="sm:max-w-md rounded-3xl bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-rose-600 dark:text-rose-400">
+              <Trash2 className="h-5 w-5" />
+              {isAr ? 'تأكيد حذف الحساب نهائياً ⚠️' : 'Confirm Account Deletion'}
+            </DialogTitle>
+          </DialogHeader>
+
+          {deletingAccount && (
+            <div className="space-y-4 py-2 text-xs">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl space-y-1 text-rose-700 dark:text-rose-300">
+                <div className="font-bold text-sm">{deletingAccount.account_name}</div>
+                <div className="text-xs font-mono">{deletingAccount.owner_email}</div>
+              </div>
+
+              <p className="text-muted-foreground text-xs leading-relaxed font-bold">
+                {isAr
+                  ? '⚠️ تحذير أمني شديد: هذا الإجراء سيقوم بحذف الحساب وجميع سجلاته ورسائله واشتراكاته وحساب المستخدم من قاعدة البيانات (Supabase DB & Auth) نهائياً، ولا يمكن استرجاع هذه البيانات إطلاقاً!'
+                  : 'Warning: This action will permanently delete the account, all associated messages, contacts, subscriptions, and auth users from the database. This cannot be undone.'}
+              </p>
+
+              <DialogFooter className="pt-2 flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteModalOpen(false)}
+                  className="rounded-2xl h-11 font-bold flex-1"
+                >
+                  {isAr ? 'إلغاء الإجراء' : 'Cancel'}
+                </Button>
+                <Button
+                  onClick={handleDeleteAccountConfirm}
+                  disabled={confirmingDelete}
+                  className="bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-2xl h-11 px-5 flex-1 shadow-lg shadow-rose-600/20"
+                >
+                  {confirmingDelete ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    isAr ? 'تأكيد الحذف النهائي 🗑️' : 'Delete Permanently'
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

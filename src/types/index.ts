@@ -187,7 +187,10 @@ export interface Conversation {
 // Notifications (migration 027)
 // ============================================================
 
-export type NotificationType = 'conversation_assigned';
+export type NotificationType =
+  | 'conversation_assigned'
+  | 'payment_approved'
+  | 'payment_rejected';
 
 export interface Notification {
   id: string;

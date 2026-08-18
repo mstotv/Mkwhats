@@ -4,9 +4,10 @@ import { createServerClient } from '@supabase/ssr'
 import { createServiceClient } from '@/lib/supabase/service'
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get('code')
+  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
+  const redirectTarget = next.startsWith('/') ? next : '/dashboard'
 
   if (code) {
     const cookieStore = await cookies()
@@ -59,9 +60,20 @@ export async function GET(request: Request) {
         }
       }
 
-      return NextResponse.redirect(`${origin}${next}`)
+      // Relative Location header guarantees redirect stays on user's active domain in browser
+      return new NextResponse(null, {
+        status: 307,
+        headers: {
+          Location: redirectTarget,
+        },
+      })
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth_failed`)
+  return new NextResponse(null, {
+    status: 307,
+    headers: {
+      Location: '/login?error=auth_failed',
+    },
+  })
 }

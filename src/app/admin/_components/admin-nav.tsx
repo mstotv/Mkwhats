@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   CreditCard,
+  Landmark,
   Globe,
   LogOut,
   FileText,
@@ -72,6 +73,13 @@ export function AdminNav() {
       label: isAr ? 'الباقات والأسعار (Plans)' : 'Plans',
       href: '/admin/plans',
       icon: CreditCard,
+    },
+    {
+      label: isAr ? 'الدفع المحلي (Offline)' : 'Offline Payments',
+      href: '/admin/offline-payments',
+      icon: Landmark,
+      badge: 'جديد',
+      badgeEn: 'New',
     },
     {
       label: isAr ? 'تذاكر الدعم والبرودكاست' : 'Support Tickets',

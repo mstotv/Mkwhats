@@ -2,7 +2,29 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *, .dark, [data-mode="dark"] *, [data-mode="dark"]));
+
+/* Custom Autofill Styles for Light Mode */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #09090b !important;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+}
+
+/* Custom Autofill Styles for Dark Mode */
+html[data-mode="dark"] input:-webkit-autofill,
+html[data-mode="dark"] input:-webkit-autofill:hover,
+html[data-mode="dark"] input:-webkit-autofill:focus,
+html[data-mode="dark"] input:-webkit-autofill:active,
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-text-fill-color: #f4f4f5 !important;
+  -webkit-box-shadow: 0 0 0px 1000px #18181b inset !important;
+}
 
 @theme inline {
   --color-background: var(--background);

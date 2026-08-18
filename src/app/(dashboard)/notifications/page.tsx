@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import type { Notification } from "@/types";
-import { Bell, CheckCheck, Loader2, UserPlus } from "lucide-react";
+import { Bell, CheckCheck, Loader2, UserPlus, CheckCircle2, XCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,8 @@ import { useTranslations } from "next-intl";
 
 const TYPE_ICON: Record<Notification["type"], typeof Bell> = {
   conversation_assigned: UserPlus,
+  payment_approved: CheckCircle2,
+  payment_rejected: XCircle,
 };
 
 export default function NotificationsPage() {

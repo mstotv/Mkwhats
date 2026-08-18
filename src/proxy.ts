@@ -22,11 +22,42 @@ export async function proxy(request: NextRequest) {
     return response
   }
 
+  // Helper to create safe redirect URLs that preserve incoming host/protocol (from x-forwarded headers or site settings)
+  const createRedirectResponse = (targetPath: string, extraParams?: URLSearchParams) => {
+    const forwardedHost = request.headers.get('x-forwarded-host')
+    const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+    const host = request.headers.get('host')
+
+    let targetUrl: URL
+
+    if (forwardedHost) {
+      targetUrl = new URL(targetPath, `${forwardedProto}://${forwardedHost}`)
+    } else if (host && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+      const proto = request.headers.get('x-forwarded-proto') || (request.nextUrl.protocol.replace(':', '') || 'https')
+      targetUrl = new URL(targetPath, `${proto}://${host}`)
+    } else if (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_SITE_URL.includes('example.com')) {
+      targetUrl = new URL(targetPath, process.env.NEXT_PUBLIC_SITE_URL)
+    } else {
+      targetUrl = request.nextUrl.clone()
+      targetUrl.pathname = targetPath
+    }
+
+    if (extraParams) {
+      extraParams.forEach((val, key) => {
+        targetUrl.searchParams.set(key, val)
+      })
+    }
+
+    return withRefreshedCookies(NextResponse.redirect(targetUrl))
+  }
+
   // ─────────────────────────────────────────────────────────────
-  // PLATFORM ADMIN ROUTES (/admin/*)
+  // PLATFORM ADMIN ROUTES (/admin/* and /api/admin/*)
   // Completely isolated from regular user routes below.
   // ─────────────────────────────────────────────────────────────
-  if (pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+    const isApiAdmin = pathname.startsWith('/api/admin')
+
     const adminSupabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -62,9 +93,7 @@ export async function proxy(request: NextRequest) {
 
           if (adminRow) {
             // Already logged in as super-admin -> redirect to admin dashboard
-            const url = request.nextUrl.clone()
-            url.pathname = '/admin/dashboard'
-            return withRefreshedCookies(NextResponse.redirect(url))
+            return createRedirectResponse('/admin/dashboard')
           }
         } catch (e) {
           console.error('[Middleware/Proxy] Admin check error on login:', e)
@@ -74,11 +103,14 @@ export async function proxy(request: NextRequest) {
       return supabaseResponse
     }
 
-    // 2. Protected Admin Pages (/admin/*)
+    // 2. Protected Admin Pages & API Routes
     if (!adminUser) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/admin/login'
-      return withRefreshedCookies(NextResponse.redirect(url))
+      if (isApiAdmin) {
+        return withRefreshedCookies(
+          NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        )
+      }
+      return createRedirectResponse('/admin/login')
     }
 
     // Verify platform super-admin role in DB using service_role key (bypasses RLS)
@@ -91,16 +123,22 @@ export async function proxy(request: NextRequest) {
         .maybeSingle()
 
       if (!adminRow) {
+        if (isApiAdmin) {
+          return withRefreshedCookies(
+            NextResponse.json({ error: 'Forbidden: Super-admin access required' }, { status: 403 })
+          )
+        }
         // Logged in user is NOT a platform super-admin -> redirect to main app home
-        const url = request.nextUrl.clone()
-        url.pathname = '/'
-        return withRefreshedCookies(NextResponse.redirect(url))
+        return createRedirectResponse('/')
       }
     } catch (e) {
       console.error('[Middleware/Proxy] Admin authorization check error:', e)
-      const url = request.nextUrl.clone()
-      url.pathname = '/admin/login'
-      return withRefreshedCookies(NextResponse.redirect(url))
+      if (isApiAdmin) {
+        return withRefreshedCookies(
+          NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        )
+      }
+      return createRedirectResponse('/admin/login')
     }
 
     return supabaseResponse
@@ -109,6 +147,12 @@ export async function proxy(request: NextRequest) {
   // ─────────────────────────────────────────────────────────────
   // REGULAR APP ROUTES (User Auth & Protected Routes)
   // ─────────────────────────────────────────────────────────────
+
+  // OAuth Callback Fallback: Redirect any incoming request containing auth 'code' parameter
+  // to /auth/callback if it lands on root '/' or login/signup instead.
+  if (request.nextUrl.searchParams.has('code') && !pathname.startsWith('/auth/callback') && !pathname.startsWith('/api')) {
+    return createRedirectResponse('/auth/callback', request.nextUrl.searchParams)
+  }
 
   // 0. Active Admin Impersonation Session Check (Highest priority for app routes)
   const impersonationCookie = request.cookies.get(IMPERSONATION_COOKIE_NAME)?.value
@@ -149,7 +193,16 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  if (authError) {
+    // Evict stale invalid auth cookies to prevent repeated 'refresh_token_not_found' errors
+    request.cookies.getAll().forEach((c) => {
+      if (c.name.includes('sb-') && c.name.includes('-auth-token')) {
+        supabaseResponse.cookies.set(c.name, '', { maxAge: 0, path: '/' })
+      }
+    })
+  }
 
   // Account Status Check for Authenticated Users (Enforces Suspension with 60s Cache Cookie)
   if (user) {
@@ -185,11 +238,10 @@ export async function proxy(request: NextRequest) {
     }
 
     if (isSuspended) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/login'
-      url.searchParams.set('error', 'account_suspended')
+      const searchParams = new URLSearchParams()
+      searchParams.set('error', 'account_suspended')
+      const evictedResponse = createRedirectResponse('/login', searchParams)
 
-      const evictedResponse = NextResponse.redirect(url)
       // Evict user: terminate session and clear auth cookies immediately
       request.cookies.getAll().forEach((c) => {
         if (c.name.includes('sb-') || c.name === 'wacrm_acc_status') {
@@ -206,28 +258,22 @@ export async function proxy(request: NextRequest) {
     request.nextUrl.pathname === '/signup' ||
     request.nextUrl.pathname === '/forgot-password'
   )) {
-    const url = request.nextUrl.clone()
     const inviteToken = request.nextUrl.searchParams.get('invite')
     if (
       inviteToken &&
       (request.nextUrl.pathname === '/login' ||
         request.nextUrl.pathname === '/signup')
     ) {
-      url.pathname = `/join/${encodeURIComponent(inviteToken)}`
-      url.search = ''
+      return createRedirectResponse(`/join/${encodeURIComponent(inviteToken)}`)
     } else {
-      url.pathname = '/dashboard'
-      url.search = ''
+      return createRedirectResponse('/dashboard')
     }
-    return withRefreshedCookies(NextResponse.redirect(url))
   }
 
   // Protected pages - redirect to login if not authenticated
   const protectedPaths = ['/dashboard', '/inbox', '/contacts', '/pipelines', '/broadcasts', '/automations', '/settings', '/orders']
   if (!user && protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return withRefreshedCookies(NextResponse.redirect(url))
+    return createRedirectResponse('/login')
   }
 
   // API routes that need auth (not webhooks)

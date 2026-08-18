@@ -17,6 +17,7 @@ const pageTitles: Record<string, { ar: string; en: string }> = {
   '/admin/dashboard': { ar: 'لوحة المراقبة الشاملة', en: 'Super Admin Overview' },
   '/admin/accounts': { ar: 'إدارة الشركات والحسابات', en: 'Tenants & Accounts Directory' },
   '/admin/plans': { ar: 'إدارة الباقات والاشتراكات', en: 'SaaS Pricing & Plans Manager' },
+  '/admin/offline-payments': { ar: 'إدارة الدفع المحلي والأوفلاين', en: 'Offline Payments Manager' },
   '/admin/tickets': { ar: 'مركز تذاكر الدعم والبرودكاست', en: 'Support & Broadcasts Manager' },
   '/admin/pages': { ar: 'إدارة الصفحات والمحتوى', en: 'Pages & Content Directory' },
   '/admin/landing-settings': { ar: 'إعدادات صفحة الهبوط الشاملة', en: 'Landing Page CMS & Theme Settings' },

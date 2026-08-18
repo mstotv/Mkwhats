@@ -4,6 +4,8 @@ import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { ShieldCheck, Sparkles, MessageSquare, Lock, Shield, Smartphone } from 'lucide-react';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { ModeToggle } from '@/components/layout/mode-toggle';
 
 interface AuthShellProps {
   children: ReactNode;
@@ -11,6 +13,37 @@ interface AuthShellProps {
   badgeText?: string;
   illustrationTitle?: string;
   illustrationSub?: string;
+}
+
+function getInitialAuthSettings() {
+  if (typeof window === "undefined") {
+    return {
+      platform_name: "MK Whats",
+      platform_name_ar: "واتساب اوتوميشن",
+      platform_name_en: "WhatsApp Automation",
+      primary_color: "#10b981",
+    };
+  }
+  try {
+    const cached = localStorage.getItem("mk_site_settings");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      return {
+        platform_name: parsed.platform_name || "MK Whats",
+        platform_name_ar: parsed.platform_name_ar || "واتساب اوتوميشن",
+        platform_name_en: parsed.platform_name_en || "WhatsApp Automation",
+        primary_color: parsed.primary_color || "#10b981",
+        logo_url: parsed.logo_url || "",
+        logo_height: parsed.logo_height || 36,
+      };
+    }
+  } catch {}
+  return {
+    platform_name: "MK Whats",
+    platform_name_ar: "واتساب اوتوميشن",
+    platform_name_en: "WhatsApp Automation",
+    primary_color: "#10b981",
+  };
 }
 
 export function AuthShell({
@@ -22,20 +55,9 @@ export function AuthShell({
 }: AuthShellProps) {
   const locale = useLocale();
   const isAr = locale === 'ar';
-  const [siteSettings, setSiteSettings] = useState<{
-    logo_url?: string;
-    logo_height?: number;
-    platform_name?: string;
-    platform_name_ar?: string;
-    platform_name_en?: string;
-    primary_color?: string;
-  }>({});
+  const [siteSettings, setSiteSettings] = useState(getInitialAuthSettings);
 
   useEffect(() => {
-    try {
-      const cached = localStorage.getItem('mk_site_settings');
-      if (cached) setSiteSettings(JSON.parse(cached));
-    } catch {}
     fetch('/api/site-settings')
       .then((res) => res.json())
       .then((data) => {
@@ -49,20 +71,20 @@ export function AuthShell({
 
   const logoUrl = siteSettings.logo_url || '';
   const logoHeight = siteSettings.logo_height || 36;
-  const primaryColor = siteSettings.primary_color || '#7C3AED';
+  const primaryColor = siteSettings.primary_color || '#10b981';
   const platformName = isAr
-    ? (siteSettings.platform_name_ar || siteSettings.platform_name || '')
-    : (siteSettings.platform_name_en || siteSettings.platform_name || '');
+    ? (siteSettings.platform_name_ar || siteSettings.platform_name || 'واتساب اوتوميشن')
+    : (siteSettings.platform_name_en || siteSettings.platform_name || 'WhatsApp Automation');
 
   return (
-    <div className="min-h-screen w-full bg-[#FFFFFF] text-[#18181B] font-cairo dir-rtl flex flex-col justify-between p-4 lg:p-6 selection:bg-[#7C3AED]/20">
+    <div className="min-h-screen w-full bg-background dark:bg-zinc-950 text-foreground dark:text-zinc-100 font-cairo dir-rtl flex flex-col justify-between p-4 lg:p-6 selection:bg-emerald-500/20 transition-colors duration-200">
       <div className="mx-auto w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[calc(100vh-3rem)]">
         
         {/* LEFT COLUMN: Authentication Form Container (~45% Desktop Width in LTR / RTL Right) */}
         <div className="lg:col-span-6 xl:col-span-5 flex flex-col justify-between py-6 px-2 sm:px-8 space-y-8">
           
-          {/* Header Branding */}
-          <div className="flex items-center gap-3">
+          {/* Header Branding + Controls (Language Switcher & Theme Toggle) */}
+          <div className="flex items-center justify-between w-full gap-3">
             <Link href="/" className="flex items-center gap-3 group">
               {logoUrl ? (
                 <img
@@ -74,24 +96,30 @@ export function AuthShell({
               ) : (
                 <div
                   style={{ backgroundColor: primaryColor }}
-                  className="flex h-10 w-10 items-center justify-center rounded-2xl text-white font-black shadow-lg shadow-[#7C3AED]/20 transition-transform group-hover:scale-105"
+                  className="flex h-10 w-10 items-center justify-center rounded-2xl text-white font-black shadow-lg transition-transform group-hover:scale-105 shrink-0"
                 >
                   <MessageSquare className="h-5 w-5" />
                 </div>
               )}
-              <span className="text-xl font-extrabold tracking-tight text-[#18181B]">
+              <span className="text-xl font-extrabold tracking-tight text-foreground dark:text-zinc-100">
                 {platformName}
               </span>
             </Link>
+
+            {/* Quick Actions Header: Language & Theme Toggle */}
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher className="bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-800 text-foreground dark:text-zinc-200 rounded-xl px-2.5 py-1.5 shadow-sm transition-colors" />
+              <ModeToggle className="bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-800 text-foreground dark:text-zinc-200 rounded-xl h-9 w-9 p-0 shadow-sm transition-colors" />
+            </div>
           </div>
 
           {/* Form Content Body */}
           <div className="space-y-6">{children}</div>
 
           {/* Clean Subdued Footer */}
-          <div className="text-xs text-[#71717A] flex items-center gap-2 pt-2 border-t border-[#E4E4E7]/60">
+          <div className="text-xs text-muted-foreground dark:text-zinc-400 flex items-center gap-2 pt-2 border-t border-border dark:border-zinc-800">
             <ShieldCheck className="h-4 w-4 text-[#7C3AED]" />
-            <span>نظام توثيق وحماية مشفر 100% © {new Date().getFullYear()} {platformName}</span>
+            <span>{isAr ? `نظام توثيق وحماية مشفر 100% © ${new Date().getFullYear()} ${platformName}` : `100% Encrypted & Secure Auth System © ${new Date().getFullYear()} ${platformName}`}</span>
           </div>
         </div>
 
@@ -116,7 +144,7 @@ export function AuthShell({
           {/* Center SaaS Vector Illustration Card */}
           <div className="relative z-10 my-auto flex flex-col items-center justify-center text-center space-y-6">
             <div className="relative max-w-lg w-full">
-              <div className="relative rounded-3xl bg-white/95 border border-white/40 shadow-2xl p-6 backdrop-blur-xl transition-transform duration-500 hover:scale-[1.01]">
+              <div className="relative rounded-3xl bg-white/95 dark:bg-zinc-900/90 border border-white/40 dark:border-white/20 shadow-2xl p-6 backdrop-blur-xl transition-transform duration-500 hover:scale-[1.01]">
                 <img
                   src={illustrationImage}
                   alt="SaaS Brand Illustration"

@@ -27,6 +27,24 @@ export default function SignupPage() {
   );
 }
 
+function getCachedSiteSettings() {
+  if (typeof window === "undefined") {
+    return { platform_name: "MK Whats", primary_color: "#10b981", google_auth_enabled: true };
+  }
+  try {
+    const cached = localStorage.getItem("mk_site_settings");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      return {
+        platform_name: parsed.platform_name || "MK Whats",
+        primary_color: parsed.primary_color || "#10b981",
+        google_auth_enabled: parsed.google_auth_enabled !== undefined ? !!parsed.google_auth_enabled : true,
+      };
+    }
+  } catch {}
+  return { platform_name: "MK Whats", primary_color: "#10b981", google_auth_enabled: true };
+}
+
 function SignupPageInner() {
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get("invite");
@@ -40,9 +58,10 @@ function SignupPageInner() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const [platformName, setPlatformName] = useState<string>("MK Whats");
-  const [primaryColor, setPrimaryColor] = useState<string>("#7C3AED");
-  const [googleAuthEnabled, setGoogleAuthEnabled] = useState(false);
+  const cachedSettings = getCachedSiteSettings();
+  const [platformName, setPlatformName] = useState<string>(cachedSettings.platform_name);
+  const [primaryColor, setPrimaryColor] = useState<string>(cachedSettings.primary_color);
+  const [googleAuthEnabled, setGoogleAuthEnabled] = useState<boolean>(cachedSettings.google_auth_enabled);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const supabase = createClient();
@@ -54,7 +73,8 @@ function SignupPageInner() {
         if (data.settings) {
           if (data.settings.platform_name) setPlatformName(data.settings.platform_name);
           if (data.settings.primary_color) setPrimaryColor(data.settings.primary_color);
-          if (data.settings.google_auth_enabled) setGoogleAuthEnabled(true);
+          if (data.settings.google_auth_enabled !== undefined) setGoogleAuthEnabled(!!data.settings.google_auth_enabled);
+          try { localStorage.setItem('mk_site_settings', JSON.stringify(data.settings)); } catch {}
         }
       })
       .catch(() => {});
@@ -169,17 +189,17 @@ function SignupPageInner() {
     >
       {/* Titles */}
       <div className="space-y-2">
-        <h1 className="text-3xl sm:text-4xl font-black text-[#18181B] tracking-tight">
+        <h1 className="text-3xl sm:text-4xl font-black text-foreground dark:text-zinc-100 tracking-tight">
           Create your account 🚀
         </h1>
-        <p className="text-sm text-[#71717A] font-normal leading-relaxed">
+        <p className="text-sm text-muted-foreground dark:text-zinc-400 font-normal leading-relaxed">
           Start using {platformName} today | أنشئ حسابك وابدأ الاستخدام فوراً
         </p>
       </div>
 
       {/* Error Message Banner */}
       {error && (
-        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs text-rose-600 font-bold leading-relaxed">
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs text-rose-600 dark:text-rose-400 font-bold leading-relaxed">
           ⚠️ {error}
         </div>
       )}
@@ -188,11 +208,11 @@ function SignupPageInner() {
       <form onSubmit={handleSignup} className="space-y-4">
         {/* Full Name Field */}
         <div className="space-y-1">
-          <label htmlFor="fullName" className="text-xs font-bold text-[#18181B]">
+          <label htmlFor="fullName" className="text-xs font-bold text-foreground dark:text-zinc-200">
             Full Name / الاسم الكامل
           </label>
           <div className="relative">
-            <User className="absolute start-3.5 top-3.5 h-4 w-4 text-[#71717A]" />
+            <User className="absolute start-3.5 top-3.5 h-4 w-4 text-muted-foreground dark:text-zinc-400" />
             <Input
               id="fullName"
               type="text"
@@ -200,18 +220,18 @@ function SignupPageInner() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              className="h-11 ps-10 bg-[#FFFFFF] border-[#E4E4E7] focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs text-[#18181B] placeholder:text-[#71717A]/60"
+              className="h-11 ps-10 bg-white dark:bg-zinc-900/90 border-slate-200 dark:border-zinc-800 text-foreground dark:text-zinc-100 focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs placeholder:text-muted-foreground/60 transition-colors"
             />
           </div>
         </div>
 
         {/* Email Field */}
         <div className="space-y-1">
-          <label htmlFor="email" className="text-xs font-bold text-[#18181B]">
+          <label htmlFor="email" className="text-xs font-bold text-foreground dark:text-zinc-200">
             Email Address / البريد الإلكتروني
           </label>
           <div className="relative">
-            <Mail className="absolute start-3.5 top-3.5 h-4 w-4 text-[#71717A]" />
+            <Mail className="absolute start-3.5 top-3.5 h-4 w-4 text-muted-foreground dark:text-zinc-400" />
             <Input
               id="email"
               type="email"
@@ -219,18 +239,18 @@ function SignupPageInner() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-11 ps-10 bg-[#FFFFFF] border-[#E4E4E7] focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono text-[#18181B] placeholder:text-[#71717A]/60"
+              className="h-11 ps-10 bg-white dark:bg-zinc-900/90 border-slate-200 dark:border-zinc-800 text-foreground dark:text-zinc-100 focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono placeholder:text-muted-foreground/60 transition-colors"
             />
           </div>
         </div>
 
         {/* Password Field */}
         <div className="space-y-1">
-          <label htmlFor="password" className="text-xs font-bold text-[#18181B]">
+          <label htmlFor="password" className="text-xs font-bold text-foreground dark:text-zinc-200">
             Password / كلمة المرور
           </label>
           <div className="relative">
-            <Lock className="absolute start-3.5 top-3.5 h-4 w-4 text-[#71717A]" />
+            <Lock className="absolute start-3.5 top-3.5 h-4 w-4 text-muted-foreground dark:text-zinc-400" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -238,12 +258,12 @@ function SignupPageInner() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-11 ps-10 pe-10 bg-[#FFFFFF] border-[#E4E4E7] focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono text-[#18181B] placeholder:text-[#71717A]/60"
+              className="h-11 ps-10 pe-10 bg-white dark:bg-zinc-900/90 border-slate-200 dark:border-zinc-800 text-foreground dark:text-zinc-100 focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono placeholder:text-muted-foreground/60 transition-colors"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute end-3.5 top-3.5 text-[#71717A] hover:text-[#18181B]"
+              className="absolute end-3.5 top-3.5 text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 transition-colors"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -255,11 +275,11 @@ function SignupPageInner() {
 
         {/* Confirm Password Field */}
         <div className="space-y-1">
-          <label htmlFor="confirmPassword" className="text-xs font-bold text-[#18181B]">
+          <label htmlFor="confirmPassword" className="text-xs font-bold text-foreground dark:text-zinc-200">
             Confirm Password / تأكيد كلمة المرور
           </label>
           <div className="relative">
-            <Lock className="absolute start-3.5 top-3.5 h-4 w-4 text-[#71717A]" />
+            <Lock className="absolute start-3.5 top-3.5 h-4 w-4 text-muted-foreground dark:text-zinc-400" />
             <Input
               id="confirmPassword"
               type={showPassword ? "text" : "password"}
@@ -267,7 +287,7 @@ function SignupPageInner() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="h-11 ps-10 pe-10 bg-[#FFFFFF] border-[#E4E4E7] focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono text-[#18181B] placeholder:text-[#71717A]/60"
+              className="h-11 ps-10 pe-10 bg-white dark:bg-zinc-900/90 border-slate-200 dark:border-zinc-800 text-foreground dark:text-zinc-100 focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono placeholder:text-muted-foreground/60 transition-colors"
             />
           </div>
         </div>
@@ -295,21 +315,20 @@ function SignupPageInner() {
         {googleAuthEnabled && (
           <div className="space-y-3 pt-2">
             <div className="relative flex items-center justify-center">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#E4E4E7]" /></div>
-              <span className="relative bg-white px-3 text-[11px] font-bold text-[#71717A]">أو / OR</span>
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-zinc-800" /></div>
+              <span className="relative bg-background dark:bg-zinc-950 px-3 text-[11px] font-bold text-muted-foreground dark:text-zinc-400">أو / OR</span>
             </div>
 
-            <Button
+            <button
               type="button"
-              variant="outline"
               disabled={googleLoading || loading}
               onClick={handleGoogleAuth}
-              className="w-full h-12 rounded-2xl font-bold text-xs text-[#18181B] border-[#E4E4E7] bg-white hover:bg-slate-50 shadow-sm transition-all flex items-center justify-center gap-3"
+              className="w-full h-12 rounded-2xl font-bold text-xs text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white shadow-sm hover:shadow transition-all flex items-center justify-center gap-3 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {googleLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-[#71717A]" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               ) : (
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
@@ -317,12 +336,12 @@ function SignupPageInner() {
                 </svg>
               )}
               <span>إنشاء حساب بواسطة Google / Sign up with Google 🚀</span>
-            </Button>
+            </button>
           </div>
         )}
 
         {/* Switch Link */}
-        <div className="text-center text-xs font-bold text-[#71717A] pt-1">
+        <div className="text-center text-xs font-bold text-muted-foreground dark:text-zinc-400 pt-1">
           Already have an account?{" "}
           <Link
             href={
@@ -330,7 +349,7 @@ function SignupPageInner() {
                 ? `/login?invite=${encodeURIComponent(inviteToken)}`
                 : "/login"
             }
-            className="text-[#7C3AED] hover:underline font-black ms-1"
+            className="text-[#7C3AED] dark:text-purple-400 hover:underline font-black ms-1"
           >
             Sign In / تسجيل الدخول 🔑
           </Link>

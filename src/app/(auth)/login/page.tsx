@@ -18,6 +18,23 @@ export default function LoginPage() {
   );
 }
 
+function getCachedSiteSettings() {
+  if (typeof window === "undefined") {
+    return { primary_color: "#10b981", google_auth_enabled: true };
+  }
+  try {
+    const cached = localStorage.getItem("mk_site_settings");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      return {
+        primary_color: parsed.primary_color || "#10b981",
+        google_auth_enabled: parsed.google_auth_enabled !== undefined ? !!parsed.google_auth_enabled : true,
+      };
+    }
+  } catch {}
+  return { primary_color: "#10b981", google_auth_enabled: true };
+}
+
 function LoginPageInner() {
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get("invite");
@@ -30,8 +47,10 @@ function LoginPageInner() {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [primaryColor, setPrimaryColor] = useState<string>("#7C3AED");
-  const [googleAuthEnabled, setGoogleAuthEnabled] = useState(false);
+
+  const cachedSettings = getCachedSiteSettings();
+  const [primaryColor, setPrimaryColor] = useState<string>(cachedSettings.primary_color);
+  const [googleAuthEnabled, setGoogleAuthEnabled] = useState<boolean>(cachedSettings.google_auth_enabled);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const supabase = createClient();
@@ -42,7 +61,8 @@ function LoginPageInner() {
       .then((data) => {
         if (data.settings) {
           if (data.settings.primary_color) setPrimaryColor(data.settings.primary_color);
-          if (data.settings.google_auth_enabled) setGoogleAuthEnabled(true);
+          if (data.settings.google_auth_enabled !== undefined) setGoogleAuthEnabled(!!data.settings.google_auth_enabled);
+          try { localStorage.setItem('mk_site_settings', JSON.stringify(data.settings)); } catch {}
         }
       })
       .catch(() => {});
@@ -106,10 +126,10 @@ function LoginPageInner() {
     >
       {/* Titles */}
       <div className="space-y-2">
-        <h1 className="text-3xl sm:text-4xl font-black text-[#18181B] tracking-tight">
+        <h1 className="text-3xl sm:text-4xl font-black text-foreground dark:text-zinc-100 tracking-tight">
           {inviteToken ? "الانضمام لفريقك 👋" : "Welcome Back 👋"}
         </h1>
-        <p className="text-sm text-[#71717A] font-normal leading-relaxed">
+        <p className="text-sm text-muted-foreground dark:text-zinc-400 font-normal leading-relaxed">
           {inviteToken
             ? "سجّل دخولك لتفعيل دعوتك والانضمام المباشر لبيئة العمل"
             : "Sign in to your account to continue | سجّل دخولك للوصول إلى حسابك"}
@@ -118,7 +138,7 @@ function LoginPageInner() {
 
       {/* Error Message Banner */}
       {displayError && (
-        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs text-rose-600 font-bold leading-relaxed">
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs text-rose-600 dark:text-rose-400 font-bold leading-relaxed">
           ⚠️ {displayError}
         </div>
       )}
@@ -127,11 +147,11 @@ function LoginPageInner() {
       <form onSubmit={handleLogin} className="space-y-5">
         {/* Email Field */}
         <div className="space-y-1.5">
-          <label htmlFor="email" className="text-xs font-bold text-[#18181B]">
+          <label htmlFor="email" className="text-xs font-bold text-foreground dark:text-zinc-200">
             Email Address / البريد الإلكتروني
           </label>
           <div className="relative">
-            <Mail className="absolute start-3.5 top-3.5 h-4 w-4 text-[#71717A]" />
+            <Mail className="absolute start-3.5 top-3.5 h-4 w-4 text-muted-foreground dark:text-zinc-400" />
             <Input
               id="email"
               type="email"
@@ -139,7 +159,7 @@ function LoginPageInner() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-12 ps-10 bg-[#FFFFFF] border-[#E4E4E7] focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono text-[#18181B] placeholder:text-[#71717A]/60"
+              className="h-12 ps-10 bg-white dark:bg-zinc-900/90 border-slate-200 dark:border-zinc-800 text-foreground dark:text-zinc-100 focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono placeholder:text-muted-foreground/60 transition-colors"
             />
           </div>
         </div>
@@ -147,18 +167,18 @@ function LoginPageInner() {
         {/* Password Field */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-xs font-bold text-[#18181B]">
+            <label htmlFor="password" className="text-xs font-bold text-foreground dark:text-zinc-200">
               Password / كلمة المرور
             </label>
             <Link
               href="/forgot-password"
-              className="text-xs font-bold text-[#7C3AED] hover:underline"
+              className="text-xs font-bold text-[#7C3AED] dark:text-purple-400 hover:underline"
             >
               Forgot Password?
             </Link>
           </div>
           <div className="relative">
-            <Lock className="absolute start-3.5 top-3.5 h-4 w-4 text-[#71717A]" />
+            <Lock className="absolute start-3.5 top-3.5 h-4 w-4 text-muted-foreground dark:text-zinc-400" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -166,12 +186,12 @@ function LoginPageInner() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="h-12 ps-10 pe-10 bg-[#FFFFFF] border-[#E4E4E7] focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono text-[#18181B] placeholder:text-[#71717A]/60"
+              className="h-12 ps-10 pe-10 bg-white dark:bg-zinc-900/90 border-slate-200 dark:border-zinc-800 text-foreground dark:text-zinc-100 focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono placeholder:text-muted-foreground/60 transition-colors"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute end-3.5 top-3.5 text-[#71717A] hover:text-[#18181B]"
+              className="absolute end-3.5 top-3.5 text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 transition-colors"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -180,12 +200,12 @@ function LoginPageInner() {
 
         {/* Remember Me Checkbox */}
         <div className="flex items-center justify-between text-xs font-medium pt-1">
-          <label className="flex items-center gap-2 cursor-pointer text-[#18181B]">
+          <label className="flex items-center gap-2 cursor-pointer text-foreground dark:text-zinc-200">
             <input
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded border-[#E4E4E7] text-[#7C3AED] focus:ring-[#7C3AED]"
+              className="h-4 w-4 rounded border-slate-300 dark:border-zinc-700 text-[#7C3AED] focus:ring-[#7C3AED] dark:bg-zinc-900"
             />
             Remember me / تذكرني على هذا الجهاز
           </label>
@@ -214,21 +234,20 @@ function LoginPageInner() {
         {googleAuthEnabled && (
           <div className="space-y-3 pt-2">
             <div className="relative flex items-center justify-center">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#E4E4E7]" /></div>
-              <span className="relative bg-white px-3 text-[11px] font-bold text-[#71717A]">أو / OR</span>
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-zinc-800" /></div>
+              <span className="relative bg-background dark:bg-zinc-950 px-3 text-[11px] font-bold text-muted-foreground dark:text-zinc-400">أو / OR</span>
             </div>
 
-            <Button
+            <button
               type="button"
-              variant="outline"
               disabled={googleLoading || loading}
               onClick={handleGoogleAuth}
-              className="w-full h-12 rounded-2xl font-bold text-xs text-[#18181B] border-[#E4E4E7] bg-white hover:bg-slate-50 shadow-sm transition-all flex items-center justify-center gap-3"
+              className="w-full h-12 rounded-2xl font-bold text-xs text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white shadow-sm hover:shadow transition-all flex items-center justify-center gap-3 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {googleLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-[#71717A]" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               ) : (
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
@@ -236,15 +255,15 @@ function LoginPageInner() {
                 </svg>
               )}
               <span>المتابعة بواسطة Google / Continue with Google 🚀</span>
-            </Button>
+            </button>
           </div>
         )}
 
         {/* Switch Link */}
         {!inviteToken && (
-          <div className="text-center text-xs font-bold text-[#71717A] pt-2">
+          <div className="text-center text-xs font-bold text-muted-foreground dark:text-zinc-400 pt-2">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-[#7C3AED] hover:underline font-black ms-1">
+            <Link href="/signup" className="text-[#7C3AED] dark:text-purple-400 hover:underline font-black ms-1">
               Create Account / أنشئ حساباً مجانياً 🚀
             </Link>
           </div>

@@ -1,6 +1,55 @@
-# حالة المشروع - آخر تحديث: [17/8/2026]
+# حالة المشروع - آخر تحديث: [18/8/2026]
 
 ## آخر شي خلص وشغال 100%
+
+- ✅ **بوابة الدفع المحلي والأوفلاين وإعلانات التفعيل التلقائية (Local Offline Payment Gateway & Automated Bilingual Presets System)**:
+  - **قواعد البيانات والبنية التحتيّة (`supabase/migrations/074` & `075`)**:
+    - مايقريشن `074_offline_payment_methods_and_submissions.sql`: إنشاء جدول `offline_payment_methods` لطرق الدفع البنكية والمحافظ الرقمية (زين كاش، STC Pay، بنك الراجحي، فودافون كاش) وجدول `offline_payment_submissions` لاستلام إثباتات ووصلات العملاء المحولة مع حماية RLS و standard `account_id` CASCADE.
+    - مايقريشن `075_payment_notifications.sql`: فك قيود الجدول `notifications` لدعم أنواع الإشعارات المستحدثة `payment_approved` و `payment_rejected`.
+  - **بوابة اختيار وسائل الدفع الموحدة وزر "ادفع الآن" بواجهة المستخدم (`PlanUsagePanel`)**:
+    - توحيد الأزرار في كروت الباقات بـ **زر موحد وأنيق واحد فقط**: `🚀 ادفع الآن وارتقِ بالخطة / Pay Now & Upgrade`.
+    - **نافذة تفاعلية منبثقة للعميل (`Select Payment Method Modal`)** تظهر عند كبس الزر وتتيح الاختيار بين:
+      - 🏦 **الدفع المحلي والأوفلاين (Local & Offline Payment)**
+      - 💳 **بطاقة بنكية (Visa / MasterCard via Stripe)**
+      - 🪙 **عملات رقمية كريبتو (Crypto USDT / BTC via Plisio)**
+    - **نافذة إرفاق الوصل والحسابات البنكية (`Offline Payment Submission Modal`)**:
+      - عرض المحافظ والبنوك المتاحة مع **زر نسخ رقم الحساب/IBAN بنقرة واحدة** ومؤشر التميز.
+      - إرفاق صورة الوصل عبر مسار رفع المرفقات `/api/upload-receipt` وإدخال رقم المرجع/الحوالة وملاحظات العميل.
+      - إظهار بنر حالة معلق تلقائي (`جاري مراجعة إثبات الدفع من قبل الإدارة ⏳`).
+  - **لوحة إدارة وطرق الدفع للأدمن ومراجعة الوصلات (`/admin/offline-payments`)**:
+    - إضافة وتعديل وحذف وتفعيل/تعطيل طرق الدفع المحلية مع رفع الشعار والتعليمات.
+    - مراجعة إثباتات الدفع الواردة مع مكبر معاينة الوصل (Receipt Preview Image Modal).
+    - عند النقر على **"موافقة وترقية"**: تفعيل الباقات فورياً في جدول `subscriptions` وتحديث تواريخ الفوترة وإكمال طلبات الترقية المعلقة.
+  - **نماذج الرسائل الجاهزة وأزرار الخيارات السريعة للأدمن (One-Click Presets)**:
+    - إدراج تلقائي لرسائل جاهزة باللغتين العربية والإنجليزية تحتوي اسم الباقة والتعليلات.
+    - إضافة **أزرار نماذج جاهزة بنقرة واحدة (One-Click Presets)** داخل نافذة الأدمن:
+      - للقبول: 🟢 `تفعيل قياسي` | ⚡ `تفعيل مع الشكر`
+      - للرفض: 🔴 `صورة غير واضحة` | 🟡 `رقم مرجع خاطئ` | 🔵 `المبلغ غير مكتمل`
+    - إمكانية تعديل النصوص الحرة بالعربية والإنجليزية قبل الاعتماد.
+  - **منظومة الإشعارات التلقائية الفورية ثنائية اللغة (`Dual Notifications & Platform Announcements`)**:
+    - إرسال الإشعار والتذكرة فورياً إلى **قسم Platform Announcements 📢 وتذاكر الدعم الفني 🎫** بجدول `support_tickets` بـ `is_announcement = true` و `category = 'announcement'` لتظهر بالتبويب المخصص في `Settings -> Contact Support`.
+    - إرسال الإشعار أيضاً إلى **جرس التنبيهات العلوي 🔔** وشارة الإشعارات الحية بجدول `notifications`.
+  - **إصلاح خلل 401 Unauthorized وتحديث الـ Proxy Middleware (`src/proxy.ts`)**:
+    - شمول مسارات الـ API بـ `if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin'))`.
+    - حماية كوكيز الأدمن وتجديد التوكنات بـ `withRefreshedCookies` وإرجاع استجابات JSON صحيحة.
+  - **ميزة الحذف النهائي للحسابات من لوحة الأدمن (`Permanent Account Deletion`)**:
+    - زر وحوار تأكيد أحمر بـ `/admin/accounts` ومسار `/api/admin/accounts/delete`.
+    - مسح كاسكادي شامل لبيانات الشركة من الداتابيز وحذف المستخدم نهائياً من بنية Supabase Auth `deleteUser()`.
+
+- ✅ **معالجة وتطوير توثيق Google OAuth والتصميم المزدوج (Google OAuth Architecture & Bilingual Theme-Aware Auth Shell)**:
+  - **إصلاح توجيه التوثيق للبيئات المنشورة وعبر السيرفرات العكسية (Nginx & Production Reverse Proxy Redirection Fix)**:
+    - تحديث مسار الـ Callback بـ [`src/app/auth/callback/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/auth/callback/route.ts) لإرجاع هيدر توجيه نسبي (`Location: /dashboard`)، مما يضمن التوجيه المباشر بنسبة 100% على نفس نطاق الزائر (`https://mkwacrm.mstoviral.online`) دون التوجه لـ `localhost:80` أو التوقف بصفحة الدخول.
+    - إضافة دالة المساعدة `createRedirectResponse` بـ [`src/proxy.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/proxy.ts) لاستخراج النطاق الحقيقي والبروتوكول تلقائياً من الترويسات العكسية (`x-forwarded-host` / `host`) وإلغاء أي تحويل خاطئ للمنافذ الداخلية.
+    - المعالجة الفورية لكوكيز التوكنات القديمة المنتهية وحذفها آلياً لتفادي تكرار تنبيه `refresh_token_not_found` بالتيرمينال.
+  - **إضافة أزرار اللغة والنمط (Light / Dark Mode & Language Switcher in Auth Shell)**:
+    - إضافة زر تبديل اللغة (🇸🇦 العربية / 🇬🇧 English) وزر التبديل بين الوضع الليلي والنهاري (☀️/🌙) في الهيدر العلوي لـ [`AuthShell`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/auth/auth-shell.tsx) ليعملا بسلاسة في شاشات تسجيل الدخول وتنسيق الحسابات.
+  - **إعادة تصميم وترقية زر Google والواجهات (Ultra-Premium Google OAuth Button & Dark Mode UX)**:
+    - تطوير وتحديث تصميم زر التوثيق بـ Google بصفحتي [`login/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/(auth)/login/page.tsx) و [`signup/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/(auth)/signup/page.tsx) ليكون واضحاً وربط التباين بين الوضعين النهائي والليلي دون اختفاء النص عند تحريك الماوس (Hover Contrast Protection).
+    - توحيد خلفيات وحقول الإدخال وإضافة قواعد CSS كاملة لمعالجة الإكمال التلقائي لكروم بـ [`globals.css`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/globals.css) ليكون النص داكن الألوان وسلس القراءة بـ `#09090b` بالوضع النهاري (Light Mode) وأبيض ناصع بـ `#f4f4f5` بالوضع الليلي (Dark Mode).
+    - إلغاء ومحو وميض الخلفية السوداء (Flash of Dark Mode) عند إعادة تحديث الصفحة (Refresh) بتحويل السكريبت في [`layout.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/layout.tsx) للتنفيذ المباشر التزامني (Synchronous Inline Boot Script) قبل رندر الصفحة.
+    - توحيد لون الهوية الأساسي `primaryColor` وتعيين قيمته الافتراضية `#10b981` الموحدة ومزامنة الكاش المحلي `localStorage` بين [`AuthShell`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/auth/auth-shell.tsx) وصفحات التوثيق لمنع تباين ألوان زر تسجيل الدخول مع لون أيقونة الشعار.
+    - إلغاء اختفاء واختفاء التأخير لزر Google وأيقونة الثيم واسم المنصة عند إعادة تحديث الصفحة (Zero-Delay Instant Rendering) عبر ضبط التهيئة المبدئية لـ `google_auth_enabled` و `platform_name` ورفع تأخير الهيدريشن بـ [`mode-toggle.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/layout/mode-toggle.tsx) ليعرض العناصر فورياً 100% من أول كادر HTML.
+    - دعم الشعار المرفوع من الأدمن `logo_url` والعرض الفوري له فور تحميل الصفحة بدون تأخير.
 
 - ✅ **إعادة هيكلة وتصميم صفحة الهبوط بالدقة التامة (Custom UI/UX Landing Page)**:
   - **قسم البطل (Hero Section)**: عنوان رئيسي *"نمِّ عملك مع واتساب والذكاء الاصطناعي"* مع زر CTA زمرّدي *"ابدأ مجاناً"* وزر *"شاهد العرض التوضيحي"*.

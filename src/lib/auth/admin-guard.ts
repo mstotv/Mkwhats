@@ -13,7 +13,9 @@ export async function checkIsSuperAdmin(): Promise<boolean> {
 
     if (!user) return false;
 
-    const { data: adminRow } = await supabase
+    const { createServiceClient } = await import('@/lib/supabase/service');
+    const serviceClient = createServiceClient();
+    const { data: adminRow } = await serviceClient
       .from('platform_admins')
       .select('user_id')
       .eq('user_id', user.id)
