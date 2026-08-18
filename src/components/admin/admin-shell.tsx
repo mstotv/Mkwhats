@@ -1,151 +1,75 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import {
-  ShieldAlert,
-  LayoutDashboard,
-  Building2,
-  CreditCard,
-  MessageSquare,
-  Bot,
-  ShieldCheck,
-  Settings,
-  ArrowRight,
-  LogOut,
-  Sparkles,
-} from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { createClient } from '@/lib/supabase/client';
-import { toast } from 'sonner';
+import { AdminNav } from '@/app/admin/_components/admin-nav';
+import { usePathname } from 'next/navigation';
+import { useLocale } from 'next-intl';
+import { ModeToggle } from '@/components/layout/mode-toggle';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { ShieldCheck } from 'lucide-react';
 
 interface AdminShellProps {
   children: React.ReactNode;
   userEmail?: string;
 }
 
-const NAV_ITEMS = [
-  {
-    href: '/admin',
-    label: 'لوحة القيادة',
-    labelEn: 'Dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    href: '/admin/accounts',
-    label: 'الشركات والحسابات',
-    labelEn: 'Tenants & Accounts',
-    icon: Building2,
-  },
-  {
-    href: '/admin/plans',
-    label: 'الباقات والاشتراكات',
-    labelEn: 'Plans & Billing',
-    icon: CreditCard,
-  },
-  {
-    href: '/admin/settings',
-    label: 'إعدادات النظام العامة',
-    labelEn: 'System Settings',
-    icon: Settings,
-  },
-];
+const pageTitles: Record<string, { ar: string; en: string }> = {
+  '/admin': { ar: 'لوحة المراقبة الشاملة', en: 'Super Admin Overview' },
+  '/admin/dashboard': { ar: 'لوحة المراقبة الشاملة', en: 'Super Admin Overview' },
+  '/admin/accounts': { ar: 'إدارة الشركات والحسابات', en: 'Tenants & Accounts Directory' },
+  '/admin/plans': { ar: 'إدارة الباقات والاشتراكات', en: 'SaaS Pricing & Plans Manager' },
+  '/admin/tickets': { ar: 'مركز تذاكر الدعم والبرودكاست', en: 'Support & Broadcasts Manager' },
+  '/admin/pages': { ar: 'إدارة الصفحات والمحتوى', en: 'Pages & Content Directory' },
+  '/admin/landing-settings': { ar: 'إعدادات صفحة الهبوط الشاملة', en: 'Landing Page CMS & Theme Settings' },
+  '/admin/site-settings': { ar: 'إعدادات المنصة وبوابات الدفع', en: 'Site & Payment Settings' },
+};
 
 export function AdminShell({ children, userEmail }: AdminShellProps) {
   const pathname = usePathname();
-  const router = useRouter();
+  const locale = useLocale();
+  const isAr = locale === 'ar';
 
-  async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    toast.success('تم تسجيل الخروج بنجاح');
-    router.push('/admin/login');
-  }
+  const currentPageTitle = pageTitles[pathname]?.[isAr ? 'ar' : 'en'] || (isAr ? 'لوحة التحكم الأدمن' : 'Super Admin Center');
 
   return (
-    <div className="min-h-screen bg-background font-sans text-foreground flex flex-col">
-      {/* Top Super Admin Banner Header */}
-      <header className="sticky top-0 z-40 border-b border-border/80 bg-card/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
-            <Link href="/admin" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-slate-950 font-black shadow-md shadow-amber-500/20">
-                <ShieldAlert className="h-5 w-5 text-slate-950" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">
-                  مركز الإدارة الكلية
-                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-black text-amber-500">
-                    <Sparkles className="h-3 w-3" /> SUPER ADMIN
-                  </span>
-                </span>
-              </div>
-            </Link>
+    <div className="min-h-screen bg-background font-sans text-foreground flex flex-col md:flex-row antialiased transition-colors">
+      {/* 1. Left/Right Sidebar Navigation */}
+      <AdminNav />
+
+      {/* 2. Main Workspace Viewport */}
+      <div className="flex-1 flex flex-col min-w-0 bg-background">
+        {/* Top Workspace Header Bar */}
+        <header className="sticky top-0 z-20 border-b border-border bg-card/80 backdrop-blur-md px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4 transition-colors">
+          <div className="flex items-center gap-3 min-w-0">
+            <h1 className="text-base font-extrabold text-foreground truncate flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0" />
+              {currentPageTitle}
+            </h1>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/dashboard')}
-              className="border-border text-muted-foreground hover:text-foreground"
-            >
-              <ArrowRight className="h-4 w-4 ms-1" />
-              العودة للمنصة الرئيسية
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
-            >
-              <LogOut className="h-4 w-4 ms-1" />
-              خروج
-            </Button>
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <ModeToggle />
+            <LanguageSwitcher className="border border-border rounded-lg bg-background" />
+            {userEmail && (
+              <span className="hidden lg:inline-flex text-[11px] font-mono font-bold text-muted-foreground bg-muted border border-border px-2.5 py-1 rounded-lg">
+                {userEmail}
+              </span>
+            )}
           </div>
-        </div>
+        </header>
 
-        {/* Secondary Subnav Bar */}
-        <div className="border-t border-border/50 bg-muted/40">
-          <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-4 py-2 sm:px-6 scrollbar-none">
-            {NAV_ITEMS.map((item) => {
-              const isActive =
-                item.href === '/admin'
-                  ? pathname === '/admin'
-                  : pathname.startsWith(item.href);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+        {/* Page Main Content Area */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1440px] w-full mx-auto space-y-8">
+          {children}
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-border bg-card py-4 text-center text-xs text-muted-foreground transition-colors">
+          <div className="max-w-[1440px] mx-auto px-4 flex flex-wrap justify-between items-center gap-2">
+            <span>MK Whats Super Admin SaaS Engine &copy; 2026 — جميع الحقوق محفوظة لمدير المنصة</span>
+            <span className="font-mono text-[11px] text-muted-foreground">v1.0.0 (Production)</span>
           </div>
-        </div>
-      </header>
-
-      {/* Main Content Viewport */}
-      <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
-        {children}
-      </main>
-
-      {/* Admin Footer */}
-      <footer className="border-t border-border/60 bg-card py-4 text-center text-xs text-muted-foreground">
-        <div className="mx-auto max-w-7xl px-4 flex flex-wrap justify-between items-center gap-2">
-          <span>wacrm SaaS Engine &copy; 2026 — جميع الحقوق محفوظة لمدير النظام</span>
-          {userEmail && <span className="font-mono text-[11px]">المستخدم الحالي: {userEmail}</span>}
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }

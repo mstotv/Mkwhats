@@ -24,6 +24,8 @@ import {
   Zap,
 } from 'lucide-react'
 
+import { useLocale } from 'next-intl'
+
 export interface PlanItem {
   id: string
   name: string
@@ -57,6 +59,8 @@ export function UpgradePlanModal({
   availablePlans,
   onSuccess,
 }: UpgradePlanModalProps) {
+  const locale = useLocale()
+  const isAr = locale === 'ar'
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
   const [submittingPlanId, setSubmittingPlanId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -84,7 +88,7 @@ export function UpgradePlanModal({
       const data = await res.json()
 
       if (!res.ok || data.error) {
-        setError(data.error || 'حدث خطأ أثناء إرسال طلب الترقية')
+        setError(data.error || (isAr ? 'حدث خطأ أثناء إرسال طلب الترقية' : 'Error sending upgrade request'))
         return
       }
 
@@ -103,7 +107,7 @@ export function UpgradePlanModal({
 
       if (onSuccess) onSuccess()
     } catch (err: any) {
-      setError(err.message || 'فشل الاتصال بالخادم')
+      setError(err.message || (isAr ? 'فشل الاتصال بالخادم' : 'Connection failed'))
     } finally {
       setSubmittingPlanId(null)
     }
@@ -111,19 +115,21 @@ export function UpgradePlanModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-6xl w-full max-w-[95vw] p-6 sm:p-8 dir-rtl max-h-[90vh] overflow-y-auto font-sans shadow-2xl border-border bg-card">
-        <DialogHeader className="text-right space-y-2 pb-4 border-b">
+      <DialogContent className="sm:max-w-6xl w-full max-w-[95vw] p-6 sm:p-8 max-h-[90vh] overflow-y-auto font-sans shadow-2xl border-border bg-card">
+        <DialogHeader className="text-start space-y-2 pb-4 border-b">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <DialogTitle className="text-2xl sm:text-3xl font-black flex items-center gap-2 text-foreground">
               <Sparkles className="h-6 w-6 text-indigo-500 shrink-0" />
-              اختر الخطة المناسبة لنشاطك التجاري
+              {isAr ? 'اختر الخطة المناسبة لنشاطك التجاري' : 'Choose the Ideal Plan for Your Business'}
             </DialogTitle>
             <Badge variant="outline" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20 text-xs px-3 py-1 font-semibold">
-              ترقية مباشرة ومضمونة ⚡
+              {isAr ? 'ترقية مباشرة ومضمونة ⚡' : 'Instant Guaranteed Upgrade ⚡'}
             </Badge>
           </div>
           <DialogDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-            ترقية خطتك تمنحك حدوداً تشغيلية أعلى، ورصيداً شهرياً مضاعفاً، وتفعيلاً فورياً لكافة ميزات المنصة.
+            {isAr
+              ? 'ترقية خطتك تمنحك حدوداً تشغيلية أعلى، ورصيداً شهرياً مضاعفاً، وتفعيلاً فورياً لكافة ميزات المنصة.'
+              : 'Upgrading your plan grants higher operational limits, expanded monthly quotas, and instant access to all platform features.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -133,11 +139,13 @@ export function UpgradePlanModal({
             <div className="flex items-start gap-3">
               <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <h4 className="font-bold text-sm">تم تسجيل طلب الترقية إلى خطة {successInfo.planName} بنجاح!</h4>
+                <h4 className="font-bold text-sm">
+                  {isAr ? `تم تسجيل طلب الترقية إلى خطة ${successInfo.planName} بنجاح!` : `Upgrade request to ${successInfo.planName} registered successfully!`}
+                </h4>
                 <p className="text-xs opacity-90 leading-relaxed">
                   {successInfo.paymentMethod === 'plisio'
-                    ? 'تم إنشاء فاتورة الدفع الرقمي بالكريبتو عبر Plisio. ينبغي أن تفتح صفحة الدفع تلقائياً، أو اضغط الزر أدناه لإكمال العملية.'
-                    : 'تم حفظ طلبك بالنظام كطلب معلق (Pending). يرجى فتح محادثة الواتساب المباشرة لتأكيد التفعيل مع إدارة المنصة.'}
+                    ? (isAr ? 'تم إنشاء فاتورة الدفع الرقمي بالكريبتو عبر Plisio. ينبغي أن تفتح صفحة الدفع تلقائياً، أو اضغط الزر أدناه لإكمال العملية.' : 'Crypto checkout invoice created via Plisio. The checkout page should open automatically.')
+                    : (isAr ? 'تم حفظ طلبك بالنظام كطلب معلق (Pending). يرجى فتح محادثة الواتساب المباشرة لتأكيد التفعيل مع إدارة المنصة.' : 'Your request was saved as pending. Please open live WhatsApp chat for manual verification.')}
                 </p>
               </div>
             </div>
@@ -149,8 +157,8 @@ export function UpgradePlanModal({
                   onClick={() => window.open(successInfo.checkoutUrl, '_blank')}
                 >
                   <Send className="h-3.5 w-3.5" />
-                  الانتقال لصفحة الدفع بالكريبتو (Plisio Checkout) 🪙
-                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                  {isAr ? 'الانتقال لصفحة الدفع بالكريبتو (Plisio Checkout) 🪙' : 'Proceed to Plisio Crypto Checkout 🪙'}
+                  <ExternalLink className="h-3.5 w-3.5 ms-1" />
                 </Button>
               ) : (
                 <Button
@@ -159,8 +167,8 @@ export function UpgradePlanModal({
                   onClick={() => window.open(successInfo.whatsappUrl || '#', '_blank')}
                 >
                   <Send className="h-3.5 w-3.5" />
-                  فتح محادثة الواتساب للتأكيد
-                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                  {isAr ? 'فتح محادثة الواتساب للتأكيد' : 'Open WhatsApp Chat to Confirm'}
+                  <ExternalLink className="h-3.5 w-3.5 ms-1" />
                 </Button>
               )}
             </div>
@@ -172,7 +180,7 @@ export function UpgradePlanModal({
           <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3 text-xs text-rose-500 flex items-center justify-between">
             <span>{error}</span>
             <Button variant="ghost" size="sm" onClick={() => setError(null)} className="h-6 text-xs px-2">
-              إغلاق
+              {isAr ? 'إغلاق' : 'Dismiss'}
             </Button>
           </div>
         )}
@@ -189,7 +197,7 @@ export function UpgradePlanModal({
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              دفع شهري
+              {isAr ? 'دفع شهري' : 'Monthly'}
             </button>
             <button
               type="button"
@@ -200,9 +208,9 @@ export function UpgradePlanModal({
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <span>دفع سنوي</span>
+              <span>{isAr ? 'دفع سنوي' : 'Yearly'}</span>
               <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] px-2 py-0.5 border-0 font-extrabold">
-                توفير 20% 🎉
+                {isAr ? 'توفير 20% 🎉' : 'Save 20% 🎉'}
               </Badge>
             </button>
           </div>
@@ -232,14 +240,14 @@ export function UpgradePlanModal({
                   {isCurrent && (
                     <div className="rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 font-bold text-xs px-3 py-1.5 text-center flex items-center justify-center gap-1.5 shadow-xs">
                       <Check className="h-4 w-4" />
-                      <span>خطتك الحالية المفعّلة</span>
+                      <span>{isAr ? 'خطتك الحالية المفعّلة' : 'Your Current Active Plan'}</span>
                     </div>
                   )}
 
                   {!isCurrent && isPopular && (
                     <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-bold text-xs px-3 py-1.5 text-center flex items-center justify-center gap-1.5 shadow-xs">
                       <Zap className="h-3.5 w-3.5 fill-amber-500" />
-                      <span>الخطة الأكثر طلباً ⭐</span>
+                      <span>{isAr ? 'الخطة الأكثر طلباً ⭐' : 'Most Popular Plan ⭐'}</span>
                     </div>
                   )}
 
@@ -248,10 +256,10 @@ export function UpgradePlanModal({
                     <h3 className="text-xl font-black text-foreground">{plan.name}</h3>
                     <p className="text-xs text-muted-foreground leading-relaxed min-h-[36px]">
                       {plan.slug === 'enterprise'
-                        ? 'للشركات الكبيرة والمؤسسات التي تتطلب حلولاً وحجم رسائل مفتوح'
+                        ? (isAr ? 'للشركات الكبيرة والمؤسسات التي تتطلب حلولاً وحجم رسائل مفتوح' : 'For enterprises needing custom solutions & unlimited quotas')
                         : plan.slug === 'pro'
-                        ? 'للأعمال المتنامية والفرق التي تحتاج أتمتة وذكاء اصطناعي'
-                        : 'مناسبة للفرق الصغيرة والإنطلاقة الأولى'}
+                        ? (isAr ? 'للأعمال المتنامية والفرق التي تحتاج أتمتة وذكاء اصطناعي' : 'For growing teams requiring automations & AI tools')
+                        : (isAr ? 'مناسبة للفرق الصغيرة والإنطلاقة الأولى' : 'Ideal for small teams and initial launch')}
                     </p>
                   </div>
 
@@ -260,40 +268,40 @@ export function UpgradePlanModal({
                     <div className="flex items-baseline gap-1.5 dir-ltr">
                       <span className="text-3xl sm:text-4xl font-black text-foreground">${price}</span>
                       <span className="text-xs font-semibold text-muted-foreground">
-                        /{billingCycle === 'yearly' ? 'سنة' : 'شهر'}
+                        /{billingCycle === 'yearly' ? (isAr ? 'سنة' : 'year') : (isAr ? 'شهر' : 'month')}
                       </span>
                     </div>
                   </div>
 
                   {/* Operational Limits */}
                   <div className="space-y-2.5 text-xs">
-                    <span className="font-bold text-muted-foreground block text-[11px] uppercase tracking-wider">الحدود التشغيلية:</span>
+                    <span className="font-bold text-muted-foreground block text-[11px] uppercase tracking-wider">{isAr ? 'الحدود التشغيلية:' : 'Operational Limits:'}</span>
                     <div className="space-y-2 bg-accent/40 rounded-xl p-3 border">
                       <div className="flex items-center justify-between text-foreground">
                         <span className="flex items-center gap-2 font-medium">
                           <MessageSquare className="h-4 w-4 text-indigo-500 shrink-0" />
-                          الرسائل الشهرية:
+                          {isAr ? 'الرسائل الشهرية:' : 'Monthly Messages:'}
                         </span>
                         <span className="font-mono font-bold">
-                          {plan.max_messages_monthly === -1 ? 'غير محدودة' : plan.max_messages_monthly.toLocaleString()}
+                          {plan.max_messages_monthly === -1 ? (isAr ? 'غير محدودة' : 'Unlimited') : plan.max_messages_monthly.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-foreground">
                         <span className="flex items-center gap-2 font-medium">
                           <Radio className="h-4 w-4 text-indigo-500 shrink-0" />
-                          حملات البرودكاست:
+                          {isAr ? 'حملات البرودكاست:' : 'Broadcast Campaigns:'}
                         </span>
                         <span className="font-mono font-bold">
-                          {plan.max_broadcasts_monthly === -1 ? 'غير محدودة' : plan.max_broadcasts_monthly.toLocaleString()}
+                          {plan.max_broadcasts_monthly === -1 ? (isAr ? 'غير محدودة' : 'Unlimited') : plan.max_broadcasts_monthly.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-foreground">
                         <span className="flex items-center gap-2 font-medium">
                           <Users className="h-4 w-4 text-indigo-500 shrink-0" />
-                          أعضاء الفريق:
+                          {isAr ? 'أعضاء الفريق:' : 'Team Members:'}
                         </span>
                         <span className="font-mono font-bold">
-                          {plan.max_users === -1 ? 'غير محدود' : `${plan.max_users} أعضاء`}
+                          {plan.max_users === -1 ? (isAr ? 'غير محدود' : 'Unlimited') : (isAr ? `${plan.max_users} أعضاء` : `${plan.max_users} members`)}
                         </span>
                       </div>
                     </div>
@@ -301,7 +309,7 @@ export function UpgradePlanModal({
 
                   {/* Features Checklist */}
                   <div className="space-y-2.5 pt-1 text-xs">
-                    <span className="font-bold text-muted-foreground block text-[11px] uppercase tracking-wider">الميزات المتاحة:</span>
+                    <span className="font-bold text-muted-foreground block text-[11px] uppercase tracking-wider">{isAr ? 'الميزات المتاحة:' : 'Included Features:'}</span>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2.5">
                         {plan.features?.ai_assistant ? (
@@ -310,7 +318,7 @@ export function UpgradePlanModal({
                           <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
                         )}
                         <span className={plan.features?.ai_assistant ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
-                          مساعد الردود الذكي (AI Assistant)
+                          {isAr ? 'مساعد الردود الذكي (AI Assistant)' : 'Gemini AI Assistant'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2.5">
@@ -320,7 +328,7 @@ export function UpgradePlanModal({
                           <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
                         )}
                         <span className={plan.features?.excel_export ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
-                          تصدير تقارير الطلبات بـ Excel
+                          {isAr ? 'تصدير تقارير الطلبات بـ Excel' : 'Excel Report Export'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2.5">
@@ -330,7 +338,7 @@ export function UpgradePlanModal({
                           <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
                         )}
                         <span className={plan.features?.telegram_bot ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
-                          إشعارات بوت Telegram الفورية
+                          {isAr ? 'إشعارات بوت Telegram الفورية' : 'Instant Telegram Bot Notifications'}
                         </span>
                       </div>
                     </div>
@@ -341,8 +349,8 @@ export function UpgradePlanModal({
                 <div className="pt-6 border-t border-border/80">
                   {isCurrent ? (
                     <Button variant="outline" disabled className="w-full text-xs font-bold border-border bg-muted/50 py-5">
-                      <Check className="h-4 w-4 ml-1.5" />
-                      خطتك المفعلة حالياً
+                      <Check className="h-4 w-4 me-1.5" />
+                      {isAr ? 'خطتك المفعلة حالياً' : 'Your Current Plan'}
                     </Button>
                   ) : (
                     <Button
@@ -352,13 +360,13 @@ export function UpgradePlanModal({
                     >
                       {isSubmitting ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin ml-1.5" />
-                          جاري تسجيل الطلب...
+                          <Loader2 className="h-4 w-4 animate-spin me-1.5" />
+                          {isAr ? 'جاري تسجيل الطلب...' : 'Processing request...'}
                         </>
                       ) : (
                         <>
                           <Send className="h-3.5 w-3.5" />
-                          طلب الترقية إلى خطة {plan.name}
+                          {isAr ? `طلب الترقية إلى خطة ${plan.name}` : `Upgrade to ${plan.name}`}
                         </>
                       )}
                     </Button>

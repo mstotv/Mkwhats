@@ -22,6 +22,8 @@ import {
 import Link from 'next/link';
 import { toast } from 'sonner';
 
+import { useLocale } from 'next-intl';
+
 interface GlobalMetrics {
   total_accounts: number;
   active_accounts: number;
@@ -34,6 +36,8 @@ interface GlobalMetrics {
 }
 
 export default function AdminDashboardPage() {
+  const locale = useLocale();
+  const isAr = locale === 'ar';
   const [metrics, setMetrics] = useState<GlobalMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,12 +46,12 @@ export default function AdminDashboardPage() {
     try {
       setRefreshing(true);
       const res = await fetch('/api/admin/metrics');
-      if (!res.ok) throw new Error('فشل جلب الإحصائيات');
+      if (!res.ok) throw new Error(isAr ? 'فشل جلب الإحصائيات' : 'Failed to fetch metrics');
       const data = await res.json();
       setMetrics(data as GlobalMetrics);
     } catch (err) {
       console.error('[AdminDashboard] Error fetching metrics:', err);
-      toast.error('تعذر تحميل إحصائيات النظام');
+      toast.error(isAr ? 'تعذر تحميل إحصائيات النظام' : 'Could not load system metrics');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -62,7 +66,9 @@ export default function AdminDashboardPage() {
     return (
       <div className="flex h-72 flex-col items-center justify-center gap-3 text-muted-foreground">
         <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-        <p className="text-sm font-medium">جاري تحضير إحصائيات مركز الإدارة الكلية...</p>
+        <p className="text-sm font-medium">
+          {isAr ? 'جاري تحضير إحصائيات مركز الإدارة الكلية...' : 'Preparing Super Admin dashboard metrics...'}
+        </p>
       </div>
     );
   }
@@ -73,10 +79,12 @@ export default function AdminDashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            لوحة القيادة الرئيسية
+            {isAr ? 'لوحة القيادة الرئيسية' : 'Super Admin Dashboard'}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            مراقبة الأداء الكلي لمنصة SaaS، الشركات، ومؤشرات السيرفر لحظياً
+            {isAr
+              ? 'مراقبة الأداء الكلي لمنصة SaaS، الشركات، ومؤشرات السيرفر لحظياً'
+              : 'Monitor overall SaaS platform performance, tenants, and real-time server health.'}
           </p>
         </div>
 
@@ -88,16 +96,16 @@ export default function AdminDashboardPage() {
             disabled={refreshing}
             className="border-border text-xs font-semibold"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ms-1.5 ${refreshing ? 'animate-spin' : ''}`} />
-            تحديث البيانات
+            <RefreshCw className={`h-3.5 w-3.5 me-1.5 ${refreshing ? 'animate-spin' : ''}`} />
+            {isAr ? 'تحديث البيانات' : 'Refresh Data'}
           </Button>
           <Link href="/admin/plans">
             <Button
               size="sm"
               className="bg-gradient-to-r from-amber-500 to-orange-600 font-bold text-slate-950 hover:from-amber-400 hover:to-orange-500 shadow-md shadow-amber-500/20 text-xs"
             >
-              <Plus className="h-4 w-4 ms-1" />
-              إضافة باقة جديدة
+              <Plus className="h-4 w-4 me-1" />
+              {isAr ? 'إضافة باقة جديدة' : 'Add New Plan'}
             </Button>
           </Link>
         </div>
@@ -107,7 +115,9 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border border-border/80 bg-card p-5 shadow-sm transition-all hover:border-amber-500/30">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted-foreground">إجمالي الشركات (Tenants)</span>
+            <span className="text-xs font-bold text-muted-foreground">
+              {isAr ? 'إجمالي الشركات (Tenants)' : 'Total Tenants'}
+            </span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
               <Building2 className="h-5 w-5" />
             </div>
@@ -117,14 +127,16 @@ export default function AdminDashboardPage() {
               {metrics?.total_accounts.toLocaleString() ?? 0}
             </span>
             <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-              {metrics?.active_accounts ?? 0} نشطة
+              {metrics?.active_accounts ?? 0} {isAr ? 'نشطة' : 'Active'}
             </span>
           </div>
         </Card>
 
         <Card className="border border-border/80 bg-card p-5 shadow-sm transition-all hover:border-blue-500/30">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted-foreground">المستخدمون والمستشارون</span>
+            <span className="text-xs font-bold text-muted-foreground">
+              {isAr ? 'المستخدمون والمستشارون' : 'Users & Members'}
+            </span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
               <Users className="h-5 w-5" />
             </div>
@@ -133,13 +145,17 @@ export default function AdminDashboardPage() {
             <span className="text-3xl font-black text-foreground">
               {metrics?.total_users.toLocaleString() ?? 0}
             </span>
-            <span className="text-xs font-medium text-muted-foreground">مستخدم مفعل</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              {isAr ? 'مستخدم مفعل' : 'Active Users'}
+            </span>
           </div>
         </Card>
 
         <Card className="border border-border/80 bg-card p-5 shadow-sm transition-all hover:border-emerald-500/30">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted-foreground">الرسائل الكلية المرسلة</span>
+            <span className="text-xs font-bold text-muted-foreground">
+              {isAr ? 'الرسائل الكلية المرسلة' : 'Total Messages Sent'}
+            </span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
               <MessageSquare className="h-5 w-5" />
             </div>
@@ -149,14 +165,16 @@ export default function AdminDashboardPage() {
               {metrics?.total_messages.toLocaleString() ?? 0}
             </span>
             <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-              {metrics?.messages_this_month.toLocaleString() ?? 0} هذا الشهر
+              {metrics?.messages_this_month.toLocaleString() ?? 0} {isAr ? 'هذا الشهر' : 'this month'}
             </span>
           </div>
         </Card>
 
         <Card className="border border-border/80 bg-card p-5 shadow-sm transition-all hover:border-violet-500/30">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted-foreground">الدخل الشهري المتوقع (MRR)</span>
+            <span className="text-xs font-bold text-muted-foreground">
+              {isAr ? 'الدخل الشهري المتوقع (MRR)' : 'Estimated Monthly Revenue (MRR)'}
+            </span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400">
               <DollarSign className="h-5 w-5" />
             </div>
@@ -166,7 +184,7 @@ export default function AdminDashboardPage() {
               ${metrics?.estimated_mrr.toLocaleString() ?? 0}
             </span>
             <span className="text-xs font-semibold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-full">
-              تقديري
+              {isAr ? 'تقديري' : 'Estimated'}
             </span>
           </div>
         </Card>
@@ -176,7 +194,7 @@ export default function AdminDashboardPage() {
       <div className="space-y-4">
         <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
           <Activity className="h-5 w-5 text-amber-500" />
-          مراقبة خوادم المنصة (System Health Monitor)
+          {isAr ? 'مراقبة خوادم المنصة (System Health Monitor)' : 'System Health Monitor'}
         </h2>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -184,11 +202,17 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Server className="h-4 w-4 text-emerald-400" />
-                <span className="text-xs font-bold text-foreground">قاعدة البيانات (Supabase PostgreSQL)</span>
+                <span className="text-xs font-bold text-foreground">
+                  {isAr ? 'قاعدة البيانات (Supabase PostgreSQL)' : 'Database (Supabase PostgreSQL)'}
+                </span>
               </div>
               <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
-            <p className="text-xs text-muted-foreground">الاتصال مستقر وتعمل جميع سياسات الأمان (RLS) بكفاءة.</p>
+            <p className="text-xs text-muted-foreground">
+              {isAr
+                ? 'الاتصال مستقر وتعمل جميع سياسات الأمان (RLS) بكفاءة.'
+                : 'Connection stable; all RLS security policies are fully enforced.'}
+            </p>
             <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
               <CheckCircle2 className="h-3.5 w-3.5" /> 100% Operational
             </div>
@@ -198,11 +222,17 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Cpu className="h-4 w-4 text-blue-400" />
-                <span className="text-xs font-bold text-foreground">سيرفر الواتساب (Evolution API)</span>
+                <span className="text-xs font-bold text-foreground">
+                  {isAr ? 'سيرفر الواتساب (Evolution API)' : 'WhatsApp Engine (Evolution API)'}
+                </span>
               </div>
               <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
-            <p className="text-xs text-muted-foreground">محرك الربط المباشر يستقبل ويرسل الرسائل الفورية بدون تأخير.</p>
+            <p className="text-xs text-muted-foreground">
+              {isAr
+                ? 'محرك الربط المباشر يستقبل ويرسل الرسائل الفورية بدون تأخير.'
+                : 'Direct connection engine receives and sends instant messages without delay.'}
+            </p>
             <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
               <CheckCircle2 className="h-3.5 w-3.5" /> Active & Connected
             </div>
@@ -212,11 +242,17 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Activity className="h-4 w-4 text-amber-400" />
-                <span className="text-xs font-bold text-foreground">المجدول التلقائي (Automation Cron)</span>
+                <span className="text-xs font-bold text-foreground">
+                  {isAr ? 'المجدول التلقائي (Automation Cron)' : 'Automation Cron Scheduler'}
+                </span>
               </div>
               <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
             </div>
-            <p className="text-xs text-muted-foreground">فحص خطوات الانتظار وحملات البرودكاست المجدولة قيد التشغيل.</p>
+            <p className="text-xs text-muted-foreground">
+              {isAr
+                ? 'فحص خطوات الانتظار وحملات البرودكاست المجدولة قيد التشغيل.'
+                : 'Monitoring delay steps and scheduled broadcast campaigns actively.'}
+            </p>
             <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
               <CheckCircle2 className="h-3.5 w-3.5" /> Polling Active
             </div>
@@ -229,11 +265,15 @@ export default function AdminDashboardPage() {
         <Link href="/admin/accounts" className="group">
           <Card className="border border-border bg-card p-5 space-y-3 transition-all hover:border-amber-500/50 hover:bg-card/80">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-foreground">إدارة الشركات والعملاء</span>
+              <span className="text-sm font-bold text-foreground">
+                {isAr ? 'إدارة الشركات والعملاء' : 'Tenants & Accounts Management'}
+              </span>
               <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-amber-500" />
             </div>
             <p className="text-xs text-muted-foreground">
-              تصفح قائمة الشركات المسجلة، حظر الحسابات أو إعادة تفعيلها، وتخصيص الحدود.
+              {isAr
+                ? 'تصفح قائمة الشركات المسجلة، حظر الحسابات أو إعادة تفعيلها، وتخصيص الحدود.'
+                : 'Browse registered tenants, suspend or reinstate accounts, and customize limits.'}
             </p>
           </Card>
         </Link>
@@ -241,11 +281,31 @@ export default function AdminDashboardPage() {
         <Link href="/admin/plans" className="group">
           <Card className="border border-border bg-card p-5 space-y-3 transition-all hover:border-amber-500/50 hover:bg-card/80">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-foreground">إدارة الباقات والاشتراكات</span>
+              <span className="text-sm font-bold text-foreground">
+                {isAr ? 'إدارة الباقات والاشتراكات' : 'Plans & Subscriptions Management'}
+              </span>
               <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-amber-500" />
             </div>
             <p className="text-xs text-muted-foreground">
-              تحديث أسعار الباقات، تعديل قيود الرسائل والمستخدمين، ومنح تمديدات مجانية.
+              {isAr
+                ? 'تحديث أسعار الباقات، تعديل قيود الرسائل والمستخدمين، ومنح تمديدات مجانية.'
+                : 'Update plan pricing, modify message & user quotas, and set features.'}
+            </p>
+          </Card>
+        </Link>
+
+        <Link href="/admin/tickets" className="group">
+          <Card className="border border-emerald-500/40 bg-emerald-500/5 p-5 space-y-3 transition-all hover:border-emerald-500 hover:bg-emerald-500/10">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-foreground">
+                {isAr ? 'إدارة تذاكر الدعم الفني 🎧' : 'Support Tickets Manager 🎧'}
+              </span>
+              <ArrowUpRight className="h-4 w-4 text-emerald-400 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isAr
+                ? 'استلام تذاكر العملاء، الرد المباشر المرفق بالصور، وتحديد حالة تم حل المشكلة.'
+                : 'Receive client tickets, reply with attachments, and mark issues as resolved.'}
             </p>
           </Card>
         </Link>
@@ -253,11 +313,15 @@ export default function AdminDashboardPage() {
         <Link href="/admin/settings" className="group">
           <Card className="border border-border bg-card p-5 space-y-3 transition-all hover:border-amber-500/50 hover:bg-card/80">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-foreground">إعدادات النظام العامة</span>
+              <span className="text-sm font-bold text-foreground">
+                {isAr ? 'إعدادات النظام العامة' : 'System & Landing Settings'}
+              </span>
               <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-amber-500" />
             </div>
             <p className="text-xs text-muted-foreground">
-              التحكم بهوية المنصة، وضع الصيانة، والخيارات الكلية للسيرفر.
+              {isAr
+                ? 'التحكم بهوية المنصة، وضع الصيانة، والخيارات الكلية للسيرفر.'
+                : 'Control platform branding, maintenance mode, and global server settings.'}
             </p>
           </Card>
         </Link>

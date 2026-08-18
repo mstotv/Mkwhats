@@ -22,11 +22,11 @@ interface AccountsGrowthChartProps {
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-lg border border-slate-800 bg-slate-900/95 p-3 shadow-lg backdrop-blur-md text-xs font-sans">
-        <p className="text-slate-400 mb-1 text-[11px]">{label}</p>
-        <p className="font-semibold text-slate-100 flex items-center gap-2">
+      <div className="rounded-xl border border-border bg-card p-3 shadow-xl backdrop-blur-md text-xs font-sans">
+        <p className="text-muted-foreground mb-1 text-[11px] font-bold">{label}</p>
+        <p className="font-bold text-foreground flex items-center gap-2">
           <span>حسابات جديدة:</span>
-          <span className="font-mono text-indigo-400 text-sm font-bold">
+          <span className="font-mono text-emerald-500 text-sm font-black">
             {payload[0].value}
           </span>
         </p>
@@ -46,37 +46,40 @@ export function AccountsGrowthChart({ data }: AccountsGrowthChartProps) {
         >
           <defs>
             <linearGradient id="stripeGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
-              <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
+              <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
             </linearGradient>
           </defs>
           <CartesianGrid
             strokeDasharray="3 3"
             vertical={false}
-            stroke="#1e293b"
+            stroke="currentColor"
+            className="text-border opacity-40"
           />
           <XAxis
             dataKey="date"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#64748b', fontSize: 11 }}
+            tick={{ fill: 'currentColor', fontSize: 11 }}
+            className="text-muted-foreground"
             dy={8}
           />
           <YAxis
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#64748b', fontSize: 11 }}
+            tick={{ fill: 'currentColor', fontSize: 11 }}
+            className="text-muted-foreground"
             allowDecimals={false}
           />
           <Tooltip content={<CustomTooltip />} />
           <Area
             type="monotone"
             dataKey="count"
-            stroke="#6366f1"
-            strokeWidth={2}
+            stroke="#10b981"
+            strokeWidth={2.5}
             fillOpacity={1}
             fill="url(#stripeGradient)"
-            activeDot={{ r: 4, fill: '#818cf8', stroke: '#0f172a', strokeWidth: 2 }}
+            activeDot={{ r: 5, fill: '#10b981', stroke: '#020617', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

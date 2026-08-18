@@ -17,6 +17,9 @@ import { Loader2, Save, Bot, FileSpreadsheet, Send } from 'lucide-react'
 export interface Plan {
   id: string
   name: string
+  name_en?: string
+  description?: string
+  description_en?: string
   slug: string
   price_monthly: number
   price_yearly: number
@@ -52,6 +55,9 @@ export function EditPlanModal({
 
   const [formData, setFormData] = useState({
     name: '',
+    name_en: '',
+    description: '',
+    description_en: '',
     price_monthly: 0,
     price_yearly: 0,
     max_users: 1,
@@ -71,6 +77,9 @@ export function EditPlanModal({
     if (plan) {
       setFormData({
         name: plan.name || '',
+        name_en: plan.name_en || '',
+        description: plan.description || '',
+        description_en: plan.description_en || '',
         price_monthly: plan.price_monthly ?? 0,
         price_yearly: plan.price_yearly ?? 0,
         max_users: plan.max_users ?? 1,
@@ -135,15 +144,27 @@ export function EditPlanModal({
             </div>
           )}
 
-          {/* Plan Name */}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-slate-300">اسم الخطة</Label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="bg-slate-950 border-slate-800 text-slate-100 text-sm"
-              required
-            />
+          {/* Plan Name AR & EN */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-slate-300">اسم الخطة بالعربية 🇸🇦</Label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="مثال: المحترف"
+                required
+                className="bg-slate-950 border-slate-800 text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-slate-300">Plan Name in English 🇬🇧</Label>
+              <Input
+                value={formData.name_en}
+                onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
+                placeholder="e.g. Pro"
+                className="bg-slate-950 border-slate-800 text-xs dir-ltr"
+              />
+            </div>
           </div>
 
           {/* Pricing */}

@@ -21,7 +21,7 @@
     "createAccount": "Create account"
   },
   "Sidebar": {
-    "title": "CRM Template for WhatsApp",
+    "title": "MK Whats",
     "dashboard": "Dashboard",
     "inbox": "Inbox",
     "notifications": "Notifications",
@@ -45,6 +45,7 @@
     "defaultAvatar": "Avatar",
     "menuProfile": "Profile",
     "menuSettings": "Settings",
+    "menuSupport": "Contact Support",
     "menuSignOut": "Sign out"
   },
   "Header": {
@@ -62,6 +63,7 @@
     "defaultAvatar": "Avatar",
     "menuProfile": "Profile",
     "menuSettings": "Settings",
+    "menuSupport": "Contact Support",
     "menuSignOut": "Sign out"
   },
   "ModeToggle": {
@@ -1290,6 +1292,7 @@
       "security": "Login & security",
       "appearance": "Appearance",
       "plan": "Plan & Usage",
+      "support": "Contact Support",
       "whatsapp": "WhatsApp",
       "telegram": "Telegram Bot",
       "templates": "Templates",

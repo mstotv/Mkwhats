@@ -65,15 +65,19 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { title, content_html, is_published } = body || {}
+    const { title, title_en, content_html, content_html_en, is_published } = body || {}
 
     const updateData: Record<string, any> = {
       updated_at: new Date().toISOString(),
     }
 
     if (title !== undefined) updateData.title = String(title).trim()
+    if (title_en !== undefined) updateData.title_en = title_en ? String(title_en).trim() : null
     if (content_html !== undefined) {
       updateData.content_html = DOMPurify.sanitize(String(content_html), SANITIZE_CONFIG)
+    }
+    if (content_html_en !== undefined) {
+      updateData.content_html_en = content_html_en ? DOMPurify.sanitize(String(content_html_en), SANITIZE_CONFIG) : null
     }
     if (is_published !== undefined) updateData.is_published = Boolean(is_published)
 

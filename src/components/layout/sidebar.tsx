@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { cn, isValidImageUrl } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useTotalUnread } from "@/hooks/use-total-unread";
@@ -12,6 +12,7 @@ import {
   Bot,
   Crown,
   GitBranch,
+  Headphones,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -113,13 +114,42 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { isImpersonatingClient } from "@/lib/admin-impersonation";
 
 export function Sidebar({ open = false, onClose }: SidebarProps) {
   const t = useTranslations("Sidebar");
+  const locale = useLocale();
+  const isAr = locale === "ar";
   const pathname = usePathname();
   const { profile, profileLoading, account, accountRole, signOut } = useAuth();
+
+  const [siteSettings, setSiteSettings] = useState<{
+    logo_url?: string;
+    logo_height?: number;
+    platform_name?: string;
+    platform_name_ar?: string;
+    platform_name_en?: string;
+  }>({});
+
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem("mk_site_settings");
+      if (cached) setSiteSettings(JSON.parse(cached));
+    } catch {}
+
+    fetch('/api/site-settings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings) {
+          setSiteSettings(data.settings);
+          try {
+            localStorage.setItem("mk_site_settings", JSON.stringify(data.settings));
+          } catch {}
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSignOut = () => {
     if (isImpersonatingClient()) {
@@ -201,11 +231,18 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
             close button is hidden since the sidebar is always-visible. */}
         <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-4">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <MessageSquare className="h-4 w-4" />
-            </div>
-            <span className="text-sm font-semibold text-foreground">
-              {t("title")}
+            {siteSettings.logo_url ? (
+              <img
+                src={siteSettings.logo_url}
+                alt={isAr ? (siteSettings.platform_name_ar || '') : (siteSettings.platform_name_en || '')}
+                style={{ height: `${siteSettings.logo_height || 32}px` }}
+                className="w-auto object-contain max-h-9"
+              />
+            ) : null}
+            <span className="text-sm font-bold text-foreground" suppressHydrationWarning>
+              {isAr
+                ? (siteSettings.platform_name_ar || '')
+                : (siteSettings.platform_name_en || '')}
             </span>
           </Link>
           <button
@@ -396,6 +433,18 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
               >
                 <Settings className="size-4" />
                 {t("menuSettings")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                render={
+                  <Link
+                    href="/settings?tab=support"
+                    onClick={onClose}
+                    className="text-popover-foreground focus:bg-accent focus:text-accent-foreground"
+                  />
+                }
+              >
+                <Headphones className="size-4 text-emerald-400" />
+                <span>{t("menuSupport")}</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem

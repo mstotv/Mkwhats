@@ -56,6 +56,9 @@ export async function PATCH(
     const body = await request.json()
     const {
       name,
+      name_en,
+      description,
+      description_en,
       price_monthly,
       price_yearly,
       max_users,
@@ -72,6 +75,9 @@ export async function PATCH(
     }
 
     if (name !== undefined) updateData.name = String(name)
+    if (name_en !== undefined) updateData.name_en = name_en ? String(name_en) : null
+    if (description !== undefined) updateData.description = String(description)
+    if (description_en !== undefined) updateData.description_en = description_en ? String(description_en) : null
     if (price_monthly !== undefined) updateData.price_monthly = Number(price_monthly)
     if (price_yearly !== undefined) updateData.price_yearly = Number(price_yearly)
     if (max_users !== undefined) updateData.max_users = Number(max_users)

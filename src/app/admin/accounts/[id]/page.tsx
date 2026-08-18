@@ -1,5 +1,4 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { AdminNav } from '../../_components/admin-nav'
 import { AccountMembersTable, type MemberItem } from '../../_components/account-members-table'
 import { AccountStatusToggle } from '../../_components/account-status-toggle'
 import { AccountSubscriptionCard } from '../../_components/account-subscription-card'
@@ -75,10 +74,7 @@ export default async function AdminAccountDetailsPage({ params }: PageProps) {
   )
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      <AdminNav />
-
-      <main className="flex-1 mx-auto w-full max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+    <div className="space-y-8">
         {/* Back Link */}
         <div>
           <Link
@@ -214,7 +210,6 @@ export default async function AdminAccountDetailsPage({ params }: PageProps) {
             accountName={account.name}
           />
         </div>
-      </main>
-    </div>
-  )
-}
+      </div>
+    )
+  }

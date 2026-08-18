@@ -56,13 +56,13 @@ export function PlansClient({ initialPlans }: PlansClientProps) {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
         <div>
-          <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+          <h1 className="text-xl font-black text-foreground flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-500">
               <CreditCard className="h-4 w-4" />
             </div>
             {t('title')}
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs font-medium text-muted-foreground mt-1">
             {t('description')}
           </p>
         </div>

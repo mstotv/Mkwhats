@@ -19,6 +19,7 @@ import { DealsSettings } from '@/components/settings/deals-settings';
 import { MembersTab } from '@/components/settings/members-tab';
 import { ApiKeysSettings } from '@/components/settings/api-keys-settings';
 import { PlanUsagePanel } from '@/components/settings/plan-usage-panel';
+import { SupportPanel } from '@/components/settings/support-panel';
 import { TelegramSettingsPanel } from '@/components/settings/telegram-settings-panel';
 import {
   resolveSection,
@@ -77,6 +78,7 @@ function SettingsPageInner() {
     security: <SecurityPanel />,
     appearance: <AppearancePanel />,
     plan: <PlanUsagePanel />,
+    support: <SupportPanel />,
     whatsapp: <WhatsAppConfig />,
     telegram: <TelegramSettingsPanel />,
     templates: <TemplateManager />,

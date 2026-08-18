@@ -1,6 +1,7 @@
 import {
   Coins,
   FileText,
+  Headphones,
   KeyRound,
   LayoutGrid,
   Palette,
@@ -21,6 +22,7 @@ export const SETTINGS_SECTIONS = [
   'security',
   'appearance',
   'plan',
+  'support',
   'whatsapp',
   'telegram',
   'templates',
@@ -49,6 +51,7 @@ export const SECTION_META: Record<SettingsSection, SectionMeta> = {
   security: { id: 'security', label: 'Login & security', icon: Shield, group: 'account' },
   appearance: { id: 'appearance', label: 'Appearance', icon: Palette, group: 'account' },
   plan: { id: 'plan', label: 'Plan & Usage', icon: Sparkles, group: 'account' },
+  support: { id: 'support', label: 'Contact Support', icon: Headphones, group: 'account' },
   whatsapp: { id: 'whatsapp', label: 'WhatsApp', icon: PlugZap, group: 'workspace' },
   telegram: { id: 'telegram', label: 'Telegram Bot', icon: Send, group: 'workspace' },
   templates: { id: 'templates', label: 'Templates', icon: FileText, group: 'workspace' },

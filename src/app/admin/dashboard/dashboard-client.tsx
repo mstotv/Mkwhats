@@ -11,7 +11,6 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslations, useLocale } from 'next-intl'
-import { AdminNav } from '../_components/admin-nav'
 import { StatsCard } from '../_components/stats-card'
 import { AccountsGrowthChart, type GrowthDataPoint } from '../_components/accounts-growth-chart'
 
@@ -47,24 +46,21 @@ export function DashboardClient({
   const locale = useLocale()
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      <AdminNav />
-
-      <main className="flex-1 mx-auto w-full max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+    <div className="space-y-8">
         {/* Header section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-50 tracking-tight">
+            <h1 className="text-2xl font-black text-foreground tracking-tight">
               {t('title')}
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {t('description')}
             </p>
           </div>
           <Link href="/admin/accounts">
             <Button
               size="sm"
-              className="bg-amber-500 text-slate-950 font-semibold hover:bg-amber-400 gap-1.5 text-xs h-9 px-4 shadow-sm"
+              className="bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 gap-1.5 text-xs h-9 px-4 shadow-sm"
             >
               <Users className="h-3.5 w-3.5" />
               {t('manageAccounts')}
@@ -113,17 +109,17 @@ export function DashboardClient({
         </div>
 
         {/* Chart Section - Stripe Style Card */}
-        <div className="rounded-xl border border-slate-800/60 bg-slate-900/40 p-6 shadow-sm space-y-4">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-slate-100 tracking-tight">
+              <h2 className="text-sm font-bold text-foreground tracking-tight">
                 {t('growthChartTitle')}
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {t('growthChartSub')}
               </p>
             </div>
-            <span className="text-xs font-mono text-slate-400 bg-slate-950/60 px-2.5 py-1 rounded-md border border-slate-800/60">
+            <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-1 rounded-lg border border-border">
               {t('dailySignups')}
             </span>
           </div>
@@ -131,19 +127,19 @@ export function DashboardClient({
         </div>
 
         {/* Recent Accounts Table Card - Stripe Style */}
-        <div className="rounded-xl border border-slate-800/60 bg-slate-900/40 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between p-5 border-b border-slate-800/60 bg-slate-950/20">
+        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between p-5 border-b border-border bg-muted/30">
             <div>
-              <h2 className="text-sm font-semibold text-slate-100 tracking-tight">
+              <h2 className="text-sm font-bold text-foreground tracking-tight">
                 {t('recentAccountsTitle')}
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {t('recentAccountsSub')}
               </p>
             </div>
             <Link
               href="/admin/accounts"
-              className="text-xs font-medium text-slate-400 hover:text-slate-200 flex items-center gap-1 transition-colors"
+              className="text-xs font-bold text-emerald-500 hover:text-emerald-400 flex items-center gap-1 transition-colors"
             >
               {t('viewAllAccounts', { count: totalAccounts })}
               <ArrowLeft className="h-3 w-3" />
@@ -151,8 +147,8 @@ export function DashboardClient({
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs text-slate-300">
-              <thead className="border-b border-slate-800/60 bg-slate-950/50 text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+            <table className="w-full text-right text-xs text-foreground">
+              <thead className="border-b border-border bg-muted/50 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-5">{t('thAccountName')}</th>
                   <th className="py-3 px-5">{t('thStatus')}</th>
@@ -160,28 +156,28 @@ export function DashboardClient({
                   <th className="py-3 px-5 font-mono">{t('thId')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/40">
+              <tbody className="divide-y divide-border">
                 {recentAccounts && recentAccounts.length > 0 ? (
                   recentAccounts.map((acc) => (
                     <tr
                       key={acc.id}
-                      className="hover:bg-slate-800/30 transition-colors"
+                      className="hover:bg-muted/40 transition-colors"
                     >
-                      <td className="py-3.5 px-5 font-medium text-slate-100">
+                      <td className="py-3.5 px-5 font-bold text-foreground">
                         {acc.name}
                       </td>
                       <td className="py-3.5 px-5">
                         <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium border ${
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${
                             acc.status === 'suspended'
-                              ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                              : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                           }`}
                         >
                           {acc.status === 'suspended' ? t('suspended') : t('active')}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5 text-slate-400" suppressHydrationWarning>
+                      <td className="py-3.5 px-5 text-muted-foreground font-medium" suppressHydrationWarning>
                         {new Date(acc.created_at).toLocaleDateString(
                           locale === 'ar' ? 'ar-EG' : 'en-US',
                           {
@@ -191,7 +187,7 @@ export function DashboardClient({
                           }
                         )}
                       </td>
-                      <td className="py-3.5 px-5 text-slate-500 font-mono text-[11px]">
+                      <td className="py-3.5 px-5 text-muted-foreground font-mono text-[11px]">
                         {acc.id}
                       </td>
                     </tr>
@@ -200,7 +196,7 @@ export function DashboardClient({
                   <tr>
                     <td
                       colSpan={4}
-                      className="py-8 text-center text-slate-500 text-xs"
+                      className="py-8 text-center text-muted-foreground text-xs"
                     >
                       {t('noAccounts')}
                     </td>
@@ -210,7 +206,6 @@ export function DashboardClient({
             </table>
           </div>
         </div>
-      </main>
-    </div>
-  )
-}
+      </div>
+    )
+  }

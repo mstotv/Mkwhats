@@ -6,7 +6,7 @@ import {
   IMPERSONATION_COOKIE_NAME,
 } from '@/lib/admin-impersonation'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const pathname = request.nextUrl.pathname
@@ -67,7 +67,7 @@ export async function middleware(request: NextRequest) {
             return withRefreshedCookies(NextResponse.redirect(url))
           }
         } catch (e) {
-          console.error('[Middleware] Admin check error on login:', e)
+          console.error('[Middleware/Proxy] Admin check error on login:', e)
         }
       }
       // Not logged in or logged in as regular user -> allow rendering admin login page
@@ -97,7 +97,7 @@ export async function middleware(request: NextRequest) {
         return withRefreshedCookies(NextResponse.redirect(url))
       }
     } catch (e) {
-      console.error('[Middleware] Admin authorization check error:', e)
+      console.error('[Middleware/Proxy] Admin authorization check error:', e)
       const url = request.nextUrl.clone()
       url.pathname = '/admin/login'
       return withRefreshedCookies(NextResponse.redirect(url))
@@ -180,7 +180,7 @@ export async function middleware(request: NextRequest) {
           sameSite: 'lax',
         })
       } catch (e) {
-        console.error('[Middleware] Account status check error:', e)
+        console.error('[Middleware/Proxy] Account status check error:', e)
       }
     }
 
@@ -240,6 +240,9 @@ export async function middleware(request: NextRequest) {
 
   return supabaseResponse
 }
+
+// Backward compatibility alias for tests
+export const middleware = proxy
 
 export const config = {
   matcher: [

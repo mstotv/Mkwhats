@@ -100,7 +100,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }}
         />
       </head>
-      <body className="min-h-full bg-background text-foreground font-sans">
+      <body className={`min-h-full bg-background text-foreground font-sans font-cairo ${dir === 'rtl' ? 'dir-rtl' : 'dir-ltr'}`}>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeProvider>
             {children}

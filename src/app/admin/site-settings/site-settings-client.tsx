@@ -19,34 +19,43 @@ import {
   Globe,
   FileText,
   Save,
-  Plus,
-  Trash2,
   Loader2,
   CheckCircle2,
   ExternalLink,
   Edit,
+  Headphones,
+  MessageCircle,
+  Send,
+  Mail,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
-import { AdminNav } from '../_components/admin-nav'
-
-interface SocialLink {
-  platform: string
-  url: string
-}
-
-interface Partner {
-  name: string
-  logo_url: string
-}
+import { useTranslations, useLocale } from 'next-intl'
 
 interface SiteSettings {
   id: number
   platform_name: string
+  platform_name_ar?: string
+  platform_name_en?: string
   logo_url: string | null
-  social_links: SocialLink[]
-  partners: Partner[]
+  support_whatsapp?: string
+  support_telegram?: string
+  support_email?: string
+  user_panel_support_enabled?: {
+    whatsapp: boolean
+    telegram: boolean
+    email: boolean
+  }
   plisio_api_key?: string | null
   plisio_enabled?: boolean
+  stripe_enabled?: boolean
+  stripe_publishable_key?: string | null
+  stripe_secret_key?: string | null
+  stripe_webhook_secret?: string | null
+  google_auth_enabled?: boolean
+  google_client_id?: string | null
+  google_client_secret?: string | null
 }
 
 interface ContentPage {
@@ -68,54 +77,67 @@ export function SiteSettingsClient({
   initialPages,
 }: SiteSettingsClientProps) {
   const t = useTranslations('Admin.siteSettings')
-  const [settings, setSettings] = useState<SiteSettings>(
-    initialSettings || {
-      id: 1,
-      platform_name: 'MK Whats',
-      logo_url: '',
-      social_links: [],
-      partners: [],
+  const locale = useLocale()
+  const isAr = locale === 'ar'
+  const [settings, setSettings] = useState<SiteSettings>(() => {
+    return {
+      id: initialSettings?.id || 1,
+      ...initialSettings,
+      platform_name: initialSettings?.platform_name || '',
+      platform_name_ar: initialSettings?.platform_name_ar || (initialSettings?.platform_name?.match(/[\u0600-\u06FF]/) ? initialSettings.platform_name : '') || '',
+      platform_name_en: initialSettings?.platform_name_en || (!initialSettings?.platform_name?.match(/[\u0600-\u06FF]/) ? initialSettings?.platform_name : '') || '',
+      logo_url: initialSettings?.logo_url || '',
+      support_whatsapp: initialSettings?.support_whatsapp || '',
+      support_telegram: initialSettings?.support_telegram || '',
+      support_email: initialSettings?.support_email || '',
+      user_panel_support_enabled: initialSettings?.user_panel_support_enabled || {
+        whatsapp: true,
+        telegram: true,
+        email: true,
+      },
     }
-  )
+  })
 
   const [pages, setPages] = useState<ContentPage[]>(initialPages)
   const [loading, setLoading] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const handleFileUpload = async (file: File) => {
+    try {
+      setUploadingLogo(true)
+      setErrorMsg(null)
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/admin/upload-logo', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setErrorMsg(data.error || (isAr ? 'فشل رفع صورة الشعار' : 'Failed to upload logo'))
+        return
+      }
+
+      if (data.url) {
+        setSettings((prev) => ({ ...prev, logo_url: data.url }))
+        setSuccessMsg(isAr ? 'تم رفع الشعار بنجاح! 🖼️' : 'Logo uploaded successfully! 🖼️')
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || (isAr ? 'حدث خطأ أثناء رفع الشعار' : 'Error uploading logo'))
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
 
   // Edit Page Modal state
   const [editingPage, setEditingPage] = useState<ContentPage | null>(null)
   const [pageModalOpen, setPageModalOpen] = useState(false)
 
-  // Handlers for Social Links
-  const handleAddSocial = () => {
-    setSettings({
-      ...settings,
-      social_links: [...(settings.social_links || []), { platform: 'twitter', url: '' }],
-    })
-  }
 
-  const handleRemoveSocial = (index: number) => {
-    const updated = [...(settings.social_links || [])]
-    updated.splice(index, 1)
-    setSettings({ ...settings, social_links: updated })
-  }
-
-  // Handlers for Partners
-  const handleAddPartner = () => {
-    setSettings({
-      ...settings,
-      partners: [...(settings.partners || []), { name: '', logo_url: '' }],
-    })
-  }
-
-  const handleRemovePartner = (index: number) => {
-    const updated = [...(settings.partners || [])]
-    updated.splice(index, 1)
-    setSettings({ ...settings, partners: updated })
-  }
-
-  // Submit Site Settings
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -124,20 +146,38 @@ export function SiteSettingsClient({
 
     try {
       const res = await fetch('/api/admin/site-settings', {
-        method: 'PATCH',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       })
 
-      const data = await res.json()
+      let data: any = {}
+      try {
+        data = await res.json()
+      } catch {
+        // Empty body — treat as success if 2xx
+      }
 
       if (!res.ok || data.error) {
         setErrorMsg(data.error || 'فشل حفظ إعدادات الموقع')
         return
       }
 
-      setSettings(data.settings)
-      setSuccessMsg('تم حفظ إعدادات الهوية والشركاء بنجاح')
+      // Update local state if fresh settings returned
+      if (data.settings) {
+        setSettings((prev) => {
+          const merged = { ...prev, ...data.settings }
+          try {
+            localStorage.setItem('mk_site_settings', JSON.stringify(merged))
+          } catch {}
+          return merged
+        })
+      } else {
+        try {
+          localStorage.setItem('mk_site_settings', JSON.stringify(settings))
+        } catch {}
+      }
+      setSuccessMsg('تم حفظ إعدادات الموقع وبوابات الدفع بنجاح 🎉')
     } catch (err: any) {
       setErrorMsg(err.message || 'حدث خطأ أثناء الحفظ')
     } finally {
@@ -176,16 +216,13 @@ export function SiteSettingsClient({
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-      <AdminNav />
-
-      <main className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-            <Globe className="h-6 w-6 text-indigo-400" /> {t('title')}
+          <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
+            <Globe className="h-6 w-6 text-indigo-500 shrink-0" /> {t('title')}
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="mt-1 text-xs font-medium text-muted-foreground">
             {t('description')}
           </p>
         </div>
@@ -203,65 +240,157 @@ export function SiteSettingsClient({
           </div>
         )}
 
-        <Tabs defaultValue="general" className="w-full">
-          <TabsList className="bg-slate-900 border border-slate-800 p-1">
-            <TabsTrigger value="general" className="data-[state=active]:bg-slate-800 text-xs gap-2">
-              <Globe className="h-4 w-4" /> {t('tabGeneral')}
-            </TabsTrigger>
-            <TabsTrigger value="pages" className="data-[state=active]:bg-slate-800 text-xs gap-2">
-              <FileText className="h-4 w-4" /> {t('tabPages')} ({pages.length})
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Tab 1: General Branding & Partners */}
-          <TabsContent value="general" className="mt-4">
-            <form onSubmit={handleSaveSettings} className="space-y-6">
-              <Card className="bg-slate-900 border-slate-800 text-slate-100">
+        <form onSubmit={handleSaveSettings} className="space-y-6">
+              <Card className="bg-card border-border text-card-foreground shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-base font-bold">{t('generalHeader')}</CardTitle>
-                  <CardDescription className="text-xs text-slate-400">
+                  <CardDescription className="text-xs text-muted-foreground">
                     {t('generalDesc')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-slate-300">{t('platformName')}</Label>
-                      <Input
-                        value={settings.platform_name}
-                        onChange={(e) =>
-                          setSettings({ ...settings, platform_name: e.target.value })
-                        }
-                        className="bg-slate-950 border-slate-800 text-slate-100 text-sm"
-                        required
-                      />
+                  <div className="space-y-4">
+                    {/* Platform Name Bilingual Inputs */}
+                    <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
+                      <Label className="text-xs font-bold text-foreground flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-emerald-500" />
+                        {isAr ? 'اسم المنصة (Platform Name)' : 'Platform Name'}
+                      </Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-black text-amber-500 flex items-center gap-1">🇸🇦 العربية</span>
+                          <Input
+                            value={settings.platform_name_ar || ''}
+                            onChange={(e) =>
+                              setSettings({
+                                ...settings,
+                                platform_name_ar: e.target.value,
+                                platform_name: e.target.value || settings.platform_name_en || '',
+                              })
+                            }
+                            placeholder="أدخل اسم المنصة بالعربية..."
+                            className="bg-background text-sm font-bold"
+                            dir="rtl"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-black text-sky-500 flex items-center gap-1">🇬🇧 English</span>
+                          <Input
+                            value={settings.platform_name_en || ''}
+                            onChange={(e) =>
+                              setSettings({ ...settings, platform_name_en: e.target.value })
+                            }
+                            placeholder="Enter platform name in English..."
+                            className="bg-background text-sm font-bold"
+                            dir="ltr"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-slate-300">{t('logoUrl')}</Label>
-                      <Input
-                        value={settings.logo_url || ''}
-                        onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
-                        placeholder="https://example.com/logo.png"
-                        className="bg-slate-950 border-slate-800 text-slate-100 text-sm"
-                      />
+
+                    {/* Logo Section (URL or Device Upload) */}
+                    <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-foreground flex items-center gap-2">
+                          <ImageIcon className="h-4 w-4 text-emerald-500" />
+                          {isAr ? 'شعار المنصة (Logo)' : 'Platform Logo'}
+                        </Label>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          {isAr ? 'رابط مباشر أو رفع من الجهاز' : 'URL or File Upload'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                        {/* Image Preview Box */}
+                        <div className="sm:col-span-3 flex items-center justify-center p-2 rounded-xl border border-border bg-background h-24 relative overflow-hidden group shadow-inner">
+                          {settings.logo_url ? (
+                            <div className="relative w-full h-full flex items-center justify-center">
+                              <img
+                                src={settings.logo_url}
+                                alt="Logo Preview"
+                                className="max-h-full max-w-full object-contain p-1"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setSettings({ ...settings, logo_url: '' })}
+                                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-rose-500/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-600 shadow-md"
+                                title={isAr ? 'حذف الشعار' : 'Remove logo'}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="text-center text-muted-foreground space-y-1">
+                              <ImageIcon className="h-6 w-6 mx-auto text-muted-foreground/40" />
+                              <p className="text-[10px] font-bold">{isAr ? 'لا يوجد شعار' : 'No Logo'}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* URL Input & File Upload Button */}
+                        <div className="sm:col-span-9 space-y-2">
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                            <Input
+                              value={settings.logo_url || ''}
+                              onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
+                              placeholder="https://example.com/logo.png"
+                              className="bg-background text-xs font-mono flex-1 h-9"
+                            />
+                            <div className="relative">
+                              <input
+                                id="logo-file-input"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) handleFileUpload(file)
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={uploadingLogo}
+                                onClick={() => {
+                                  document.getElementById('logo-file-input')?.click()
+                                }}
+                                className="w-full sm:w-auto border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 text-xs font-bold gap-1.5 h-9 shrink-0"
+                              >
+                                {uploadingLogo ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Upload className="h-4 w-4" />
+                                )}
+                                {isAr ? 'رفع من الجهاز 📁' : 'Upload File 📁'}
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            {isAr
+                              ? 'يمكنك وضع رابط مباشر لصورة الشعار (PNG / SVG / JPG) أو الضغط على "رفع من الجهاز" لتحديد صورة من حاسوبك أو هاتفك وسيتم رفعها وحفظها تلقائياً.'
+                              : 'Enter direct image URL or click "Upload File" to select an image from your device.'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Plisio Payment Gateway Settings */}
-              <Card className="bg-slate-900 border-slate-800 text-slate-100">
+              <Card className="bg-card border-border text-card-foreground shadow-sm">
                 <CardHeader className="flex flex-row items-center justify-between pb-3">
                   <div className="space-y-1">
                     <CardTitle className="text-base font-bold flex items-center gap-2">
-                      <span className="text-amber-400">🪙</span> {t('cryptoHeader')}
+                      <span className="text-amber-500">🪙</span> {t('cryptoHeader')}
                     </CardTitle>
-                    <CardDescription className="text-xs text-slate-400">
+                    <CardDescription className="text-xs text-muted-foreground">
                       {t('cryptoDesc')}
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-slate-300">
+                    <span className="text-xs font-bold text-foreground">
                       {t('enableCrypto')}
                     </span>
                     <Switch
@@ -274,7 +403,7 @@ export function SiteSettingsClient({
                 </CardHeader>
                 <CardContent className="space-y-4 pt-0">
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-slate-300">Plisio Secret API Key</Label>
+                    <Label className="text-xs font-bold text-foreground">Plisio Secret API Key</Label>
                     <Input
                       type="password"
                       value={settings.plisio_api_key || ''}
@@ -282,125 +411,248 @@ export function SiteSettingsClient({
                         setSettings({ ...settings, plisio_api_key: e.target.value })
                       }
                       placeholder="Enter Plisio Secret API Key"
-                      className="bg-slate-950 border-slate-800 text-slate-100 text-sm font-mono"
+                      className="bg-background border-border text-foreground text-sm font-mono"
                     />
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Social Links */}
-              <Card className="bg-slate-900 border-slate-800 text-slate-100">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base font-bold">{t('socialHeader')}</CardTitle>
-                    <CardDescription className="text-xs text-slate-400">
-                      {t('socialDesc')}
+              {/* Stripe Payment Gateway Card */}
+              <Card className="bg-card border-indigo-500/30 text-card-foreground shadow-md">
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <div className="space-y-1">
+                    <CardTitle className="text-base font-bold flex items-center gap-2 text-indigo-500 dark:text-indigo-400">
+                      <span className="text-lg">💳</span> {isAr ? 'بوابة الدفع الدولي للبطاقات Stripe (Visa / Mastercard)' : 'Stripe International Card Payment Gateway (Visa / Mastercard)'}
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground">
+                      {isAr ? 'أدخل مفاتيح Stripe لتمكين العملاء والشركات من الدفع ببطاقات الفيزا والماستركارد والترقية التلقائية الفورية للباقات.' : 'Enter Stripe keys to allow clients and accounts to pay with Visa/Mastercard credit cards with instant automated plan upgrades.'}
                     </CardDescription>
                   </div>
-                  <Button
-                    type="button"
-                    onClick={handleAddSocial}
-                    variant="outline"
-                    size="sm"
-                    className="border-slate-800 text-slate-300 text-xs gap-1"
-                  >
-                    <Plus className="h-3.5 w-3.5" /> {t('addSocial')}
-                  </Button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-bold text-foreground">
+                      {isAr ? 'تفعيل Stripe' : 'Enable Stripe'}
+                    </span>
+                    <Switch
+                      checked={Boolean(settings.stripe_enabled)}
+                      onCheckedChange={(checked) =>
+                        setSettings({ ...settings, stripe_enabled: checked })
+                      }
+                    />
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {(settings.social_links || []).map((link, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
+                <CardContent className="space-y-4 pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Stripe Publishable Key</Label>
                       <Input
-                        value={link.platform}
-                        onChange={(e) => {
-                          const updated = [...settings.social_links]
-                          updated[idx].platform = e.target.value
-                          setSettings({ ...settings, social_links: updated })
-                        }}
-                        placeholder="Platform (e.g. twitter, facebook)"
-                        className="w-1/3 bg-slate-950 border-slate-800 text-slate-100 text-xs"
+                        value={settings.stripe_publishable_key || ''}
+                        onChange={(e) =>
+                          setSettings({ ...settings, stripe_publishable_key: e.target.value })
+                        }
+                        placeholder="pk_live_... / pk_test_..."
+                        className="bg-background border-border text-foreground text-sm font-mono"
                       />
-                      <Input
-                        value={link.url}
-                        onChange={(e) => {
-                          const updated = [...settings.social_links]
-                          updated[idx].url = e.target.value
-                          setSettings({ ...settings, social_links: updated })
-                        }}
-                        placeholder="URL (https://...)"
-                        className="w-2/3 bg-slate-950 border-slate-800 text-slate-100 text-xs"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveSocial(idx)}
-                        className="text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
-                  ))}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Stripe Secret Key</Label>
+                      <Input
+                        type="password"
+                        value={settings.stripe_secret_key || ''}
+                        onChange={(e) =>
+                          setSettings({ ...settings, stripe_secret_key: e.target.value })
+                        }
+                        placeholder="sk_live_... / sk_test_..."
+                        className="bg-background border-border text-foreground text-sm font-mono"
+                      />
+                    </div>
+                    <div className="space-y-1.5 md:col-span-2">
+                      <Label className="text-xs font-bold text-foreground">Stripe Webhook Secret</Label>
+                      <Input
+                        type="password"
+                        value={settings.stripe_webhook_secret || ''}
+                        onChange={(e) =>
+                          setSettings({ ...settings, stripe_webhook_secret: e.target.value })
+                        }
+                        placeholder="whsec_..."
+                        className="bg-background border-border text-foreground text-sm font-mono"
+                      />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Partners Marquee Bar */}
-              <Card className="bg-slate-900 border-slate-800 text-slate-100">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base font-bold">{t('partnersHeader')}</CardTitle>
-                    <CardDescription className="text-xs text-slate-400">
-                      {t('partnersDesc')}
+              {/* Google OAuth Settings Card */}
+              <Card className="bg-card border-emerald-500/30 text-card-foreground shadow-md">
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <div className="space-y-1">
+                    <CardTitle className="text-base font-bold flex items-center gap-2 text-emerald-500 dark:text-emerald-400">
+                      <span className="text-lg">🔑</span> {isAr ? 'إعدادات تسجيل الدخول والإنشاء عبر Google (OAuth)' : 'Google Single Sign-On & Signup Settings (OAuth)'}
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground">
+                      {isAr ? 'أدخل معرف العميل (Client ID) والرمز السري (Client Secret) لتمكين الزوار من تسجيل الدخول وإنشاء حسابات جديدة بضغطة زر واحدة عبر Google.' : 'Enter Google Client ID & Client Secret to allow visitors to login and register new accounts with 1-click via Google.'}
                     </CardDescription>
                   </div>
-                  <Button
-                    type="button"
-                    onClick={handleAddPartner}
-                    variant="outline"
-                    size="sm"
-                    className="border-slate-800 text-slate-300 text-xs gap-1"
-                  >
-                    <Plus className="h-3.5 w-3.5" /> {t('addPartner')}
-                  </Button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-bold text-foreground">
+                      {isAr ? 'تفعيل Google Auth' : 'Enable Google Auth'}
+                    </span>
+                    <Switch
+                      checked={Boolean(settings.google_auth_enabled)}
+                      onCheckedChange={(checked) =>
+                        setSettings({ ...settings, google_auth_enabled: checked })
+                      }
+                    />
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {(settings.partners || []).map((partner, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
+                <CardContent className="space-y-4 pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Google Client ID</Label>
                       <Input
-                        value={partner.name}
-                        onChange={(e) => {
-                          const updated = [...settings.partners]
-                          updated[idx].name = e.target.value
-                          setSettings({ ...settings, partners: updated })
-                        }}
-                        placeholder="Shopify / WooCommerce..."
-                        className="w-1/3 bg-slate-950 border-slate-800 text-slate-100 text-xs"
+                        value={settings.google_client_id || ''}
+                        onChange={(e) =>
+                          setSettings({ ...settings, google_client_id: e.target.value })
+                        }
+                        placeholder="e.g. 1234567890-xxx.apps.googleusercontent.com"
+                        className="bg-background border-border text-foreground text-sm font-mono"
                       />
-                      <Input
-                        value={partner.logo_url}
-                        onChange={(e) => {
-                          const updated = [...settings.partners]
-                          updated[idx].logo_url = e.target.value
-                          setSettings({ ...settings, partners: updated })
-                        }}
-                        placeholder="https://..."
-                        className="w-2/3 bg-slate-950 border-slate-800 text-slate-100 text-xs"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemovePartner(idx)}
-                        className="text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
-                  ))}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-foreground">Google Client Secret</Label>
+                      <Input
+                        type="password"
+                        value={settings.google_client_secret || ''}
+                        onChange={(e) =>
+                          setSettings({ ...settings, google_client_secret: e.target.value })
+                        }
+                        placeholder="GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx"
+                        className="bg-background border-border text-foreground text-sm font-mono"
+                      />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
-              <div className="flex justify-end">
+              {/* User Panel Support Channels Control Card */}
+              <Card className="bg-card border-emerald-500/30 text-card-foreground shadow-md">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-bold flex items-center gap-2 text-emerald-500 dark:text-emerald-400">
+                    <Headphones className="h-5 w-5" />
+                    {isAr
+                      ? 'إعدادات قنوات الدعم المباشر لوحة المستخدم (User Panel Support Channels)'
+                      : 'User Panel Support Channels Settings'}
+                  </CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground">
+                    {isAr
+                      ? 'التحكم بإظهار أو إخفاء قنوات الدعم الخارجي (الواتساب، التلغرام، البريد) للمستخدمين داخل مركز الدعم لوحة التحكم. يمكنك إيقاف أي قناة لإخفائها تماماً وترك تذاكر الدعم فقط.'
+                      : 'Control which external support channels (WhatsApp, Telegram, Email) are visible in the user Support Panel.'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* WhatsApp */}
+                    <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black flex items-center gap-1.5 text-emerald-500">
+                          <MessageCircle className="h-4 w-4" />
+                          {isAr ? 'دعم الواتساب' : 'WhatsApp'}
+                        </span>
+                        <Switch
+                          checked={settings.user_panel_support_enabled?.whatsapp !== false}
+                          onCheckedChange={(checked) =>
+                            setSettings({
+                              ...settings,
+                              user_panel_support_enabled: {
+                                ...(settings.user_panel_support_enabled || { whatsapp: true, telegram: true, email: true }),
+                                whatsapp: checked,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-bold text-muted-foreground">
+                          {isAr ? 'رقم الواتساب' : 'WhatsApp Phone Number'}
+                        </Label>
+                        <Input
+                          value={settings.support_whatsapp || ''}
+                          onChange={(e) => setSettings({ ...settings, support_whatsapp: e.target.value })}
+                          placeholder="+966500000000"
+                          className="bg-background text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Telegram */}
+                    <div className="p-3.5 rounded-xl border border-sky-500/30 bg-sky-500/5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black flex items-center gap-1.5 text-sky-500">
+                          <Send className="h-4 w-4" />
+                          {isAr ? 'دعم التلغرام' : 'Telegram'}
+                        </span>
+                        <Switch
+                          checked={settings.user_panel_support_enabled?.telegram !== false}
+                          onCheckedChange={(checked) =>
+                            setSettings({
+                              ...settings,
+                              user_panel_support_enabled: {
+                                ...(settings.user_panel_support_enabled || { whatsapp: true, telegram: true, email: true }),
+                                telegram: checked,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-bold text-muted-foreground">
+                          {isAr ? 'معرف التلغرام' : 'Telegram Username/Link'}
+                        </Label>
+                        <Input
+                          value={settings.support_telegram || ''}
+                          onChange={(e) => setSettings({ ...settings, support_telegram: e.target.value })}
+                          placeholder="mkwhats_support"
+                          className="bg-background text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Email */}
+                    <div className="p-3.5 rounded-xl border border-purple-500/30 bg-purple-500/5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black flex items-center gap-1.5 text-purple-500">
+                          <Mail className="h-4 w-4" />
+                          {isAr ? 'دعم البريد' : 'Email'}
+                        </span>
+                        <Switch
+                          checked={settings.user_panel_support_enabled?.email !== false}
+                          onCheckedChange={(checked) =>
+                            setSettings({
+                              ...settings,
+                              user_panel_support_enabled: {
+                                ...(settings.user_panel_support_enabled || { whatsapp: true, telegram: true, email: true }),
+                                email: checked,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-bold text-muted-foreground">
+                          {isAr ? 'البريد الإلكتروني' : 'Support Email Address'}
+                        </Label>
+                        <Input
+                          value={settings.support_email || ''}
+                          onChange={(e) => setSettings({ ...settings, support_email: e.target.value })}
+                          placeholder="support@mkwhats.com"
+                          className="bg-background text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+<div className="flex justify-end">
                 <Button
                   type="submit"
                   disabled={loading}
@@ -411,125 +663,6 @@ export function SiteSettingsClient({
                 </Button>
               </div>
             </form>
-          </TabsContent>
-
-          {/* Tab 2: Content Pages Manager */}
-          <TabsContent value="pages" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {pages.map((p) => (
-                <Card key={p.id} className="bg-slate-900 border-slate-800 text-slate-100">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-bold">{p.title}</CardTitle>
-                      <span
-                        className={`text-[11px] px-2 py-0.5 rounded-full border ${
-                          p.is_published
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : 'bg-slate-800 text-slate-400 border-slate-700'
-                        }`}
-                      >
-                        {p.is_published ? t('published') : t('draft')}
-                      </span>
-                    </div>
-                    <CardDescription className="text-xs text-slate-400 font-mono">
-                      /p/{p.slug}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-0 flex items-center justify-between border-t border-slate-800/60 mt-2 pt-3">
-                    <a
-                      href={`/p/${p.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
-                    >
-                      <ExternalLink className="h-3 w-3" /> /p/{p.slug}
-                    </a>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditingPage(p)
-                        setPageModalOpen(true)
-                      }}
-                      className="text-xs text-slate-300 hover:text-white gap-1 h-7 border border-slate-800"
-                    >
-                      <Edit className="h-3 w-3" /> {t('editPage')}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </main>
-
-      {/* Edit Page Modal */}
-      {editingPage && (
-        <Dialog open={pageModalOpen} onOpenChange={setPageModalOpen}>
-          <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>{t('editPage')}: {editingPage.title}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSavePage} className="space-y-4 py-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">عنوان الصفحة</Label>
-                <Input
-                  value={editingPage.title}
-                  onChange={(e) =>
-                    setEditingPage({ ...editingPage, title: e.target.value })
-                  }
-                  className="bg-slate-950 border-slate-800 text-slate-100 text-sm"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs text-slate-300">المحتوى (HTML / Markdown)</Label>
-                <Textarea
-                  value={editingPage.content_html}
-                  onChange={(e) =>
-                    setEditingPage({ ...editingPage, content_html: e.target.value })
-                  }
-                  rows={10}
-                  className="bg-slate-950 border-slate-800 text-slate-100 text-xs font-mono"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={editingPage.is_published}
-                    onCheckedChange={(checked) =>
-                      setEditingPage({ ...editingPage, is_published: checked })
-                    }
-                  />
-                  <Label className="text-xs text-slate-300">نشر الصفحة للعامة</Label>
-                </div>
-              </div>
-
-              <DialogFooter className="mt-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setPageModalOpen(false)}
-                  className="text-xs text-slate-400"
-                >
-                  إلغاء
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs gap-1.5"
-                >
-                  {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                  حفظ التعديلات
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   )
 }

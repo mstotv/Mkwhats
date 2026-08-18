@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { LogOut, Menu, Settings as SettingsIcon, User } from "lucide-react";
+import { Headphones, LogOut, Menu, Settings as SettingsIcon, User } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -48,11 +48,66 @@ interface HeaderProps {
 import { useTranslations } from "next-intl";
 import { isImpersonatingClient } from "@/lib/admin-impersonation";
 
+import { useEffect, useState } from "react";
+import { Sparkles, Bell } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+
 export function Header({ onOpenSidebar }: HeaderProps) {
   const t = useTranslations("Header");
   const pathname = usePathname();
   const { profile, signOut } = useAuth();
   const titleKey = getPageTitleKey(pathname);
+
+  const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+  const [latestSupportTicket, setLatestSupportTicket] = useState<{ id: string; subject: string } | null>(null);
+
+  async function checkUnreadSupport() {
+    try {
+      const res = await fetch('/api/support/unread-count');
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadSupportCount(data.unreadCount || 0);
+        setLatestSupportTicket(data.latestTicket || null);
+      }
+    } catch {
+      // Ignore background errors
+    }
+  }
+
+  useEffect(() => {
+    checkUnreadSupport();
+    const interval = setInterval(checkUnreadSupport, 5000);
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel('header_support_unread')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'support_tickets',
+        },
+        () => {
+          checkUnreadSupport();
+        }
+      )
+      .subscribe();
+
+    window.addEventListener('unread-tickets-updated', checkUnreadSupport);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('unread-tickets-updated', checkUnreadSupport);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  function handleClearUnreadSupport() {
+    setUnreadSupportCount(0);
+    setLatestSupportTicket(null);
+    fetch('/api/support/tickets/read-all', { method: 'POST' }).catch(() => {});
+  }
 
   const handleSignOut = () => {
     if (isImpersonatingClient()) {
@@ -92,20 +147,22 @@ export function Header({ onOpenSidebar }: HeaderProps) {
 
         <DropdownMenu>
         <DropdownMenuTrigger
-          className="flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-muted/70 focus:bg-muted/70 focus:outline-none data-popup-open:bg-muted/70 sm:gap-3 sm:pl-1 sm:pr-3"
+          className="relative flex items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-muted/70 focus:bg-muted/70 focus:outline-none data-popup-open:bg-muted/70 sm:gap-3 sm:pl-1 sm:pr-3"
           aria-label={t("openAccountMenu")}
         >
-          <Avatar className="size-8">
-            {profile?.avatar_url && isValidImageUrl(profile.avatar_url) ? (
-              <AvatarImage
-                src={profile.avatar_url}
-                alt={profile.full_name ?? t("defaultAvatar")}
-              />
-            ) : null}
-            <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
-              {initial}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar className="size-8">
+              {profile?.avatar_url && isValidImageUrl(profile.avatar_url) ? (
+                <AvatarImage
+                  src={profile.avatar_url}
+                  alt={profile.full_name ?? t("defaultAvatar")}
+                />
+              ) : null}
+              <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
+                {initial}
+              </AvatarFallback>
+            </Avatar>
+          </div>
           <span className="hidden text-sm font-medium text-foreground sm:inline">
             {profile?.full_name ?? t("defaultUser")}
           </span>
@@ -124,6 +181,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
             </p>
           </div>
           <DropdownMenuSeparator className="bg-border" />
+
           <DropdownMenuItem
             render={
               <Link
@@ -145,6 +203,19 @@ export function Header({ onOpenSidebar }: HeaderProps) {
           >
             <SettingsIcon className="size-4" />
             {t("menuSettings")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            render={
+              <Link
+                href="/settings?tab=support"
+                className="text-popover-foreground focus:bg-accent focus:text-accent-foreground flex items-center justify-between"
+              />
+            }
+          >
+            <div className="flex items-center gap-2">
+              <Headphones className="size-4 text-emerald-400" />
+              <span>{t("menuSupport")}</span>
+            </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-border" />
           <DropdownMenuItem

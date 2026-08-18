@@ -22,7 +22,7 @@ import {
   ShoppingBag,
 } from 'lucide-react'
 import { UpgradePlanModal, type PlanItem } from './upgrade-plan-modal'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { toast } from 'sonner'
 
 interface PlanData {
@@ -82,6 +82,8 @@ interface UsageData {
 
 export function PlanUsagePanel() {
   const t = useTranslations('Settings.plan')
+  const locale = useLocale()
+  const isAr = locale === 'ar'
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [plan, setPlan] = useState<PlanData | null>(null)
@@ -99,96 +101,6 @@ export function PlanUsagePanel() {
 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
 
-  const handleStripeCheckout = async (planItem: any) => {
-    try {
-      setUpgradingPlanId(planItem.id)
-      setUpgradingGateway('stripe')
-      const res = await fetch('/api/billing/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plan_id: planItem.id,
-          billing_cycle: billingCycle,
-        }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok || data.error) {
-        toast.error(data.error || 'حدث خطأ أثناء الإنشاء عبر سترايب')
-        return
-      }
-
-      if (data.url) {
-        toast.success(`جاري التوجيه لبوابة الدفع الآمنة لـ Stripe (${billingCycle === 'yearly' ? 'سنوي' : 'شهري'})... 💳`)
-        window.location.href = data.url
-      }
-    } catch (err) {
-      toast.error('فشل التوجيه لـ Stripe')
-    } finally {
-      setUpgradingPlanId(null)
-      setUpgradingGateway(null)
-    }
-  }
-
-  const handlePlisioUpgrade = async (planItem: any) => {
-    try {
-      setUpgradingPlanId(planItem.id)
-      setUpgradingGateway('plisio')
-      const res = await fetch('/api/account/upgrade-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          target_plan_id: planItem.id,
-          billing_cycle: billingCycle,
-        }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok || data.error) {
-        toast.error(data.error || 'حدث خطأ أثناء الاتصال بالخادم')
-        return
-      }
-
-      const targetUrl = data.checkout_url || data.whatsapp_url
-      if (targetUrl) {
-        toast.success(`جاري التوجيه لموجّه الدفع لخطة "${planItem.name}"... 🚀`)
-        window.location.href = targetUrl
-      } else {
-        setIsUpgradeModalOpen(true)
-      }
-    } catch (err) {
-      toast.error('فشل التوجيه لبوابة الدفع')
-    } finally {
-      setUpgradingPlanId(null)
-      setUpgradingGateway(null)
-    }
-  }
-
-  const handleFreeActivate = async (planItem: any) => {
-    try {
-      setUpgradingPlanId(planItem.id)
-      const res = await fetch('/api/account/activate-free-plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan_id: planItem.id }),
-      })
-      const data = await res.json()
-      if (!res.ok || data.error) {
-        toast.error(data.error || 'فشل الانتقال للخطة المجانية')
-        return
-      }
-      toast.success(data.message || 'تم الانتقال إلى الخطة المجانية بنجاح 🎁')
-      fetchSubscriptionInfo()
-    } catch (err) {
-      toast.error('فشل التفعيل')
-    } finally {
-      setUpgradingPlanId(null)
-    }
-  }
-
-  // Handle Stripe Payment Success Verification Return
   const verifiedSessionRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -200,7 +112,6 @@ export function PlanUsagePanel() {
     if (paymentStatus === 'success' && sessionId && verifiedSessionRef.current !== sessionId) {
       verifiedSessionRef.current = sessionId
 
-      // Clean URL parameters immediately so reloading or re-rendering never re-triggers toasts or re-verifies old session IDs
       const cleanParams = new URLSearchParams(window.location.search)
       cleanParams.delete('payment')
       cleanParams.delete('session_id')
@@ -217,8 +128,7 @@ export function PlanUsagePanel() {
           })
           const data = await res.json()
           if (data.success && data.paid) {
-            toast.success('تم التأكد من عملية الدفع وترقية باقة اشتراكك بنجاح! 🎉')
-            // Refresh subscription
+            toast.success(isAr ? 'تم التأكد من عملية الدفع وترقية باقة اشتراكك بنجاح! 🎉' : 'Payment verified and plan upgraded successfully! 🎉')
             fetchSubscriptionInfo()
           }
         } catch (err) {
@@ -227,7 +137,7 @@ export function PlanUsagePanel() {
       }
       verifyStripe()
     }
-  }, [])
+  }, [isAr])
 
   async function fetchSubscriptionInfo() {
     try {
@@ -262,6 +172,94 @@ export function PlanUsagePanel() {
     fetchSubscriptionInfo()
   }, [t])
 
+  const handleStripeCheckout = async (targetPlan: any) => {
+    try {
+      setUpgradingPlanId(targetPlan.id)
+      setUpgradingGateway('stripe')
+      const res = await fetch('/api/billing/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan_id: targetPlan.id,
+          billing_cycle: billingCycle,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        toast.error(data.error || (isAr ? 'فشل إنشاء جلسة الدفع' : 'Failed to create payment session'))
+        return
+      }
+
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (err: any) {
+      toast.error(err.message || (isAr ? 'حدث خطأ غير متوقع' : 'An unexpected error occurred'))
+    } finally {
+      setUpgradingPlanId(null)
+      setUpgradingGateway(null)
+    }
+  }
+
+  const handlePlisioUpgrade = async (targetPlan: any) => {
+    try {
+      setUpgradingPlanId(targetPlan.id)
+      setUpgradingGateway('plisio')
+      const res = await fetch('/api/account/upgrade-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          target_plan_id: targetPlan.id,
+          billing_cycle: billingCycle,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        toast.error(data.error || (isAr ? 'فشل إرسال طلب الترقية' : 'Upgrade request failed'))
+        return
+      }
+
+      const targetUrl = data.checkout_url || data.whatsapp_url
+      if (targetUrl) {
+        window.open(targetUrl, '_blank')
+        toast.success(isAr ? 'تم فتح صفحة الدفع بنجاح! 🪙' : 'Payment page opened successfully! 🪙')
+      } else {
+        toast.success(isAr ? 'تم تسجيل طلبك بنجاح! 🎉' : 'Request submitted successfully! 🎉')
+      }
+    } catch (err: any) {
+      toast.error(err.message || (isAr ? 'حدث خطأ في الاتصال' : 'Connection error'))
+    } finally {
+      setUpgradingPlanId(null)
+      setUpgradingGateway(null)
+    }
+  }
+
+  const handleFreeActivate = async (targetPlan: any) => {
+    try {
+      setUpgradingPlanId(targetPlan.id)
+      const res = await fetch('/api/account/upgrade-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          target_plan_id: targetPlan.id,
+          billing_cycle: 'monthly',
+        }),
+      })
+      const data = await res.json()
+      if (data.success || res.ok) {
+        toast.success(isAr ? 'تم تفعيل الخطة المجانية بنجاح!' : 'Free plan activated successfully!')
+        fetchSubscriptionInfo()
+      } else {
+        toast.error(data.error || (isAr ? 'فشل تفعيل الخطة' : 'Plan activation failed'))
+      }
+    } catch (err: any) {
+      toast.error(err.message || (isAr ? 'حدث خطأ' : 'An error occurred'))
+    } finally {
+      setUpgradingPlanId(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -290,31 +288,31 @@ export function PlanUsagePanel() {
   const featuresList = [
     {
       key: 'ai_assistant',
-      label: 'مساعد الذكاء الاصطناعي (AI Assistant)',
+      label: isAr ? 'مساعد الذكاء الاصطناعي (AI Assistant)' : 'Gemini AI Assistant',
       icon: Bot,
       enabled: Boolean(plan.features?.ai_assistant),
     },
     {
       key: 'automations',
-      label: 'الأتمتة والردود الآلية',
+      label: isAr ? 'الأتمتة والردود الآلية' : 'Automations & Auto-Replies',
       icon: Zap,
       enabled: Boolean(plan.features?.automations),
     },
     {
       key: 'flows_builder',
-      label: 'منشئ الأتمتة ومسارات العمل (Flows)',
+      label: isAr ? 'منشئ الأتمتة ومسارات العمل (Flows)' : 'Flows & Workflow Builder',
       icon: Sparkles,
       enabled: Boolean(plan.features?.flows_builder),
     },
     {
       key: 'excel_export',
-      label: 'تصدير البيانات إلى Excel',
+      label: isAr ? 'تصدير البيانات إلى Excel' : 'Excel Data Export',
       icon: FileSpreadsheet,
       enabled: Boolean(plan.features?.excel_export),
     },
     {
       key: 'telegram_bot',
-      label: 'ربط بوت التلغرام للإشعارات',
+      label: isAr ? 'ربط بوت التلغرام للإشعارات' : 'Telegram Bot Notifications',
       icon: Send,
       enabled: Boolean(plan.features?.telegram_bot),
     },
@@ -322,7 +320,6 @@ export function PlanUsagePanel() {
 
   return (
     <div className="space-y-6">
-      {/* Limit Exceeded Alert Banner */}
       {limitsExceeded && (
         <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-4 text-rose-500 flex items-start justify-between gap-3 shadow-sm">
           <div className="flex items-start gap-3">
@@ -345,7 +342,6 @@ export function PlanUsagePanel() {
         </div>
       )}
 
-      {/* Main Plan Overview Card */}
       <Card className="border-border">
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b">
           <div className="space-y-1">
@@ -383,17 +379,15 @@ export function PlanUsagePanel() {
         </CardHeader>
 
         <CardContent className="pt-5 space-y-5">
-          {/* Clean Compact 4-Quotas Dashboard Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            {/* 1. Messages Quota Box */}
             <div className="rounded-xl border border-border bg-card p-4 space-y-2.5 shadow-sm hover:border-indigo-500/30 transition-all">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 truncate">
-                  <MessageSquare className="h-3.5 w-3.5 text-indigo-500 shrink-0" /> الرسائل الشهرية
+                  <MessageSquare className="h-3.5 w-3.5 text-indigo-500 shrink-0" /> {isAr ? 'الرسائل الشهرية' : 'Monthly Messages'}
                 </span>
                 {plan.max_messages_monthly === -1 ? (
                   <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-2 py-0">
-                    غير محدود ♾️
+                    {isAr ? 'غير محدود ♾️' : 'Unlimited ♾️'}
                   </Badge>
                 ) : (
                   <span className="text-[11px] font-mono font-bold text-foreground">
@@ -408,7 +402,7 @@ export function PlanUsagePanel() {
                     {(usage?.messages_count || 0).toLocaleString()}
                   </span>
                   <span className="text-[11px] text-muted-foreground font-medium block">
-                    {plan.max_messages_monthly === -1 ? 'رسائل مرسلة' : `من ${(plan.max_messages_monthly || 0).toLocaleString()}`}
+                    {plan.max_messages_monthly === -1 ? (isAr ? 'رسائل مرسلة' : 'Messages Sent') : (isAr ? `من ${(plan.max_messages_monthly || 0).toLocaleString()}` : `of ${(plan.max_messages_monthly || 0).toLocaleString()}`)}
                   </span>
                 </div>
 
@@ -417,7 +411,7 @@ export function PlanUsagePanel() {
                     <span className="text-xs font-bold text-emerald-400 block font-mono">
                       {(usage?.messages_remaining ?? 0).toLocaleString()}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">متبقي</span>
+                    <span className="text-[10px] text-muted-foreground">{isAr ? 'متبقي' : 'Remaining'}</span>
                   </div>
                 )}
               </div>
@@ -432,20 +426,19 @@ export function PlanUsagePanel() {
               ) : (
                 <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold pt-0.5 truncate">
                   <CheckCircle2 className="h-3 w-3 shrink-0" />
-                  <span className="truncate">إرسال غير محدود 🟢</span>
+                  <span className="truncate">{isAr ? 'إرسال غير محدود 🟢' : 'Unlimited Sending 🟢'}</span>
                 </div>
               )}
             </div>
 
-            {/* 2. Contacts Quota Box */}
             <div className="rounded-xl border border-border bg-card p-4 space-y-2.5 shadow-sm hover:border-emerald-500/30 transition-all">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 truncate">
-                  <Users className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> جهات الاتصال والعملاء
+                  <Users className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> {isAr ? 'جهات الاتصال والعملاء' : 'Contacts & Customers'}
                 </span>
                 {plan.max_contacts === -1 ? (
                   <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-2 py-0">
-                    غير محدود ♾️
+                    {isAr ? 'غير محدود ♾️' : 'Unlimited ♾️'}
                   </Badge>
                 ) : (
                   <span className="text-[11px] font-mono font-bold text-foreground">
@@ -460,7 +453,7 @@ export function PlanUsagePanel() {
                     {(usage?.contacts_count || 0).toLocaleString()}
                   </span>
                   <span className="text-[11px] text-muted-foreground font-medium block">
-                    {plan.max_contacts === -1 ? 'عملاء محفوظين' : `من ${(plan.max_contacts || 1000).toLocaleString()}`}
+                    {plan.max_contacts === -1 ? (isAr ? 'عملاء محفوظين' : 'Saved Contacts') : (isAr ? `من ${(plan.max_contacts || 1000).toLocaleString()}` : `of ${(plan.max_contacts || 1000).toLocaleString()}`)}
                   </span>
                 </div>
 
@@ -469,7 +462,7 @@ export function PlanUsagePanel() {
                     <span className="text-xs font-bold text-emerald-400 block font-mono">
                       {(usage?.contacts_remaining ?? 0).toLocaleString()}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">متبقي</span>
+                    <span className="text-[10px] text-muted-foreground">{isAr ? 'متبقي' : 'Remaining'}</span>
                   </div>
                 )}
               </div>
@@ -484,20 +477,19 @@ export function PlanUsagePanel() {
               ) : (
                 <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold pt-0.5 truncate">
                   <CheckCircle2 className="h-3 w-3 shrink-0" />
-                  <span className="truncate">حفظ عملاء غير محدود 🟢</span>
+                  <span className="truncate">{isAr ? 'حفظ عملاء غير محدود 🟢' : 'Unlimited Storage 🟢'}</span>
                 </div>
               )}
             </div>
 
-            {/* 3. Team Members Quota Box */}
             <div className="rounded-xl border border-border bg-card p-4 space-y-2.5 shadow-sm hover:border-indigo-500/30 transition-all">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 truncate">
-                  <Users className="h-3.5 w-3.5 text-indigo-500 shrink-0" /> أعضاء الفريق (Team)
+                  <Users className="h-3.5 w-3.5 text-indigo-500 shrink-0" /> {isAr ? 'أعضاء الفريق (TEAM)' : 'Team Members'}
                 </span>
                 {plan.max_users === -1 ? (
                   <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-2 py-0">
-                    غير محدود ♾️
+                    {isAr ? 'غير محدود ♾️' : 'Unlimited ♾️'}
                   </Badge>
                 ) : (
                   <span className="text-[11px] font-mono font-bold text-foreground">
@@ -512,7 +504,7 @@ export function PlanUsagePanel() {
                     {usage?.members_count || 1}
                   </span>
                   <span className="text-[11px] text-muted-foreground font-medium block">
-                    {plan.max_users === -1 ? 'موظفين بالحساب' : `من ${plan.max_users} مقاعد`}
+                    {plan.max_users === -1 ? (isAr ? 'موظفين بالحساب' : 'Account Members') : (isAr ? `من ${plan.max_users} مقاعد` : `of ${plan.max_users} seats`)}
                   </span>
                 </div>
 
@@ -521,7 +513,7 @@ export function PlanUsagePanel() {
                     <span className="text-xs font-bold text-emerald-400 block font-mono">
                       {usage?.members_remaining ?? 0}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">متبقي</span>
+                    <span className="text-[10px] text-muted-foreground">{isAr ? 'متبقي' : 'Remaining'}</span>
                   </div>
                 )}
               </div>
@@ -536,20 +528,19 @@ export function PlanUsagePanel() {
               ) : (
                 <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold pt-0.5 truncate">
                   <CheckCircle2 className="h-3 w-3 shrink-0" />
-                  <span className="truncate">أعضاء غير محدود 🟢</span>
+                  <span className="truncate">{isAr ? 'أعضاء غير محدود 🟢' : 'Unlimited Seats 🟢'}</span>
                 </div>
               )}
             </div>
 
-            {/* 4. Orders & Sales Quota Box */}
             <div className="rounded-xl border border-border bg-card p-4 space-y-2.5 shadow-sm hover:border-amber-500/30 transition-all">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 truncate">
-                  <FileSpreadsheet className="h-3.5 w-3.5 text-amber-500 shrink-0" /> الطلبات والمبيعات
+                  <FileSpreadsheet className="h-3.5 w-3.5 text-amber-500 shrink-0" /> {isAr ? 'الطلبات والمبيعات' : 'Orders & Sales'}
                 </span>
                 {plan.max_orders_monthly === -1 ? (
                   <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-2 py-0">
-                    غير محدود ♾️
+                    {isAr ? 'غير محدود ♾️' : 'Unlimited ♾️'}
                   </Badge>
                 ) : (
                   <span className="text-[11px] font-mono font-bold text-foreground">
@@ -564,7 +555,7 @@ export function PlanUsagePanel() {
                     {(usage?.orders_count || 0).toLocaleString()}
                   </span>
                   <span className="text-[11px] text-muted-foreground font-medium block">
-                    {plan.max_orders_monthly === -1 ? 'طلبات مضافة' : `من ${(plan.max_orders_monthly || 500).toLocaleString()}`}
+                    {plan.max_orders_monthly === -1 ? (isAr ? 'طلبات مضافة' : 'Added Orders') : (isAr ? `من ${(plan.max_orders_monthly || 500).toLocaleString()}` : `of ${(plan.max_orders_monthly || 500).toLocaleString()}`)}
                   </span>
                 </div>
 
@@ -573,7 +564,7 @@ export function PlanUsagePanel() {
                     <span className="text-xs font-bold text-emerald-400 block font-mono">
                       {(usage?.orders_remaining ?? 0).toLocaleString()}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">متبقي</span>
+                    <span className="text-[10px] text-muted-foreground">{isAr ? 'متبقي' : 'Remaining'}</span>
                   </div>
                 )}
               </div>
@@ -588,13 +579,12 @@ export function PlanUsagePanel() {
               ) : (
                 <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold pt-0.5 truncate">
                   <CheckCircle2 className="h-3 w-3 shrink-0" />
-                  <span className="truncate">مبيعات غير محدودة 🟢</span>
+                  <span className="truncate">{isAr ? 'مبيعات غير محدودة 🟢' : 'Unlimited Sales 🟢'}</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Features Checklist */}
           <div className="space-y-3 pt-2">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
               {t('planFeaturesTitle')}
@@ -624,7 +614,6 @@ export function PlanUsagePanel() {
             </div>
           </div>
 
-          {/* Info Note */}
           <div className="rounded-lg bg-muted/60 p-3 text-[11px] text-muted-foreground border">
             <span>
               {t('cycleNote', { period: usage?.year_month || '' })}
@@ -633,20 +622,18 @@ export function PlanUsagePanel() {
         </CardContent>
       </Card>
 
-      {/* Available Plans Section */}
       <div className="space-y-4 pt-4 border-t border-border">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-extrabold text-foreground flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-amber-500" />
-              باقات العضوية المتاحة والترقية (Available Plans)
+              {isAr ? 'باقات العضوية المتاحة والترقية (Available Plans)' : 'Available Subscription Plans & Upgrades'}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              اختر الباقة المناسبة لاحتياجات فريقك ودورة الفوترة (شهرياً أو سنوياً)
+              {isAr ? 'اختر الباقة المناسبة لاحتياجات فريقك ودورة الفوترة (شهرياً أو سنوياً)' : 'Choose the best plan for your team size and billing cycle (Monthly or Yearly)'}
             </p>
           </div>
 
-          {/* Monthly / Yearly Toggle Switch */}
           <div className="grid grid-cols-2 sm:flex items-center gap-1 p-1 bg-muted rounded-xl border border-border w-full sm:w-auto">
             <button
               type="button"
@@ -657,7 +644,7 @@ export function PlanUsagePanel() {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              📅 فوترة شهرية
+              {isAr ? '📅 فوترة شهرية' : '📅 Monthly Billing'}
             </button>
             <button
               type="button"
@@ -668,8 +655,10 @@ export function PlanUsagePanel() {
                   : 'text-amber-400 hover:text-amber-300'
               }`}
             >
-              <span>🎁 فوترة سنوية</span>
-              <span className="text-[10px] bg-slate-950/20 px-1.5 py-0.5 rounded font-mono hidden xs:inline">توفير</span>
+              <span>{isAr ? '🎁 فوترة سنوية' : '🎁 Yearly Billing'}</span>
+              <span className="text-[10px] bg-slate-950/20 px-1.5 py-0.5 rounded font-mono hidden xs:inline">
+                {isAr ? 'توفير' : 'Save'}
+              </span>
             </button>
           </div>
         </div>
@@ -702,16 +691,14 @@ export function PlanUsagePanel() {
                       : 'border border-border/80 bg-card hover:border-muted-foreground/30 hover:shadow-lg'
                 }`}
               >
-                {/* Popular Badge Banner */}
                 {p.is_popular && (
                   <div className="-mt-2 mb-4 flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/50 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 px-3 py-1.5 text-xs font-black text-amber-300 shadow-sm backdrop-blur-sm">
                     <Sparkles className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
-                    <span>الباقة الأكثر رواجاً ومبيعاً (Most Popular)</span>
+                    <span>{isAr ? 'الباقة الأكثر رواجاً ومبيعاً (Most Popular)' : 'Most Popular Plan 🔥'}</span>
                   </div>
                 )}
 
                 <div className="space-y-4 sm:space-y-5">
-                  {/* Card Header & Title */}
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-lg sm:text-xl font-black text-foreground tracking-tight">{p.name}</h4>
@@ -721,12 +708,11 @@ export function PlanUsagePanel() {
                     </div>
                     {isCurrent && (
                       <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1">
-                        باقتك الحالية ✓
+                        {isAr ? 'باقتك الحالية ✓' : 'Current Active Plan ✓'}
                       </Badge>
                     )}
                   </div>
 
-                  {/* Pricing Box */}
                   <div className="rounded-xl bg-muted/40 p-3 sm:p-3.5 border border-border/50">
                     <div className="flex items-baseline justify-between flex-wrap gap-2">
                       <div className="flex items-baseline gap-1.5 sm:gap-2 dir-ltr">
@@ -744,72 +730,70 @@ export function PlanUsagePanel() {
                             ${priceActive}
                           </span>
                         )}
-                        <span className="text-[11px] sm:text-xs font-medium text-muted-foreground dir-rtl">
-                          /{isYearly ? 'سنوياً' : 'شهرياً'}
+                        <span className="text-[11px] sm:text-xs font-medium text-muted-foreground">
+                          {isYearly ? (isAr ? '/سنوياً' : '/year') : (isAr ? '/شهرياً' : '/month')}
                         </span>
                       </div>
                       {hasDiscount && (
                         <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                          خصم خاص 🏷️
+                          {isAr ? 'خصم خاص 🏷️' : 'Special Offer 🏷️'}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Limits & Quotas Box */}
                   <div className="space-y-1.5 border-t border-border/50 pt-4 text-xs">
                     <div className="flex items-center justify-between rounded-lg bg-background/60 px-3 py-2 border border-border/40">
                       <span className="text-muted-foreground flex items-center gap-1.5">
                         <Users className="h-3.5 w-3.5 text-muted-foreground/70" />
-                        أعضاء الفريق:
+                        {isAr ? 'أعضاء الفريق:' : 'Team Members:'}
                       </span>
                       <span className="font-bold text-foreground">
-                        {p.max_users === -1 ? 'غير محدود ♾️' : p.max_users}
+                        {p.max_users === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : p.max_users}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg bg-background/60 px-3 py-2 border border-border/40">
                       <span className="text-muted-foreground flex items-center gap-1.5">
                         <UsersRound className="h-3.5 w-3.5 text-muted-foreground/70" />
-                        سقف جهات الاتصال:
+                        {isAr ? 'سقف جهات الاتصال:' : 'Contacts Limit:'}
                       </span>
                       <span className="font-bold text-foreground">
-                        {p.max_contacts === -1 ? 'غير محدود ♾️' : (p.max_contacts || 1000).toLocaleString()}
+                        {p.max_contacts === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (p.max_contacts || 1000).toLocaleString()}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg bg-background/60 px-3 py-2 border border-border/40">
                       <span className="text-muted-foreground flex items-center gap-1.5">
                         <MessageSquare className="h-3.5 w-3.5 text-muted-foreground/70" />
-                        الرسائل الشهرية:
+                        {isAr ? 'الرسائل الشهرية:' : 'Monthly Messages:'}
                       </span>
                       <span className="font-bold text-foreground">
-                        {p.max_messages_monthly === -1 ? 'غير محدود ♾️' : (p.max_messages_monthly || 1000).toLocaleString()}
+                        {p.max_messages_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (p.max_messages_monthly || 1000).toLocaleString()}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg bg-background/60 px-3 py-2 border border-border/40">
                       <span className="text-muted-foreground flex items-center gap-1.5">
                         <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground/70" />
-                        الطلبات والمبيعات:
+                        {isAr ? 'الطلبات والمبيعات:' : 'Orders & Sales:'}
                       </span>
                       <span className="font-bold text-foreground">
-                        {p.max_orders_monthly === -1 ? 'غير محدود ♾️' : (p.max_orders_monthly || 500).toLocaleString()}
+                        {p.max_orders_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (p.max_orders_monthly || 500).toLocaleString()}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg bg-background/60 px-3 py-2 border border-border/40">
                       <span className="text-muted-foreground flex items-center gap-1.5">
                         <Radio className="h-3.5 w-3.5 text-muted-foreground/70" />
-                        حملات البرودكاست:
+                        {isAr ? 'حملات البرودكاست:' : 'Broadcast Campaigns:'}
                       </span>
                       <span className="font-bold text-foreground">
-                        {p.max_broadcasts_monthly === -1 ? 'غير محدود ♾️' : (p.max_broadcasts_monthly || 50).toLocaleString()}
+                        {p.max_broadcasts_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (p.max_broadcasts_monthly || 50).toLocaleString()}
                       </span>
                     </div>
                   </div>
 
-                  {/* Features List */}
                   <div className="space-y-2 border-t border-border/50 pt-4 text-xs">
                     <div className="flex items-center gap-2.5">
                       {p.features?.ai_assistant ? (
@@ -818,7 +802,7 @@ export function PlanUsagePanel() {
                         <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
                       )}
                       <span className={p.features?.ai_assistant ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        مساعد الذكاء الاصطناعي (AI)
+                        {isAr ? 'مساعد الذكاء الاصطناعي (AI)' : 'Gemini AI Assistant'}
                       </span>
                     </div>
 
@@ -829,7 +813,7 @@ export function PlanUsagePanel() {
                         <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
                       )}
                       <span className={p.features?.automations ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        الأتمتة والردود الآلية
+                        {isAr ? 'الأتمتة والردود الآلية' : 'Automations & Auto-Replies'}
                       </span>
                     </div>
 
@@ -840,7 +824,7 @@ export function PlanUsagePanel() {
                         <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
                       )}
                       <span className={p.features?.flows_builder ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        منشئ مسارات العمل (Flows)
+                        {isAr ? 'منشئ مسارات العمل (Flows)' : 'Flows Builder'}
                       </span>
                     </div>
 
@@ -851,7 +835,7 @@ export function PlanUsagePanel() {
                         <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
                       )}
                       <span className={p.features?.telegram_bot ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        ربط بوت التلغرام للإشعارات
+                        {isAr ? 'ربط بوت التلغرام للإشعارات' : 'Telegram Bot Notifications'}
                       </span>
                     </div>
 
@@ -862,20 +846,19 @@ export function PlanUsagePanel() {
                         <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
                       )}
                       <span className={p.features?.excel_export ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        تصدير البيانات إلى Excel
+                        {isAr ? 'تصدير البيانات إلى Excel' : 'Excel Export'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Card Action Buttons */}
                 <div className="mt-6 pt-4 border-t border-border/50 space-y-2">
                   {isCurrent ? (
                     <Button
                       disabled
                       className="w-full text-xs font-bold bg-muted/60 text-muted-foreground border border-border/50 py-3 rounded-xl cursor-not-allowed"
                     >
-                      باقتك الحالية المفعلة ✓
+                      {isAr ? 'باقتك الحالية المفعلة ✓' : 'Current Active Plan ✓'}
                     </Button>
                   ) : p.price_monthly === 0 || p.slug === 'free' ? (
                     <Button
@@ -886,7 +869,7 @@ export function PlanUsagePanel() {
                       {upgradingPlanId === p.id ? (
                         <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                       ) : (
-                        'الانتقال للخطة المجانية (تفعيل مجاني) 🎁'
+                        isAr ? 'الانتقال للخطة المجانية (تفعيل مجاني) 🎁' : 'Switch to Free Plan 🎁'
                       )}
                     </Button>
                   ) : (
@@ -900,7 +883,7 @@ export function PlanUsagePanel() {
                           {upgradingPlanId === p.id && upgradingGateway === 'stripe' ? (
                             <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                           ) : (
-                            '💳 الدفع بطاقة بنكية (Visa / MasterCard)'
+                            isAr ? '💳 الدفع بطاقة بنكية (Visa / MasterCard)' : '💳 Pay with Card (Visa / MasterCard)'
                           )}
                         </Button>
                       )}
@@ -914,7 +897,7 @@ export function PlanUsagePanel() {
                           {upgradingPlanId === p.id && upgradingGateway === 'plisio' ? (
                             <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                           ) : (
-                            '🪙 الدفع كريبتو (USDT / Bitcoin)'
+                            isAr ? '🪙 الدفع كريبتو (USDT / Bitcoin)' : '🪙 Pay with Crypto (USDT / Bitcoin)'
                           )}
                         </Button>
                       )}

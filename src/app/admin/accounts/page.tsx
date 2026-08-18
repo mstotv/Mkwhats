@@ -37,6 +37,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { useLocale } from 'next-intl';
+
 interface AdminAccountRow {
   account_id: string;
   account_name: string;
@@ -59,6 +61,8 @@ interface PlanOption {
 }
 
 export default function AdminAccountsPage() {
+  const locale = useLocale();
+  const isAr = locale === 'ar';
   const [accounts, setAccounts] = useState<AdminAccountRow[]>([]);
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -239,10 +243,12 @@ export default function AdminAccountsPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            إدارة الشركات والحسابات (Tenants Directory)
+            {isAr ? 'إدارة الشركات والحسابات (Tenants Directory)' : 'Tenants & Accounts Directory'}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            الدخول بحساب الشركة لمساعدتهم في الإعداد، حظر/تفعيل الحسابات، تغيير كلمات المرور، وتعديل الباقات
+            {isAr
+              ? 'الدخول بحساب الشركة لمساعدتهم في الإعداد، حظر/تفعيل الحسابات، تغيير كلمات المرور، وتعديل الباقات'
+              : 'Log into tenant accounts for support, suspend/activate accounts, reset passwords, and update plans.'}
           </p>
         </div>
 
@@ -253,8 +259,8 @@ export default function AdminAccountsPage() {
           disabled={loading}
           className="border-border text-xs font-semibold"
         >
-          <RefreshCw className={`h-3.5 w-3.5 ms-1.5 ${loading ? 'animate-spin' : ''}`} />
-          تحديث القائمة
+          <RefreshCw className={`h-3.5 w-3.5 me-1.5 ${loading ? 'animate-spin' : ''}`} />
+          {isAr ? 'تحديث القائمة' : 'Refresh Directory'}
         </Button>
       </div>
 
@@ -263,15 +269,17 @@ export default function AdminAccountsPage() {
         <div className="rounded-2xl border border-amber-500/40 bg-card p-6 shadow-xl space-y-4">
           <div className="flex items-center justify-between border-b border-border pb-3">
             <h3 className="text-base font-bold text-foreground">
-              تغيير باقة شركة: <span className="text-amber-500">{changingAccount.account_name}</span>
+              {isAr ? 'تغيير باقة شركة:' : 'Change Plan for:'} <span className="text-amber-500">{changingAccount.account_name}</span>
             </h3>
             <Button variant="ghost" size="sm" onClick={() => setChangingAccount(null)} className="text-xs">
-              إلغاء
+              {isAr ? 'إلغاء' : 'Cancel'}
             </Button>
           </div>
 
           <div className="space-y-3 text-xs">
-            <label className="font-semibold text-foreground">اختر الباقة الجديدة للشركة:</label>
+            <label className="font-semibold text-foreground">
+              {isAr ? 'اختر الباقة الجديدة للشركة:' : 'Select New Plan:'}
+            </label>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {plans.map((p) => (
                 <div
@@ -295,7 +303,7 @@ export default function AdminAccountsPage() {
 
           <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button variant="outline" size="sm" onClick={() => setChangingAccount(null)}>
-              إلغاء
+              {isAr ? 'إلغاء' : 'Cancel'}
             </Button>
             <Button
               size="sm"
@@ -304,7 +312,7 @@ export default function AdminAccountsPage() {
               className="bg-amber-500 font-bold text-slate-950 hover:bg-amber-400"
             >
               {savingPlan ? <Loader2 className="h-4 w-4 animate-spin me-1.5" /> : null}
-              تأكيد تغيير الباقة
+              {isAr ? 'تأكيد تغيير الباقة' : 'Confirm Plan Change'}
             </Button>
           </div>
         </div>
@@ -316,24 +324,24 @@ export default function AdminAccountsPage() {
           <div className="flex items-center justify-between border-b border-border pb-3">
             <h3 className="text-base font-bold text-foreground flex items-center gap-2">
               <Key className="h-5 w-5 text-amber-500" />
-              تغيير كلمة المرور لمالك شركة: <span className="text-amber-500">{resettingAccount.account_name}</span>
+              {isAr ? 'تغيير كلمة المرور لمالك شركة:' : 'Reset Password for:'} <span className="text-amber-500">{resettingAccount.account_name}</span>
             </h3>
             <Button variant="ghost" size="sm" onClick={() => setResettingAccount(null)} className="text-xs">
-              إلغاء
+              {isAr ? 'إلغاء' : 'Cancel'}
             </Button>
           </div>
 
           <div className="space-y-3 text-xs">
             <p className="text-muted-foreground">
-              البريد المستهدف: <strong className="text-foreground font-mono">{resettingAccount.owner_email}</strong>
+              {isAr ? 'البريد المستهدف:' : 'Target Email:'} <strong className="text-foreground font-mono">{resettingAccount.owner_email}</strong>
             </p>
             <div className="space-y-1.5 max-w-md">
-              <label className="font-semibold text-foreground">كلمة المرور الجديدة</label>
+              <label className="font-semibold text-foreground">{isAr ? 'كلمة المرور الجديدة' : 'New Password'}</label>
               <div className="relative">
                 <Lock className="absolute start-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="أدخل كلمة مرور جديدة (مثلاً: Abc@123456)"
+                  placeholder={isAr ? 'أدخل كلمة مرور جديدة (مثلاً: Abc@123456)' : 'Enter new password (e.g. Abc@123456)'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="ps-9 bg-background border-border"
@@ -344,7 +352,7 @@ export default function AdminAccountsPage() {
 
           <div className="flex justify-end gap-3 border-t border-border pt-4">
             <Button variant="outline" size="sm" onClick={() => setResettingAccount(null)}>
-              إلغاء
+              {isAr ? 'إلغاء' : 'Cancel'}
             </Button>
             <Button
               size="sm"
@@ -353,7 +361,7 @@ export default function AdminAccountsPage() {
               className="bg-amber-500 font-bold text-slate-950 hover:bg-amber-400"
             >
               {resettingPass ? <Loader2 className="h-4 w-4 animate-spin me-1.5" /> : null}
-              تأكيد حفظ كلمة المرور
+              {isAr ? 'تأكيد حفظ كلمة المرور' : 'Confirm Save Password'}
             </Button>
           </div>
         </div>
@@ -365,7 +373,7 @@ export default function AdminAccountsPage() {
           <Search className="absolute start-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="البحث باسم الشركة أو بريد المالك..."
+            placeholder={isAr ? 'البحث باسم الشركة أو بريد المالك...' : 'Search company name or owner email...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="ps-9 bg-background border-border text-xs"
@@ -379,7 +387,7 @@ export default function AdminAccountsPage() {
             onClick={() => setStatusFilter('all')}
             className="text-xs font-semibold"
           >
-            الكل ({accounts.length})
+            {isAr ? 'الكل' : 'All'} ({accounts.length})
           </Button>
           <Button
             variant={statusFilter === 'active' ? 'default' : 'outline'}
@@ -387,7 +395,7 @@ export default function AdminAccountsPage() {
             onClick={() => setStatusFilter('active')}
             className="text-xs font-semibold"
           >
-            النشطة ({accounts.filter((a) => !a.is_suspended).length})
+            {isAr ? 'النشطة' : 'Active'} ({accounts.filter((a) => !a.is_suspended).length})
           </Button>
           <Button
             variant={statusFilter === 'suspended' ? 'default' : 'outline'}
@@ -395,7 +403,7 @@ export default function AdminAccountsPage() {
             onClick={() => setStatusFilter('suspended')}
             className="text-xs font-semibold text-red-400"
           >
-            المحظورة ({accounts.filter((a) => a.is_suspended).length})
+            {isAr ? 'المحظورة' : 'Suspended'} ({accounts.filter((a) => a.is_suspended).length})
           </Button>
         </div>
       </div>
@@ -405,26 +413,28 @@ export default function AdminAccountsPage() {
         {loading ? (
           <div className="flex h-64 items-center justify-center gap-2 text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
-            <span className="text-xs font-medium">جاري تحميل الشركات...</span>
+            <span className="text-xs font-medium">{isAr ? 'جاري تحميل الشركات...' : 'Loading accounts...'}</span>
           </div>
         ) : filteredAccounts.length === 0 ? (
           <div className="flex h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
             <Building2 className="h-8 w-8 text-muted-foreground/50" />
-            <p className="text-xs font-medium">لم يتم العثور على أي شركات تطابق نتائج البحث.</p>
+            <p className="text-xs font-medium">
+              {isAr ? 'لم يتم العثور على أي شركات تطابق نتائج البحث.' : 'No accounts match the search criteria.'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="text-start text-xs font-bold text-muted-foreground">اسم الشركة</TableHead>
-                  <TableHead className="text-start text-xs font-bold text-muted-foreground">مالك الحساب</TableHead>
-                  <TableHead className="text-start text-xs font-bold text-muted-foreground">الباقة الحالية</TableHead>
-                  <TableHead className="text-start text-xs font-bold text-muted-foreground">المستخدمون</TableHead>
-                  <TableHead className="text-start text-xs font-bold text-muted-foreground">الرسائل</TableHead>
-                  <TableHead className="text-start text-xs font-bold text-muted-foreground">حالة الحساب</TableHead>
-                  <TableHead className="text-start text-xs font-bold text-muted-foreground">تاريخ التسجيل</TableHead>
-                  <TableHead className="text-end text-xs font-bold text-muted-foreground">إجراءات التحكم</TableHead>
+                  <TableHead className="text-start text-xs font-bold text-muted-foreground">{isAr ? 'اسم الشركة' : 'Company Name'}</TableHead>
+                  <TableHead className="text-start text-xs font-bold text-muted-foreground">{isAr ? 'مالك الحساب' : 'Account Owner'}</TableHead>
+                  <TableHead className="text-start text-xs font-bold text-muted-foreground">{isAr ? 'الباقة الحالية' : 'Current Plan'}</TableHead>
+                  <TableHead className="text-start text-xs font-bold text-muted-foreground">{isAr ? 'المستخدمون' : 'Users'}</TableHead>
+                  <TableHead className="text-start text-xs font-bold text-muted-foreground">{isAr ? 'الرسائل' : 'Messages'}</TableHead>
+                  <TableHead className="text-start text-xs font-bold text-muted-foreground">{isAr ? 'حالة الحساب' : 'Status'}</TableHead>
+                  <TableHead className="text-start text-xs font-bold text-muted-foreground">{isAr ? 'تاريخ التسجيل' : 'Registered Date'}</TableHead>
+                  <TableHead className="text-end text-xs font-bold text-muted-foreground">{isAr ? 'إجراءات التحكم' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -457,16 +467,16 @@ export default function AdminAccountsPage() {
                     <TableCell className="text-start">
                       {acc.is_suspended ? (
                         <span className="inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 text-xs font-bold text-red-400">
-                          🛑 محظور
+                          🛑 {isAr ? 'محظور' : 'Suspended'}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-bold text-emerald-400">
-                          ✅ نشط
+                          ✅ {isAr ? 'نشط' : 'Active'}
                         </span>
                       )}
                     </TableCell>
                     <TableCell className="text-start text-xs text-muted-foreground">
-                      {new Date(acc.created_at).toLocaleDateString('ar-EG')}
+                      {new Date(acc.created_at).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}
                     </TableCell>
                     <TableCell className="text-end">
                       <DropdownMenu>
@@ -486,8 +496,12 @@ export default function AdminAccountsPage() {
                             <div className="flex items-center gap-2.5">
                               <LogIn className="h-4 w-4 text-blue-400 shrink-0" />
                               <div className="flex flex-col text-start">
-                                <span className="text-xs font-bold text-blue-400">الدخول لحساب الشركة</span>
-                                <span className="text-[10px] font-normal text-muted-foreground">تقديم الدعم الفني وتسهيل التكوين</span>
+                                <span className="text-xs font-bold text-blue-400">
+                                  {isAr ? 'الدخول لحساب الشركة' : 'Impersonate Account'}
+                                </span>
+                                <span className="text-[10px] font-normal text-muted-foreground">
+                                  {isAr ? 'تقديم الدعم الفني وتسهيل التكوين' : 'Provide support & assist setup'}
+                                </span>
                               </div>
                             </div>
                           </DropdownMenuItem>
@@ -499,8 +513,12 @@ export default function AdminAccountsPage() {
                             <div className="flex items-center gap-2.5">
                               <Key className="h-4 w-4 text-amber-400 shrink-0" />
                               <div className="flex flex-col text-start">
-                                <span className="text-xs font-bold text-amber-400">تغيير كلمة المرور</span>
-                                <span className="text-[10px] font-normal text-muted-foreground">تعيين كلمة مرور جديدة للمالك</span>
+                                <span className="text-xs font-bold text-amber-400">
+                                  {isAr ? 'تغيير كلمة المرور' : 'Reset Password'}
+                                </span>
+                                <span className="text-[10px] font-normal text-muted-foreground">
+                                  {isAr ? 'تعيين كلمة مرور جديدة للمالك' : 'Set a new password for owner'}
+                                </span>
                               </div>
                             </div>
                           </DropdownMenuItem>
@@ -515,8 +533,12 @@ export default function AdminAccountsPage() {
                             <div className="flex items-center gap-2.5">
                               <CreditCard className="h-4 w-4 text-amber-500 shrink-0" />
                               <div className="flex flex-col text-start">
-                                <span className="text-xs font-bold text-amber-500">تغيير الباقة والاشتراك</span>
-                                <span className="text-[10px] font-normal text-muted-foreground">ترقية أو تعديل خطة الاشتراك</span>
+                                <span className="text-xs font-bold text-amber-500">
+                                  {isAr ? 'تغيير الباقة والاشتراك' : 'Change Plan & Subscription'}
+                                </span>
+                                <span className="text-[10px] font-normal text-muted-foreground">
+                                  {isAr ? 'ترقية أو تعديل خطة الاشتراك' : 'Upgrade or modify subscription plan'}
+                                </span>
                               </div>
                             </div>
                           </DropdownMenuItem>
@@ -538,10 +560,14 @@ export default function AdminAccountsPage() {
                               )}
                               <div className="flex flex-col text-start">
                                 <span className="text-xs font-bold">
-                                  {acc.is_suspended ? 'رفع الحظر عن الحساب' : 'حظر الحساب فوراً'}
+                                  {acc.is_suspended
+                                    ? isAr ? 'رفع الحظر عن الحساب' : 'Reinstate Account'
+                                    : isAr ? 'حظر الحساب فوراً' : 'Suspend Account Immediately'}
                                 </span>
                                 <span className="text-[10px] font-normal text-muted-foreground">
-                                  {acc.is_suspended ? 'إعادة تفعيل صلاحيات الدخول' : 'إيقاف وتعطيل وصول العميل'}
+                                  {acc.is_suspended
+                                    ? isAr ? 'إعادة تفعيل صلاحيات الدخول' : 'Re-enable login access'
+                                    : isAr ? 'إيقاف وتعطيل وصول العميل' : 'Disable customer access'}
                                 </span>
                               </div>
                             </div>

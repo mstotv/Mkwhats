@@ -218,6 +218,11 @@ export function SettingsOverview({
             })}`,
     },
     {
+      section: 'support',
+      loading: false,
+      subtitle: 'WhatsApp · Telegram · Email 24/7',
+    },
+    {
       section: 'appearance',
       loading: false,
       subtitle: t('appearance', { mode: cap(mode), theme: themeName }),

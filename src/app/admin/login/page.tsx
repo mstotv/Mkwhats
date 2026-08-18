@@ -8,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { ShieldAlert, Lock, Mail, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { ModeToggle } from '@/components/layout/mode-toggle';
+import { LanguageSwitcher } from '@/components/language-switcher';
+
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -63,7 +66,12 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background font-sans text-foreground flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background font-sans text-foreground flex flex-col items-center justify-center p-4 relative">
+      <div className="absolute top-4 end-4 flex items-center gap-2">
+        <ModeToggle />
+        <LanguageSwitcher />
+      </div>
+
       <div className="w-full max-w-md space-y-6 rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-xl">
         <div className="text-center space-y-2">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20">

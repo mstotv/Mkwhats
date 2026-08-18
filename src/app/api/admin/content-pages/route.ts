@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { slug, title, content_html, is_published } = body || {}
+    const { slug, title, title_en, content_html, content_html_en, is_published } = body || {}
 
     if (!slug || !title) {
       return NextResponse.json({ error: 'Slug and title are required' }, { status: 400 })
@@ -81,7 +81,9 @@ export async function POST(request: NextRequest) {
       .insert({
         slug: formattedSlug,
         title: String(title).trim(),
+        title_en: title_en ? String(title_en).trim() : null,
         content_html: content_html ? String(content_html) : '',
+        content_html_en: content_html_en ? String(content_html_en) : null,
         is_published: is_published !== undefined ? Boolean(is_published) : true,
       })
       .select('*')

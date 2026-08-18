@@ -1,9 +1,9 @@
 import { getRequestConfig } from 'next-intl/server';
 import { cookies, headers } from 'next/headers';
 
-export const SUPPORTED_LOCALES = ['ar', 'en'] as const;
+export const SUPPORTED_LOCALES = ['en', 'ar'] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-export const DEFAULT_LOCALE: SupportedLocale = 'ar';
+export const DEFAULT_LOCALE: SupportedLocale = 'en';
 
 export default getRequestConfig(async () => {
   let locale: SupportedLocale = DEFAULT_LOCALE;
