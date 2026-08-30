@@ -22,6 +22,10 @@
     - صفحة إدارة المواعيد الفاخرة [`/appointments`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/(dashboard)/appointments/page.tsx) مع بطاقات إحصائية، فلاتر الحالات، بحث سريع، وتغيير الحالات، ومودال إضافة موعد يدوي.
     - إضافة رابط المواعيد بالقائمة الجانبية [`Sidebar`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/layout/sidebar.tsx) مع أيقونة Calendar والتدويل الكامل.
 
+  - **تحسينات البناء والأداء للبنية التحتية (`Dockerfile & Deployment`)**:
+    - تحسين بناء Next.js / Turbopack في حاويات Docker داخل Coolify عبر تحديد `NEXT_CPU_COUNT=1` و `NEXT_BUILD_WORKERS=1` وضبط استهلاك الذاكرة الآمن `NODE_OPTIONS="--max-old-space-size=1536"` لمنع استنزاف ذاكرة ومعالج السيرفر (OOM Lockup) وسرعة البناء.
+    - إضافة `export const dynamic = 'force-dynamic'` في مسار التذاكر غير المقروءة `/api/support/unread-count` وحماية `process.version` في `src/instrumentation.ts` لتفادي أخطاء الـ Dynamic Server Usage أثناء التجميع.
+
 - ✅ **بوابة الدفع المحلي والأوفلاين وإعلانات التفعيل التلقائية (Local Offline Payment Gateway & Automated Bilingual Presets System)**:
   - **قواعد البيانات والبنية التحتيّة (`supabase/migrations/074` & `075`)**:
     - مايقريشن `074_offline_payment_methods_and_submissions.sql`: إنشاء جدول `offline_payment_methods` لطرق الدفع البنكية والمحافظ الرقمية (زين كاش، STC Pay، بنك الراجحي، فودافون كاش) وجدول `offline_payment_submissions` لاستلام إثباتات ووصلات العملاء المحولة مع حماية RLS و standard `account_id` CASCADE.
