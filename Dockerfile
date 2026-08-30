@@ -15,7 +15,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NEXT_CPU_COUNT=1
+ENV NEXT_BUILD_WORKERS=1
+ENV NODE_OPTIONS="--max-old-space-size=1536"
 
 # Accept environment variables at build time if provided
 ARG NEXT_PUBLIC_SUPABASE_URL
