@@ -26,7 +26,7 @@ export async function register() {
     '[STARTUP] App server started',
     '[STARTUP] Commit : ' + commit,
     '[STARTUP] Built  : ' + buildTime,
-    '[STARTUP] Node   : ' + process.version,
+    '[STARTUP] Node   : ' + (typeof process !== 'undefined' ? process.version : 'unknown'),
     '[STARTUP] Env    : ' + (process.env.NODE_ENV ?? 'unknown'),
     '[STARTUP] ========================================',
   ]

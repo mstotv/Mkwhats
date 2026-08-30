@@ -3,8 +3,8 @@ import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { createServiceClient } from '@/lib/supabase/service'
 
-// Cache headers: revalidate every 30 seconds
-export const revalidate = 30
+// Dynamic route because it reads cookies for session
+export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
