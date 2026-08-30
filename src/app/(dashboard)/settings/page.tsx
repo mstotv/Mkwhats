@@ -21,6 +21,7 @@ import { ApiKeysSettings } from '@/components/settings/api-keys-settings';
 import { PlanUsagePanel } from '@/components/settings/plan-usage-panel';
 import { SupportPanel } from '@/components/settings/support-panel';
 import { TelegramSettingsPanel } from '@/components/settings/telegram-settings-panel';
+import { AppointmentsSettings } from '@/components/settings/appointments-settings';
 import {
   resolveSection,
   type SettingsSection,
@@ -79,6 +80,7 @@ function SettingsPageInner() {
     appearance: <AppearancePanel />,
     plan: <PlanUsagePanel />,
     support: <SupportPanel />,
+    appointments: <AppointmentsSettings />,
     whatsapp: <WhatsAppConfig />,
     telegram: <TelegramSettingsPanel />,
     templates: <TemplateManager />,

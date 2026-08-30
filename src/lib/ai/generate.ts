@@ -3,6 +3,7 @@ import {
   type AiConfig,
   type AiUsage,
   type ChatMessage,
+  type ExtractedAppointmentData,
   type ExtractedOrderData,
   type GenerateResult,
 } from './types'
@@ -17,11 +18,10 @@ export interface GenerateArgs {
   systemPrompt: string
   /** Recent conversation turns, oldest first. */
   messages: ChatMessage[]
-  /** When true, `parseGeneration` will attempt to extract the |||{...}|||
-   *  JSON block from the model's reply. Pass true only in auto_reply mode
-   *  when order-collection is active — avoids regex overhead on normal
-   *  replies. Defaults to false. */
+  /** When true, `parseGeneration` will attempt to extract the order JSON block. */
   orderMode?: boolean
+  /** When true, `parseGeneration` will attempt to extract the appointment JSON block. */
+  appointmentMode?: boolean
 }
 
 /**
@@ -30,7 +30,7 @@ export interface GenerateArgs {
  * of the raw text. Throws `AiError` on any provider/network failure.
  */
 export async function generateReply(args: GenerateArgs): Promise<GenerateResult> {
-  const { config, systemPrompt, messages, orderMode = false } = args
+  const { config, systemPrompt, messages, orderMode = false, appointmentMode = false } = args
   const timeoutMs = aiRequestTimeoutMs()
   const providerArgs = {
     apiKey: config.apiKey,
@@ -58,27 +58,13 @@ export async function generateReply(args: GenerateArgs): Promise<GenerateResult>
       })
   }
 
-  return parseGeneration(result.text, result.usage, orderMode)
+  return parseGeneration(result.text, result.usage, orderMode, appointmentMode)
 }
 
 /**
- * Attempt to parse the |||{...}||| JSON block the model embeds in its
- * reply when order-collection mode is active.
- *
- * Extraction strategy: find the FIRST occurrence of ||| and the LAST
- * occurrence of |||, then JSON.parse() everything in between. This is
- * more robust than a non-greedy regex because:
- *   - regex `\{[\s\S]*?\}` can in theory stop at the wrong `}` if the
- *     engine backtracks in an unexpected way on very large payloads.
- *   - indexOf/lastIndexOf always finds the outermost delimiters, so any
- *     nesting depth (objects inside extracted, arrays, escaped chars) is
- *     handled by the JSON parser rather than the regex engine.
- *
- * Returns null on: no delimiters found, only one delimiter, or any
- * JSON.parse failure. Callers treat null as "nothing extracted this
- * turn" and continue; the customer reply (text) is still sent.
+ * Attempt to parse raw JSON from |||...||| delimiters safely.
  */
-export function tryParseOrderBlock(raw: string): ExtractedOrderData | null {
+function parseRawJsonBlock(raw: string): Record<string, unknown> | null {
   const startIdx = raw.indexOf('|||')
   if (startIdx === -1) return null
 
@@ -88,32 +74,38 @@ export function tryParseOrderBlock(raw: string): ExtractedOrderData | null {
   if (endIdx > startIdx) {
     jsonStr = raw.slice(startIdx + 3, endIdx).trim()
   } else {
-    // Unclosed ||| block (e.g. model output got truncated mid-JSON)
     jsonStr = raw.slice(startIdx + 3).trim()
   }
 
-  // Attempt 1: Direct JSON parse
+  // Attempt 1: Direct parse
   try {
-    const parsed = JSON.parse(jsonStr) as Record<string, unknown>
-    return buildExtractedOrderData(parsed)
+    return JSON.parse(jsonStr) as Record<string, unknown>
   } catch {
-    // Attempt 2: Rescue unclosed JSON by appending missing quotes/closing braces
+    // Attempt 2: Rescue unclosed JSON
     const suffixes = ['}', '"}', '"}}', '"}}}', 'false}', 'false}}', 'null}']
     for (const suffix of suffixes) {
       try {
-        const parsed = JSON.parse(jsonStr + suffix) as Record<string, unknown>
-        return buildExtractedOrderData(parsed)
+        return JSON.parse(jsonStr + suffix) as Record<string, unknown>
       } catch {
-        // try next suffix
+        // continue
       }
     }
-    console.warn('[order-collection] model returned a malformed or truncated JSON block — skipping extraction for this turn')
     return null
   }
 }
 
+export function tryParseOrderBlock(raw: string): ExtractedOrderData | null {
+  const parsed = parseRawJsonBlock(raw)
+  if (!parsed) return null
+  return buildExtractedOrderData(parsed)
+}
+
 function buildExtractedOrderData(parsed: Record<string, unknown>): ExtractedOrderData | null {
   if (!parsed || typeof parsed !== 'object') return null
+  // Only treat as order data if it has extracted or new_order or order-related fields
+  if (!('extracted' in parsed) && !('new_order' in parsed) && !('confirmed' in parsed && !('appointment' in parsed))) {
+    return null
+  }
   return {
     extracted:
       typeof parsed.extracted === 'object' &&
@@ -126,26 +118,37 @@ function buildExtractedOrderData(parsed: Record<string, unknown>): ExtractedOrde
   }
 }
 
+export function tryParseAppointmentBlock(raw: string): ExtractedAppointmentData | null {
+  const parsed = parseRawJsonBlock(raw)
+  if (!parsed || typeof parsed !== 'object') return null
+
+  const apptObj = (parsed.appointment as Record<string, unknown>) || parsed
+  if (!apptObj || typeof apptObj !== 'object') return null
+
+  if (!('date_time' in apptObj) && !('service_name' in apptObj) && !('cancel_appointment' in apptObj)) {
+    return null
+  }
+
+  return {
+    customer_name: typeof apptObj.customer_name === 'string' ? apptObj.customer_name : undefined,
+    service_name: typeof apptObj.service_name === 'string' ? apptObj.service_name : undefined,
+    date_time: typeof apptObj.date_time === 'string' ? apptObj.date_time : undefined,
+    confirmed: apptObj.confirmed === true,
+    cancel_appointment: apptObj.cancel_appointment === true,
+  }
+}
+
 /**
- * Split the raw model output into `{ text, handoff, extracted, usage }`.
- *
- * Stripping order:
- *   1. Remove the |||{...}||| block (order data) — it must never appear
- *      in the customer-facing text. If the block is unclosed (only one |||
- *      present), strips EVERYTHING from ||| to the end of string so
- *      unclosed JSON never leaks to the customer.
- *   2. Remove any residual ||| markers or English meta-thinking lines.
- *   3. Remove the [[HANDOFF]] sentinel.
- *   4. Trim whitespace.
+ * Split the raw model output into `{ text, handoff, extracted, appointmentData, usage }`.
  */
 export function parseGeneration(
   raw: string,
   usage: AiUsage | null = null,
   orderMode = false,
+  appointmentMode = false,
 ): GenerateResult {
-  // Step 1: extract (and remove) the order JSON block before any other
-  // processing. tryParseOrderBlock() is safe — returns null on any error.
   const extracted = orderMode ? tryParseOrderBlock(raw) : null
+  const appointmentData = appointmentMode ? tryParseAppointmentBlock(raw) : null
 
   // Strip the block from the text unconditionally.
   let withoutBlock = raw
@@ -153,26 +156,23 @@ export function parseGeneration(
   if (blockStart !== -1) {
     const blockEnd = raw.lastIndexOf('|||')
     if (blockEnd > blockStart) {
-      // Complete block between blockStart and blockEnd
       withoutBlock = raw.slice(0, blockStart) + raw.slice(blockEnd + 3)
     } else {
-      // UNCLOSED ||| block (e.g. truncated mid-JSON) -> strip everything from blockStart to end!
       withoutBlock = raw.slice(0, blockStart)
     }
   }
 
-  // Step 2: Clean up any lingering ||| artifacts or meta commentary
   withoutBlock = withoutBlock
     .replace(/\|\|\|[\s\S]*/g, '')
     .replace(/(?:Let's|Let us|No preamble|Here is the JSON|Formatting JSON)[\s\S]*/gi, '')
 
-  console.log('[DIAG][parseGeneration] orderMode:', orderMode, '| raw contains|||:', raw.includes('|||'), '| withoutBlock contains|||:', withoutBlock.includes('|||'), '| extracted:', JSON.stringify(extracted))
-
-  // Step 3: detect and strip the handoff sentinel.
   const handoff = withoutBlock.includes(HANDOFF_SENTINEL)
   const text = withoutBlock.split(HANDOFF_SENTINEL).join('').trim()
 
-  console.log('[DIAG][parseGeneration] final text len:', text.length, '| preview:', JSON.stringify(text.slice(0, 100)))
+  const res: GenerateResult = { text, handoff, usage, extracted }
+  if (appointmentMode) {
+    res.appointmentData = appointmentData
+  }
 
-  return { text, handoff, usage, extracted }
+  return res
 }

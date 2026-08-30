@@ -76,6 +76,18 @@ export function buildSystemPrompt(args: {
      *  the order summary and ask for confirmation. */
     readyToConfirm: boolean
   }
+  /**
+   * Appointment booking context. When provided (auto_reply mode only),
+   * the model is instructed to collect appointment details (service, date, time)
+   * within business hours and produce an appointment JSON block.
+   */
+  appointmentContext?: {
+    formattedBusinessHours: string
+    timezone: string
+    slotDurationMinutes: number
+    serviceLabel: string
+    currentDateTimeLocal: string
+  }
 }): string {
   const { userPrompt, mode, knowledge } = args
   const parts: string[] = [
@@ -145,6 +157,36 @@ export function buildSystemPrompt(args: {
         `Still needed (ask for the FIRST one only, do not ask for all at once):\n${remaining}\n\nAsk the customer for: "${next.field_label}"${choicesHint}. In your JSON "extracted" object, use exact key "${next.field_key}".`
       )
     }
+  }
+
+  // ── Appointment-booking instructions (auto_reply only) ─────────
+  if (mode === 'auto_reply' && args.appointmentContext) {
+    const {
+      formattedBusinessHours,
+      timezone,
+      slotDurationMinutes,
+      serviceLabel,
+      currentDateTimeLocal,
+    } = args.appointmentContext
+
+    parts.push(
+      'APPOINTMENT BOOKING MODE IS ACTIVE.\n' +
+      'You can schedule and confirm customer appointments.\n' +
+      `Current local time is: ${currentDateTimeLocal} (${timezone}).\n` +
+      `Slot duration: ${slotDurationMinutes} minutes. Service label: "${serviceLabel}".\n\n` +
+      `Business Hours:\n${formattedBusinessHours}\n\n` +
+      'RULES FOR APPOINTMENT BOOKING:\n' +
+      '1. If the customer asks to book an appointment or mentions a date/time:\n' +
+      '   - Check if their requested date & time is within the Business Hours shown above.\n' +
+      '   - If the requested day is closed or outside hours, politely inform them in Arabic, state the working hours, and suggest an alternative.\n' +
+      '   - Ask for customer name and desired service if not provided.\n' +
+      '   - Present the summary (Date, Time, Service, Customer Name) and ask for confirmation.\n' +
+      '2. In appointment mode, whenever an appointment date/time is discussed or confirmed, append an appointment JSON block at the VERY END on a new line in this format:\n' +
+      '|||{"appointment": {"customer_name": "Name", "service_name": "Service", "date_time": "YYYY-MM-DD HH:mm", "confirmed": false}}|||\n' +
+      '- "date_time": format as standard "YYYY-MM-DD HH:mm" in the business local timezone.\n' +
+      '- "confirmed": set to true ONLY when the customer explicitly agrees/confirms the appointment summary.\n' +
+      'Write the Arabic message first, then append the single-line JSON block at the end.'
+    )
   }
 
   if (userPrompt && userPrompt.trim()) {

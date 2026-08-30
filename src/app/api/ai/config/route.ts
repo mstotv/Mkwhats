@@ -176,6 +176,7 @@ export async function POST(request: Request) {
           handoffAgentId: null,
           embeddingsApiKey: null,
           orderCollectionEnabled: false,
+          appointmentsEnabled: false,
         })
       } catch (err) {
         const errMsg = err instanceof AiError ? err.message : 'تعذّر التواصل مع المزود'

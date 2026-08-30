@@ -1,4 +1,5 @@
 import {
+  Calendar,
   Coins,
   FileText,
   Headphones,
@@ -23,6 +24,7 @@ export const SETTINGS_SECTIONS = [
   'appearance',
   'plan',
   'support',
+  'appointments',
   'whatsapp',
   'telegram',
   'templates',
@@ -52,6 +54,7 @@ export const SECTION_META: Record<SettingsSection, SectionMeta> = {
   appearance: { id: 'appearance', label: 'Appearance', icon: Palette, group: 'account' },
   plan: { id: 'plan', label: 'Plan & Usage', icon: Sparkles, group: 'account' },
   support: { id: 'support', label: 'Contact Support', icon: Headphones, group: 'account' },
+  appointments: { id: 'appointments', label: 'Appointments', icon: Calendar, group: 'workspace' },
   whatsapp: { id: 'whatsapp', label: 'WhatsApp', icon: PlugZap, group: 'workspace' },
   telegram: { id: 'telegram', label: 'Telegram Bot', icon: Send, group: 'workspace' },
   templates: { id: 'templates', label: 'Templates', icon: FileText, group: 'workspace' },

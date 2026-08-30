@@ -60,6 +60,21 @@ export interface AiConfig {
    *  account: it injects the order form fields into the system prompt
    *  and parses a structured JSON block from every model reply. */
   orderCollectionEnabled: boolean
+  /** When true the auto-reply bot enters appointment-booking mode for this
+   *  account: it injects business hours and booking rules into the system
+   *  prompt and validates slot availability. */
+  appointmentsEnabled: boolean
+}
+
+/**
+ * Parsed output for appointment bookings extracted from |||{...}||| JSON block.
+ */
+export interface ExtractedAppointmentData {
+  customer_name?: string
+  service_name?: string
+  date_time?: string // ISO or YYYY-MM-DD HH:mm
+  confirmed: boolean
+  cancel_appointment?: boolean
 }
 
 /** A single conversation turn in the shape both providers accept. */
@@ -99,6 +114,10 @@ export interface GenerateResult {
    * block was absent / malformed (safe fallback — text still delivered).
    */
   extracted: ExtractedOrderData | null
+  /**
+   * Structured appointment data extracted in appointment mode.
+   */
+  appointmentData?: ExtractedAppointmentData | null
 }
 
 /**

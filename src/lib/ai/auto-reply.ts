@@ -16,6 +16,11 @@ import {
   loadOrderFormFields,
   upsertOrderFields,
 } from './order-collection'
+import {
+  loadAppointmentContext,
+  processAppointmentAction,
+  type AppointmentContext,
+} from './appointment-collection'
 import { engineSendText } from '@/lib/flows/meta-send'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
@@ -183,6 +188,13 @@ export async function dispatchInboundToAiReply(
     }
     // ── End order-collection setup ─────────────────────────────────
 
+    // ── Appointment-booking mode setup ─────────────────────────────
+    let appointmentContext: AppointmentContext | null = null
+    if (config.appointmentsEnabled) {
+      appointmentContext = await loadAppointmentContext(db, accountId)
+    }
+    // ── End appointment setup ──────────────────────────────────────
+
     // Ground the reply in the account's knowledge base (best-effort).
     const knowledge = await retrieveKnowledge(
       db,
@@ -195,8 +207,7 @@ export async function dispatchInboundToAiReply(
       userPrompt: config.systemPrompt,
       mode: 'auto_reply',
       knowledge,
-      // Pass orderContext only when order mode is active AND we have a
-      // live order. Undefined → buildSystemPrompt skips the order block.
+      // Pass orderContext only when order mode is active AND we have a live order.
       ...(orderContext
         ? {
             orderContext: {
@@ -206,21 +217,34 @@ export async function dispatchInboundToAiReply(
             },
           }
         : {}),
+      // Pass appointmentContext only when appointment mode is active
+      ...(appointmentContext
+        ? {
+            appointmentContext: {
+              formattedBusinessHours: appointmentContext.formattedBusinessHours,
+              timezone: appointmentContext.settings.timezone || 'Asia/Baghdad',
+              slotDurationMinutes: appointmentContext.settings.slot_duration_minutes || 60,
+              serviceLabel: appointmentContext.settings.service_label || 'الخدمة',
+              currentDateTimeLocal: appointmentContext.currentDateTimeLocal,
+            },
+          }
+        : {}),
     })
 
     let text: string
     let handoff: boolean
     let usage: Awaited<ReturnType<typeof generateReply>>['usage']
     let extracted: Awaited<ReturnType<typeof generateReply>>['extracted']
+    let appointmentData: Awaited<ReturnType<typeof generateReply>>['appointmentData']
 
     try {
-      ;({ text, handoff, usage, extracted } = await generateReply({
+      ;({ text, handoff, usage, extracted, appointmentData } = await generateReply({
         config,
         systemPrompt,
         messages,
-        // Tell parseGeneration to attempt JSON block extraction only when
-        // we're in order mode — avoids regex overhead on normal replies.
+        // Tell parseGeneration to attempt JSON block extraction only when active
         orderMode: config.orderCollectionEnabled && !!orderContext,
+        appointmentMode: config.appointmentsEnabled && !!appointmentContext,
       }))
     } catch (aiErr) {
       // The LLM call failed (rate limit, network error, bad API key, etc.).
@@ -345,6 +369,36 @@ export async function dispatchInboundToAiReply(
       }
     }
     // ── End order processing ───────────────────────────────────────
+
+    // ── Process appointment extraction (appointment mode only) ─────
+    if (appointmentContext && appointmentData) {
+      console.log('[DIAG][ai auto-reply] appointment processing check | data:', JSON.stringify(appointmentData))
+      try {
+        const { data: contactRow } = await db
+          .from('contacts')
+          .select('phone, name')
+          .eq('id', contactId)
+          .maybeSingle()
+
+        const contactPhone = contactRow?.phone || ''
+        const custName = appointmentData.customer_name || contactRow?.name || 'عميل واتساب'
+
+        await processAppointmentAction(
+          db,
+          accountId,
+          conversationId,
+          contactId,
+          contactPhone,
+          {
+            ...appointmentData,
+            customer_name: custName,
+          }
+        )
+      } catch (apptErr) {
+        console.error('[ai auto-reply] processAppointmentAction error:', apptErr)
+      }
+    }
+    // ── End appointment processing ──────────────────────────────────
 
     // Atomically claim a reply slot: the cap check + increment happen in
     // one UPDATE, so concurrent inbounds can never overshoot the cap. If

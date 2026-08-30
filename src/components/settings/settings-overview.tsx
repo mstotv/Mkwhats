@@ -164,6 +164,11 @@ export function SettingsOverview({
       subtitle: 'عرض تفاصيل الخطة والرصيد الشهري',
     },
     {
+      section: 'appointments',
+      loading: false,
+      subtitle: 'ساعات العمل والحجز بالذكاء الاصطناعي',
+    },
+    {
       section: 'whatsapp',
       loading: whatsappLoading,
       subtitle: !whatsapp?.configured ? (

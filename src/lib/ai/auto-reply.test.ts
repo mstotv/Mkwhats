@@ -95,6 +95,7 @@ function aiConfig(overrides: Partial<AiConfig> = {}): AiConfig {
     handoffAgentId: null,
     embeddingsApiKey: null,
     orderCollectionEnabled: false,
+    appointmentsEnabled: false,
     ...overrides,
   }
 }

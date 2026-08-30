@@ -1,6 +1,24 @@
-# حالة المشروع - آخر تحديث: [18/8/2026]
+# حالة المشروع - آخر تحديث: [30/8/2026]
 
 ## آخر شي خلص وشغال 100%
+
+- ✅ **نظام حجز وإدارة المواعيد المستقل بالذكاء الاصطناعي (AI Automated Appointments System - Phase 1)**:
+  - **قواعد البيانات ودوال التحقق (`supabase/migrations/076` & `077`)**:
+    - مايقريشن `076_appointments_core.sql`: إنشاء جدول `business_hours` (أيام وساعات العمل 0..6)، جدول `appointment_settings` (المدة الافتراضية، المنطقة الزمنية `timezone` الافتراضية `Asia/Baghdad`، رسائل التأكيد وتسمية الخدمة)، وجدول `appointments` (معرف المحادثة والعميل والخدمة والوقت المخزن بـ UTC وحالات pending/confirmed/cancelled/no_show)، ومفتاح `appointments_enabled` بجدول `ai_configs` مع حماية RLS عبر `is_account_member(account_id)`.
+    - مايقريشن `077_appointments_availability_fn.sql`: دالة SQL `check_slot_availability(p_account_id, p_requested_utc, p_exclude_id)` للتحقق الذري من ساعات وأيام العمل والأيام المغلقة ومنع تداخل المواعيد (Overlap check عبر `tstzrange`).
+  - **طبقة الخدمات والـ API Routes**:
+    - مسارات إدارة المواعيد: `/api/appointments` (GET, POST, PATCH, DELETE)، مسار فحص التوفر `/api/appointments/availability`، ومسارات إعدادات ساعات العمل `/api/account/business-hours` وإعدادات المواعيد `/api/account/appointment-settings`.
+    - موديول الخدمات المساعدة [`src/lib/appointments/appointment-service.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/appointments/appointment-service.ts) والأنواع [`types.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/appointments/types.ts).
+  - **الدمج الذكي مع محرك الذكاء الاصطناعي (Independent AI Context & Auto-Reply Engine)**:
+    - فصل كامل ومستقل 100% عن نظام جمع الطلبات `order_collection` دون أي تداخل في الحالة (State) أو الـ JSON block.
+    - حقن `appointmentContext` في الـ System Prompt بالمنطقة الزمنية المحلية وتنسيق ساعات العمل.
+    - استخراج وحجز المواعيد آلياً عبر الـ JSON Block `{"appointment": {...}}` مع التحقق التلقائي من التوفر وتأكيد الموعد فورياً.
+  - **منظومة إشعارات تيليقرام الآلية للمواعيد (Telegram Appointment Notifications)**:
+    - دالة `sendTelegramAppointmentNotification` بـ [`src/lib/telegram/send-notification.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/telegram/send-notification.ts) لإرسال إشعار فوري منسق بـ HTML عند تأكيد أي موعد جديد يتضمن اسم العميل، الهاتف، الخدمة، والوقت بتوقيت الحساب المحلي.
+  - **واجهة الإعدادات ولوحة التحكم (Settings & Dashboard Appointments Page)**:
+    - واجهة إعدادات مخصصة بـ Settings → Appointments ([`AppointmentsSettings`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/appointments-settings.tsx)) لضبط مفتاح الذكاء الاصطناعي، مدة الموعد، التايم زون، وجدول أوقات العمل لكل يوم.
+    - صفحة إدارة المواعيد الفاخرة [`/appointments`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/(dashboard)/appointments/page.tsx) مع بطاقات إحصائية، فلاتر الحالات، بحث سريع، وتغيير الحالات، ومودال إضافة موعد يدوي.
+    - إضافة رابط المواعيد بالقائمة الجانبية [`Sidebar`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/layout/sidebar.tsx) مع أيقونة Calendar والتدويل الكامل.
 
 - ✅ **بوابة الدفع المحلي والأوفلاين وإعلانات التفعيل التلقائية (Local Offline Payment Gateway & Automated Bilingual Presets System)**:
   - **قواعد البيانات والبنية التحتيّة (`supabase/migrations/074` & `075`)**:
