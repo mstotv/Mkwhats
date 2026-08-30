@@ -47,6 +47,9 @@ export async function GET() {
       timezone: 'Asia/Baghdad',
       booking_confirmation_msg: 'تم تأكيد موعدك بنجاح! نحن بانتظارك. ✨',
       service_label: 'الخدمة',
+      reminder_enabled: false,
+      reminder_minutes_before: 60,
+      reminder_message: 'مرحباً {الاسم} 🌟\nنود تذكيرك بموعدك لخدمة {الخدمة} اليوم الساعة {الوقت}.\nنتطلع لرؤيتك! 😊',
     };
 
     const appointmentsEnabled = Boolean(aiConfigRes.data?.appointments_enabled);
@@ -91,6 +94,9 @@ export async function PUT(request: Request) {
       timezone,
       booking_confirmation_msg,
       service_label,
+      reminder_enabled,
+      reminder_minutes_before,
+      reminder_message,
       appointments_enabled,
     } = body;
 
@@ -111,6 +117,15 @@ export async function PUT(request: Request) {
     }
     if (service_label !== undefined) {
       settingsPayload.service_label = service_label;
+    }
+    if (reminder_enabled !== undefined) {
+      settingsPayload.reminder_enabled = Boolean(reminder_enabled);
+    }
+    if (reminder_minutes_before !== undefined) {
+      settingsPayload.reminder_minutes_before = Math.max(5, parseInt(reminder_minutes_before, 10) || 60);
+    }
+    if (reminder_message !== undefined) {
+      settingsPayload.reminder_message = reminder_message;
     }
 
     const { data: updatedSettings, error: settingsErr } = await service

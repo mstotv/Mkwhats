@@ -20,6 +20,9 @@ export interface AppointmentSettings {
   timezone: string;
   booking_confirmation_msg: string | null;
   service_label: string | null;
+  reminder_enabled?: boolean;
+  reminder_minutes_before?: number;
+  reminder_message?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -35,6 +38,7 @@ export interface Appointment {
   scheduled_at: string; // ISO UTC string
   duration_minutes: number;
   status: AppointmentStatus;
+  reminder_sent_at?: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

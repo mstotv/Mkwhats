@@ -83,6 +83,13 @@ export function AppointmentsSettings() {
   const [serviceLabel, setServiceLabel] = useState("الخدمة");
   const [confirmationMsg, setConfirmationMsg] = useState("");
 
+  // Reminder state
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderMinutesBefore, setReminderMinutesBefore] = useState(60);
+  const [reminderMessage, setReminderMessage] = useState(
+    "مرحباً {الاسم} 🌟\nنود تذكيرك بموعدك لخدمة {الخدمة} اليوم الساعة {الوقت}.\nنتطلع لرؤيتك! 😊"
+  );
+
   // Business hours state (0..6)
   const [businessHours, setBusinessHours] = useState<BusinessHour[]>([]);
 
@@ -103,6 +110,11 @@ export function AppointmentsSettings() {
           setTimezone(sData.settings.timezone || "Asia/Baghdad");
           setServiceLabel(sData.settings.service_label || "الخدمة");
           setConfirmationMsg(sData.settings.booking_confirmation_msg || "");
+          setReminderEnabled(Boolean(sData.settings.reminder_enabled));
+          setReminderMinutesBefore(sData.settings.reminder_minutes_before || 60);
+          if (sData.settings.reminder_message) {
+            setReminderMessage(sData.settings.reminder_message);
+          }
         }
       }
 
@@ -136,6 +148,9 @@ export function AppointmentsSettings() {
           timezone,
           service_label: serviceLabel,
           booking_confirmation_msg: confirmationMsg,
+          reminder_enabled: reminderEnabled,
+          reminder_minutes_before: reminderMinutesBefore,
+          reminder_message: reminderMessage,
         }),
       });
 
@@ -338,6 +353,126 @@ export function AppointmentsSettings() {
               className="w-full rounded-xl border border-border bg-background px-3.5 py-2 text-xs text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none"
             />
           </div>
+        </div>
+
+        {/* ── Appointment Reminder Settings ───────────────────────── */}
+        <div className="mt-6 pt-6 border-t border-border/60">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-foreground">
+                  {isAr ? "🔔 التذكير التلقائي بموعد الزبون عبر الواتساب" : "🔔 Automated WhatsApp Appointment Reminders"}
+                </span>
+                {reminderEnabled ? (
+                  <Badge variant="default" className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                    {isAr ? "مفعّل ⚡" : "Active ⚡"}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                    {isAr ? "معطّل" : "Disabled"}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {isAr
+                  ? "إرسال رسالة تذكير تلقائية عبر الواتساب لرقم العميل قبل موعده بوقت محدد."
+                  : "Automatically send a WhatsApp reminder message to the customer before their scheduled time."}
+              </p>
+            </div>
+
+            {/* Toggle Switch */}
+            <button
+              type="button"
+              onClick={() => setReminderEnabled(!reminderEnabled)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                reminderEnabled ? "bg-emerald-500" : "bg-muted-foreground/30"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                  reminderEnabled ? "translate-x-5 rtl:-translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+
+          {reminderEnabled && (
+            <div className="mt-4 p-4 rounded-xl bg-muted/30 border border-border/60 space-y-4 animate-in fade-in-50 duration-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Reminder Timing */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground">
+                    {isAr ? "إرسال التذكير قبل الموعد بـ" : "Send Reminder Before"}
+                  </label>
+                  <select
+                    value={reminderMinutesBefore}
+                    onChange={(e) => setReminderMinutesBefore(parseInt(e.target.value, 10))}
+                    className="w-full rounded-xl border border-border bg-background px-3.5 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                  >
+                    <option value={15}>{isAr ? "15 دقيقة قبل الموعد" : "15 minutes before"}</option>
+                    <option value={30}>{isAr ? "30 دقيقة قبل الموعد" : "30 minutes before"}</option>
+                    <option value={60}>{isAr ? "ساعة واحدة (60 دقيقة) قبل الموعد" : "1 hour before"}</option>
+                    <option value={120}>{isAr ? "ساعتان (120 دقيقة) قبل الموعد" : "2 hours before"}</option>
+                    <option value={1440}>{isAr ? "24 ساعة (يوم كامل) قبل الموعد" : "24 hours (1 day) before"}</option>
+                  </select>
+                </div>
+
+                {/* Available Variables Hint */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground">
+                    {isAr ? "المتغيرات الذكية المتاحة (انقر للنسخ أو الإدراج):" : "Smart Variables:"}
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {[
+                      { key: "{الاسم}", desc: isAr ? "اسم العميل" : "Customer Name" },
+                      { key: "{الخدمة}", desc: isAr ? "نوع الخدمة" : "Service" },
+                      { key: "{الوقت}", desc: isAr ? "وقت الموعد" : "Time" },
+                      { key: "{التاريخ}", desc: isAr ? "يوم وتاريخ الموعد" : "Date" },
+                    ].map((v) => (
+                      <button
+                        key={v.key}
+                        type="button"
+                        onClick={() => setReminderMessage((prev) => `${prev} ${v.key}`)}
+                        className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[11px] font-mono text-foreground hover:bg-muted hover:border-primary/50 transition-colors"
+                        title={v.desc}
+                      >
+                        <span className="text-primary font-bold">{v.key}</span>
+                        <span className="text-[10px] text-muted-foreground">({v.desc})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Message Textarea */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  {isAr ? "نص رسالة التذكير" : "Reminder Message Text"}
+                </label>
+                <textarea
+                  rows={3}
+                  value={reminderMessage}
+                  onChange={(e) => setReminderMessage(e.target.value)}
+                  placeholder={isAr ? "اكتب نص رسالة التذكير هنا..." : "Type your reminder message template..."}
+                  className="w-full rounded-xl border border-border bg-background p-3 text-xs text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none resize-none leading-relaxed"
+                />
+              </div>
+
+              {/* Live Preview */}
+              <div className="p-3 rounded-lg bg-background border border-border/80 text-xs">
+                <span className="text-[11px] font-bold text-muted-foreground block mb-1">
+                  {isAr ? "معاينة الرسالة للعميل:" : "Message Preview:"}
+                </span>
+                <p className="whitespace-pre-line text-foreground/90 bg-muted/20 p-2.5 rounded border border-border/40 font-sans">
+                  {reminderMessage
+                    .replace(/{الاسم}/g, "مصطفى علي")
+                    .replace(/{الخدمة}/g, serviceLabel || "تنظيف أسنان")
+                    .replace(/{الوقت}/g, "04:00 مساءً")
+                    .replace(/{التاريخ}/g, "الأحد 30 آب")}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Save Settings Button */}
