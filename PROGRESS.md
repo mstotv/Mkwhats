@@ -15,6 +15,13 @@
     - فصل كامل ومستقل 100% عن نظام جمع الطلبات `order_collection` دون أي تداخل في الحالة (State) أو الـ JSON block.
     - حقن `appointmentContext` في الـ System Prompt بالمنطقة الزمنية المحلية وتنسيق ساعات العمل.
     - استخراج وحجز المواعيد آلياً عبر الـ JSON Block `{"appointment": {...}}` مع التحقق التلقائي من التوفر وتأكيد الموعد فورياً واسترجاع سياق التاريخ من الرسائل السابقة تلقائياً (History Fallback).
+  - **منظومة التذكير التلقائي بمواعيد العملاء عبر الواتساب (Automated WhatsApp Reminders System)**:
+    - **محرك تذكيرات خلفي ذاتي مدمج بالسيرفر (`Built-in Background Runner`)**: تم دمج فاحص تذكيرات دوري يعمل كل 60 ثانية من داخل دورة حياة السيرفر [`src/instrumentation.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/instrumentation.ts) وموديول المعالجة [`src/lib/appointments/reminder-runner.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/appointments/reminder-runner.ts) للتحقق وإرسال رسائل الواتساب ذاتياً وتلقائياً دون الحاجة لأي مشغّل خارجي أو إعدادات Cron خارجية (Zero-Config Internal Cron).
+    - **الربط التلقائي والإنشاء الذاتي للمحادثات (`Auto Contact & Conversation Resolver`)**: التحقق التلقائي من أرقام الهواتف وإنشاء جهة اتصال ومحادثة برمجياً إذا لم تكن موجودة مسبقاً، لضمان وصول الرسالة فورياً للزبون.
+    - **نافذة الاستدراك الذكية (`Catch-up Window`)**: استدراك أي مواعيد مستحقة لم يُرسل لها تذكير بعد (بين موعد الاستحقاق وحتى وقت الموعد) ومنع الإرسال المزدوج بشكل ذري عبر `reminder_sent_at`.
+    - **زر الإرسال الفوري بنقرة واحدة (One-Click Reminder Button `🔔`)**: إضافة أيقونة جرس تفاعلية بجانب كل موعد مؤكد بصفحة [`/appointments`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/(dashboard)/appointments/page.tsx) لتجربة إرسال التذكير بنقرة زر واحدة مع إشعارات نجاح فورية.
+    - **المتغيرات الذكية والقوالب المخصصة**: دعم الاستبدال الآلي لـ `{الاسم}`، `{الخدمة}`، `{الوقت}`، و`{التاريخ}` بالتوقيت المحلي لكل حساب، مع بطاقة معاينة حية للمتغيرات (Live Preview Card) بقسم إعدادات المواعيد.
+
   - **منظومة إشعارات تيليقرام الآلية للمواعيد (Telegram Appointment Notifications)**:
     - دالة `sendTelegramAppointmentNotification` بـ [`src/lib/telegram/send-notification.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/telegram/send-notification.ts) لإرسال إشعار فوري منسق بـ HTML عند تأكيد أي موعد جديد يتضمن اسم العميل، الهاتف، الخدمة، والوقت بتوقيت الحساب المحلي.
   - **واجهة الإعدادات ولوحة التحكم (Settings & Dashboard Appointments Page)**:
