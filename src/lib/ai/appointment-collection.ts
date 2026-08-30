@@ -80,6 +80,8 @@ export async function loadAppointmentContext(
   }
 }
 
+import { parseLocalDateTimeToUtc } from '@/lib/appointments/timezone-helper';
+
 /**
  * Process appointment extraction from AI.
  */
@@ -96,19 +98,68 @@ export async function processAppointmentAction(
   confirmed?: boolean;
   availabilityError?: string;
 }> {
-  if (!appointmentData.date_time) {
+  console.log('[DIAG][appointment-collection] entered processAppointmentAction | rawData:', JSON.stringify(appointmentData));
+
+  // Load settings for timezone
+  const settings = await loadAppointmentSettings(db, accountId);
+  const timeZone = settings.timezone || 'Asia/Baghdad';
+
+  let dateTimeStr = appointmentData.date_time?.trim();
+
+  // If date_time is missing from the confirmation block, scan recent conversation messages
+  if (!dateTimeStr && appointmentData.confirmed) {
+    console.log('[DIAG][appointment-collection] date_time missing in confirmation block — inspecting recent messages...');
+    try {
+      const { data: recentMsgs } = await db
+        .from('messages')
+        .select('content, created_at')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (recentMsgs && recentMsgs.length > 0) {
+        for (const msg of recentMsgs) {
+          const content = String(msg.content || '');
+          // Try match date pattern YYYY-MM-DD HH:mm or |||{"appointment":...}|||
+          const jsonMatch = content.match(/"date_time"\s*:\s*"([^"]+)"/);
+          if (jsonMatch && jsonMatch[1]) {
+            dateTimeStr = jsonMatch[1];
+            console.log('[DIAG][appointment-collection] Found date_time from previous message json:', dateTimeStr);
+            break;
+          }
+          const textDateMatch = content.match(/(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})/);
+          if (textDateMatch && textDateMatch[1]) {
+            dateTimeStr = textDateMatch[1];
+            console.log('[DIAG][appointment-collection] Found date_time from previous message text:', dateTimeStr);
+            break;
+          }
+        }
+      }
+    } catch (scanErr) {
+      console.error('[DIAG][appointment-collection] error scanning history for date_time:', scanErr);
+    }
+  }
+
+  if (!dateTimeStr) {
+    console.warn('[DIAG][appointment-collection] No date_time found. Skipping.');
     return { handled: false };
   }
 
-  // Parse requested date
-  const requestedDate = new Date(appointmentData.date_time);
-  if (isNaN(requestedDate.getTime())) {
+  // Parse requested date to UTC using account timezone
+  const requestedDate = parseLocalDateTimeToUtc(dateTimeStr, timeZone);
+  if (!requestedDate || isNaN(requestedDate.getTime())) {
+    console.warn('[DIAG][appointment-collection] Invalid date_time:', dateTimeStr);
     return { handled: false, availabilityError: 'تاريخ الموعد غير صحيح' };
   }
 
+  console.log('[DIAG][appointment-collection] Checking slot availability for UTC:', requestedDate.toISOString(), '| Local timezone:', timeZone);
+
   // Check availability
   const avail = await checkSlotAvailability(db, accountId, requestedDate);
+  console.log('[DIAG][appointment-collection] Availability result:', JSON.stringify(avail));
+
   if (!avail.available) {
+    console.warn('[DIAG][appointment-collection] Slot is not available:', avail.message);
     return {
       handled: false,
       availabilityError: avail.message || 'الموعد المحدد غير متاح',
@@ -117,6 +168,7 @@ export async function processAppointmentAction(
 
   // If confirmed, book it in database
   if (appointmentData.confirmed) {
+    console.log('[DIAG][appointment-collection] ✅ Booking confirmed appointment in DB...');
     const res = await createAppointment(db, accountId, {
       customerName: appointmentData.customer_name || 'عميل واتساب',
       customerPhone: contactPhone,
@@ -127,11 +179,14 @@ export async function processAppointmentAction(
     });
 
     if (res.appointment) {
+      console.log('[DIAG][appointment-collection] 🎉 Appointment booked successfully! ID:', res.appointment.id);
       return {
         handled: true,
         appointmentId: res.appointment.id,
         confirmed: true,
       };
+    } else {
+      console.error('[DIAG][appointment-collection] Error creating appointment:', res.error);
     }
   }
 

@@ -183,8 +183,8 @@ export function buildSystemPrompt(args: {
       '   - Present the summary (Date, Time, Service, Customer Name) and ask for confirmation.\n' +
       '2. In appointment mode, whenever an appointment date/time is discussed or confirmed, append an appointment JSON block at the VERY END on a new line in this format:\n' +
       '|||{"appointment": {"customer_name": "Name", "service_name": "Service", "date_time": "YYYY-MM-DD HH:mm", "confirmed": false}}|||\n' +
-      '- "date_time": format as standard "YYYY-MM-DD HH:mm" in the business local timezone.\n' +
-      '- "confirmed": set to true ONLY when the customer explicitly agrees/confirms the appointment summary.\n' +
+      '- "date_time": format strictly as standard "YYYY-MM-DD HH:mm" (24-hour format, e.g. "2026-08-30 15:00") in the business local timezone.\n' +
+      '- "confirmed": set to true ONLY when the customer explicitly agrees/confirms the appointment summary. When confirmed is true, YOU MUST STILL include the full "date_time", "customer_name", and "service_name" in the JSON.\n' +
       'Write the Arabic message first, then append the single-line JSON block at the end.'
     )
   }
