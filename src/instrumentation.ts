@@ -27,8 +27,30 @@ export async function register() {
     '[STARTUP] Commit : ' + commit,
     '[STARTUP] Built  : ' + buildTime,
     '[STARTUP] Node   : ' + (typeof process !== 'undefined' ? process.version : 'unknown'),
-    '[STARTUP] Env    : ' + (process.env.NODE_ENV ?? 'unknown'),
     '[STARTUP] ========================================',
   ]
   console.log(lines.join('\n'))
+
+  // Start internal background timer for appointment reminders (every 60 seconds)
+  // This ensures reminders run automatically out of the box without requiring external Cron setups.
+  try {
+    const { processDueReminders } = await import('@/lib/appointments/reminder-runner')
+    // Run once after 5s startup delay
+    setTimeout(() => {
+      void processDueReminders(false).catch((err) =>
+        console.error('[STARTUP] Initial appointment reminders check error:', err)
+      )
+    }, 5000)
+
+    // Repeat every 60 seconds
+    setInterval(() => {
+      void processDueReminders(false).catch((err) =>
+        console.error('[BACKGROUND] Appointment reminders runner error:', err)
+      )
+    }, 60000)
+
+    console.log('[STARTUP] ✅ Automated appointment reminders background runner started (interval: 60s)')
+  } catch (runnerErr) {
+    console.error('[STARTUP] Failed to initialize appointment reminders background runner:', runnerErr)
+  }
 }
