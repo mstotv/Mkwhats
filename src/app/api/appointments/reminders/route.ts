@@ -147,29 +147,61 @@ export async function GET(request: Request) {
         let contactId = appt.contact_id || appt.contacts?.id;
         const phone = appt.customer_phone?.trim() || appt.contacts?.phone?.trim();
 
-        if (!contactId && phone) {
-          const { data: contactRow } = await service
-            .from('contacts')
-            .select('id')
-            .eq('account_id', accountId)
-            .eq('phone', phone)
-            .maybeSingle();
-          if (contactRow) {
-            contactId = contactRow.id;
-          }
-        }
+        if (phone) {
+          if (!contactId) {
+            // Find or create contact
+            const { data: existingContact } = await service
+              .from('contacts')
+              .select('id')
+              .eq('account_id', accountId)
+              .eq('phone', phone)
+              .maybeSingle();
 
-        if (!conversationId && contactId) {
-          const { data: convRow } = await service
-            .from('conversations')
-            .select('id')
-            .eq('account_id', accountId)
-            .eq('contact_id', contactId)
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (convRow) {
-            conversationId = convRow.id;
+            if (existingContact) {
+              contactId = existingContact.id;
+            } else {
+              const { data: newContact } = await service
+                .from('contacts')
+                .insert({
+                  account_id: accountId,
+                  name: customerName,
+                  phone,
+                })
+                .select('id')
+                .maybeSingle();
+              if (newContact) {
+                contactId = newContact.id;
+              }
+            }
+          }
+
+          if (contactId && !conversationId) {
+            // Find or create conversation
+            const { data: existingConv } = await service
+              .from('conversations')
+              .select('id')
+              .eq('account_id', accountId)
+              .eq('contact_id', contactId)
+              .order('updated_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (existingConv) {
+              conversationId = existingConv.id;
+            } else {
+              const { data: newConv } = await service
+                .from('conversations')
+                .insert({
+                  account_id: accountId,
+                  contact_id: contactId,
+                  status: 'open',
+                })
+                .select('id')
+                .maybeSingle();
+              if (newConv) {
+                conversationId = newConv.id;
+              }
+            }
           }
         }
 
@@ -194,6 +226,12 @@ export async function GET(request: Request) {
               text: finalMessage,
             });
             totalSent++;
+            sentDetails.push({
+              appointmentId: appt.id,
+              customerName,
+              phone,
+              scheduledAt: appt.scheduled_at,
+            });
           } catch (sendErr) {
             console.error(`[appointment-reminders] Failed to send text for appt ${appt.id}:`, sendErr);
           }
@@ -208,6 +246,7 @@ export async function GET(request: Request) {
       processed: activeSettingsList.length,
       sent: totalSent,
       skipped: totalSkipped,
+      details: sentDetails,
     });
   } catch (err: any) {
     console.error('[appointment-reminders] Cron error:', err);

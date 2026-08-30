@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
+  Bell,
   Calendar,
   Clock,
   RefreshCw,
@@ -387,6 +388,30 @@ export default function AppointmentsPage() {
                   {/* Actions */}
                   <td className="px-4 py-3 text-right rtl:text-left">
                     <div className="flex items-center justify-end rtl:justify-start gap-1">
+                      {/* Send Reminder Button */}
+                      {a.status === "confirmed" && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              toast.loading(isAr ? "جاري إرسال التذكير..." : "Sending reminder...", { id: "remind-" + a.id });
+                              const res = await fetch("/api/appointments/reminders?force=true");
+                              const d = await res.json();
+                              if (d.success) {
+                                toast.success(isAr ? "تم إرسال التذكير بنجاح عبر الواتساب! 📲✨" : "Reminder sent successfully! 📲✨", { id: "remind-" + a.id });
+                                fetchAppointments();
+                              } else {
+                                toast.error(d.message || (isAr ? "تعذر إرسال التذكير" : "Failed to send"), { id: "remind-" + a.id });
+                              }
+                            } catch {
+                              toast.error(isAr ? "حدث خطأ أثناء الإرسال" : "Error sending", { id: "remind-" + a.id });
+                            }
+                          }}
+                          title={isAr ? "إرسال رسالة تذكير فورية للعميل" : "Send WhatsApp Reminder"}
+                          className="rounded-lg p-1.5 text-amber-500 hover:bg-amber-500/10 transition-colors"
+                        >
+                          <Bell className="size-4" />
+                        </button>
+                      )}
                       {a.status !== "confirmed" && (
                         <button
                           onClick={() => handleUpdateStatus(a.id, "confirmed")}
