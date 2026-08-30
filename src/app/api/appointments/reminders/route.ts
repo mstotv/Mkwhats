@@ -34,6 +34,9 @@ export async function GET(request: Request) {
     const service = createServiceClient();
     const now = new Date();
 
+    const { searchParams } = new URL(request.url);
+    const isForce = searchParams.get('force') === 'true';
+
     // 1. Fetch all accounts with active reminder settings
     const { data: activeSettingsList, error: settingsErr } = await service
       .from('appointment_settings')
@@ -46,11 +49,12 @@ export async function GET(request: Request) {
     }
 
     if (!activeSettingsList || activeSettingsList.length === 0) {
-      return NextResponse.json({ success: true, processed: 0, sent: 0 });
+      return NextResponse.json({ success: true, processed: 0, sent: 0, message: 'No accounts with reminder_enabled=true' });
     }
 
     let totalSent = 0;
     let totalSkipped = 0;
+    const sentDetails: any[] = [];
 
     for (const settings of activeSettingsList) {
       const accountId = settings.account_id;
@@ -60,19 +64,21 @@ export async function GET(request: Request) {
         'مرحباً {الاسم} 🌟\nنود تذكيرك بموعدك لخدمة {الخدمة} اليوم الساعة {الوقت}.\nنتطلع لرؤيتك! 😊';
       const tz = settings.timezone || 'Asia/Baghdad';
 
-      // Lookahead window: appointments scheduled between (now) and (now + minutesBefore + 5 minutes)
-      // where the scheduled_at - minutesBefore <= now
-      const maxScheduledTime = new Date(now.getTime() + (minutesBefore + 10) * 60 * 1000).toISOString();
-      const minScheduledTime = new Date(now.getTime() - 15 * 60 * 1000).toISOString(); // Not expired long ago
-
-      const { data: dueAppointments, error: apptErr } = await service
+      // Lookahead window:
+      let query = service
         .from('appointments')
         .select('*, contacts(id, phone, name)')
         .eq('account_id', accountId)
         .eq('status', 'confirmed')
-        .is('reminder_sent_at', null)
-        .gte('scheduled_at', minScheduledTime)
-        .lte('scheduled_at', maxScheduledTime);
+        .is('reminder_sent_at', null);
+
+      if (!isForce) {
+        const maxScheduledTime = new Date(now.getTime() + (minutesBefore + 10) * 60 * 1000).toISOString();
+        const minScheduledTime = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
+        query = query.gte('scheduled_at', minScheduledTime).lte('scheduled_at', maxScheduledTime);
+      }
+
+      const { data: dueAppointments, error: apptErr } = await query;
 
       if (apptErr || !dueAppointments || dueAppointments.length === 0) {
         continue;
@@ -82,8 +88,8 @@ export async function GET(request: Request) {
         const scheduledDate = new Date(appt.scheduled_at);
         const triggerTime = new Date(scheduledDate.getTime() - minutesBefore * 60 * 1000);
 
-        // Check if we reached the trigger time
-        if (now < triggerTime) {
+        // Check if we reached the trigger time (unless force is true)
+        if (!isForce && now < triggerTime) {
           totalSkipped++;
           continue; // Not yet time for this specific appointment
         }
