@@ -1,7 +1,7 @@
 'use client'
 
 import { useLocale } from 'next-intl'
-import { Sparkles, Calendar, Send, FileSpreadsheet, Bot, CheckCircle2, Zap } from 'lucide-react'
+import { Sparkles, Calendar, Send, FileSpreadsheet, Bot, CheckCircle2, Zap, ShoppingBag } from 'lucide-react'
 
 export function LandingHeroMockup() {
   const locale = useLocale()
@@ -66,24 +66,24 @@ export function LandingHeroMockup() {
           </div>
         </div>
 
-        {/* 3. Bottom-Left: Google Sheets & Excel Export Badge */}
+        {/* 3. Bottom-Left: AI Order Taking Badge */}
         <div
           className="absolute bottom-6 sm:bottom-12 start-4 sm:start-10 z-20 animate-bounce hidden sm:block"
           style={{ animationDuration: '3.8s', animationDelay: '1s' }}
         >
           <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl bg-white/95 dark:bg-[#1C1C1E]/95 border border-neutral-200/80 dark:border-neutral-700/80 px-3.5 py-2 shadow-xl backdrop-blur-md">
-            <div className="h-7 sm:h-8 w-7 sm:w-8 rounded-lg bg-[#107C41]/15 text-[#107C41] dark:text-[#34D399] flex items-center justify-center shadow-xs">
-              <FileSpreadsheet className="h-4 w-4" />
+            <div className="h-7 sm:h-8 w-7 sm:w-8 rounded-lg bg-[#F59E0B]/15 text-[#D97706] dark:text-[#FBBF24] flex items-center justify-center shadow-xs">
+              <ShoppingBag className="h-4 w-4" />
             </div>
             <div className="text-start">
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] sm:text-xs font-bold text-neutral-900 dark:text-white">
-                  Google Sheets
+                  {isAr ? 'أخذ واستقبال الطلبات' : 'AI Order Taking'}
                 </span>
-                <CheckCircle2 className="h-3 w-3 text-[#107C41]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B] animate-ping" />
               </div>
-              <span className="text-[9.5px] sm:text-[10px] text-[#107C41] dark:text-[#34D399] font-semibold block">
-                {isAr ? 'مزامنة الطلبات والبيانات لحظياً' : 'Live Order & Lead Sync'}
+              <span className="text-[9.5px] sm:text-[10px] text-[#D97706] dark:text-[#FBBF24] font-semibold block">
+                {isAr ? 'أتمتة وحفظ الطلبات آلياً' : 'Automate Orders & Sales'}
               </span>
             </div>
           </div>

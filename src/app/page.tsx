@@ -11,7 +11,18 @@ import {
   Globe,
   FileSpreadsheet,
   FileText,
-  PlayCircle,
+  Zap,
+  Shield,
+  Sparkles,
+  MessageSquare,
+  Clock,
+  Smartphone,
+  Users,
+  Workflow,
+  TrendingUp,
+  Layers,
+  Lock,
+  Bell,
 } from 'lucide-react'
 import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { LandingFooter } from '@/components/landing/landing-footer'
@@ -19,6 +30,52 @@ import { LandingHeroMockup } from '@/components/landing/landing-hero-mockup'
 import { FloatingSupport } from '@/components/landing/floating-support'
 
 export const dynamic = 'force-dynamic'
+
+function getFeatureIcon(iconName: string) {
+  const iconProps = { className: 'h-6 w-6' }
+  const smIconProps = { className: 'h-5 w-5' }
+
+  switch (iconName) {
+    case 'Bot':
+      return <Bot {...iconProps} />
+    case 'BarChart3':
+      return <BarChart3 {...smIconProps} />
+    case 'Radio':
+      return <Radio {...smIconProps} />
+    case 'FileText':
+      return <FileText {...smIconProps} />
+    case 'FileSpreadsheet':
+      return <FileSpreadsheet {...smIconProps} />
+    case 'Zap':
+      return <Zap {...smIconProps} />
+    case 'Shield':
+      return <Shield {...smIconProps} />
+    case 'Sparkles':
+      return <Sparkles {...smIconProps} />
+    case 'MessageSquare':
+      return <MessageSquare {...smIconProps} />
+    case 'Clock':
+      return <Clock {...smIconProps} />
+    case 'Users':
+      return <Users {...smIconProps} />
+    case 'Smartphone':
+      return <Smartphone {...smIconProps} />
+    case 'Workflow':
+      return <Workflow {...smIconProps} />
+    case 'TrendingUp':
+      return <TrendingUp {...smIconProps} />
+    case 'Layers':
+      return <Layers {...smIconProps} />
+    case 'Lock':
+      return <Lock {...smIconProps} />
+    case 'Bell':
+      return <Bell {...smIconProps} />
+    case 'Globe':
+      return <Globe {...smIconProps} />
+    default:
+      return <Sparkles {...smIconProps} />
+  }
+}
 
 export default async function LandingPage() {
   const cookieStore = await cookies()
@@ -86,6 +143,89 @@ export default async function LandingPage() {
       : (settings?.hero_content?.secondary_cta_text_en || 'Watch Live Demo'),
   }
 
+  // Bento Grid / Features content configuration with full fallback
+  const rawFeatures = settings?.features_content
+  const sectionTitle = isAr
+    ? (rawFeatures?.section_title_ar || 'كل ما تحتاجه للتحكم الكامل بـ واتساب')
+    : (rawFeatures?.section_title_en || 'Everything You Need to Master WhatsApp')
+
+  const sectionSubtitle = isAr
+    ? (rawFeatures?.section_subtitle_ar || 'مجموعة متطورة من الأدوات المصممة لأتمتة وتحليل وتوسيع تجارتك بسهولة تامة.')
+    : (rawFeatures?.section_subtitle_en || 'A sophisticated suite of tools designed to automate, analyze, and scale your conversational commerce effortlessly.')
+
+  const defaultFeaturesList = [
+    {
+      id: 'ai-automation',
+      title_ar: 'أتمتة الذكاء الاصطناعي (Gemini AI)',
+      title_en: 'Gemini AI Automation',
+      description_ar: 'نشر وكلاء محادثة يفهمون السياق والنية بدقة لتقديم ردود طبيعية شبيهة بالبشر على مدار الساعة.',
+      description_en: 'Deploy conversational agents that understand context, nuance, and user intent, providing human-like responses 24/7.',
+      icon: 'Bot',
+      col_span: 'col-span-2',
+      badges: [
+        { text_ar: 'Gemini 2.5 & 3.6 Flash Active', text_en: 'Gemini 2.5 & 3.6 Flash Active', variant: 'pulse' },
+        { text_ar: 'Intent: Purchase High', text_en: 'Intent: Purchase High', variant: 'neutral' },
+      ],
+      integrations: [],
+    },
+    {
+      id: 'deep-analytics',
+      title_ar: 'تحليلات عميقة',
+      title_en: 'Deep Analytics',
+      description_ar: 'متابعة معدلات التفاعل والتحويل واستهلاك الرسائل الشهرية لحظة بلحظة.',
+      description_en: 'Track engagement, conversion rates, and agent performance in real-time.',
+      icon: 'BarChart3',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'targeted-broadcasts',
+      title_ar: 'حملات برودكاست موجهة',
+      title_en: 'Targeted Broadcasts',
+      description_ar: 'إرسال رسائل تسويقية جماعية للجمهور المستهدف بمعدلات آمنة وموثوقة.',
+      description_en: 'Send personalized bulk messages to segmented audiences securely.',
+      icon: 'Radio',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'approved-templates',
+      title_ar: 'قوالب معتمدة',
+      title_en: 'Approved Templates',
+      description_ar: 'إنشاء واستخدام قوالب رسائل تفاعلية لتسريع ردود فريق المبيعات.',
+      description_en: 'Manage and deploy WhatsApp-approved message templates effortlessly.',
+      icon: 'FileText',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'sheets-telegram-sync',
+      title_ar: 'مزامنة Google Sheets و Telegram',
+      title_en: 'Google Sheets & Telegram Sync',
+      description_ar: 'تسجيل العملاء والطلبات تلقائياً في Google Sheets مع تنبيهات فورية على Telegram لفريقك عند تأكيد الطلب.',
+      description_en: 'Automatically log leads into Google Sheets and trigger instant Telegram alerts for your sales team when high-intent actions occur.',
+      icon: 'FileSpreadsheet',
+      col_span: 'col-span-2',
+      badges: [],
+      integrations: [
+        { title_ar: 'Google Sheets', title_en: 'Google Sheets', status_ar: '● Auto-Synced', status_en: '● Auto-Synced' },
+        { title_ar: 'Telegram Bot', title_en: 'Telegram Bot', status_ar: '● Instant Alert', status_en: '● Instant Alert' },
+      ],
+    },
+  ]
+
+  let featuresList: any[] = defaultFeaturesList
+  if (rawFeatures) {
+    if (Array.isArray(rawFeatures.features) && rawFeatures.features.length > 0) {
+      featuresList = rawFeatures.features
+    } else if (Array.isArray(rawFeatures) && rawFeatures.length > 0) {
+      featuresList = rawFeatures
+    }
+  }
+
   const socialLinks = (settings?.social_links as any[]) || []
 
   const defaultPartners = [
@@ -148,14 +288,6 @@ export default async function LandingPage() {
             {heroContent.primary_cta_text}
             <ArrowIcon className="h-4 w-4" />
           </Link>
-
-          <Link
-            href="/features"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[4px] border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-[#1B1C1C] dark:text-white px-7 py-3.5 text-[13px] font-semibold transition-all shadow-sm"
-          >
-            <PlayCircle className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB]" />
-            {heroContent.secondary_cta_text}
-          </Link>
         </div>
 
         {/* Hero Interactive Laptop Showcase */}
@@ -184,128 +316,149 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── 4. Bento Grid ("Everything You Need to Master WhatsApp") ── */}
-      <section className="py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-16">
+      {/* ── 4. Bento Grid (Dynamic CMS Features) ── */}
+      <section id="features" className="py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-16">
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <h2 className="font-serif text-3xl sm:text-5xl font-bold text-[#1B1C1C] dark:text-white">
-            {isAr ? 'كل ما تحتاجه للتحكم الكامل بـ واتساب' : 'Everything You Need to Master WhatsApp'}
+            {sectionTitle}
           </h2>
           <p className="text-sm sm:text-base text-[#605E5B] dark:text-[#C9C6C1]">
-            {isAr
-              ? 'مجموعة متطورة من الأدوات المصممة لأتمتة وتحليل وتوسيع تجارتك بسهولة تامة.'
-              : 'A sophisticated suite of tools designed to automate, analyze, and scale your conversational commerce effortlessly.'}
+            {sectionSubtitle}
           </p>
         </div>
 
-        {/* Bento Grid */}
+        {/* Bento Grid Container */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: Large Featured AI Automation */}
-          <div className="md:col-span-2 rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col justify-between relative overflow-hidden group">
-            <div className="z-10 space-y-5">
-              <div className="h-12 w-12 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
-                <Bot className="h-6 w-6" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-serif text-2xl font-bold text-[#1B1C1C] dark:text-white">
-                  {isAr ? 'أتمتة الذكاء الاصطناعي (Gemini AI)' : 'Gemini AI Automation'}
-                </h3>
-                <p className="text-sm text-[#605E5B] dark:text-[#C9C6C1] max-w-md leading-relaxed">
-                  {isAr
-                    ? 'نشر وكلاء محادثة يفهمون السياق والنية بدقة لتقديم ردود طبيعية شبيهة بالبشر على مدار الساعة.'
-                    : 'Deploy conversational agents that understand context, nuance, and user intent, providing human-like responses 24/7.'}
-                </p>
-              </div>
-            </div>
+          {featuresList.map((card: any, idx: number) => {
+            const isWide = card.col_span === 'col-span-2'
+            const cardTitle = isAr
+              ? (card.title_ar || card.title || '')
+              : (card.title_en || card.title || '')
+            const cardDesc = isAr
+              ? (card.description_ar || card.description || '')
+              : (card.description_en || card.description || '')
+            const hasBadges = Array.isArray(card.badges) && card.badges.length > 0
+            const hasIntegrations = Array.isArray(card.integrations) && card.integrations.length > 0
 
-            <div className="pt-8 flex flex-wrap gap-2 z-10">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00685F]/10 text-[#00685F] dark:text-[#6BD8CB] px-3.5 py-1 text-xs font-semibold uppercase tracking-wider">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#00685F] dark:bg-[#6BD8CB] animate-pulse" />
-                Gemini 2.5 & 3.6 Flash Active
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F5F3F3] dark:bg-zinc-800 text-[#605E5B] dark:text-[#C9C6C1] px-3.5 py-1 text-xs font-semibold uppercase tracking-wider">
-                Intent: Purchase High
-              </span>
-            </div>
-          </div>
+            if (isWide && hasIntegrations) {
+              // Wide Integration Card (like Sheets & Telegram)
+              return (
+                <div
+                  key={card.id || idx}
+                  className="md:col-span-2 rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6"
+                >
+                  <div className="space-y-3 flex-1">
+                    <div className="h-10 w-10 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
+                      {getFeatureIcon(card.icon)}
+                    </div>
+                    <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
+                      {cardTitle}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed max-w-lg">
+                      {cardDesc}
+                    </p>
+                  </div>
 
-          {/* Card 2: Deep Analytics */}
-          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-7 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
-              <div className="h-10 w-10 rounded-[4px] bg-[#F5F3F3] dark:bg-zinc-800 flex items-center justify-center text-[#1B1C1C] dark:text-[#F2F0F0]">
-                <BarChart3 className="h-5 w-5 text-[#00685F] dark:text-[#6BD8CB]" />
-              </div>
-              <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
-                {isAr ? 'تحليلات عميقة' : 'Deep Analytics'}
-              </h3>
-              <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
-                {isAr
-                  ? 'متابعة معدلات التفاعل والتحويل واستهلاك الرسائل الشهرية لحظة بلحظة.'
-                  : 'Track engagement, conversion rates, and agent performance in real-time.'}
-              </p>
-            </div>
-          </div>
+                  <div className="flex items-center gap-3 shrink-0 flex-wrap">
+                    {card.integrations.map((intg: any, iIdx: number) => {
+                      const intgTitle = isAr ? (intg.title_ar || intg.title || '') : (intg.title_en || intg.title || '')
+                      const intgStatus = isAr ? (intg.status_ar || intg.status || '') : (intg.status_en || intg.status || '')
+                      return (
+                        <div key={iIdx} className="rounded-[4px] border border-[#EFEDED] dark:border-zinc-800 bg-[#F9F5F0] dark:bg-zinc-800 px-4 py-3 text-center">
+                          <div className="text-xs font-bold text-[#1B1C1C] dark:text-[#F2F0F0]">{intgTitle}</div>
+                          <div className="text-[10px] text-[#00685F] dark:text-[#6BD8CB] font-mono">{intgStatus}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            }
 
-          {/* Card 3: Targeted Broadcasts */}
-          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-7 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
-              <div className="h-10 w-10 rounded-[4px] bg-[#F5F3F3] dark:bg-zinc-800 flex items-center justify-center text-[#1B1C1C] dark:text-[#F2F0F0]">
-                <Radio className="h-5 w-5 text-[#00685F] dark:text-[#6BD8CB]" />
-              </div>
-              <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
-                {isAr ? 'حملات برودكاست موجهة' : 'Targeted Broadcasts'}
-              </h3>
-              <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
-                {isAr
-                  ? 'إرسال رسائل تسويقية جماعية للجمهور المستهدف بمعدلات آمنة وموثوقة.'
-                  : 'Send personalized bulk messages to segmented audiences securely.'}
-              </p>
-            </div>
-          </div>
+            if (isWide) {
+              // Wide Card with Badges or Normal Wide (like AI Automation)
+              return (
+                <div
+                  key={card.id || idx}
+                  className="md:col-span-2 rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col justify-between relative overflow-hidden group"
+                >
+                  <div className="z-10 space-y-5">
+                    <div className="h-12 w-12 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
+                      {getFeatureIcon(card.icon)}
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-serif text-2xl font-bold text-[#1B1C1C] dark:text-white">
+                        {cardTitle}
+                      </h3>
+                      <p className="text-sm text-[#605E5B] dark:text-[#C9C6C1] max-w-md leading-relaxed">
+                        {cardDesc}
+                      </p>
+                    </div>
+                  </div>
 
-          {/* Card 4: Approved Templates */}
-          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-7 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
-              <div className="h-10 w-10 rounded-[4px] bg-[#F5F3F3] dark:bg-zinc-800 flex items-center justify-center text-[#1B1C1C] dark:text-[#F2F0F0]">
-                <FileText className="h-5 w-5 text-[#00685F] dark:text-[#6BD8CB]" />
-              </div>
-              <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
-                {isAr ? 'قوالب معتمدة' : 'Approved Templates'}
-              </h3>
-              <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
-                {isAr
-                  ? 'إنشاء واستخدام قوالب رسائل تفاعلية لتسريع ردود فريق المبيعات.'
-                  : 'Manage and deploy WhatsApp-approved message templates effortlessly.'}
-              </p>
-            </div>
-          </div>
+                  {hasBadges && (
+                    <div className="pt-8 flex flex-wrap gap-2 z-10">
+                      {card.badges.map((badge: any, bIdx: number) => {
+                        const badgeText = isAr ? (badge.text_ar || badge.text || '') : (badge.text_en || badge.text || '')
+                        const isPulse = badge.variant === 'pulse' || bIdx === 0
+                        return (
+                          <span
+                            key={bIdx}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold uppercase tracking-wider ${
+                              isPulse
+                                ? 'bg-[#00685F]/10 text-[#00685F] dark:text-[#6BD8CB]'
+                                : 'bg-[#F5F3F3] dark:bg-zinc-800 text-[#605E5B] dark:text-[#C9C6C1]'
+                            }`}
+                          >
+                            {isPulse && <span className="h-1.5 w-1.5 rounded-full bg-[#00685F] dark:bg-[#6BD8CB] animate-pulse" />}
+                            {badgeText}
+                          </span>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            }
 
-          {/* Card 5: Google Sheets & Telegram Sync */}
-          <div className="md:col-span-2 rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div className="space-y-3 flex-1">
-              <div className="h-10 w-10 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
-                <FileSpreadsheet className="h-5 w-5" />
-              </div>
-              <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
-                {isAr ? 'مزامنة Google Sheets و Telegram' : 'Google Sheets & Telegram Sync'}
-              </h3>
-              <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed max-w-lg">
-                {isAr
-                  ? 'تسجيل العملاء والطلبات تلقائياً في Google Sheets مع تنبيهات فورية على Telegram لفريقك عند تأكيد الطلب.'
-                  : 'Automatically log leads into Google Sheets and trigger instant Telegram alerts for your sales team when high-intent actions occur.'}
-              </p>
-            </div>
+            // Normal Card (1 Col)
+            return (
+              <div
+                key={card.id || idx}
+                className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-7 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col justify-between space-y-4"
+              >
+                <div className="space-y-3">
+                  <div className="h-10 w-10 rounded-[4px] bg-[#F5F3F3] dark:bg-zinc-800 flex items-center justify-center text-[#1B1C1C] dark:text-[#F2F0F0]">
+                    <div className="text-[#00685F] dark:text-[#6BD8CB]">
+                      {getFeatureIcon(card.icon)}
+                    </div>
+                  </div>
+                  <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
+                    {cardTitle}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
+                    {cardDesc}
+                  </p>
+                </div>
 
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="rounded-[4px] border border-[#EFEDED] dark:border-zinc-800 bg-[#F9F5F0] dark:bg-zinc-800 px-4 py-3 text-center">
-                <div className="text-xs font-bold text-[#1B1C1C] dark:text-[#F2F0F0]">Google Sheets</div>
-                <div className="text-[10px] text-[#00685F] dark:text-[#6BD8CB] font-mono">● Auto-Synced</div>
+                {hasBadges && (
+                  <div className="pt-2 flex flex-wrap gap-1.5">
+                    {card.badges.map((badge: any, bIdx: number) => {
+                      const badgeText = isAr ? (badge.text_ar || badge.text || '') : (badge.text_en || badge.text || '')
+                      return (
+                        <span
+                          key={bIdx}
+                          className="inline-flex items-center gap-1 rounded-full bg-[#00685F]/10 text-[#00685F] dark:text-[#6BD8CB] px-2.5 py-0.5 text-[10px] font-semibold"
+                        >
+                          {badgeText}
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-              <div className="rounded-[4px] border border-[#EFEDED] dark:border-zinc-800 bg-[#F9F5F0] dark:bg-zinc-800 px-4 py-3 text-center">
-                <div className="text-xs font-bold text-[#1B1C1C] dark:text-[#F2F0F0]">Telegram Bot</div>
-                <div className="text-[10px] text-[#00685F] dark:text-[#6BD8CB] font-mono">● Instant Alert</div>
-              </div>
-            </div>
-          </div>
+            )
+          })}
         </div>
       </section>
 

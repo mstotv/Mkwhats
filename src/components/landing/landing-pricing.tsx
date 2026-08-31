@@ -145,7 +145,7 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
           const btnText = userLoggedIn
             ? isAr ? 'الانتقال للوحة التحكم' : 'Go to Dashboard'
             : isPopular
-            ? isAr ? 'ابدأ تجربة مجانية 14 يوم' : 'Start 14-Day Free Trial'
+            ? isAr ? 'ابدأ الآن مع الخطة' : 'Get Started Now'
             : isEnterprise
             ? isAr ? 'الترقية للمؤسسات' : 'Upgrade to Enterprise'
             : isAr ? 'ابدأ مجاناً' : 'Get Started Free'

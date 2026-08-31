@@ -40,19 +40,18 @@ export function LandingNavbar({
     <header className="sticky top-0 z-50 border-b border-[#BCC9C6]/30 dark:border-white/10 bg-[#F9F5F0]/95 dark:bg-[#1A1A1A]/95 backdrop-blur-md transition-colors">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-8 lg:px-16 relative">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5 z-10 shrink-0">
+        <Link href="/" className="flex items-center gap-3 z-10 shrink-0 group">
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={platformName}
-              style={{ height: `${logoHeight}px` }}
-              className="w-auto object-contain max-h-12"
+              style={{ height: `${Math.max(logoHeight || 44, 40)}px` }}
+              className="w-auto object-contain max-h-16 transition-transform group-hover:scale-105"
             />
-          ) : (
-            <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-[#00685F] dark:text-[#6BD8CB]">
-              {platformName}
-            </span>
-          )}
+          ) : null}
+          <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-[#00685F] dark:text-[#6BD8CB]">
+            {platformName}
+          </span>
         </Link>
 
         {/* Navigation Links (Centered on Desktop) */}

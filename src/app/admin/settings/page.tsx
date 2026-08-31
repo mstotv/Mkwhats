@@ -175,7 +175,7 @@ export default function AdminSettingsPage() {
 
   const [platformName, setPlatformName] = useState('wacrm');
   const [logoUrl, setLogoUrl] = useState('');
-  const [logoHeight, setLogoHeight] = useState(32);
+  const [logoHeight, setLogoHeight] = useState(48);
   const [supportEmail, setSupportEmail] = useState('support@wacrm.com');
   const [supportWhatsapp, setSupportWhatsapp] = useState('+966500000000');
   const [supportTelegram, setSupportTelegram] = useState('@wacrm_support');
@@ -997,34 +997,46 @@ export default function AdminSettingsPage() {
                         </Button>
                       ) : null}
 
-                      {/* Logo Live Preview */}
-                      <div className="h-12 px-4 rounded-xl border border-border bg-slate-950 flex items-center justify-center shrink-0 overflow-hidden min-w-[100px]">
+                      {/* Logo Live Preview with Checkerboard Transparency Grid */}
+                      <div
+                        className="h-14 px-4 rounded-xl border border-border flex items-center justify-center shrink-0 overflow-hidden min-w-[120px] relative shadow-inner"
+                        style={{
+                          backgroundImage: 'linear-gradient(45deg, #1e293b 25%, transparent 25%), linear-gradient(-45deg, #1e293b 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1e293b 75%), linear-gradient(-45deg, transparent 75%, #1e293b 75%)',
+                          backgroundSize: '12px 12px',
+                          backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0px',
+                          backgroundColor: '#0f172a',
+                        }}
+                      >
                         {logoUrl ? (
                           <img
                             src={logoUrl}
                             alt="Logo Preview"
                             style={{ height: `${logoHeight}px` }}
-                            className="w-auto object-contain"
+                            className="w-auto object-contain transition-all"
                           />
                         ) : (
-                          <span className="text-[10px] text-muted-foreground font-mono">
-                            {isAr ? 'اسم المنصة فقط (بدون شعار)' : 'Platform Name Only (No Logo)'}
+                          <span className="text-[10px] text-muted-foreground font-mono bg-slate-900/80 px-2 py-0.5 rounded">
+                            {isAr ? 'اسم المنصة فقط' : 'Name Only'}
                           </span>
                         )}
                       </div>
                     </div>
+
+                    <p className="text-[11px] text-muted-foreground/90">
+                      💡 {isAr ? 'ملاحظة: لظهور الشعار بدون أي حواف بيضاء، تأكد من رفعه بصيغة PNG أو SVG مفرغة الخلفية (Transparent).' : 'Note: For a seamless logo, ensure uploading a Transparent PNG or SVG with no white background.'}
+                    </p>
                   </div>
 
                   {/* Logo Height Dimension */}
                   <div className="space-y-1.5">
                     <label className="font-semibold text-foreground flex items-center justify-between">
-                      <span>{isAr ? 'ارتفاع الشعار بالبكسل (Logo Height)' : 'Logo Height (Pixels)'}</span>
+                      <span>{isAr ? 'ارتفاع وحجم الشعار بالبكسل (Logo Height)' : 'Logo Height & Size (Pixels)'}</span>
                       <span className="text-emerald-400 font-bold font-mono">{logoHeight}px</span>
                     </label>
                     <Input
                       type="number"
-                      min={16}
-                      max={120}
+                      min={20}
+                      max={180}
                       value={logoHeight}
                       onChange={(e) => setLogoHeight(Number(e.target.value))}
                       className="bg-background border-border text-xs font-mono"

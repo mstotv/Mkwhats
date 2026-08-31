@@ -1,5 +1,35 @@
 # حالة المشروع - آخر تحديث: [1/9/2026]
 
+- ✅ **نظام إدارة وتعديل صفحة الهبوط وشبكة المميزات بالكامل من لوحة التحكم (Landing Page & Bento Grid Full CMS)**:
+  - **لوحة تحكم الأدمن ([`landing-settings-client.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/landing-settings/landing-settings-client.tsx))**:
+    - إضافة تبويب مخصص بالكامل لإدارة المميزات: **"المميزات Bento" (Features & Bento Grid Management)**.
+    - دعم التعديل الثنائي للغات (العربية 🇸🇦 والإنجليزية 🇬🇧) على عنوان ووصف قسم المميزات الرئيسي (`Everything You Need to Master WhatsApp`).
+    - تحكم كامل بجميع كروت المميزات الخمسة الأساسية مع إمكانية إضافة كروت مميزات جديدة غير محدودة بضغطة زر.
+    - قائمة منتقي الأيقونات التفاعلية (Icon Picker) تدعم 18 أيقونة متخصصة (`Bot`, `BarChart3`, `Radio`, `FileText`, `FileSpreadsheet`, `Zap`, `Shield`, `Sparkles`, `MessageSquare`, `Clock`, `Smartphone`, `Users`, `Workflow`, `TrendingUp`, إلخ).
+    - التحكم بحجم وشكل الكارت في الشبكة التفاعلية: كارت عادي (عمود واحد `col-span-1`) أو كارت عريض مميز (عمودين `col-span-2`).
+    - إدارة الشارات التفاعلية (Interactive Badges) مثل شارات حالة الذكاء الاصطناعي `Gemini 2.5 Active` ونوايا الشراء `Purchase High`.
+    - إدارة صناديق الربط والتكامل (Integration Pills) مثل `Google Sheets: Auto-Synced` و `Telegram Bot: Instant Alert`.
+    - إمكانية إعادة ترتيب الكروت في اللاندينغ بيج (تحريك لأعلى ولأسفل) وحذف أي كارت فورياً.
+  - **صفحة الهبوط الرئيسية ([`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/page.tsx))**:
+    - تحويل شبكة الـ Bento Grid من كود ثابت (Hardcoded) إلى محتوى ديناميكي يقرأ مباشرة من `site_settings.features_content` بقاعدة البيانات.
+    - دعم القيم الافتراضية الشاملة (Fallback) لمنع حدوث أي فراغ عند التشغيل لأول مرة.
+    - تصيير تلقائي متجاوب لكافة أنواع الكروت وشاراتها وصناديق الربط باللغة الحالية للزائر (RTL للعربية / LTR للإنجليزية) مع الحفاظ على التصميم الفخم.
+  - **قواعد البيانات والهجرات ([`081_update_landing_bento_features_defaults.sql`](file:///c:/Users/Mustafa/Desktop/mk%20whats/supabase/migrations/081_update_landing_bento_features_defaults.sql))**:
+    - إنشاء هجرة آمنة (Idempotent) لضبط القيمة الافتراضية الشاملة لـ `features_content` في `site_settings`.
+
+- ✅ **تحسينات واجهات صفحة الهبوط وتجربة المستخدم (Landing Page & Auth Refinements)**:
+  - **حذف عبارات التجربة المحددة (Removal of 14-Day Free Trial Mentions)**:
+    - **شاشة التسجيل ([`signup/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/(auth)/signup/page.tsx))**: حذف عنصر `14-day free trial. No credit card required.` من قائمة الميزات الجانبية.
+    - **صفحة الأسعار ([`pricing/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/pricing/page.tsx))**: تنقيح نص الوصف العام وإلغاء حصر التجربة بـ 14 يوم.
+    - **كروت الباقات ([`landing-pricing.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/landing/landing-pricing.tsx))**: تحديث زر الدعوة لإجراء الترقية للباقات الأكثر طلباً إلى `Get Started Now` / `ابدأ الآن مع الخطة`.
+  - **إضافة شارة أخذ واستقبال الطلبات بالذكاء الاصطناعي (AI Order Taking Badge)**:
+    - **محاكاة الواجهة ([`landing-hero-mockup.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/landing/landing-hero-mockup.tsx))**: إضافة شارة عائمة تفاعلية بأيقونة حقيبة التسوق `ShoppingBag` وعنوان `أخذ واستقبال الطلبات / AI Order Taking` ووصف `أتمتة وحفظ الطلبات آلياً / Automate Orders & Sales` بتصميم ذهبي/عنبري فاخر ونبض حركي متناسق.
+  - **تنقيح أزرار قسم البطل (Hero CTA Cleanup)**:
+    - **الصفحة الرئيسية ([`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/page.tsx))**: حذف زر `Watch Live Demo` وحذف أيقونة `PlayCircle` للتركيز المباشر على زر التسجيل الأساسي `Get Started Free / ابدأ مجاناً الآن`.
+  - **تكبير وتنسيق عرض الشعار والشفافية (Logo Display & Size Controls)**:
+    - **شريط التنقل وهيدر الصفحات ([`landing-navbar.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/landing/landing-navbar.tsx) & [`p/[slug]/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/p/[slug]/page.tsx))**: رفع حجم الشعار الافتراضي إلى `48px` و `max-h-16` وعرض أيقونة الشعار إلى جانب اسم المنصة الرسمي معاً بدون ترك مساحات فارغة.
+    - **لوحة الأدمن ([`admin/settings/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/settings/page.tsx))**: إضافة شبكة الشفافية الشطرنجية (`Checkerboard Grid`) لصندوق معاينة الشعار للتأكد من تفريغ الخلفية، وتوسيع مدى حقل ارتفاع الشعار ليصل حتى `180px`.
+
 - ✅ **التجاوب الكامل مع جميع الأجهزة وضبط اللغة والوضع الافتراضي (Full Cross-Device Responsiveness & Default Settings)**:
   - **التجاوب مع الهواتف الذكية، التابلت، والكمبيوتر (Mobile, Tablet & Desktop UI Consistency)**:
     - **شريط التنقل لصفحة الهبوط ([`landing-navbar.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/landing/landing-navbar.tsx))**: إضافة قائمة هاتفية ذكية (Mobile Navigation Drawer) تفتح بنقرة زر همبرغر مع حركات انتقال سلسة وخيارات التبديل بين اللغات والوضع الليلي/النهاري وأزرار الدخول والتسجيل المتجاوبة.

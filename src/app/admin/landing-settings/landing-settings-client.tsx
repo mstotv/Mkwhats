@@ -19,6 +19,27 @@ import {
   MessageCircle,
   Send,
   Mail,
+  Grid,
+  Bot,
+  BarChart3,
+  Radio,
+  FileText,
+  FileSpreadsheet,
+  Zap,
+  Shield,
+  MessageSquare,
+  Clock,
+  Smartphone,
+  Users,
+  Workflow,
+  TrendingUp,
+  Layers,
+  Lock,
+  Bell,
+  ArrowUp,
+  ArrowDown,
+  Tag,
+  Boxes,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,7 +48,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useTranslations, useLocale } from 'next-intl'
+import { useLocale } from 'next-intl'
 
 interface SocialLink {
   platform: string
@@ -41,12 +62,10 @@ interface Partner {
 
 interface FAQ {
   id: string
-  // Bilingual fields
   question_ar: string
   question_en: string
   answer_ar: string
   answer_en: string
-  // Legacy fallback (kept for backward compat)
   question?: string
   answer?: string
 }
@@ -55,7 +74,6 @@ interface CustomLink {
   label_ar: string
   label_en: string
   url: string
-  // Legacy fallback
   label?: string
 }
 
@@ -69,21 +87,18 @@ interface ThemeColors {
 }
 
 interface HeroContent {
-  // Arabic
   trust_badge_text_ar: string
   headline_ar: string
   headline_highlight_ar: string
   subtitle_ar: string
   primary_cta_text_ar: string
   secondary_cta_text_ar: string
-  // English
   trust_badge_text_en: string
   headline_en: string
   headline_highlight_en: string
   subtitle_en: string
   primary_cta_text_en: string
   secondary_cta_text_en: string
-  // Legacy (for backward compat reading)
   trust_badge_text?: string
   headline?: string
   headline_highlight?: string
@@ -92,11 +107,45 @@ interface HeroContent {
   secondary_cta_text?: string
 }
 
+export interface FeatureBadge {
+  text_ar: string
+  text_en: string
+  variant?: 'pulse' | 'neutral' | 'accent'
+}
+
+export interface FeatureIntegration {
+  title_ar: string
+  title_en: string
+  status_ar: string
+  status_en: string
+}
+
+export interface FeatureItem {
+  id: string
+  title_ar: string
+  title_en: string
+  description_ar: string
+  description_en: string
+  icon: string
+  col_span: 'col-span-1' | 'col-span-2'
+  badges?: FeatureBadge[]
+  integrations?: FeatureIntegration[]
+}
+
+export interface FeaturesSectionContent {
+  section_title_ar: string
+  section_title_en: string
+  section_subtitle_ar: string
+  section_subtitle_en: string
+  features: FeatureItem[]
+}
+
 interface LandingSettings {
   id: number
   platform_name: string
   logo_url: string | null
   hero_content: HeroContent
+  features_content: FeaturesSectionContent
   faqs: FAQ[]
   social_links: SocialLink[]
   partners: Partner[]
@@ -122,7 +171,122 @@ const DEFAULT_THEME_COLORS: ThemeColors = {
   partners_gap: 32,
 }
 
-// Normalize FAQ from DB (may have old format or new bilingual format)
+const DEFAULT_FEATURES_SECTION: FeaturesSectionContent = {
+  section_title_ar: 'كل ما تحتاجه للتحكم الكامل بـ واتساب',
+  section_title_en: 'Everything You Need to Master WhatsApp',
+  section_subtitle_ar: 'مجموعة متطورة من الأدوات المصممة لأتمتة وتحليل وتوسيع تجارتك بسهولة تامة.',
+  section_subtitle_en: 'A sophisticated suite of tools designed to automate, analyze, and scale your conversational commerce effortlessly.',
+  features: [
+    {
+      id: 'ai-automation',
+      title_ar: 'أتمتة الذكاء الاصطناعي (Gemini AI)',
+      title_en: 'Gemini AI Automation',
+      description_ar: 'نشر وكلاء محادثة يفهمون السياق والنية بدقة لتقديم ردود طبيعية شبيهة بالبشر على مدار الساعة.',
+      description_en: 'Deploy conversational agents that understand context, nuance, and user intent, providing human-like responses 24/7.',
+      icon: 'Bot',
+      col_span: 'col-span-2',
+      badges: [
+        { text_ar: 'Gemini 2.5 & 3.6 Flash نشط', text_en: 'Gemini 2.5 & 3.6 Flash Active', variant: 'pulse' },
+        { text_ar: 'نية الشراء: عالية جداً', text_en: 'Intent: Purchase High', variant: 'neutral' },
+      ],
+      integrations: [],
+    },
+    {
+      id: 'deep-analytics',
+      title_ar: 'تحليلات عميقة',
+      title_en: 'Deep Analytics',
+      description_ar: 'متابعة معدلات التفاعل والتحويل واستهلاك الرسائل الشهرية لحظة بلحظة.',
+      description_en: 'Track engagement, conversion rates, and agent performance in real-time.',
+      icon: 'BarChart3',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'targeted-broadcasts',
+      title_ar: 'حملات برودكاست موجهة',
+      title_en: 'Targeted Broadcasts',
+      description_ar: 'إرسال رسائل تسويقية جماعية للجمهور المستهدف بمعدلات آمنة وموثوقة.',
+      description_en: 'Send personalized bulk messages to segmented audiences securely.',
+      icon: 'Radio',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'approved-templates',
+      title_ar: 'قوالب معتمدة',
+      title_en: 'Approved Templates',
+      description_ar: 'إنشاء واستخدام قوالب رسائل تفاعلية لتسريع ردود فريق المبيعات.',
+      description_en: 'Manage and deploy WhatsApp-approved message templates effortlessly.',
+      icon: 'FileText',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'sheets-telegram-sync',
+      title_ar: 'مزامنة Google Sheets و Telegram',
+      title_en: 'Google Sheets & Telegram Sync',
+      description_ar: 'تسجيل العملاء والطلبات تلقائياً في Google Sheets مع تنبيهات فورية على Telegram لفريقك عند تأكيد الطلب.',
+      description_en: 'Automatically log leads into Google Sheets and trigger instant Telegram alerts for your sales team when high-intent actions occur.',
+      icon: 'FileSpreadsheet',
+      col_span: 'col-span-2',
+      badges: [],
+      integrations: [
+        { title_ar: 'Google Sheets', title_en: 'Google Sheets', status_ar: '● مزامنة فورية', status_en: '● Auto-Synced' },
+        { title_ar: 'Telegram Bot', title_en: 'Telegram Bot', status_ar: '● تنبيه فوري', status_en: '● Instant Alert' },
+      ],
+    },
+  ],
+}
+
+const AVAILABLE_ICONS = [
+  { value: 'Bot', label_ar: 'روبوت الذكاء الاصطناعي (Bot)', label_en: 'AI Bot' },
+  { value: 'BarChart3', label_ar: 'إحصائيات وتحليلات (Analytics)', label_en: 'Analytics' },
+  { value: 'Radio', label_ar: 'بث وحملات برودكاست (Broadcast)', label_en: 'Broadcast' },
+  { value: 'FileText', label_ar: 'قوالب ونصوص (Templates)', label_en: 'Templates' },
+  { value: 'FileSpreadsheet', label_ar: 'شيتس وإكسل (Spreadsheet)', label_en: 'Spreadsheet' },
+  { value: 'Zap', label_ar: 'أتمتة وسرعة (Lightning)', label_en: 'Automation' },
+  { value: 'Shield', label_ar: 'أمان وحماية (Security)', label_en: 'Security' },
+  { value: 'Sparkles', label_ar: 'ذكاء اصطناعي وبريق (Sparkles)', label_en: 'AI Sparkles' },
+  { value: 'MessageSquare', label_ar: 'محادثات ورسائل (Chat)', label_en: 'Chat' },
+  { value: 'Workflow', label_ar: 'مسارات وتدفقات (Workflow)', label_en: 'Workflow' },
+  { value: 'TrendingUp', label_ar: 'نمو ومبيعات (Growth)', label_en: 'Growth' },
+  { value: 'Clock', label_ar: 'ساعة وعمل 24/7 (24/7)', label_en: '24/7 Availability' },
+  { value: 'Users', label_ar: 'فريق ومستخدمين (Team)', label_en: 'Team' },
+  { value: 'Smartphone', label_ar: 'جوال وهواتف (Mobile)', label_en: 'Mobile' },
+  { value: 'Globe', label_ar: 'عالمي وربط دولي (Global)', label_en: 'Global' },
+  { value: 'Layers', label_ar: 'طبقات متعددة (Layers)', label_en: 'Layers' },
+  { value: 'Lock', label_ar: 'تشفير وخصوصية (Privacy)', label_en: 'Privacy' },
+  { value: 'Bell', label_ar: 'تنبيهات وإشعارات (Notifications)', label_en: 'Notifications' },
+]
+
+function renderIconPreview(iconName: string) {
+  const iconProps = { className: 'h-4 w-4' }
+  switch (iconName) {
+    case 'Bot': return <Bot {...iconProps} />
+    case 'BarChart3': return <BarChart3 {...iconProps} />
+    case 'Radio': return <Radio {...iconProps} />
+    case 'FileText': return <FileText {...iconProps} />
+    case 'FileSpreadsheet': return <FileSpreadsheet {...iconProps} />
+    case 'Zap': return <Zap {...iconProps} />
+    case 'Shield': return <Shield {...iconProps} />
+    case 'Sparkles': return <Sparkles {...iconProps} />
+    case 'MessageSquare': return <MessageSquare {...iconProps} />
+    case 'Workflow': return <Workflow {...iconProps} />
+    case 'TrendingUp': return <TrendingUp {...iconProps} />
+    case 'Clock': return <Clock {...iconProps} />
+    case 'Users': return <Users {...iconProps} />
+    case 'Smartphone': return <Smartphone {...iconProps} />
+    case 'Globe': return <Globe {...iconProps} />
+    case 'Layers': return <Layers {...iconProps} />
+    case 'Lock': return <Lock {...iconProps} />
+    case 'Bell': return <Bell {...iconProps} />
+    default: return <Sparkles {...iconProps} />
+  }
+}
+
 function normalizeFaq(f: any, idx: number): FAQ {
   return {
     id: f.id || String(idx + 1),
@@ -133,7 +297,6 @@ function normalizeFaq(f: any, idx: number): FAQ {
   }
 }
 
-// Normalize CustomLink from DB
 function normalizeLink(l: any): CustomLink {
   return {
     label_ar: l.label_ar || l.label || '',
@@ -142,7 +305,6 @@ function normalizeLink(l: any): CustomLink {
   }
 }
 
-// Normalize HeroContent from DB
 function normalizeHero(h: any): HeroContent {
   return {
     trust_badge_text_ar: h.trust_badge_text_ar || h.trust_badge_text || 'منصة أتمتة وتسويق الواتساب الأولى للشركات والمتاجر',
@@ -160,8 +322,53 @@ function normalizeHero(h: any): HeroContent {
   }
 }
 
+function normalizeFeatures(raw: any): FeaturesSectionContent {
+  if (!raw) return DEFAULT_FEATURES_SECTION
+
+  // If it's an old array format
+  if (Array.isArray(raw)) {
+    return {
+      section_title_ar: DEFAULT_FEATURES_SECTION.section_title_ar,
+      section_title_en: DEFAULT_FEATURES_SECTION.section_title_en,
+      section_subtitle_ar: DEFAULT_FEATURES_SECTION.section_subtitle_ar,
+      section_subtitle_en: DEFAULT_FEATURES_SECTION.section_subtitle_en,
+      features: raw.map((item, idx) => ({
+        id: item.id || `feature-${idx + 1}`,
+        title_ar: item.title_ar || item.title || `ميزة ${idx + 1}`,
+        title_en: item.title_en || `Feature ${idx + 1}`,
+        description_ar: item.description_ar || item.description || '',
+        description_en: item.description_en || '',
+        icon: item.icon || 'Sparkles',
+        col_span: item.col_span || 'col-span-1',
+        badges: item.badges || [],
+        integrations: item.integrations || [],
+      })),
+    }
+  }
+
+  // If it's the new object format
+  return {
+    section_title_ar: raw.section_title_ar || DEFAULT_FEATURES_SECTION.section_title_ar,
+    section_title_en: raw.section_title_en || DEFAULT_FEATURES_SECTION.section_title_en,
+    section_subtitle_ar: raw.section_subtitle_ar || DEFAULT_FEATURES_SECTION.section_subtitle_ar,
+    section_subtitle_en: raw.section_subtitle_en || DEFAULT_FEATURES_SECTION.section_subtitle_en,
+    features: Array.isArray(raw.features) && raw.features.length > 0
+      ? raw.features.map((item: any, idx: number) => ({
+          id: item.id || `feature-${idx + 1}`,
+          title_ar: item.title_ar || item.title || '',
+          title_en: item.title_en || '',
+          description_ar: item.description_ar || item.description || '',
+          description_en: item.description_en || '',
+          icon: item.icon || 'Sparkles',
+          col_span: item.col_span === 'col-span-2' ? 'col-span-2' : 'col-span-1',
+          badges: Array.isArray(item.badges) ? item.badges : [],
+          integrations: Array.isArray(item.integrations) ? item.integrations : [],
+        }))
+      : DEFAULT_FEATURES_SECTION.features,
+  }
+}
+
 export function LandingSettingsClient({ initialSettings }: { initialSettings: any }) {
-  const t = useTranslations('Admin.siteSettings')
   const locale = useLocale()
   const isAr = locale === 'ar'
 
@@ -170,6 +377,7 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
     platform_name: initialSettings?.platform_name || 'MK Whats',
     logo_url: initialSettings?.logo_url || '',
     hero_content: normalizeHero(initialSettings?.hero_content || {}),
+    features_content: normalizeFeatures(initialSettings?.features_content),
     faqs: (initialSettings?.faqs || [
       {
         id: '1',
@@ -231,12 +439,128 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
         throw new Error(data.error || 'Failed to save landing settings')
       }
 
-      setSuccessMsg(isAr ? 'تم حفظ كافة إعدادات صفحة الهبوط بنجاح! 🎉' : 'Landing Page Settings saved successfully! 🎉')
+      setSuccessMsg(isAr ? 'تم حفظ كافة إعدادات صفحة الهبوط والمميزات بنجاح! 🎉' : 'Landing Page Settings & Bento Features saved successfully! 🎉')
     } catch (err: any) {
       setErrorMsg(err.message || 'An error occurred while saving settings')
     } finally {
       setLoading(false)
     }
+  }
+
+  // Feature Section Handlers
+  const updateFeatureSection = (field: 'section_title_ar' | 'section_title_en' | 'section_subtitle_ar' | 'section_subtitle_en', value: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      features_content: {
+        ...prev.features_content,
+        [field]: value,
+      },
+    }))
+  }
+
+  const handleAddFeature = () => {
+    const newId = `feature-${Date.now()}`
+    const newFeature: FeatureItem = {
+      id: newId,
+      title_ar: 'ميزة جديدة متطورة',
+      title_en: 'New Advanced Feature',
+      description_ar: 'شرح وتفاصيل الميزة وكيف تخدم العملاء وتزيد من كفاءة العمل والمبيعات.',
+      description_en: 'Description and details of how this feature empowers business workflows and increases sales.',
+      icon: 'Zap',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    }
+
+    setSettings((prev) => ({
+      ...prev,
+      features_content: {
+        ...prev.features_content,
+        features: [...prev.features_content.features, newFeature],
+      },
+    }))
+  }
+
+  const handleRemoveFeature = (index: number) => {
+    setSettings((prev) => ({
+      ...prev,
+      features_content: {
+        ...prev.features_content,
+        features: prev.features_content.features.filter((_, i) => i !== index),
+      },
+    }))
+  }
+
+  const handleMoveFeature = (index: number, direction: 'up' | 'down') => {
+    const list = [...settings.features_content.features]
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+    if (targetIndex < 0 || targetIndex >= list.length) return
+    const [moved] = list.splice(index, 1)
+    list.splice(targetIndex, 0, moved)
+    setSettings((prev) => ({
+      ...prev,
+      features_content: {
+        ...prev.features_content,
+        features: list,
+      },
+    }))
+  }
+
+  const updateFeatureItem = (index: number, field: keyof FeatureItem, value: any) => {
+    setSettings((prev) => {
+      const updated = [...prev.features_content.features]
+      updated[index] = { ...updated[index], [field]: value }
+      return {
+        ...prev,
+        features_content: {
+          ...prev.features_content,
+          features: updated,
+        },
+      }
+    })
+  }
+
+  // Feature Badges
+  const handleAddBadge = (featureIndex: number) => {
+    const feature = settings.features_content.features[featureIndex]
+    const updatedBadges = [...(feature.badges || []), { text_ar: 'شارة جديدة', text_en: 'New Badge', variant: 'pulse' as const }]
+    updateFeatureItem(featureIndex, 'badges', updatedBadges)
+  }
+
+  const handleRemoveBadge = (featureIndex: number, badgeIndex: number) => {
+    const feature = settings.features_content.features[featureIndex]
+    const updatedBadges = (feature.badges || []).filter((_, i) => i !== badgeIndex)
+    updateFeatureItem(featureIndex, 'badges', updatedBadges)
+  }
+
+  const handleUpdateBadge = (featureIndex: number, badgeIndex: number, field: keyof FeatureBadge, value: any) => {
+    const feature = settings.features_content.features[featureIndex]
+    const updatedBadges = [...(feature.badges || [])]
+    updatedBadges[badgeIndex] = { ...updatedBadges[badgeIndex], [field]: value }
+    updateFeatureItem(featureIndex, 'badges', updatedBadges)
+  }
+
+  // Feature Integrations
+  const handleAddIntegration = (featureIndex: number) => {
+    const feature = settings.features_content.features[featureIndex]
+    const updatedIntegrations = [
+      ...(feature.integrations || []),
+      { title_ar: 'المنصة', title_en: 'Platform', status_ar: '● متصل', status_en: '● Connected' },
+    ]
+    updateFeatureItem(featureIndex, 'integrations', updatedIntegrations)
+  }
+
+  const handleRemoveIntegration = (featureIndex: number, intIndex: number) => {
+    const feature = settings.features_content.features[featureIndex]
+    const updatedIntegrations = (feature.integrations || []).filter((_, i) => i !== intIndex)
+    updateFeatureItem(featureIndex, 'integrations', updatedIntegrations)
+  }
+
+  const handleUpdateIntegration = (featureIndex: number, intIndex: number, field: keyof FeatureIntegration, value: any) => {
+    const feature = settings.features_content.features[featureIndex]
+    const updatedIntegrations = [...(feature.integrations || [])]
+    updatedIntegrations[intIndex] = { ...updatedIntegrations[intIndex], [field]: value }
+    updateFeatureItem(featureIndex, 'integrations', updatedIntegrations)
   }
 
   // FAQ handlers
@@ -338,21 +662,6 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
     }))
   }
 
-  // Bilingual label row
-  const BilingualLabel = ({ ar, en }: { ar: string; en: string }) => (
-    <div className="flex items-center gap-2">
-      <span className="inline-flex items-center gap-1 text-[10px] font-black bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-md border border-amber-500/20">
-        🇸🇦 AR
-      </span>
-      <span className="text-xs font-bold text-foreground">{ar}</span>
-      <span className="mx-1 text-muted-foreground">/</span>
-      <span className="inline-flex items-center gap-1 text-[10px] font-black bg-sky-500/10 text-sky-500 px-2 py-0.5 rounded-md border border-sky-500/20">
-        🇬🇧 EN
-      </span>
-      <span className="text-xs font-bold text-foreground">{en}</span>
-    </div>
-  )
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -360,12 +669,12 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2">
             <Layout className="h-6 w-6 text-emerald-500 shrink-0" />
-            {isAr ? 'إعدادات صفحة الهبوط الشاملة (Landing Page CMS)' : 'Landing Page Full Management System'}
+            {isAr ? 'إدارة صفحة الهبوط الشاملة (Landing Page CMS)' : 'Landing Page Full Management System'}
           </h1>
           <p className="mt-1 text-xs font-medium text-muted-foreground">
             {isAr
-              ? 'التحكم الكامل بالنصوص (عربي + إنجليزي)، ألوان الصفحة، الأسئلة الشائعة، الشركاء، روابط الهيدر والفوتر، وأزرار الدعم المباشر.'
-              : 'Full bilingual (AR + EN) control over text, colors, FAQs, partners, header/footer links, and live support buttons.'}
+              ? 'التحكم الكامل بالنصوص، قسم المميزات والـ Bento Grid، الألوان، الأسئلة الشائعة، الشركاء، وروابط الموقع بالعربية والإنجليزية.'
+              : 'Full bilingual (AR + EN) control over text, Bento Grid features, colors, FAQs, partners, and site links.'}
           </p>
         </div>
 
@@ -402,11 +711,16 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
         </span>
       </div>
 
-      <Tabs defaultValue="hero" className="w-full space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 bg-muted p-1 rounded-xl gap-1">
+      <Tabs defaultValue="features" className="w-full space-y-6">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-muted p-1 rounded-xl gap-1">
           <TabsTrigger value="hero" className="text-xs font-bold gap-1.5">
             <Sparkles className="h-3.5 w-3.5" />
-            {isAr ? 'القسم الرئيسي' : 'Hero & Text'}
+            {isAr ? 'الهيرو' : 'Hero'}
+          </TabsTrigger>
+
+          <TabsTrigger value="features" className="text-xs font-bold gap-1.5 text-emerald-600 dark:text-emerald-400">
+            <Grid className="h-3.5 w-3.5" />
+            {isAr ? 'المميزات Bento' : 'Features'}
           </TabsTrigger>
 
           <TabsTrigger value="faqs" className="text-xs font-bold gap-1.5">
@@ -416,7 +730,7 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
 
           <TabsTrigger value="social" className="text-xs font-bold gap-1.5">
             <Share2 className="h-3.5 w-3.5" />
-            {isAr ? 'السوشيال ميديا' : 'Social Links'}
+            {isAr ? 'السوشيال' : 'Social'}
           </TabsTrigger>
 
           <TabsTrigger value="partners" className="text-xs font-bold gap-1.5">
@@ -426,17 +740,17 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
 
           <TabsTrigger value="theme" className="text-xs font-bold gap-1.5">
             <Palette className="h-3.5 w-3.5" />
-            {isAr ? 'الألوان والهوية' : 'Colors & Reset'}
+            {isAr ? 'الألوان' : 'Colors'}
           </TabsTrigger>
 
           <TabsTrigger value="menu" className="text-xs font-bold gap-1.5">
             <Link2 className="h-3.5 w-3.5" />
-            {isAr ? 'الهيدر والفوتر' : 'Header & Footer'}
+            {isAr ? 'الهيدر/فوتر' : 'Links'}
           </TabsTrigger>
 
           <TabsTrigger value="support" className="text-xs font-bold gap-1.5">
             <Headphones className="h-3.5 w-3.5" />
-            {isAr ? 'أزرار الدعم' : 'Support Buttons'}
+            {isAr ? 'أزرار الدعم' : 'Support'}
           </TabsTrigger>
         </TabsList>
 
@@ -577,7 +891,420 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
           </Card>
         </TabsContent>
 
-        {/* 2. FAQs Tab — BILINGUAL */}
+        {/* 2. Bento Grid & Features Tab — BILINGUAL CMS */}
+        <TabsContent value="features" className="space-y-6">
+          <Card className="bg-card border-border text-card-foreground shadow-sm">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <Grid className="h-4 w-4 text-emerald-500" />
+                  {isAr ? 'إدارة قسم المميزات وشبكة Bento Grid' : 'Features & Bento Grid Management'}
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
+                  {isAr
+                    ? 'التحكم الكامل بالعناوين، كروت المميزات، الأيقونات، الشارات، ووسوم التكامل مع إمكانية إضافة كروت جديدة.'
+                    : 'Manage section header, cards, icons, badges, integrations, and add new feature cards dynamically.'}
+                </CardDescription>
+              </div>
+              <Button
+                type="button"
+                onClick={handleAddFeature}
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs gap-1.5 shrink-0"
+              >
+                <Plus className="h-4 w-4" />
+                {isAr ? 'إضافة كارت ميزة جديد' : 'Add Feature Card'}
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-6">
+
+              {/* Section Header Inputs */}
+              <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-border">
+                  <Sparkles className="h-4 w-4 text-emerald-500" />
+                  <span className="text-xs font-black text-foreground">
+                    {isAr ? 'عنوان ووصف قسم المميزات العام (Section Header)' : 'Section Main Header & Subtitle'}
+                  </span>
+                </div>
+
+                {/* Section Title */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold">{isAr ? 'عنوان القسم الرئيسي' : 'Section Main Title'}</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black text-amber-500">🇸🇦 العربية</span>
+                      <Input
+                        value={settings.features_content.section_title_ar}
+                        onChange={(e) => updateFeatureSection('section_title_ar', e.target.value)}
+                        className="bg-background text-sm font-bold"
+                        dir="rtl"
+                        placeholder="كل ما تحتاجه للتحكم الكامل بـ واتساب"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black text-sky-500">🇬🇧 English</span>
+                      <Input
+                        value={settings.features_content.section_title_en}
+                        onChange={(e) => updateFeatureSection('section_title_en', e.target.value)}
+                        className="bg-background text-sm font-bold"
+                        dir="ltr"
+                        placeholder="Everything You Need to Master WhatsApp"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section Subtitle */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold">{isAr ? 'الوصف الفرعي للقسم' : 'Section Subtitle'}</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black text-amber-500">🇸🇦 العربية</span>
+                      <Textarea
+                        value={settings.features_content.section_subtitle_ar}
+                        onChange={(e) => updateFeatureSection('section_subtitle_ar', e.target.value)}
+                        rows={2}
+                        className="bg-background text-xs leading-relaxed"
+                        dir="rtl"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black text-sky-500">🇬🇧 English</span>
+                      <Textarea
+                        value={settings.features_content.section_subtitle_en}
+                        onChange={(e) => updateFeatureSection('section_subtitle_en', e.target.value)}
+                        rows={2}
+                        className="bg-background text-xs leading-relaxed"
+                        dir="ltr"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feature Cards List */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Boxes className="h-4 w-4 text-emerald-500" />
+                    {isAr ? `كروت المميزات الحالية (${settings.features_content.features.length})` : `Feature Cards List (${settings.features_content.features.length})`}
+                  </span>
+                </div>
+
+                {settings.features_content.features.map((feature, fIdx) => (
+                  <div
+                    key={feature.id || fIdx}
+                    className="p-5 rounded-xl border border-border bg-card shadow-sm space-y-4 relative group hover:border-emerald-500/40 transition-colors duration-200"
+                  >
+                    {/* Card Top Action Bar */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-border/60">
+                      <div className="flex items-center gap-2">
+                        <span className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black text-xs">
+                          #{fIdx + 1}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                          {renderIconPreview(feature.icon)}
+                          <span>{isAr ? feature.title_ar || `ميزة #${fIdx + 1}` : feature.title_en || `Feature #${fIdx + 1}`}</span>
+                        </div>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${feature.col_span === 'col-span-2' ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' : 'bg-muted border-border text-muted-foreground'}`}>
+                          {feature.col_span === 'col-span-2' ? (isAr ? 'عريض 2 أعمدة' : 'Wide 2-Col') : (isAr ? 'عادي 1 عمود' : 'Normal 1-Col')}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={fIdx === 0}
+                          onClick={() => handleMoveFeature(fIdx, 'up')}
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                          title={isAr ? 'تحريك للأعلى' : 'Move Up'}
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={fIdx === settings.features_content.features.length - 1}
+                          onClick={() => handleMoveFeature(fIdx, 'down')}
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                          title={isAr ? 'تحريك للأسفل' : 'Move Down'}
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveFeature(fIdx)}
+                          className="h-7 w-7 p-0 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 ml-1"
+                          title={isAr ? 'حذف الميزة' : 'Delete Feature'}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Settings Row: Icon & Layout Selector */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Icon Selector */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold flex items-center gap-1.5">
+                          {renderIconPreview(feature.icon)}
+                          {isAr ? 'الأيقونة' : 'Icon'}
+                        </Label>
+                        <select
+                          value={feature.icon || 'Sparkles'}
+                          onChange={(e) => updateFeatureItem(fIdx, 'icon', e.target.value)}
+                          className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        >
+                          {AVAILABLE_ICONS.map((ic) => (
+                            <option key={ic.value} value={ic.value}>
+                              {isAr ? ic.label_ar : ic.label_en}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Layout Size Selector */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold flex items-center gap-1.5">
+                          <Grid className="h-3.5 w-3.5 text-emerald-500" />
+                          {isAr ? 'حجم الكارت في الشبكة' : 'Grid Layout Span'}
+                        </Label>
+                        <select
+                          value={feature.col_span || 'col-span-1'}
+                          onChange={(e) => updateFeatureItem(fIdx, 'col_span', e.target.value)}
+                          className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        >
+                          <option value="col-span-1">{isAr ? 'كارت عادي (عمود واحد - 1 Col)' : 'Normal Card (1 Column)'}</option>
+                          <option value="col-span-2">{isAr ? 'كارت مميز عريض (عمودين - 2 Cols)' : 'Featured Wide Card (2 Columns)'}</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Title Inputs */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold">{isAr ? 'عنوان الميزة' : 'Feature Title'}</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-black text-amber-500">🇸🇦 العربية</span>
+                          <Input
+                            value={feature.title_ar}
+                            onChange={(e) => updateFeatureItem(fIdx, 'title_ar', e.target.value)}
+                            className="bg-background text-sm font-bold"
+                            dir="rtl"
+                            placeholder="عنوان الميزة بالعربية"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-black text-sky-500">🇬🇧 English</span>
+                          <Input
+                            value={feature.title_en}
+                            onChange={(e) => updateFeatureItem(fIdx, 'title_en', e.target.value)}
+                            className="bg-background text-sm font-bold"
+                            dir="ltr"
+                            placeholder="Feature Title in English"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Description Inputs */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold">{isAr ? 'وصف الميزة' : 'Feature Description'}</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-black text-amber-500">🇸🇦 العربية</span>
+                          <Textarea
+                            value={feature.description_ar}
+                            onChange={(e) => updateFeatureItem(fIdx, 'description_ar', e.target.value)}
+                            rows={2}
+                            className="bg-background text-xs leading-relaxed"
+                            dir="rtl"
+                            placeholder="شرح تفصيلي للميزة..."
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-black text-sky-500">🇬🇧 English</span>
+                          <Textarea
+                            value={feature.description_en}
+                            onChange={(e) => updateFeatureItem(fIdx, 'description_en', e.target.value)}
+                            rows={2}
+                            className="bg-background text-xs leading-relaxed"
+                            dir="ltr"
+                            placeholder="Detailed description in English..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Feature Badges Section (Optional tags like Gemini Active, Purchase Intent) */}
+                    <div className="p-3 rounded-lg border border-border/80 bg-muted/20 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold flex items-center gap-1.5 text-foreground">
+                          <Tag className="h-3.5 w-3.5 text-emerald-500" />
+                          {isAr ? 'الشارات التفاعلية الإضافية (Badges)' : 'Interactive Badges'}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddBadge(fIdx)}
+                          className="h-7 text-[11px] gap-1 border-dashed"
+                        >
+                          <Plus className="h-3 w-3" />
+                          {isAr ? 'إضافة شارة' : 'Add Badge'}
+                        </Button>
+                      </div>
+
+                      {feature.badges && feature.badges.length > 0 ? (
+                        <div className="space-y-2">
+                          {feature.badges.map((badge, bIdx) => (
+                            <div key={bIdx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-background p-2 rounded-md border border-border">
+                              <div className="sm:col-span-5 space-y-0.5">
+                                <span className="text-[9px] font-black text-amber-500">🇸🇦 AR:</span>
+                                <Input
+                                  value={badge.text_ar}
+                                  onChange={(e) => handleUpdateBadge(fIdx, bIdx, 'text_ar', e.target.value)}
+                                  className="h-7 text-xs"
+                                  dir="rtl"
+                                />
+                              </div>
+                              <div className="sm:col-span-5 space-y-0.5">
+                                <span className="text-[9px] font-black text-sky-500">🇬🇧 EN:</span>
+                                <Input
+                                  value={badge.text_en}
+                                  onChange={(e) => handleUpdateBadge(fIdx, bIdx, 'text_en', e.target.value)}
+                                  className="h-7 text-xs"
+                                  dir="ltr"
+                                />
+                              </div>
+                              <div className="sm:col-span-2 flex justify-end pt-3 sm:pt-0">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveBadge(fIdx, bIdx)}
+                                  className="h-7 w-7 p-0 text-rose-500 hover:bg-rose-500/10"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-muted-foreground italic">
+                          {isAr ? 'لا توجد شارات لهذا الكارت (اختياري).' : 'No badges added for this card (optional).'}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Feature Integrations Pills (Optional for tools like Google Sheets / Telegram Bot) */}
+                    <div className="p-3 rounded-lg border border-border/80 bg-muted/20 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold flex items-center gap-1.5 text-foreground">
+                          <Boxes className="h-3.5 w-3.5 text-emerald-500" />
+                          {isAr ? 'صناديق الربط والتكامل (Integration Pills)' : 'Integration Pills'}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddIntegration(fIdx)}
+                          className="h-7 text-[11px] gap-1 border-dashed"
+                        >
+                          <Plus className="h-3 w-3" />
+                          {isAr ? 'إضافة صندوق ربط' : 'Add Integration Pill'}
+                        </Button>
+                      </div>
+
+                      {feature.integrations && feature.integrations.length > 0 ? (
+                        <div className="space-y-2">
+                          {feature.integrations.map((intg, iIdx) => (
+                            <div key={iIdx} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-background p-2 rounded-md border border-border">
+                              <div className="sm:col-span-3 space-y-0.5">
+                                <span className="text-[9px] font-black text-amber-500">🇸🇦 العنوان:</span>
+                                <Input
+                                  value={intg.title_ar}
+                                  onChange={(e) => handleUpdateIntegration(fIdx, iIdx, 'title_ar', e.target.value)}
+                                  className="h-7 text-xs font-bold"
+                                  dir="rtl"
+                                  placeholder="Google Sheets"
+                                />
+                              </div>
+                              <div className="sm:col-span-3 space-y-0.5">
+                                <span className="text-[9px] font-black text-sky-500">🇬🇧 Title:</span>
+                                <Input
+                                  value={intg.title_en}
+                                  onChange={(e) => handleUpdateIntegration(fIdx, iIdx, 'title_en', e.target.value)}
+                                  className="h-7 text-xs font-bold"
+                                  dir="ltr"
+                                  placeholder="Google Sheets"
+                                />
+                              </div>
+                              <div className="sm:col-span-2.5 space-y-0.5">
+                                <span className="text-[9px] font-black text-emerald-500">🇸🇦 الحالة:</span>
+                                <Input
+                                  value={intg.status_ar}
+                                  onChange={(e) => handleUpdateIntegration(fIdx, iIdx, 'status_ar', e.target.value)}
+                                  className="h-7 text-[11px]"
+                                  dir="rtl"
+                                  placeholder="● مزامنة فورية"
+                                />
+                              </div>
+                              <div className="sm:col-span-2.5 space-y-0.5">
+                                <span className="text-[9px] font-black text-emerald-500">🇬🇧 Status:</span>
+                                <Input
+                                  value={intg.status_en}
+                                  onChange={(e) => handleUpdateIntegration(fIdx, iIdx, 'status_en', e.target.value)}
+                                  className="h-7 text-[11px]"
+                                  dir="ltr"
+                                  placeholder="● Auto-Synced"
+                                />
+                              </div>
+                              <div className="sm:col-span-1 flex justify-end pt-2 sm:pt-0">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveIntegration(fIdx, iIdx)}
+                                  className="h-7 w-7 p-0 text-rose-500 hover:bg-rose-500/10"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-muted-foreground italic">
+                          {isAr ? 'لا توجد صناديق تكامل لهذا الكارت (اختياري).' : 'No integration pills added for this card (optional).'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom Add Feature Button */}
+              <Button
+                type="button"
+                onClick={handleAddFeature}
+                className="w-full py-4 border-2 border-dashed border-emerald-500/30 hover:border-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs gap-2"
+                variant="outline"
+              >
+                <Plus className="h-4 w-4" />
+                {isAr ? 'إضافة كارت ميزة جديد في شبكة Bento Grid' : 'Add New Feature Card to Bento Grid'}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 3. FAQs Tab — BILINGUAL */}
         <TabsContent value="faqs" className="space-y-6">
           <Card className="bg-card border-border text-card-foreground shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -691,59 +1418,68 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
           </Card>
         </TabsContent>
 
-        {/* 3. Social Media Links Tab */}
+        {/* 4. Social Links Tab */}
         <TabsContent value="social" className="space-y-6">
           <Card className="bg-card border-border text-card-foreground shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <Share2 className="h-4 w-4 text-emerald-500" />
-                  {isAr ? 'روابط وسائل التواصل الاجتماعي' : 'Social Media Links'}
+                  {isAr ? 'روابط مواقع التواصل الاجتماعي' : 'Social Media Links'}
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
-                  {isAr ? 'ربط السوشيال ميديا بالفوتر والهيدر (Twitter, Instagram, WhatsApp, Telegram, etc.)' : 'Link social accounts displayed in header & footer'}
+                  {isAr
+                    ? 'إضافة حسابات المنصة الرسمية التي تظهر في الفوتر'
+                    : 'Manage official social channels displayed in the footer'}
                 </CardDescription>
               </div>
               <Button
                 type="button"
                 onClick={handleAddSocial}
                 size="sm"
-                variant="outline"
-                className="border-border text-xs gap-1.5"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs gap-1.5"
               >
                 <Plus className="h-4 w-4" />
-                {isAr ? 'إضافة منصة جديدة' : 'Add Social Link'}
+                {isAr ? 'إضافة رابط جديد' : 'Add Link'}
               </Button>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               {settings.social_links.map((link, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-2 rounded-lg border border-border bg-muted/20">
-                  <Input
+                <div key={idx} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/20">
+                  <select
                     value={link.platform}
                     onChange={(e) => {
                       const updated = [...settings.social_links]
-                      updated[idx].platform = e.target.value
+                      updated[idx] = { ...updated[idx], platform: e.target.value }
                       setSettings({ ...settings, social_links: updated })
                     }}
-                    placeholder="Platform (twitter, instagram, whatsapp...)"
-                    className="w-1/3 bg-background text-xs font-bold"
-                  />
+                    className="h-10 rounded-lg border border-input bg-background px-3 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="telegram">Telegram</option>
+                    <option value="twitter">X / Twitter</option>
+                    <option value="instagram">Instagram</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="tiktok">TikTok</option>
+                  </select>
                   <Input
                     value={link.url}
                     onChange={(e) => {
                       const updated = [...settings.social_links]
-                      updated[idx].url = e.target.value
+                      updated[idx] = { ...updated[idx], url: e.target.value }
                       setSettings({ ...settings, social_links: updated })
                     }}
-                    placeholder="URL (https://...)"
-                    className="w-2/3 bg-background text-xs font-mono"
+                    placeholder="https://..."
+                    className="flex-1 bg-background text-xs font-mono"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveSocial(idx)}
-                    className="text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 h-8 px-2"
+                    className="text-rose-500 hover:bg-rose-500/10 h-10 w-10 p-0 shrink-0"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -753,17 +1489,19 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
           </Card>
         </TabsContent>
 
-        {/* 4. Partner Logos Tab */}
+        {/* 5. Partners Tab */}
         <TabsContent value="partners" className="space-y-6">
           <Card className="bg-card border-border text-card-foreground shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <ImageIcon className="h-4 w-4 text-emerald-500" />
-                  {isAr ? 'شريط الشركاء والمعرض (Partner Logos)' : 'Partner Logos & Integration Marquee'}
+                  {isAr ? 'شريط الشركاء والتكاملات (Integrations Bar)' : 'Partners & Integrations Bar'}
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
-                  {isAr ? 'تعديل وحذف وإضافة شعارات الشركات والمتاجر المتحركة في صفحة الهبوط' : 'Manage scrolling partner logos with live image preview'}
+                  {isAr
+                    ? 'إضافة أسماء وشعارات المنصات التي تتكامل معها منصتك'
+                    : 'Manage platform logos & integration partners shown on landing page'}
                 </CardDescription>
               </div>
               <Button
@@ -773,172 +1511,98 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
                 className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs gap-1.5"
               >
                 <Plus className="h-4 w-4" />
-                {isAr ? 'إضافة شريك جديد' : 'Add Partner Logo'}
+                {isAr ? 'إضافة شريك جديد' : 'Add Partner'}
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {settings.partners.map((partner, idx) => (
-                  <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        {partner.logo_url ? (
-                          <img
-                            src={partner.logo_url}
-                            alt={partner.name}
-                            className="h-7 w-auto max-w-[90px] object-contain rounded bg-white/90 p-1"
-                          />
-                        ) : (
-                          <div className="h-7 w-7 rounded bg-muted flex items-center justify-center text-[10px]">
-                            N/A
-                          </div>
-                        )}
-                        <span className="text-xs font-bold">{partner.name}</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemovePartner(idx)}
-                        className="text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 h-7 px-2"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-[11px] font-bold">{isAr ? 'اسم الشريك / المنصة' : 'Partner Name'}</Label>
-                      <Input
-                        value={partner.name}
-                        onChange={(e) => {
-                          const updated = [...settings.partners]
-                          updated[idx].name = e.target.value
-                          setSettings({ ...settings, partners: updated })
-                        }}
-                        className="bg-background text-xs font-bold"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-[11px] font-bold">{isAr ? 'رابط اللوجو SVG/PNG' : 'Logo Image URL'}</Label>
-                      <Input
-                        value={partner.logo_url}
-                        onChange={(e) => {
-                          const updated = [...settings.partners]
-                          updated[idx].logo_url = e.target.value
-                          setSettings({ ...settings, partners: updated })
-                        }}
-                        className="bg-background text-xs font-mono"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {settings.partners.map((partner, idx) => (
+                <div key={idx} className="flex flex-col sm:flex-row items-center gap-3 p-3 rounded-xl border border-border bg-muted/20">
+                  <Input
+                    value={partner.name}
+                    onChange={(e) => {
+                      const updated = [...settings.partners]
+                      updated[idx] = { ...updated[idx], name: e.target.value }
+                      setSettings({ ...settings, partners: updated })
+                    }}
+                    placeholder={isAr ? 'اسم الشريك (مثال: Shopify)' : 'Partner Name'}
+                    className="w-full sm:w-1/3 bg-background text-xs font-bold"
+                  />
+                  <Input
+                    value={partner.logo_url}
+                    onChange={(e) => {
+                      const updated = [...settings.partners]
+                      updated[idx] = { ...updated[idx], logo_url: e.target.value }
+                      setSettings({ ...settings, partners: updated })
+                    }}
+                    placeholder="https://... (رابط شعار الشريك SVG أو PNG)"
+                    className="w-full sm:flex-1 bg-background text-xs font-mono"
+                  />
+                  {partner.logo_url && (
+                    <img src={partner.logo_url} alt={partner.name} className="h-6 w-6 object-contain shrink-0" />
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemovePartner(idx)}
+                    className="text-rose-500 hover:bg-rose-500/10 h-10 w-10 p-0 shrink-0"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* 5. Theme Colors & Reset Tab */}
+        {/* 6. Colors Tab */}
         <TabsContent value="theme" className="space-y-6">
           <Card className="bg-card border-border text-card-foreground shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <Palette className="h-4 w-4 text-emerald-500" />
-                  {isAr ? 'تخصيص ألوان وإعادة ضبـط الألوان (Theme Colors & Reset)' : 'Theme Color Customization & Reset'}
+                  {isAr ? 'ألوان وهوية اللاندينغ بيج' : 'Theme Colors'}
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
-                  {isAr ? 'التحكم بألوان الهوية الرئيسية للاندينغ بيج، مع إمكانية استعادة الألوان الافتراضية بضغطة زر' : 'Customize theme colors or reset back to default green palette with 1 click'}
+                  {isAr
+                    ? 'تخصيص الألوان الافتراضية لعناصر واجهة الهبوط'
+                    : 'Customize primary brand color tokens'}
                 </CardDescription>
               </div>
-
               <Button
                 type="button"
-                onClick={handleResetColors}
                 variant="outline"
                 size="sm"
-                className="border-rose-500/30 text-rose-500 hover:bg-rose-500/10 text-xs gap-1.5 font-bold"
+                onClick={handleResetColors}
+                className="text-xs gap-1.5"
               >
-                <RotateCcw className="h-4 w-4" />
-                {isAr ? 'إعادة ضبط الألوان الافتراضية 🔄' : 'Reset Default Colors 🔄'}
+                <RotateCcw className="h-3.5 w-3.5" />
+                {isAr ? 'استعادة الافتراضي' : 'Reset Defaults'}
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="space-y-1.5 p-3 rounded-xl border border-border bg-muted/20">
+                <div className="space-y-2 p-3 rounded-xl border border-border bg-muted/20">
                   <Label className="text-xs font-bold">{isAr ? 'اللون الرئيسي (Primary)' : 'Primary Color'}</Label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
-                      value={settings.theme_colors.primary || '#10B981'}
+                      value={settings.theme_colors.primary}
                       onChange={(e) =>
                         setSettings({
                           ...settings,
                           theme_colors: { ...settings.theme_colors, primary: e.target.value },
                         })
                       }
-                      className="h-9 w-12 rounded border cursor-pointer"
+                      className="h-9 w-12 rounded cursor-pointer border border-border"
                     />
                     <Input
-                      value={settings.theme_colors.primary || '#10B981'}
+                      value={settings.theme_colors.primary}
                       onChange={(e) =>
                         setSettings({
                           ...settings,
                           theme_colors: { ...settings.theme_colors, primary: e.target.value },
-                        })
-                      }
-                      className="bg-background text-xs font-mono"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 p-3 rounded-xl border border-border bg-muted/20">
-                  <Label className="text-xs font-bold">{isAr ? 'خلفية الصفحة (Background)' : 'Background Color'}</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={settings.theme_colors.background || '#020617'}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          theme_colors: { ...settings.theme_colors, background: e.target.value },
-                        })
-                      }
-                      className="h-9 w-12 rounded border cursor-pointer"
-                    />
-                    <Input
-                      value={settings.theme_colors.background || '#020617'}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          theme_colors: { ...settings.theme_colors, background: e.target.value },
-                        })
-                      }
-                      className="bg-background text-xs font-mono"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 p-3 rounded-xl border border-border bg-muted/20">
-                  <Label className="text-xs font-bold">{isAr ? 'خلفية الكروت (Card Background)' : 'Card Background'}</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={settings.theme_colors.card_bg || '#1F2937'}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          theme_colors: { ...settings.theme_colors, card_bg: e.target.value },
-                        })
-                      }
-                      className="h-9 w-12 rounded border cursor-pointer"
-                    />
-                    <Input
-                      value={settings.theme_colors.card_bg || '#1F2937'}
-                      onChange={(e) =>
-                        setSettings({
-                          ...settings,
-                          theme_colors: { ...settings.theme_colors, card_bg: e.target.value },
                         })
                       }
                       className="bg-background text-xs font-mono"
@@ -950,20 +1614,19 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
           </Card>
         </TabsContent>
 
-        {/* 6. Header & Footer Links Tab — BILINGUAL */}
+        {/* 7. Header & Footer Links Tab — BILINGUAL */}
         <TabsContent value="menu" className="space-y-6">
-          {/* Header Navigation Links */}
           <Card className="bg-card border-border text-card-foreground shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <Link2 className="h-4 w-4 text-emerald-500" />
-                  {isAr ? 'روابط القائمة العلوية (Header Navigation Links)' : 'Header Navigation Links'}
+                  {isAr ? 'روابط القائمة العلوية (Header Links)' : 'Header Navigation Links'}
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
                   {isAr
-                    ? 'إضافة وتعديل وحذف روابط التنقل الرئيسية بالعربية والإنجليزية'
-                    : 'Manage header links in both Arabic & English'}
+                    ? 'الروابط التي تظهر في شريط التنقل العلوي للزوار'
+                    : 'Manage top navigation menu links'}
                 </CardDescription>
               </div>
               <Button
@@ -973,154 +1636,147 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
                 className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs gap-1.5"
               >
                 <Plus className="h-4 w-4" />
-                {isAr ? 'إضافة رابط للهيدر' : 'Add Header Link'}
+                {isAr ? 'إضافة رابط' : 'Add Link'}
               </Button>
             </CardHeader>
             <CardContent className="space-y-3">
               {settings.header_links.map((link, idx) => (
-                <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-black text-muted-foreground">#{idx + 1}</span>
+                <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center p-3 rounded-xl border border-border bg-muted/20">
+                  <div className="md:col-span-4 space-y-1">
+                    <span className="text-[10px] font-black text-amber-500">🇸🇦 AR:</span>
+                    <Input
+                      value={link.label_ar}
+                      onChange={(e) => {
+                        const updated = [...settings.header_links]
+                        updated[idx] = { ...updated[idx], label_ar: e.target.value }
+                        setSettings({ ...settings, header_links: updated })
+                      }}
+                      className="bg-background text-xs font-bold"
+                      dir="rtl"
+                      placeholder="الاسم بالعربي"
+                    />
+                  </div>
+                  <div className="md:col-span-4 space-y-1">
+                    <span className="text-[10px] font-black text-sky-500">🇬🇧 EN:</span>
+                    <Input
+                      value={link.label_en}
+                      onChange={(e) => {
+                        const updated = [...settings.header_links]
+                        updated[idx] = { ...updated[idx], label_en: e.target.value }
+                        setSettings({ ...settings, header_links: updated })
+                      }}
+                      className="bg-background text-xs font-bold"
+                      dir="ltr"
+                      placeholder="Label in English"
+                    />
+                  </div>
+                  <div className="md:col-span-3 space-y-1">
+                    <span className="text-[10px] font-black text-muted-foreground">URL:</span>
+                    <Input
+                      value={link.url}
+                      onChange={(e) => {
+                        const updated = [...settings.header_links]
+                        updated[idx] = { ...updated[idx], url: e.target.value }
+                        setSettings({ ...settings, header_links: updated })
+                      }}
+                      className="bg-background text-xs font-mono"
+                      placeholder="#features or /page"
+                    />
+                  </div>
+                  <div className="md:col-span-1 flex justify-end pt-3 md:pt-4">
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveHeaderLink(idx)}
-                      className="text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 h-7 px-2"
+                      className="text-rose-500 hover:bg-rose-500/10 h-9 w-9 p-0"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-black text-amber-500">🇸🇦 العربية</span>
-                      <Input
-                        value={link.label_ar}
-                        onChange={(e) => {
-                          const updated = [...settings.header_links]
-                          updated[idx] = { ...updated[idx], label_ar: e.target.value }
-                          setSettings({ ...settings, header_links: updated })
-                        }}
-                        placeholder="الرئيسية"
-                        className="bg-background text-xs font-bold"
-                        dir="rtl"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-black text-sky-500">🇬🇧 English</span>
-                      <Input
-                        value={link.label_en}
-                        onChange={(e) => {
-                          const updated = [...settings.header_links]
-                          updated[idx] = { ...updated[idx], label_en: e.target.value }
-                          setSettings({ ...settings, header_links: updated })
-                        }}
-                        placeholder="Home"
-                        className="bg-background text-xs font-bold"
-                        dir="ltr"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-black text-muted-foreground">🔗 URL</span>
-                      <Input
-                        value={link.url}
-                        onChange={(e) => {
-                          const updated = [...settings.header_links]
-                          updated[idx] = { ...updated[idx], url: e.target.value }
-                          setSettings({ ...settings, header_links: updated })
-                        }}
-                        placeholder="#section or /page"
-                        className="bg-background text-xs font-mono"
-                      />
-                    </div>
                   </div>
                 </div>
               ))}
             </CardContent>
           </Card>
 
-          {/* Footer Navigation Links */}
+          {/* Footer Links */}
           <Card className="bg-card border-border text-card-foreground shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <Link2 className="h-4 w-4 text-emerald-500" />
-                  {isAr ? 'روابط التذييل (Footer Navigation Links)' : 'Footer Links'}
+                  {isAr ? 'روابط التذييل السفلي (Footer Links)' : 'Footer Quick Links'}
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground">
                   {isAr
-                    ? 'إضافة وتعديل روابط الشروط والأحكام والسياسات بالعربية والإنجليزية'
-                    : 'Manage footer legal and policy links in both languages'}
+                    ? 'الروابط الإضافية وروابط الصفحات التعريفية في أسفل الموقع'
+                    : 'Manage footer secondary links'}
                 </CardDescription>
               </div>
               <Button
                 type="button"
                 onClick={handleAddFooterLink}
                 size="sm"
-                variant="outline"
-                className="border-border text-xs gap-1.5"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs gap-1.5"
               >
                 <Plus className="h-4 w-4" />
-                {isAr ? 'إضافة رابط للفوتر' : 'Add Footer Link'}
+                {isAr ? 'إضافة رابط فوتر' : 'Add Link'}
               </Button>
             </CardHeader>
             <CardContent className="space-y-3">
               {settings.footer_links.map((link, idx) => (
-                <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-black text-muted-foreground">#{idx + 1}</span>
+                <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center p-3 rounded-xl border border-border bg-muted/20">
+                  <div className="md:col-span-4 space-y-1">
+                    <span className="text-[10px] font-black text-amber-500">🇸🇦 AR:</span>
+                    <Input
+                      value={link.label_ar}
+                      onChange={(e) => {
+                        const updated = [...settings.footer_links]
+                        updated[idx] = { ...updated[idx], label_ar: e.target.value }
+                        setSettings({ ...settings, footer_links: updated })
+                      }}
+                      className="bg-background text-xs font-bold"
+                      dir="rtl"
+                      placeholder="الشروط والأحكام"
+                    />
+                  </div>
+                  <div className="md:col-span-4 space-y-1">
+                    <span className="text-[10px] font-black text-sky-500">🇬🇧 EN:</span>
+                    <Input
+                      value={link.label_en}
+                      onChange={(e) => {
+                        const updated = [...settings.footer_links]
+                        updated[idx] = { ...updated[idx], label_en: e.target.value }
+                        setSettings({ ...settings, footer_links: updated })
+                      }}
+                      className="bg-background text-xs font-bold"
+                      dir="ltr"
+                      placeholder="Terms & Conditions"
+                    />
+                  </div>
+                  <div className="md:col-span-3 space-y-1">
+                    <span className="text-[10px] font-black text-muted-foreground">URL:</span>
+                    <Input
+                      value={link.url}
+                      onChange={(e) => {
+                        const updated = [...settings.footer_links]
+                        updated[idx] = { ...updated[idx], url: e.target.value }
+                        setSettings({ ...settings, footer_links: updated })
+                      }}
+                      className="bg-background text-xs font-mono"
+                      placeholder="/terms"
+                    />
+                  </div>
+                  <div className="md:col-span-1 flex justify-end pt-3 md:pt-4">
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveFooterLink(idx)}
-                      className="text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 h-7 px-2"
+                      className="text-rose-500 hover:bg-rose-500/10 h-9 w-9 p-0"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-black text-amber-500">🇸🇦 العربية</span>
-                      <Input
-                        value={link.label_ar}
-                        onChange={(e) => {
-                          const updated = [...settings.footer_links]
-                          updated[idx] = { ...updated[idx], label_ar: e.target.value }
-                          setSettings({ ...settings, footer_links: updated })
-                        }}
-                        placeholder="الشروط والأحكام"
-                        className="bg-background text-xs font-bold"
-                        dir="rtl"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-black text-sky-500">🇬🇧 English</span>
-                      <Input
-                        value={link.label_en}
-                        onChange={(e) => {
-                          const updated = [...settings.footer_links]
-                          updated[idx] = { ...updated[idx], label_en: e.target.value }
-                          setSettings({ ...settings, footer_links: updated })
-                        }}
-                        placeholder="Terms & Conditions"
-                        className="bg-background text-xs font-bold"
-                        dir="ltr"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-black text-muted-foreground">🔗 URL</span>
-                      <Input
-                        value={link.url}
-                        onChange={(e) => {
-                          const updated = [...settings.footer_links]
-                          updated[idx] = { ...updated[idx], url: e.target.value }
-                          setSettings({ ...settings, footer_links: updated })
-                        }}
-                        placeholder="/terms"
-                        className="bg-background text-xs font-mono"
-                      />
-                    </div>
                   </div>
                 </div>
               ))}
@@ -1128,25 +1784,25 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
           </Card>
         </TabsContent>
 
-        {/* 7. Support Buttons Tab */}
+        {/* 8. Live Support Floating Buttons Tab */}
         <TabsContent value="support" className="space-y-6">
           <Card className="bg-card border-border text-card-foreground shadow-sm">
             <CardHeader>
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 <Headphones className="h-4 w-4 text-emerald-500" />
-                {isAr ? 'أزرار الدعم المباشر باللاندينغ بيج (WhatsApp & Telegram Support)' : 'Landing Page Floating Support Buttons'}
+                {isAr ? 'أزرار الدعم الفني المباشر العائمة (Live Support)' : 'Floating Live Support Buttons'}
               </CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
                 {isAr
-                  ? 'إدخال بياني رقم الواتساب وتلغرام والإيميل، والتحكم بإظهار الزر العائم لزوار اللاندينغ بيج (عربي + إنجليزي تلقائياً)'
-                  : 'Configure WhatsApp, Telegram, Email contact info and toggle floating buttons (bilingual auto-switch)'}
+                  ? 'التحكم بظهور أزرار واتساب وتلغرام والبريد في الزاوية العائمة للزوار'
+                  : 'Manage WhatsApp, Telegram, and Email support floating widgets'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* WhatsApp Support Row */}
               <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold flex items-center gap-2 text-emerald-500">
+                  <span className="text-sm font-bold flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                     <MessageCircle className="h-4 w-4" />
                     {isAr ? 'دعم الواتساب (WhatsApp Live Chat)' : 'WhatsApp Support'}
                   </span>

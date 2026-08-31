@@ -231,10 +231,6 @@ function SignupPageInner() {
                       <CheckCircle2 className="h-4 w-4 text-[#00A389] shrink-0 mt-0.5" />
                       <span>{isAr ? "إشعارات وتنبيهات فورية للموظفين عبر تيليجرام" : "Real-time Telegram notifications for staff"}</span>
                     </li>
-                    <li className="flex items-start gap-2.5">
-                      <CheckCircle2 className="h-4 w-4 text-[#00A389] shrink-0 mt-0.5" />
-                      <span>{isAr ? "تجربة مجانية 14 يوم بدون بطاقة ائتمان" : "14-day free trial. No credit card required."}</span>
-                    </li>
                   </ul>
                 </div>
 

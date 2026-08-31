@@ -169,7 +169,7 @@ export default async function ContentPage({
 
   const { data: settings } = await serviceClient
     .from('site_settings')
-    .select('platform_name, platform_name_ar, platform_name_en, logo_url')
+    .select('platform_name, platform_name_ar, platform_name_en, logo_url, logo_height')
     .limit(1)
     .maybeSingle()
 
@@ -208,14 +208,18 @@ export default async function ContentPage({
       {/* ── Top Header Bar ────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 border-b border-neutral-200 dark:border-neutral-800 bg-[#F9F5F0]/90 dark:bg-[#141416]/90 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-6 sm:px-10">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-3 group">
             {settings?.logo_url ? (
-              <img src={settings.logo_url} alt={platformName} className="h-8 w-auto object-contain" />
-            ) : (
-              <span className="font-serif text-2xl font-bold text-[#00685F] dark:text-[#6BD8CB]">
-                {platformName}
-              </span>
-            )}
+              <img
+                src={settings.logo_url}
+                alt={platformName}
+                style={{ height: `${Math.max(settings?.logo_height || 44, 40)}px` }}
+                className="w-auto object-contain max-h-16 transition-transform group-hover:scale-105"
+              />
+            ) : null}
+            <span className="font-serif text-xl sm:text-2xl font-bold text-[#00685F] dark:text-[#6BD8CB]">
+              {platformName}
+            </span>
           </Link>
 
           <div className="flex items-center gap-3">

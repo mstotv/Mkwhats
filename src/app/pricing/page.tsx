@@ -86,8 +86,8 @@ export default async function PricingPage() {
 
         <p className="text-base sm:text-lg text-[#605E5B] dark:text-[#C9C6C1] max-w-2xl mx-auto leading-relaxed">
           {isAr
-            ? 'بدون أي رسوم خفية للإعداد. قم بالترقية أو الإلغاء في أي وقت مع فترة تجريبية مجانية لجميع الخطط.'
-            : 'No hidden setup fees. Upgrade or cancel anytime. Full 14-day free trial on all paid plans.'}
+            ? 'بدون أي رسوم خفية للإعداد. قم بالترقية أو الإلغاء في أي وقت بسهولة لجميع الخطط.'
+            : 'No hidden setup fees. Upgrade or cancel anytime easily on all plans.'}
         </p>
 
         {/* ── Pricing Cards Table ────────────────────────────── */}
