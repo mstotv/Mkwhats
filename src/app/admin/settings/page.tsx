@@ -39,6 +39,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface Partner {
   id: string;
@@ -95,13 +96,72 @@ export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('brand');
 
   const DEFAULT_THEME_COLORS = {
-    primary: '#10B981',
+    primary: '#00685F', // DESIGN.md Official Primary (#00685F)
     background: '#020617',
     card_bg: '#1F2937',
     text_primary: '#FFFFFF',
     text_secondary: '#9CA3AF',
     partners_gap: 32,
   };
+
+  const PRESET_PALETTES = [
+    {
+      id: 'ethos',
+      name: isAr ? '🌟 نمط إيثوس الرسمي (DESIGN.md)' : '🌟 Ethos Teal (DESIGN.md)',
+      tagline: isAr ? 'الألوان الرسمية المعتمدة (#00685F)' : 'Official brand primary teal (#00685F)',
+      swatch: '#00685F',
+      colors: {
+        primary: '#00685F',
+        background: '#020617',
+        card_bg: '#1F2937',
+        text_primary: '#FFFFFF',
+        text_secondary: '#9CA3AF',
+        partners_gap: 32,
+      },
+    },
+    {
+      id: 'warm_beige',
+      name: isAr ? '☕ البيج الفاتح (Warm Canvas)' : '☕ Warm Editorial Light (#F9F5F0)',
+      tagline: isAr ? 'خلفية دافئة بلون الورق الطبيعي (#F9F5F0)' : 'Warm paper-on-paper canvas (#F9F5F0)',
+      swatch: '#00685F',
+      colors: {
+        primary: '#00685F',
+        background: '#F9F5F0',
+        card_bg: '#FFFFFF',
+        text_primary: '#1B1C1C',
+        text_secondary: '#605E5B',
+        partners_gap: 32,
+      },
+    },
+    {
+      id: 'emerald',
+      name: isAr ? '🌿 الأخضر الزمردي (Emerald Classic)' : '🌿 Emerald Vibrant (#10B981)',
+      tagline: isAr ? 'أخضر رسائل الواتساب الحيوي (#10B981)' : 'Classic vibrant growth green (#10B981)',
+      swatch: '#10B981',
+      colors: {
+        primary: '#10B981',
+        background: '#020617',
+        card_bg: '#1F2937',
+        text_primary: '#FFFFFF',
+        text_secondary: '#9CA3AF',
+        partners_gap: 32,
+      },
+    },
+    {
+      id: 'midnight',
+      name: isAr ? '🌌 النيلي الليلي (Midnight Indigo)' : '🌌 Midnight Indigo (#6366F1)',
+      tagline: isAr ? 'كحلي داكن عصري وفخم (#6366F1)' : 'Deep indigo high-tech dark (#6366F1)',
+      swatch: '#6366F1',
+      colors: {
+        primary: '#6366F1',
+        background: '#0F172A',
+        card_bg: '#1E293B',
+        text_primary: '#F8FAFC',
+        text_secondary: '#94A3B8',
+        partners_gap: 32,
+      },
+    },
+  ];
 
   const DEFAULT_SOCIAL_LINKS = [
     { platform: 'facebook', name: 'فيسبوك (Facebook)', url: '' },
@@ -120,7 +180,7 @@ export default function AdminSettingsPage() {
   const [supportWhatsapp, setSupportWhatsapp] = useState('+966500000000');
   const [supportTelegram, setSupportTelegram] = useState('@wacrm_support');
   const [currencySymbol, setCurrencySymbol] = useState('$');
-  const [primaryColor, setPrimaryColor] = useState('#10b981');
+  const [primaryColor, setPrimaryColor] = useState('#00685F');
   const [themeColors, setThemeColors] = useState(DEFAULT_THEME_COLORS);
   const [socialLinks, setSocialLinks] = useState(DEFAULT_SOCIAL_LINKS);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -128,7 +188,21 @@ export default function AdminSettingsPage() {
   function handleResetColors() {
     setThemeColors(DEFAULT_THEME_COLORS);
     setPrimaryColor(DEFAULT_THEME_COLORS.primary);
-    toast.success('تمت إعادة جميع ألوان اللاندينغ بيج للوضع الافتراضي الأصلي 🎉 (اضغط حفظ التعديلات لتثبيتها 💾)');
+    toast.success(
+      isAr
+        ? 'تمت استعادة ألوان هوية DESIGN.md الرسمية (Ethos Automation #00685F) بنجاح 🎉 (اضغط حفظ التعديلات لتثبيتها 💾)'
+        : 'Reset to official DESIGN.md colors (#00685F) successfully 🎉 (click Save Changes to persist 💾)'
+    );
+  }
+
+  function handleApplyPreset(preset: typeof PRESET_PALETTES[number]) {
+    setThemeColors(preset.colors);
+    setPrimaryColor(preset.colors.primary);
+    toast.success(
+      isAr
+        ? `تم تطبيق لوحة ${preset.name} بنجاح ✨ (اضغط حفظ التعديلات لتثبيتها 💾)`
+        : `Applied ${preset.name} palette ✨ (click Save Changes to persist 💾)`
+    );
   }
 
   // Landing Page Dynamic CMS States
@@ -958,14 +1032,14 @@ export default function AdminSettingsPage() {
                   </div>
 
                   {/* Full Landing Page Theme Colors Control & Reset Button */}
-                  <div className="space-y-4 sm:col-span-2 pt-4 border-t border-border">
+                  <div className="space-y-5 sm:col-span-2 pt-4 border-t border-border">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <h3 className="font-bold text-foreground text-sm flex items-center gap-2">
                           <Palette className="h-4 w-4 text-emerald-500" /> {isAr ? 'محرر ألوان وقوالب اللاندينغ بيج الكلي (Landing Page Theme Colors)' : 'Landing Page Theme Colors Editor'}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {isAr ? 'تخصيص ألوان الخلفية، الأزرار، البطاقات، والعناوين مع إمكانية استعادة الألوان الافتراضية بنقرة واحدة' : 'Customize background, buttons, cards, and typography colors with one-click default reset'}
+                          {isAr ? 'تخصيص ألوان الهوية، البطاقات، والعناوين أو اختيار لوحة جاهزة بنقرة واحدة من نظام DESIGN.md' : 'Customize brand colors, cards, and typography or pick a preset from DESIGN.md'}
                         </p>
                       </div>
 
@@ -978,8 +1052,63 @@ export default function AdminSettingsPage() {
                         className="border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 font-bold text-xs shadow-sm shrink-0"
                       >
                         <RefreshCw className="h-3.5 w-3.5 me-1.5" />
-                        {isAr ? 'إعادة الألوان للوضع الافتراضي الأول 🔄' : 'Reset Colors to Default 🔄'}
+                        {isAr ? 'إعادة ضبط الألوان للوضع الافتراضي (DESIGN.md) 🔄' : 'Reset Colors to Default (DESIGN.md) 🔄'}
                       </Button>
+                    </div>
+
+                    {/* Quick Preset Palettes Selection Grid */}
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                        {isAr ? '🎨 لوحات الألوان الجاهزة (Quick Presets):' : '🎨 Preset Palettes:'}
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                        {PRESET_PALETTES.map((preset) => {
+                          const isSelected =
+                            themeColors.primary.toLowerCase() === preset.colors.primary.toLowerCase() &&
+                            themeColors.background.toLowerCase() === preset.colors.background.toLowerCase();
+                          return (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              onClick={() => handleApplyPreset(preset)}
+                              className={cn(
+                                "flex flex-col gap-1.5 p-3 rounded-xl border text-right transition-all duration-200 relative overflow-hidden",
+                                isSelected
+                                  ? "border-emerald-500 bg-emerald-500/15 shadow-sm ring-1 ring-emerald-500/50"
+                                  : "border-border bg-card/60 hover:bg-muted/50 hover:border-emerald-500/40 text-muted-foreground hover:text-foreground"
+                              )}
+                            >
+                              <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className="h-3.5 w-3.5 rounded-full border border-white/20 shadow-xs"
+                                    style={{ backgroundColor: preset.colors.primary }}
+                                  />
+                                  <span
+                                    className="h-3.5 w-3.5 rounded-full border border-white/20 shadow-xs"
+                                    style={{ backgroundColor: preset.colors.background }}
+                                  />
+                                  <span
+                                    className="h-3.5 w-3.5 rounded-full border border-white/20 shadow-xs"
+                                    style={{ backgroundColor: preset.colors.card_bg }}
+                                  />
+                                </div>
+                                {isSelected && (
+                                  <span className="text-[10px] font-black text-emerald-400 flex items-center gap-0.5">
+                                    <Check className="h-3 w-3" /> {isAr ? 'محدد' : 'Active'}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="font-bold text-xs text-foreground mt-1">
+                                {preset.name}
+                              </div>
+                              <p className="text-[10px] text-muted-foreground line-clamp-1">
+                                {preset.tagline}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 bg-muted/30 p-4 rounded-2xl border border-border text-xs">

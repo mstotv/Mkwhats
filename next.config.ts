@@ -46,6 +46,24 @@ const nextConfig: NextConfig = {
       { protocol: "http", hostname: "**" },
     ],
   },
+  webpack: (config, { isServer, webpack }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        crypto: false,
+        "node:crypto": false,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    config.plugins.push(
+      new webpack.NormalModuleReplacementPlugin(/^node:/, (resource: any) => {
+        resource.request = resource.request.replace(/^node:/, "");
+      })
+    );
+    return config;
+  },
   async headers() {
     return [
       {

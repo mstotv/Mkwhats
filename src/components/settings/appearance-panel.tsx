@@ -1,35 +1,52 @@
 "use client";
 
-import { Check, Moon, Palette, SunMoon, Sun } from "lucide-react";
+import { Check, Moon, Palette, SunMoon, Sun, RefreshCw, Sparkles } from "lucide-react";
 
 import { useTheme } from "@/hooks/use-theme";
-import { MODES, THEMES, type Mode, type ThemeId } from "@/lib/themes";
+import { MODES, THEMES, DEFAULT_THEME, DEFAULT_MODE, type Mode, type ThemeId } from "@/lib/themes";
 import { cn } from "@/lib/utils";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { SettingsPanelHead } from "./settings-panel-head";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 /**
- * Appearance panel — light/dark mode + accent-color picker.
- *
- * Two independent controls: a mode toggle (light / dark) and the
- * accent grid. Either applies + persists immediately. No save button:
- * each change is a single attribute swap on <html>, there's nothing
- * to roll back.
- *
- * Persistence: localStorage only (device-scoped). The boot script in
- * layout.tsx replays both choices before first paint on subsequent
- * loads.
+ * Appearance panel — light/dark mode + accent-color picker + reset.
  */
 export function AppearancePanel() {
   const { theme, setTheme, mode, setMode } = useTheme();
   const t = useTranslations("Settings.appearance");
+  const locale = useLocale();
+  const isAr = locale === "ar";
+
+  const handleResetToDefault = () => {
+    setTheme(DEFAULT_THEME);
+    setMode(DEFAULT_MODE);
+    toast.success(
+      isAr
+        ? "تمت استعادة المظهر الافتراضي لنظام Ethos Automation بنجاح! 🎉"
+        : "Restored official Ethos Automation design system defaults! 🎉"
+    );
+  };
 
   return (
     <section className="max-w-3xl animate-in fade-in-50 duration-200">
-      <SettingsPanelHead
-        title={t("title")}
-        description={t("description")}
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4 mb-6">
+        <SettingsPanelHead
+          title={t("title")}
+          description={t("description")}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleResetToDefault}
+          className="border-primary/40 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground font-bold text-xs shadow-sm self-start sm:self-center gap-1.5 shrink-0"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          {isAr ? "إعادة التعيين للوضع الافتراضي (Reset)" : "Reset to Default (DESIGN.md)"}
+        </Button>
+      </div>
 
       <div className="space-y-4">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -54,10 +71,15 @@ export function AppearancePanel() {
       </div>
 
       <div className="mt-8 space-y-4">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Palette className="size-4 text-muted-foreground" />
-          {t("accentColor")}
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Palette className="size-4 text-muted-foreground" />
+            {t("accentColor")}
+          </h3>
+          <span className="text-[11px] text-muted-foreground font-medium">
+            {isAr ? "نظام الألوان الرسمية والسمات المتاحة" : "Official Color Themes"}
+          </span>
+        </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {THEMES.map((tObj) => (
@@ -68,6 +90,7 @@ export function AppearancePanel() {
               tagline={tObj.tagline}
               swatch={tObj.swatch}
               isActive={tObj.id === theme}
+              isEthos={tObj.id === "ethos"}
               onPick={() => setTheme(tObj.id)}
             />
           ))}
@@ -128,6 +151,7 @@ function ThemeCard({
   tagline,
   swatch,
   isActive,
+  isEthos,
   onPick,
 }: {
   id: ThemeId;
@@ -135,6 +159,7 @@ function ThemeCard({
   tagline: string;
   swatch: string;
   isActive: boolean;
+  isEthos?: boolean;
   onPick: () => void;
 }) {
   const t = useTranslations("Settings.appearance");
@@ -145,12 +170,18 @@ function ThemeCard({
       aria-pressed={isActive}
       aria-label={t("useTheme", { name })}
       className={cn(
-        "flex flex-col gap-3 rounded-lg border bg-card p-4 text-left transition-colors",
+        "relative flex flex-col gap-3 rounded-lg border bg-card p-4 text-left transition-colors overflow-hidden",
         isActive
           ? "border-primary/60 ring-2 ring-primary/40"
           : "border-border hover:border-border hover:bg-muted/40",
       )}
     >
+      {isEthos && (
+        <div className="absolute top-0 end-0 bg-primary/15 border-b border-s border-primary/30 px-2 py-0.5 rounded-es-md text-[9px] font-bold text-primary flex items-center gap-1">
+          <Sparkles className="h-2.5 w-2.5" />
+          DESIGN.md
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <span
           aria-hidden

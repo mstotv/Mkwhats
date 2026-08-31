@@ -27,9 +27,11 @@ import {
   PhoneCall,
   Globe,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react'
 import { useLocale } from 'next-intl'
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 export interface ContentPage {
   id: string
@@ -147,6 +149,11 @@ export function PagesClient({ initialPages }: PagesClientProps) {
 
       const data = await res.json()
 
+      if (!res.ok || data.error) {
+        toast.error(data.error || (isAr ? 'فشل حفظ الصفحة' : 'Failed to save page'))
+        return
+      }
+
       if (data.page) {
         if (isNew) {
           setPages([...pages, data.page])
@@ -155,24 +162,33 @@ export function PagesClient({ initialPages }: PagesClientProps) {
         }
         setIsModalOpen(false)
         setEditingPage(null)
+        toast.success(
+          isAr
+            ? 'تم حفظ المحتوى باللغتين العربية والإنجليزية بنجاح! 🎉'
+            : 'Page saved in Arabic & English successfully! 🎉'
+        )
       }
-    } catch {
-      // Ignore
+    } catch (err: any) {
+      toast.error(err.message || (isAr ? 'حدث خطأ غير متوقع أثناء الحفظ' : 'Unexpected error while saving'))
     } finally {
       setLoading(false)
     }
   }
 
   const handleDeletePage = async (id: string) => {
-    if (!confirm('هل أنت تأكد من رغبتك في حذف هذه الصفحة؟')) return
+    if (!confirm(isAr ? 'هل أنت متأكد من رغبتك في حذف هذه الصفحة؟' : 'Are you sure you want to delete this page?')) return
 
     try {
       const res = await fetch(`/api/admin/content-pages/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setPages(pages.filter((p) => p.id !== id))
+        toast.success(isAr ? 'تم حذف الصفحة بنجاح' : 'Page deleted successfully')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.error || (isAr ? 'فشل حذف الصفحة' : 'Failed to delete page'))
       }
     } catch {
-      // Ignore
+      toast.error(isAr ? 'حدث خطأ أثناء محاولة الحذف' : 'Error deleting page')
     }
   }
 
@@ -569,6 +585,38 @@ export function PagesClient({ initialPages }: PagesClientProps) {
 
                 {/* English Tab Content */}
                 <TabsContent value="en" className="space-y-4 pt-4 dir-ltr">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-muted-foreground">
+                      {isAr ? 'المحتوى الذي سيظهر للمستخدمين عند اختيار اللغة الإنجليزية' : 'Content displayed when English locale is active'}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const slugKey = Object.keys(PAGE_TEMPLATES_EN).find((k) =>
+                          editingPage.slug.toLowerCase().includes(k.replace(/-/g, '_')) ||
+                          editingPage.slug.toLowerCase().includes(k.split('-')[0])
+                        )
+                        const tmpl = slugKey ? PAGE_TEMPLATES_EN[slugKey] : null
+                        if (tmpl) {
+                          setEditingPage({
+                            ...editingPage,
+                            title_en: tmpl.title,
+                            content_html_en: tmpl.html,
+                          })
+                          toast.success(isAr ? 'تم تطبيق القالب الإنجليزي بنجاح ✨' : 'English template applied ✨')
+                        } else {
+                          toast.info(isAr ? 'لا يوجد قالب جاهز لهذا الرابط المحدد' : 'No default template for this custom slug')
+                        }
+                      }}
+                      className="text-[11px] h-7 px-2.5 rounded-lg border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 font-bold gap-1"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      {isAr ? 'تعبئة القالب الإنجليزي الافتراضي' : 'Auto-fill English Template'}
+                    </Button>
+                  </div>
+
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-foreground">
                       Page Title (in English 🇬🇧):

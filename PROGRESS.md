@@ -1,6 +1,39 @@
-# حالة المشروع - آخر تحديث: [30/8/2026]
+# حالة المشروع - آخر تحديث: [1/9/2026]
 
-## آخر شي خلص وشغال 100%
+- ✅ **التجاوب الكامل مع جميع الأجهزة وضبط اللغة والوضع الافتراضي (Full Cross-Device Responsiveness & Default Settings)**:
+  - **التجاوب مع الهواتف الذكية، التابلت، والكمبيوتر (Mobile, Tablet & Desktop UI Consistency)**:
+    - **شريط التنقل لصفحة الهبوط ([`landing-navbar.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/landing/landing-navbar.tsx))**: إضافة قائمة هاتفية ذكية (Mobile Navigation Drawer) تفتح بنقرة زر همبرغر مع حركات انتقال سلسة وخيارات التبديل بين اللغات والوضع الليلي/النهاري وأزرار الدخول والتسجيل المتجاوبة.
+    - **لوحة تحكم الأدمن ([`admin-nav.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/admin-nav.tsx) & [`admin-shell.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/admin/admin-shell.tsx))**: تحويل القائمة الجانبية في الشاشات الصغيرة والهواتف إلى Drawer منزلق مع خلفية معتمة (Backdrop Overlay) وزر همبرغر في الهيدر، لضمان استغلال كامل مساحة الشاشة للجداول والبيانات مع بقاء الشريط ثابتاً في الشاشات الكبيرة `md+`.
+    - **شاشات التوثيق ([`auth-shell.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/auth/auth-shell.tsx))**: ضبط اتجاه النصوص `dir="ltr"` و `dir="rtl"` تلقائياً وفق اللغة المختارة، وتكديس النماذج رأسياً بسلاسة على الهواتف والأجهزة اللوحية دون تشويه للتصميم الفخم.
+    - **بطاقات وشاشات المعاينة ([`landing-hero-mockup.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/landing/landing-hero-mockup.tsx))**: تحسين تموضع الشارات العائمة ومنع تداخلها على شاشات الجوال الضيقة (320px-375px).
+    - **الجداول وقوائم البيانات (Data Tables & Rails)**: دعم التمرير الأفقي السلس `overflow-x-auto` مع `min-w-0` في كافة الشاشات لتفادي كسر التنسيق.
+  - **ضبط الإعدادات الافتراضية الرسمية (Default English & Light Mode)**:
+    - اعتماد **اللغة الإنجليزية (`en`)** كلغة أساسية وافتراضية للنظام والزوار الجدد في [`src/i18n/request.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/i18n/request.ts) و `.env.local`.
+    - اعتماد **الوضع الفاتح (`light mode`)** كوضع افتراضي للنظام في [`src/lib/themes.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/themes.ts) و [`src/app/layout.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/layout.tsx).
+    - إتاحة التبديل الكامل والحر للمستخدم والزائر للغة العربية أو الوضع الداكن بنقرة زر واحدة مع الحفظ التلقائي في التخزين المحلي والكوكيز.
+
+  - **لوحة المستخدم (User Panel -> Appearance Settings)**:
+    - إضافة ثيم **Ethos Teal (#00685F)** كأول وأساس الثيمات الرسمية المعتمدة لنظام DESIGN.md مع شارة `DESIGN.md System`.
+    - إضافة زر **"إعادة التعيين للوضع الافتراضي (Reset to Default)"** بالأعلى لإعادة الثيم إلى `Ethos Teal` والوضع إلى `Dark` بنقرة زر واحدة وتنبيه Toast فوري.
+    - تحديث `src/lib/themes.ts` و `src/app/globals.css` لربط ألوان `html[data-theme="ethos"]` بالقيم الدقيقة لـ `DESIGN.md`.
+  - **لوحة الإدارة والأدمن (Admin Panel -> Settings / Landing CMS)**:
+    - إضافة شبكة **لوحات الألوان الجاهزة (Preset Palettes)** لاختيار نمط `Ethos Teal (#00685F)`، `Warm Canvas Light (#F9F5F0)`، `Emerald Green (#10B981)`، أو `Midnight Indigo (#6366F1)` بنقرة واحدة.
+    - إضافة زر **"إعادة ضبط الألوان للوضع الافتراضي (DESIGN.md) 🔄"** لاسترجاع ألوان الهوية الرسمية وحفظها فورياً في `site_settings`.
+
+- ✅ **إصلاح ودعم تحرير الصفحات التعريفية باللغتين العربية والإنجليزية (Bilingual Content Pages & Admin CMS Fix)**:
+  - **قواعد البيانات (`supabase/migrations/079_bilingual_content_pages_and_defaults.sql`)**: إضافة عمودي `title_en` و `content_html_en` بأمان لجدول `content_pages` وتعبئة النصوص الإنجليزية الافتراضية لكافة الصفحات الأساسية (`terms`, `privacy`, `about`, `contact`).
+  - **لوحة التحكم والأدمن بانل ([`pages-client.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/pages/pages-client.tsx))**:
+    - إصلاح دالة الحفظ وإضافة تنبيهات `toast` من `sonner` لإظهار نجاح الحفظ فورياً أو توضيح سبب الخطأ بدقة.
+    - إضافة زر ذكي **"✨ تعبئة القالب الإنجليزي الافتراضي" (Auto-fill English Template)** داخل تبويب الإنجليزية لتعبئة النصوص والـ HTML الاحترافي بنقرة زر واحدة.
+  - **تحسين مسار الـ API ([`api/admin/content-pages/[id]/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/admin/content-pages/%5Bid%5D/route.ts))**: إرجاع تفاصيل الخطأ بدقة وضمان معالجة وتطهير HTML الآمن عبر `DOMPurify` للنصين العربي والإنجليزي.
+
+- ✅ **تحديث وتنسيق شاشات التوثيق بالكامل (Auth & Recovery Screens - Stitch Design System)**:
+  - **شاشة تسجيل الدخول (`/login` - Sign In)**: بطاقة مركزية داكنة فاخرة (`#1C1C1E`) على خلفية بيج دافئة (`#F9F5F0`) مع عنوان **Welcome Back** بخط Serif، زر التوثيق بـ Google، حقول الإدخال الداكنة الأنيقة (`Email or Phone Number`, `Password`)، خيار `Remember me` ورابط `Forgot Password?`، زر `Sign In to Dashboard` الزمردي، وشارات الأمان السفلية.
+  - **شاشة إنشاء الحساب (`/signup` - Sign Up)**: حاوية مركزية داكنة فخمة بتخطيط مزدوج عمود للميزات وتقييم الـ 5 نجوم وعمود للنموذج وزر `CREATE FREE ACCOUNT` والشريط السفلي لشارات الثقة مع إزالة حقل الهاتف الزائد.
+  - **شاشتا استعادة وتعيين كلمة المرور (`/forgot-password` & `/reset-password`)**: بطاقة مركزية داكنة فخمة مع أيقونة المفتاح الزمردية، عنوان **Reset Your Password** بخط Serif، حقل البريد مع أيقونة Mail، وزر `Send Password Reset Link →` الأخضر الزمردي، ورابط العودة للدخول وشارات الحماية السفلية مطابقة للتصميم 100%.
+  - **إصلاح صفحات المعلومات والسياسات القانونية (`/p/[slug]` - Privacy, Terms, About, Contact)**:
+    - توفير مطابقة ذكية للروابط والأسماء المستعارة (`privacy`, `privacy_policy`, `privacy-policy`, `terms`, `about`, `contact`).
+    - ربط المحتوى الإنجليزي بالكامل وضمان عرضه الفوري باللغة الإنجليزية الرسمية عند اختيار لغة `EN` دون أي ارتداد للغة العربية، مع الاتجاه اليساري `LTR` والتصميم التحريري المتناسق.
 
 - ✅ **نظام حجز وإدارة المواعيد المستقل بالذكاء الاصطناعي (AI Automated Appointments System - Phase 1)**:
   - **قواعد البيانات ودوال التحقق (`supabase/migrations/076`, `077` & `078`)**:

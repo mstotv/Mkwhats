@@ -18,12 +18,39 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'لم يتم اختيار أي ملف للرفع' }, { status: 400 });
     }
 
+    // 1. Enforce strict 5MB file size limit to prevent memory exhaustion / DoS
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'حجم الملف يتجاوز الحد الأقصى المسموح به (5 ميجابايت)' },
+        { status: 400 }
+      );
+    }
+
+    // 2. Enforce strict MIME type whitelist (images & PDF only)
+    const allowedMimeTypes: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'application/pdf': 'pdf',
+    };
+
+    const detectedMime = file.type?.toLowerCase() || '';
+    const safeExt = allowedMimeTypes[detectedMime];
+
+    if (!safeExt) {
+      return NextResponse.json(
+        { error: 'نوع الملف غير مدعوم. يرجى رفع صورة (PNG, JPG, WebP) أو ملف PDF فقط.' },
+        { status: 400 }
+      );
+    }
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const ext = (file.name.split('.').pop() || 'png').toLowerCase();
-    const filename = `receipts/receipt-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-    const contentType = file.type || `image/${ext}`;
+    const filename = `receipts/receipt-${Date.now()}-${Math.random().toString(36).substring(7)}.${safeExt}`;
+    const contentType = detectedMime;
 
     const supabase = createServiceClient();
 

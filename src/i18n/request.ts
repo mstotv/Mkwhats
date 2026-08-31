@@ -29,7 +29,7 @@ export default getRequestConfig(async () => {
   try {
     messages = (await import(`../../messages/${locale}.json`)).default;
   } catch {
-    messages = (await import(`../../messages/ar.json`)).default;
+    messages = (await import(`../../messages/en.json`)).default;
   }
 
   return {

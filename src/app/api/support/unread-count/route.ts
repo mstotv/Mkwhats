@@ -61,21 +61,27 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Fetch only the columns we actually need — much lighter query
-    const { data: tickets, error } = await serviceClient
+    // Fetch only the columns we actually need with fallback if migration 068 is pending
+    let tickets: any[] | null = null
+    const { data: fullTickets, error: fullError } = await serviceClient
       .from('support_tickets')
       .select('id, subject, created_at, is_read_by_user, is_announcement, category, user_id, status')
       .eq('account_id', accountId)
-      .eq('is_read_by_user', false)   // ← filter in DB, not JS
+      .eq('is_read_by_user', false)
       .order('created_at', { ascending: false })
-      .limit(50)                        // ← cap result size
+      .limit(50)
 
-    if (error) {
-      console.error('unread-count query error:', error.message)
-      return NextResponse.json(
-        { unreadCount: 0, latestTicket: null },
-        { headers: { 'Cache-Control': 'private, max-age=30' } }
-      )
+    if (fullError) {
+      // Fallback in case is_read_by_user column doesn't exist yet
+      const { data: fallbackTickets } = await serviceClient
+        .from('support_tickets')
+        .select('id, subject, created_at, category, user_id, status')
+        .eq('account_id', accountId)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      tickets = fallbackTickets || []
+    } else {
+      tickets = fullTickets || []
     }
 
     const readTicketIds: string[] = Array.isArray(user.user_metadata?.read_ticket_ids)

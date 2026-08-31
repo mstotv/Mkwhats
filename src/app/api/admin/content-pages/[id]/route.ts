@@ -90,12 +90,84 @@ export async function PATCH(
 
     if (updateError) {
       console.error('[AdminContentPagesAPI] Patch error:', updateError)
-      return NextResponse.json({ error: 'Failed to update content page' }, { status: 500 })
+      return NextResponse.json({ 
+        error: updateError.message || 'Failed to update content page',
+        code: updateError.code,
+        details: updateError.details,
+      }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, page: updatedPage })
   } catch (err: any) {
     console.error('[AdminContentPagesAPI] Unexpected error:', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: pageId } = await params
+    const cookieStore = await cookies()
+
+    // 1. Authenticate super admin
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          },
+        },
+      }
+    )
+
+    const {
+      data: { user: adminUser },
+    } = await supabase.auth.getUser()
+
+    if (!adminUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const serviceClient = createServiceClient()
+    const { data: adminRow } = await serviceClient
+      .from('platform_admins')
+      .select('user_id')
+      .eq('user_id', adminUser.id)
+      .maybeSingle()
+
+    if (!adminRow) {
+      return NextResponse.json(
+        { error: 'Forbidden: Super-admin access required.' },
+        { status: 403 }
+      )
+    }
+
+    const { error: deleteError } = await serviceClient
+      .from('content_pages')
+      .delete()
+      .eq('id', pageId)
+
+    if (deleteError) {
+      console.error('[AdminContentPagesAPI] Delete error:', deleteError)
+      return NextResponse.json(
+        { error: deleteError.message || 'Failed to delete content page' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (err: any) {
+    console.error('[AdminContentPagesAPI] Unexpected delete error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -50,13 +50,17 @@ export async function GET(request: Request) {
           .single()
 
         if (acc?.id) {
-          await serviceClient.from('profiles').upsert({
-            user_id: data.user.id,
-            account_id: acc.id,
-            email: data.user.email,
-            full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'مستخدم جديد',
-            role: 'owner',
-          })
+          await serviceClient.from('profiles').upsert(
+            {
+              user_id: data.user.id,
+              account_id: acc.id,
+              email: data.user.email,
+              full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'مستخدم جديد',
+              account_role: 'owner',
+              role: 'owner',
+            },
+            { onConflict: 'user_id' }
+          )
         }
       }
 

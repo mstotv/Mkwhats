@@ -20,17 +20,28 @@ export async function POST(req: Request) {
 
     const supabase = createServiceClient();
 
-    // 1. Find target owner profile for this account
-    const { data: profile, error: profErr } = await supabase
+    // 1. Find target owner profile for this account (fallback to first member if needed)
+    let { data: profile, error: profErr } = await supabase
       .from('profiles')
-      .select('id, user_id, email, role')
+      .select('id, user_id, email, account_role, role')
       .eq('account_id', account_id)
-      .limit(1)
+      .eq('account_role', 'owner')
       .maybeSingle();
+
+    if (!profile) {
+      const { data: fallbackProfile, error: fallbackErr } = await supabase
+        .from('profiles')
+        .select('id, user_id, email, account_role, role')
+        .eq('account_id', account_id)
+        .limit(1)
+        .maybeSingle();
+      profile = fallbackProfile;
+      profErr = fallbackErr;
+    }
 
     if (profErr || !profile?.user_id) {
       return NextResponse.json(
-        { error: 'تعذر العثور على مالك الحساب لتغيير كلمة المرور' },
+        { error: 'تعذر العثور على مستخدم في هذا الحساب لتغيير كلمة المرور' },
         { status: 404 },
       );
     }

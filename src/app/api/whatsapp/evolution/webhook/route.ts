@@ -68,19 +68,29 @@ export async function POST(request: Request) {
 
   let authorized = false
 
-  if (expectedGlobalKey && incomingKey === expectedGlobalKey) {
+  if (expectedGlobalKey && incomingKey && incomingKey === expectedGlobalKey) {
     authorized = true
-  } else if (instanceName) {
-    // Authorize if instanceName matches an active Evolution row in our DB
-    const { data: validConfig } = await supabaseAdmin()
-      .from('whatsapp_config')
-      .select('id')
-      .eq('evolution_instance_name', instanceName)
-      .eq('connection_type', 'evolution')
-      .maybeSingle()
+  } else if (instanceName && incomingKey) {
+    // Authorize if incomingKey matches the instance's encrypted evolution_api_key
+    try {
+      const { data: validConfig } = await supabaseAdmin()
+        .from('whatsapp_config')
+        .select('id, evolution_api_key')
+        .eq('evolution_instance_name', instanceName)
+        .eq('connection_type', 'evolution')
+        .maybeSingle()
 
-    if (validConfig) {
-      authorized = true
+      if (validConfig?.evolution_api_key) {
+        let instanceApiKey = validConfig.evolution_api_key
+        try {
+          instanceApiKey = decrypt(validConfig.evolution_api_key)
+        } catch {}
+        if (instanceApiKey === incomingKey) {
+          authorized = true
+        }
+      }
+    } catch (authErr) {
+      console.error('[evolution/webhook] Error verifying instance key:', authErr)
     }
   }
 

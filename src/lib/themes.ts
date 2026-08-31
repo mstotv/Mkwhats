@@ -14,8 +14,9 @@
  */
 
 export const THEME_IDS = [
-  "violet",
+  "ethos",
   "emerald",
+  "violet",
   "cobalt",
   "amber",
   "rose",
@@ -23,7 +24,7 @@ export const THEME_IDS = [
 
 export type ThemeId = (typeof THEME_IDS)[number];
 
-export const DEFAULT_THEME: ThemeId = "violet";
+export const DEFAULT_THEME: ThemeId = "ethos";
 
 export const STORAGE_KEY = "wacrm.theme";
 
@@ -43,7 +44,7 @@ export const MODES = ["light", "dark"] as const;
 
 export type Mode = (typeof MODES)[number];
 
-export const DEFAULT_MODE: Mode = "dark";
+export const DEFAULT_MODE: Mode = "light";
 
 export const MODE_STORAGE_KEY = "wacrm.mode";
 
@@ -68,16 +69,22 @@ export interface ThemeMeta {
 
 export const THEMES: ReadonlyArray<ThemeMeta> = [
   {
-    id: "violet",
-    name: "Violet",
-    tagline: "The default — confident, slightly playful.",
-    swatch: "oklch(0.526 0.247 293)",
+    id: "ethos",
+    name: "Ethos Teal (DESIGN.md)",
+    tagline: "The official Ethos Automation design system — refined, warm editorial, and focused (#00685F).",
+    swatch: "oklch(0.48 0.11 175)",
   },
   {
     id: "emerald",
-    name: "Emerald",
-    tagline: "Growth-coded, nods at messaging without copying WhatsApp green.",
+    name: "Emerald Green",
+    tagline: "Vibrant growth-coded messaging green (#10B981).",
     swatch: "oklch(0.62 0.16 162)",
+  },
+  {
+    id: "violet",
+    name: "Violet",
+    tagline: "Confident, slightly playful purple accent.",
+    swatch: "oklch(0.526 0.247 293)",
   },
   {
     id: "cobalt",

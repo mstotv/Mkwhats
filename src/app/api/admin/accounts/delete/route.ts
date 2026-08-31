@@ -18,12 +18,25 @@ export async function POST(request: Request) {
 
     const serviceClient = createServiceClient();
 
-    // 1. Fetch all associated user profiles to delete from auth.users
+    // 1. Fetch all associated user profiles to delete from auth.users later
     const { data: profiles } = await serviceClient
       .from('profiles')
       .select('user_id')
       .eq('account_id', account_id);
 
+    // 2. Delete the account row from public.accounts FIRST
+    // This removes the Foreign Key restriction on owner_user_id and cascades to all multi-tenant tables
+    const { error: deleteErr } = await serviceClient
+      .from('accounts')
+      .delete()
+      .eq('id', account_id);
+
+    if (deleteErr) {
+      console.error('[AdminDeleteAccount] Delete account error:', deleteErr);
+      return NextResponse.json({ error: 'فشل حذف الحساب من قاعدة البيانات' }, { status: 500 });
+    }
+
+    // 3. Now delete the users from auth.users cleanly without FK conflicts
     if (profiles && profiles.length > 0) {
       for (const pr of profiles) {
         if (pr.user_id) {
@@ -34,17 +47,6 @@ export async function POST(request: Request) {
           }
         }
       }
-    }
-
-    // 2. Delete the account row from public.accounts (cascades to all multi-tenant tables)
-    const { error: deleteErr } = await serviceClient
-      .from('accounts')
-      .delete()
-      .eq('id', account_id);
-
-    if (deleteErr) {
-      console.error('[AdminDeleteAccount] Delete account error:', deleteErr);
-      return NextResponse.json({ error: 'فشل حذف الحساب من قاعدة البيانات' }, { status: 500 });
     }
 
     return NextResponse.json({

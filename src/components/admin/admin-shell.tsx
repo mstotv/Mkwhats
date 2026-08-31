@@ -1,11 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { AdminNav } from '@/app/admin/_components/admin-nav';
 import { usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { ModeToggle } from '@/components/layout/mode-toggle';
 import { LanguageSwitcher } from '@/components/language-switcher';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Menu } from 'lucide-react';
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ const pageTitles: Record<string, { ar: string; en: string }> = {
 };
 
 export function AdminShell({ children, userEmail }: AdminShellProps) {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
   const locale = useLocale();
   const isAr = locale === 'ar';
@@ -34,15 +36,25 @@ export function AdminShell({ children, userEmail }: AdminShellProps) {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground flex flex-col md:flex-row antialiased transition-colors">
       {/* 1. Left/Right Sidebar Navigation */}
-      <AdminNav />
+      <AdminNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
 
       {/* 2. Main Workspace Viewport */}
       <div className="flex-1 flex flex-col min-w-0 bg-background">
         {/* Top Workspace Header Bar */}
-        <header className="sticky top-0 z-20 border-b border-border bg-card/80 backdrop-blur-md px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4 transition-colors">
-          <div className="flex items-center gap-3 min-w-0">
-            <h1 className="text-base font-extrabold text-foreground truncate flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0" />
+        <header className="sticky top-0 z-20 border-b border-border bg-card/80 backdrop-blur-md px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3 transition-colors">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Mobile Menu Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted md:hidden focus:outline-none"
+              aria-label="Open admin menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            <h1 className="text-sm sm:text-base font-extrabold text-foreground truncate flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-500 shrink-0" />
               {currentPageTitle}
             </h1>
           </div>

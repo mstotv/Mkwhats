@@ -77,7 +77,10 @@ export function AuthShell({
     : (siteSettings.platform_name_en || siteSettings.platform_name || 'WhatsApp Automation');
 
   return (
-    <div className="min-h-screen w-full bg-background dark:bg-zinc-950 text-foreground dark:text-zinc-100 font-cairo dir-rtl flex flex-col justify-between p-4 lg:p-6 selection:bg-emerald-500/20 transition-colors duration-200">
+    <div
+      dir={isAr ? 'rtl' : 'ltr'}
+      className={`min-h-screen w-full bg-background dark:bg-zinc-950 text-foreground dark:text-zinc-100 font-sans ${isAr ? 'font-cairo dir-rtl' : 'font-inter dir-ltr'} flex flex-col justify-between p-4 lg:p-6 selection:bg-emerald-500/20 transition-colors duration-200`}
+    >
       <div className="mx-auto w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[calc(100vh-3rem)]">
         
         {/* LEFT COLUMN: Authentication Form Container (~45% Desktop Width in LTR / RTL Right) */}

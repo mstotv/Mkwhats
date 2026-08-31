@@ -14,7 +14,10 @@ export const IMPERSONATION_DISPLAY_COOKIE_NAME = 'wacrm_impersonate_display'
 export const IMPERSONATION_HEADER_NAME = 'x-impersonation-context'
 
 function getSecretKey(): string {
-  const secret = process.env.ADMIN_IMPERSONATION_SECRET || 'wacrm-admin-secret-key-32-chars-super-safe';
+  const secret = process.env.ADMIN_IMPERSONATION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret || secret.length < 16) {
+    throw new Error('Admin impersonation secret is not properly configured.');
+  }
   return secret;
 }
 

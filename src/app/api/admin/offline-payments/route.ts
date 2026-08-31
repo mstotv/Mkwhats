@@ -123,6 +123,12 @@ export async function POST(request: Request) {
           });
       }
 
+      // Update accounts table plan_id in sync
+      await serviceClient
+        .from('accounts')
+        .update({ plan_id: submission.plan_id, updated_at: now.toISOString() })
+        .eq('id', submission.account_id);
+
       // Mark upgrade_requests for account as completed
       await serviceClient
         .from('upgrade_requests')

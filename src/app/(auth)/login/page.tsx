@@ -3,12 +3,11 @@
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { AuthShell } from "@/components/auth/auth-shell";
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Zap } from "lucide-react";
+import { ModeToggle } from "@/components/layout/mode-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function LoginPage() {
   return (
@@ -20,26 +19,32 @@ export default function LoginPage() {
 
 function getCachedSiteSettings() {
   if (typeof window === "undefined") {
-    return { primary_color: "#10b981", google_auth_enabled: true };
+    return { platform_name: "Whatapp Automation", primary_color: "#00A389", google_auth_enabled: true };
   }
   try {
     const cached = localStorage.getItem("mk_site_settings");
     if (cached) {
       const parsed = JSON.parse(cached);
       return {
-        primary_color: parsed.primary_color || "#10b981",
+        platform_name: parsed.platform_name || parsed.platform_name_en || "Whatapp Automation",
+        platform_name_ar: parsed.platform_name_ar || "واتساب أوتوميشن",
+        platform_name_en: parsed.platform_name_en || "Whatapp Automation",
+        logo_url: parsed.logo_url || "",
+        logo_height: parsed.logo_height || 32,
+        primary_color: parsed.primary_color || "#00A389",
         google_auth_enabled: parsed.google_auth_enabled !== undefined ? !!parsed.google_auth_enabled : true,
       };
     }
   } catch {}
-  return { primary_color: "#10b981", google_auth_enabled: true };
+  return { platform_name: "Whatapp Automation", primary_color: "#00A389", google_auth_enabled: true };
 }
 
 function LoginPageInner() {
+  const locale = useLocale();
+  const isAr = locale === "ar";
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get("invite");
   const errorParam = searchParams.get("error");
-  const t = useTranslations("LoginPage");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,32 +54,36 @@ function LoginPageInner() {
   const [loading, setLoading] = useState(false);
 
   const cachedSettings = getCachedSiteSettings();
-  const [primaryColor, setPrimaryColor] = useState<string>(cachedSettings.primary_color);
+  const [platformName, setPlatformName] = useState<string>(cachedSettings.platform_name);
+  const [logoUrl, setLogoUrl] = useState<string>(cachedSettings.logo_url || "");
+  const [logoHeight, setLogoHeight] = useState<number>(cachedSettings.logo_height || 32);
   const [googleAuthEnabled, setGoogleAuthEnabled] = useState<boolean>(cachedSettings.google_auth_enabled);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const supabase = createClient();
 
   useEffect(() => {
-    fetch('/api/site-settings')
+    fetch("/api/site-settings")
       .then((res) => res.json())
       .then((data) => {
         if (data.settings) {
-          if (data.settings.primary_color) setPrimaryColor(data.settings.primary_color);
+          if (data.settings.platform_name) setPlatformName(isAr ? (data.settings.platform_name_ar || data.settings.platform_name) : (data.settings.platform_name_en || data.settings.platform_name));
+          if (data.settings.logo_url) setLogoUrl(data.settings.logo_url);
+          if (data.settings.logo_height) setLogoHeight(data.settings.logo_height);
           if (data.settings.google_auth_enabled !== undefined) setGoogleAuthEnabled(!!data.settings.google_auth_enabled);
-          try { localStorage.setItem('mk_site_settings', JSON.stringify(data.settings)); } catch {}
+          try { localStorage.setItem("mk_site_settings", JSON.stringify(data.settings)); } catch {}
         }
       })
       .catch(() => {});
-  }, []);
+  }, [isAr]);
 
   const handleGoogleAuth = async () => {
     setError(null);
     setGoogleLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/auth/callback${inviteToken ? `?next=/join/${encodeURIComponent(inviteToken)}` : ''}`;
+      const redirectTo = `${window.location.origin}/auth/callback${inviteToken ? `?next=/join/${encodeURIComponent(inviteToken)}` : ""}`;
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
           redirectTo,
         },
@@ -84,7 +93,7 @@ function LoginPageInner() {
         setGoogleLoading(false);
       }
     } catch (err: any) {
-      setError(err.message || 'فشل الاتصال بـ Google');
+      setError(err.message || "فشل الاتصال بـ Google");
       setGoogleLoading(false);
     }
   };
@@ -92,7 +101,7 @@ function LoginPageInner() {
   const displayError =
     error ||
     (errorParam === "account_suspended"
-      ? "هذا الحساب معلّق حالياً، يرجى التواصل مع الدعم"
+      ? (isAr ? "هذا الحساب معلّق حالياً، يرجى التواصل مع الدعم" : "This account is currently suspended. Please contact support.")
       : null);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -118,157 +127,231 @@ function LoginPageInner() {
   };
 
   return (
-    <AuthShell
-      illustrationImage="/login-illustration.png"
-      badgeText="توثيق حسابات وتطبيقات SaaS"
-      illustrationTitle="تسجيل دخول آمن ومباشر"
-      illustrationSub="إمكانية الوصول الآمن والسريع إلى لوحة التحكم وأتمتة مبيعاتك وحساباتك على مدار الساعة."
+    <div
+      dir={isAr ? "rtl" : "ltr"}
+      className="min-h-screen bg-[#F9F5F0] dark:bg-[#0D0F12] text-[#1B1C1C] dark:text-[#F2F0F0] font-sans flex flex-col justify-between transition-colors duration-300"
     >
-      {/* Titles */}
-      <div className="space-y-2">
-        <h1 className="text-3xl sm:text-4xl font-black text-foreground dark:text-zinc-100 tracking-tight">
-          {inviteToken ? "الانضمام لفريقك 👋" : "Welcome Back 👋"}
-        </h1>
-        <p className="text-sm text-muted-foreground dark:text-zinc-400 font-normal leading-relaxed">
-          {inviteToken
-            ? "سجّل دخولك لتفعيل دعوتك والانضمام المباشر لبيئة العمل"
-            : "Sign in to your account to continue | سجّل دخولك للوصول إلى حسابك"}
-        </p>
-      </div>
-
-      {/* Error Message Banner */}
-      {displayError && (
-        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs text-rose-600 dark:text-rose-400 font-bold leading-relaxed">
-          ⚠️ {displayError}
-        </div>
-      )}
-
-      {/* Form Controls */}
-      <form onSubmit={handleLogin} className="space-y-5">
-        {/* Email Field */}
-        <div className="space-y-1.5">
-          <label htmlFor="email" className="text-xs font-bold text-foreground dark:text-zinc-200">
-            Email Address / البريد الإلكتروني
-          </label>
-          <div className="relative">
-            <Mail className="absolute start-3.5 top-3.5 h-4 w-4 text-muted-foreground dark:text-zinc-400" />
-            <Input
-              id="email"
-              type="email"
-              placeholder="name@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="h-12 ps-10 bg-white dark:bg-zinc-900/90 border-slate-200 dark:border-zinc-800 text-foreground dark:text-zinc-100 focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono placeholder:text-muted-foreground/60 transition-colors"
+      {/* ── 1. Top Navbar Header ───────────────────────────────── */}
+      <header className="max-w-6xl w-full mx-auto flex items-center justify-between p-4 sm:p-6 lg:p-8 py-4">
+        {/* Brand */}
+        <Link href="/" className="flex items-center gap-2.5">
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={platformName}
+              style={{ height: `${logoHeight}px` }}
+              className="w-auto object-contain"
             />
-          </div>
-        </div>
-
-        {/* Password Field */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-xs font-bold text-foreground dark:text-zinc-200">
-              Password / كلمة المرور
-            </label>
-            <Link
-              href="/forgot-password"
-              className="text-xs font-bold text-[#7C3AED] dark:text-purple-400 hover:underline"
-            >
-              Forgot Password?
-            </Link>
-          </div>
-          <div className="relative">
-            <Lock className="absolute start-3.5 top-3.5 h-4 w-4 text-muted-foreground dark:text-zinc-400" />
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="h-12 ps-10 pe-10 bg-white dark:bg-zinc-900/90 border-slate-200 dark:border-zinc-800 text-foreground dark:text-zinc-100 focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] rounded-2xl text-xs dir-ltr font-mono placeholder:text-muted-foreground/60 transition-colors"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute end-3.5 top-3.5 text-muted-foreground hover:text-foreground dark:hover:text-zinc-100 transition-colors"
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Remember Me Checkbox */}
-        <div className="flex items-center justify-between text-xs font-medium pt-1">
-          <label className="flex items-center gap-2 cursor-pointer text-foreground dark:text-zinc-200">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 dark:border-zinc-700 text-[#7C3AED] focus:ring-[#7C3AED] dark:bg-zinc-900"
-            />
-            Remember me / تذكرني على هذا الجهاز
-          </label>
-        </div>
-
-        {/* Main Sign In Button */}
-        <Button
-          type="submit"
-          disabled={loading || googleLoading}
-          style={{ backgroundColor: primaryColor }}
-          className="w-full h-12 rounded-2xl font-black text-sm text-white shadow-xl shadow-[#7C3AED]/20 hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Signing in... / جاري الدخول...
-            </>
           ) : (
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-[4px] bg-[#00A389] flex items-center justify-center text-white text-xs font-black">
+                💬
+              </div>
+              <span className="font-serif text-xl font-bold tracking-tight text-[#00685F] dark:text-[#6BD8CB]">
+                {platformName}
+              </span>
+            </div>
+          )}
+        </Link>
+
+        {/* Right Controls */}
+        <div className="flex items-center gap-4 text-xs">
+          <LanguageSwitcher />
+          <ModeToggle />
+          {!inviteToken && (
+            <div className="hidden sm:flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
+              <span>{isAr ? "ليس لديك حساب؟" : "Don't have an account?"}</span>
+              <Link href="/signup" className="font-bold text-[#00A389] hover:underline">
+                {isAr ? "إنشاء حساب مجاني" : "Sign Up Free"}
+              </Link>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* ── 2. Center Card (Dark Container on Warm Beige) ───────── */}
+      <main className="max-w-md w-full mx-auto my-auto px-4 py-8">
+        <div className="rounded-2xl bg-[#1C1C1E] dark:bg-[#141416] border border-neutral-800 text-white shadow-2xl p-8 sm:p-10 text-center">
+          {/* Header Title & Subtitle */}
+          <div className="space-y-2">
+            <h1 className="font-serif text-3xl font-bold text-white tracking-tight">
+              {inviteToken ? (isAr ? "الانضمام لفريقك 👋" : "Join Your Team") : (isAr ? "مرحباً بعودتك" : "Welcome Back")}
+            </h1>
+            <p className="text-xs text-neutral-400 leading-relaxed max-w-xs mx-auto">
+              {inviteToken
+                ? (isAr ? "سجّل دخولك لتفعيل دعوتك والانضمام المباشر لبيئة العمل" : "Sign in to activate your invitation and join the workspace.")
+                : (isAr ? "سجل الدخول لإدارة بوتات الواتساب، حملات البرودكاست، والطلبات الواردة." : "Log in to manage your WhatsApp bots, live broadcasts, and incoming orders.")}
+            </p>
+          </div>
+
+          {/* Google Sign In Button */}
+          {googleAuthEnabled && (
             <>
-              Sign In / تسجيل الدخول <ArrowLeft className="h-4 w-4 ms-1" />
+              <button
+                type="button"
+                onClick={handleGoogleAuth}
+                disabled={googleLoading || loading}
+                className="w-full h-10 rounded-[4px] bg-[#2A2A2D] hover:bg-[#333336] border border-neutral-700/80 text-white text-xs font-semibold flex items-center justify-center gap-2.5 transition-colors cursor-pointer mt-6"
+              >
+                {googleLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
+                ) : (
+                  <>
+                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
+                      <path
+                        fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                      />
+                    </svg>
+                    <span>{isAr ? "المتابعة عبر Google" : "Continue with Google"}</span>
+                  </>
+                )}
+              </button>
+
+              <div className="relative flex items-center justify-center my-4">
+                <div className="border-t border-neutral-800 w-full" />
+                <span className="bg-[#1C1C1E] dark:bg-[#141416] px-3 text-[10px] uppercase font-bold text-neutral-500">
+                  {isAr ? "أو" : "OR"}
+                </span>
+              </div>
             </>
           )}
-        </Button>
 
-        {/* Google OAuth Button */}
-        {googleAuthEnabled && (
-          <div className="space-y-3 pt-2">
-            <div className="relative flex items-center justify-center">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-zinc-800" /></div>
-              <span className="relative bg-background dark:bg-zinc-950 px-3 text-[11px] font-bold text-muted-foreground dark:text-zinc-400">أو / OR</span>
+          {/* Error Message */}
+          {displayError && (
+            <div className="p-3 mb-4 rounded-[4px] bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold text-start">
+              ⚠️ {displayError}
+            </div>
+          )}
+
+          {/* Login Form */}
+          <form onSubmit={handleLogin} className="space-y-4 text-start">
+            {/* Email / Phone Field */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-neutral-300">
+                {isAr ? "البريد الإلكتروني أو رقم الهاتف" : "Email or Phone Number"}
+              </label>
+              <input
+                type="text"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@company.com"
+                className="w-full h-10 px-3 rounded-[4px] bg-[#242426] text-white border border-neutral-700/80 text-xs font-medium placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-[#00A389] dir-ltr text-start"
+              />
             </div>
 
-            <button
-              type="button"
-              disabled={googleLoading || loading}
-              onClick={handleGoogleAuth}
-              className="w-full h-12 rounded-2xl font-bold text-xs text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white shadow-sm hover:shadow transition-all flex items-center justify-center gap-3 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            >
-              {googleLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              ) : (
-                <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
-              )}
-              <span>المتابعة بواسطة Google / Continue with Google 🚀</span>
-            </button>
-          </div>
-        )}
+            {/* Password Field */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-neutral-300">
+                {isAr ? "كلمة المرور" : "Password"}
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full h-10 ps-3 pe-10 rounded-[4px] bg-[#242426] text-white border border-neutral-700/80 text-xs font-medium placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-[#00A389] dir-ltr text-start"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute end-3 top-2.5 text-neutral-500 hover:text-neutral-300 cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
 
-        {/* Switch Link */}
-        {!inviteToken && (
-          <div className="text-center text-xs font-bold text-muted-foreground dark:text-zinc-400 pt-2">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-[#7C3AED] dark:text-purple-400 hover:underline font-black ms-1">
-              Create Account / أنشئ حساباً مجانياً 🚀
+            {/* Remember Me & Forgot Password Row */}
+            <div className="flex items-center justify-between text-[11px] pt-1">
+              <label className="flex items-center gap-2 text-neutral-400 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-neutral-600 text-[#00A389] focus:ring-[#00A389] cursor-pointer"
+                />
+                <span>{isAr ? "تذكرني" : "Remember me"}</span>
+              </label>
+
+              <Link
+                href="/forgot-password"
+                className="text-[#00A389] hover:underline font-semibold"
+              >
+                {isAr ? "نسيت كلمة المرور؟" : "Forgot Password?"}
+              </Link>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading || googleLoading}
+              className="w-full h-11 rounded-[4px] bg-[#00A389] hover:bg-[#008f78] text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-3 uppercase tracking-wider"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                isAr ? "الدخول للوحة التحكم" : "Sign In to Dashboard"
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Security & API Pills */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-6 text-[11px] text-neutral-600 dark:text-neutral-400">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-neutral-200/60 dark:bg-neutral-800/60 border border-neutral-300/50 dark:border-neutral-700/50 px-3.5 py-1 shadow-sm">
+            <Lock className="h-3 w-3 text-[#00A389]" />
+            <span>{isAr ? "جلسة مشفرة بالكامل من طرف لطرف" : "End-to-End Encrypted Session"}</span>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-neutral-200/60 dark:bg-neutral-800/60 border border-neutral-300/50 dark:border-neutral-700/50 px-3.5 py-1 shadow-sm">
+            <Zap className="h-3 w-3 text-[#00A389]" />
+            <span>{isAr ? "متصل مع Meta Cloud API الرسمية" : "Connected to Meta Cloud API"}</span>
+          </div>
+        </div>
+      </main>
+
+      {/* ── 3. Dark Editorial Bottom Footer ─────────────────────── */}
+      <footer className="w-full bg-[#1A1A1A] border-t border-neutral-800 py-6 text-xs text-neutral-400">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="font-serif text-base font-bold text-white tracking-tight">
+            {platformName}
+          </span>
+
+          <div className="flex items-center gap-6 text-xs text-neutral-400">
+            <Link href="/p/privacy" className="hover:text-white transition-colors">
+              {isAr ? "سياسة الخصوصية" : "Privacy Policy"}
+            </Link>
+            <Link href="/p/terms" className="hover:text-white transition-colors">
+              {isAr ? "شروط الخدمة" : "Terms of Service"}
+            </Link>
+            <Link href="/p/security" className="hover:text-white transition-colors">
+              {isAr ? "الأمان والحماية" : "Security"}
             </Link>
           </div>
-        )}
-      </form>
-    </AuthShell>
+
+          <div className="text-[11px] text-neutral-500">
+            {isAr
+              ? `جميع الحقوق محفوظة © ${new Date().getFullYear()} ${platformName}.`
+              : `© ${new Date().getFullYear()} ${platformName}. All rights reserved.`}
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }

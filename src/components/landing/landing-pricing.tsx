@@ -3,11 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import {
+  Check,
   CheckCircle2,
   XCircle,
-  ArrowLeft,
-  ArrowRight,
-  Sparkles,
   Users,
   UsersRound,
   MessageSquare,
@@ -27,8 +25,12 @@ export interface PlanFeatureFlags {
 export interface Plan {
   id: string
   name: string
+  name_en?: string
+  name_ar?: string
   slug: string
   description?: string
+  description_ar?: string
+  description_en?: string
   price_monthly: number
   price_yearly?: number
   price_monthly_discounted?: number
@@ -52,6 +54,9 @@ function getLocalizedPlanName(planInput: any, locale: string): string {
   if (!planInput) return ''
   if (locale === 'en' && typeof planInput === 'object' && planInput?.name_en) {
     return planInput.name_en
+  }
+  if (locale === 'ar' && typeof planInput === 'object' && planInput?.name_ar) {
+    return planInput.name_ar
   }
   const name = typeof planInput === 'string' ? planInput : planInput?.name || ''
   if (!name || typeof name !== 'string') return ''
@@ -78,49 +83,50 @@ function getLocalizedPlanName(planInput: any, locale: string): string {
   return name
 }
 
-export function LandingPricing({ plans, userLoggedIn, primaryColor = '#10B981' }: LandingPricingProps) {
+export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
   const locale = useLocale()
   const isAr = locale === 'ar'
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
+  const [isYearly, setIsYearly] = useState(false)
 
   return (
-    <div className="space-y-12">
-      {/* Billing Cycle Switcher Pills */}
-      <div className="flex justify-center">
-        <div className="inline-flex items-center gap-1.5 rounded-2xl border border-border bg-card/90 p-1.5 shadow-2xl backdrop-blur-2xl">
-          <button
-            onClick={() => setBillingCycle('monthly')}
-            className={`rounded-xl px-6 py-3 text-xs font-extrabold transition-all duration-200 ${
-              billingCycle === 'monthly'
-                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            📅 {isAr ? 'الفوترة الشهرية' : 'Monthly Billing'}
-          </button>
+    <div className="space-y-12 max-w-6xl mx-auto">
+      {/* ── 1. Billing Cycle Switcher (Matching Screenshot Design) ── */}
+      <div className="flex items-center justify-center gap-3 text-xs sm:text-sm font-medium text-[#1B1C1C] dark:text-[#F2F0F0]">
+        <span className={!isYearly ? 'font-bold text-[#1B1C1C] dark:text-white' : 'text-[#605E5B] dark:text-[#C9C6C1]'}>
+          {isAr ? 'الفوترة الشهرية' : 'Monthly Billing'}
+        </span>
 
-          <button
-            onClick={() => setBillingCycle('yearly')}
-            className={`relative flex items-center gap-2 rounded-xl px-6 py-3 text-xs font-black transition-all duration-200 ${
-              billingCycle === 'yearly'
-                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25 hover:brightness-110'
-                : 'text-muted-foreground hover:text-foreground'
+        {/* Toggle Slider Switch */}
+        <button
+          type="button"
+          onClick={() => setIsYearly(!isYearly)}
+          className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-[#00685F]"
+          role="switch"
+          aria-checked={isYearly}
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+              isYearly ? (isAr ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'
             }`}
-          >
-            🚀 {isAr ? 'الفوترة السنوية' : 'Yearly Billing'}
-            <span className="rounded-full bg-slate-950 px-2 py-0.5 text-[10px] font-black text-emerald-400">
-              {isAr ? 'خصم 20%' : 'Save 20%'}
-            </span>
-          </button>
-        </div>
+          />
+        </button>
+
+        <span className={isYearly ? 'font-bold text-[#1B1C1C] dark:text-white' : 'text-[#605E5B] dark:text-[#C9C6C1]'}>
+          {isAr ? 'الفوترة السنوية' : 'Yearly Billing'}
+        </span>
+
+        {/* Discount Pill Badge */}
+        <span className="rounded-full bg-[#E6E2DD] dark:bg-zinc-800 text-[#1C1C19] dark:text-[#F2F0F0] px-2.5 py-0.5 text-[11px] font-semibold tracking-tight">
+          {isAr ? 'وفر 20% + شهرين مجاناً' : 'Save 20% + 2 Months Free'}
+        </span>
       </div>
 
-      {/* Pricing Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans.map((p) => {
-          const isPopular = p.is_popular || p.slug === 'pro' || p.name.toLowerCase().includes('pro')
+      {/* ── 2. Pricing Cards Grid (Live DB Data with Screenshot Typography & Design) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+        {plans.map((p, idx) => {
+          const isPopular = p.is_popular || p.slug === 'pro' || p.name.toLowerCase().includes('pro') || idx === 1
+          const isEnterprise = p.slug === 'enterprise' || p.name.toLowerCase().includes('enterprise') || idx === 2
           const localizedName = getLocalizedPlanName(p, locale)
-          const isYearly = billingCycle === 'yearly'
 
           const priceActive = isYearly
             ? p.price_yearly_discounted && p.price_yearly_discounted > 0
@@ -130,228 +136,222 @@ export function LandingPricing({ plans, userLoggedIn, primaryColor = '#10B981' }
             ? p.price_monthly_discounted
             : p.price_monthly
 
-          const priceOriginal = isYearly ? p.price_yearly || p.price_monthly * 12 : p.price_monthly
-          const hasDiscount = isYearly
-            ? Boolean(p.price_yearly_discounted && p.price_yearly_discounted > 0)
-            : Boolean(p.price_monthly_discounted && p.price_monthly_discounted > 0)
+          const displayPrice = priceActive === 0 ? '0' : priceActive.toFixed(2)
+
+          const planDescription = isAr
+            ? (p.description_ar || p.description || (isPopular ? 'الأفضل للشركات النامية ومتاجر الملابس وحجز المواعيد.' : isEnterprise ? 'مصممة لفرق المبيعات الكبيرة والعيادات والعلامات متعددة الفروع.' : 'مثالية لتجربة مسارات العمل والمتاجر الفردية في بدايتها.'))
+            : (p.description_en || p.description || (isPopular ? 'Best for growing businesses, apparel shops, and appointment booking.' : isEnterprise ? 'Designed for high-volume sales teams, clinics, and multi-branch brands.' : 'Ideal for testing workflows and solo stores just getting started.'))
+
+          const btnText = userLoggedIn
+            ? isAr ? 'الانتقال للوحة التحكم' : 'Go to Dashboard'
+            : isPopular
+            ? isAr ? 'ابدأ تجربة مجانية 14 يوم' : 'Start 14-Day Free Trial'
+            : isEnterprise
+            ? isAr ? 'الترقية للمؤسسات' : 'Upgrade to Enterprise'
+            : isAr ? 'ابدأ مجاناً' : 'Get Started Free'
+
+          const btnStyle = isPopular
+            ? 'bg-[#00685F] hover:bg-[#005049] text-white shadow-sm'
+            : isEnterprise
+            ? 'bg-[#1E1E1E] dark:bg-black hover:bg-neutral-800 text-white shadow-sm'
+            : 'border border-neutral-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-[#1B1C1C] dark:text-white hover:bg-neutral-50'
 
           return (
             <div
               key={p.id}
-              className={`relative flex flex-col justify-between p-6 rounded-3xl border transition-all duration-300 backdrop-blur-xl ${
+              className={`rounded-lg bg-white dark:bg-[#242424] p-8 sm:p-9 flex flex-col justify-between relative transition-all duration-200 ${
                 isPopular
-                  ? 'border-2 border-amber-500/80 bg-card/95 shadow-2xl shadow-amber-500/10 scale-100 md:scale-[1.02] z-10'
-                  : 'border border-border bg-card/70 hover:border-border/80'
+                  ? 'border-2 border-[#00685F] shadow-lg shadow-[#00685F]/5'
+                  : 'border border-[#EFEDED] dark:border-zinc-800 shadow-[0_4px_20px_rgba(0,0,0,0.04)]'
               }`}
             >
-              {/* Popular Badge Banner */}
+              {/* Floating "MOST POPULAR CHOICE" Badge on Pro card */}
               {isPopular && (
-                <div className="-mt-3 mb-4 flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/50 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 px-3 py-1.5 text-xs font-black text-amber-400 shadow-sm backdrop-blur-sm">
-                  <Sparkles className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
-                  <span>{isAr ? 'الباقة الأكثر رواجاً ومبيعاً (Most Popular)' : 'Most Popular Choice'}</span>
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#004D40] text-white text-[10px] font-bold uppercase tracking-wider px-4 py-1 rounded-full shadow-sm whitespace-nowrap">
+                  {isAr ? 'الخيار الأكثر طلباً' : 'MOST POPULAR CHOICE'}
                 </div>
               )}
 
-              <div className="space-y-5">
-                {/* Header & Title */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-black text-foreground tracking-tight">{localizedName}</h3>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 font-mono uppercase">
-                      {p.slug}
-                    </p>
+              <div className="space-y-6">
+                {/* Plan Header: Name & Price */}
+                <div>
+                  <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#1B1C1C] dark:text-white">
+                    {localizedName}
+                  </h3>
+
+                  <div className="flex items-baseline gap-1 mt-3 font-serif">
+                    <span className="text-4xl sm:text-5xl font-bold tracking-tight text-[#1B1C1C] dark:text-white">
+                      ${displayPrice}
+                    </span>
+                    <span className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] font-sans">
+                      /{isYearly ? (isAr ? 'سنوياً' : 'yr') : (isAr ? 'شهرياً' : 'mo')}
+                    </span>
                   </div>
+
+                  <p className="text-xs text-[#605E5B] dark:text-[#C9C6C1] mt-3 leading-relaxed min-h-[36px]">
+                    {planDescription}
+                  </p>
                 </div>
 
-                {/* Pricing Box */}
-                <div className="rounded-2xl bg-muted/40 p-4 border border-border/50">
-                  <div className="flex items-baseline justify-between flex-wrap gap-2">
-                    <div className="flex items-baseline gap-2 dir-ltr">
-                      {hasDiscount ? (
-                        <>
-                          <span className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight">
-                            ${priceActive}
-                          </span>
-                          <span className="text-xs sm:text-sm font-semibold text-muted-foreground/60 line-through">
-                            ${priceOriginal}
-                          </span>
-                        </>
+                {/* Plan CTA Button */}
+                <Link
+                  href={userLoggedIn ? '/dashboard' : '/signup'}
+                  className={`w-full inline-flex items-center justify-center rounded-[4px] py-2.5 sm:py-3 text-[13px] font-bold uppercase tracking-wider transition-all duration-200 text-center ${btnStyle}`}
+                >
+                  {btnText}
+                </Link>
+
+                {/* Dynamic DB Quotas & Limits List */}
+                <div className="space-y-2.5 border-t border-[#EFEDED] dark:border-zinc-800/80 pt-4 text-xs">
+                  {/* Account / Users Limit */}
+                  <div className="flex items-center justify-between text-[#605E5B] dark:text-[#C9C6C1]">
+                    <span className="flex items-center gap-2">
+                      {isPopular ? (
+                        <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
                       ) : (
-                        <span className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
-                          ${priceActive}
-                        </span>
+                        <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
                       )}
-                      <span className="text-xs font-medium text-muted-foreground dir-rtl">
-                        /{isYearly ? (isAr ? 'سنوياً' : 'yearly') : (isAr ? 'شهرياً' : 'monthly')}
-                      </span>
-                    </div>
-                    {hasDiscount && (
-                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
-                        {isAr ? 'خصم خاص 🏷️' : 'Special Discount 🏷️'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Quotas & Limits Box */}
-                <div className="space-y-2 border-t border-border/50 pt-4 text-xs font-medium">
-                  <div className="flex items-center justify-between rounded-xl bg-background/60 px-3.5 py-2.5 border border-border/40">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground/70" />
-                      {isAr ? 'أعضاء الفريق:' : 'Team Members:'}
+                      <span>{isAr ? 'أعضاء الفريق' : 'Team Members'}</span>
                     </span>
-                    <span className="font-bold text-foreground">
-                      {p.max_users === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : p.max_users}
+                    <span className="font-bold text-[#1B1C1C] dark:text-white">
+                      {p.max_users === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : `${p.max_users} ${isAr ? 'أعضاء' : 'Members'}`}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-xl bg-background/60 px-3.5 py-2.5 border border-border/40">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <UsersRound className="h-4 w-4 text-muted-foreground/70" />
-                      {isAr ? 'سقف جهات الاتصال:' : 'Max Contacts:'}
+                  {/* Broadcasts Limit */}
+                  <div className="flex items-center justify-between text-[#605E5B] dark:text-[#C9C6C1]">
+                    <span className="flex items-center gap-2">
+                      {isPopular ? (
+                        <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                      ) : (
+                        <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                      )}
+                      <span>{isAr ? 'حملات البرودكاست' : 'Monthly Broadcasts'}</span>
                     </span>
-                    <span className="font-bold text-foreground">
-                      {p.max_contacts === -1 || p.max_contacts === undefined
+                    <span className="font-bold text-[#1B1C1C] dark:text-white">
+                      {p.max_broadcasts_monthly === -1
                         ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️')
-                        : (p.max_contacts || 1000).toLocaleString('en-US')}
+                        : (p.max_broadcasts_monthly || 500).toLocaleString('en-US')}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-xl bg-background/60 px-3.5 py-2.5 border border-border/40">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-muted-foreground/70" />
-                      {isAr ? 'الرسائل الشهرية:' : 'Monthly Messages:'}
+                  {/* Messages Limit */}
+                  <div className="flex items-center justify-between text-[#605E5B] dark:text-[#C9C6C1]">
+                    <span className="flex items-center gap-2">
+                      {isPopular ? (
+                        <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                      ) : (
+                        <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                      )}
+                      <span>{isAr ? 'الرسائل الشهرية' : 'Monthly Messages'}</span>
                     </span>
-                    <span className="font-bold text-foreground">
+                    <span className="font-bold text-[#1B1C1C] dark:text-white">
                       {p.max_messages_monthly === -1
                         ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️')
                         : (p.max_messages_monthly || 1000).toLocaleString('en-US')}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-xl bg-background/60 px-3.5 py-2.5 border border-border/40">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <ShoppingBag className="h-4 w-4 text-muted-foreground/70" />
-                      {isAr ? 'الطلبات والمبيعات:' : 'Orders & Sales:'}
+                  {/* Max Contacts */}
+                  <div className="flex items-center justify-between text-[#605E5B] dark:text-[#C9C6C1]">
+                    <span className="flex items-center gap-2">
+                      {isPopular ? (
+                        <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                      ) : (
+                        <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                      )}
+                      <span>{isAr ? 'سقف جهات الاتصال' : 'Max Contacts'}</span>
                     </span>
-                    <span className="font-bold text-foreground">
-                      {p.max_orders_monthly === -1 || p.max_orders_monthly === undefined
+                    <span className="font-bold text-[#1B1C1C] dark:text-white">
+                      {p.max_contacts === -1 || p.max_contacts === undefined
                         ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️')
-                        : (p.max_orders_monthly || 500).toLocaleString('en-US')}
+                        : (p.max_contacts || 1000).toLocaleString('en-US')}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-xl bg-background/60 px-3.5 py-2.5 border border-border/40">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <Radio className="h-4 w-4 text-muted-foreground/70" />
-                      {isAr ? 'حملات البرودكاست:' : 'Broadcast Campaigns:'}
-                    </span>
-                    <span className="font-bold text-foreground">
-                      {p.max_broadcasts_monthly === -1
-                        ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️')
-                        : (p.max_broadcasts_monthly || 50).toLocaleString('en-US')}
-                    </span>
+                  {/* Feature Checklists from DB */}
+                  <div className="pt-2 space-y-2 border-t border-[#EFEDED]/60 dark:border-zinc-800/40">
+                    {/* AI Assistant */}
+                    <div className="flex items-center gap-2.5">
+                      {p.features?.ai_assistant ? (
+                        isPopular ? (
+                          <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                        )
+                      ) : (
+                        <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
+                      )}
+                      <span className={p.features?.ai_assistant ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
+                        {isAr ? 'مساعد الذكاء الاصطناعي (Gemini AI)' : 'Gemini AI Assistant'}
+                      </span>
+                    </div>
+
+                    {/* Automations */}
+                    <div className="flex items-center gap-2.5">
+                      {p.features?.automations ? (
+                        isPopular ? (
+                          <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                        )
+                      ) : (
+                        <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
+                      )}
+                      <span className={p.features?.automations ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
+                        {isAr ? 'الأتمتة والردود الذكية' : 'Smart Automations'}
+                      </span>
+                    </div>
+
+                    {/* Flow Builder */}
+                    <div className="flex items-center gap-2.5">
+                      {p.features?.flows_builder ? (
+                        isPopular ? (
+                          <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                        )
+                      ) : (
+                        <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
+                      )}
+                      <span className={p.features?.flows_builder ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
+                        {isAr ? 'منشئ مسارات العمل التفاعلي' : 'Visual Workflow Builder'}
+                      </span>
+                    </div>
+
+                    {/* Telegram Bot */}
+                    <div className="flex items-center gap-2.5">
+                      {p.features?.telegram_bot ? (
+                        isPopular ? (
+                          <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                        )
+                      ) : (
+                        <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
+                      )}
+                      <span className={p.features?.telegram_bot ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
+                        {isAr ? 'إشعارات بوت تيليجرام' : 'Telegram Bot Alerts'}
+                      </span>
+                    </div>
+
+                    {/* Excel Export */}
+                    <div className="flex items-center gap-2.5">
+                      {p.features?.excel_export ? (
+                        isPopular ? (
+                          <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                        )
+                      ) : (
+                        <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
+                      )}
+                      <span className={p.features?.excel_export ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
+                        {isAr ? 'تصدير البيانات إلى Excel' : 'Excel Data Export'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-
-                {/* Feature Checklist */}
-                <div className="space-y-2 border-t border-border/50 pt-4 text-xs">
-                  <div className="flex items-center gap-2.5">
-                    {p.features?.ai_assistant ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
-                    )}
-                    <span
-                      className={
-                        p.features?.ai_assistant ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'
-                      }
-                    >
-                      {isAr ? 'مساعد الذكاء الاصطناعي (AI)' : 'AI Assistant (Gemini AI)'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2.5">
-                    {p.features?.automations ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
-                    )}
-                    <span
-                      className={
-                        p.features?.automations ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'
-                      }
-                    >
-                      {isAr ? 'الأتمتة والردود الآلية' : 'Automations & Auto-Replies'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2.5">
-                    {p.features?.flows_builder ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
-                    )}
-                    <span
-                      className={
-                        p.features?.flows_builder ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'
-                      }
-                    >
-                      {isAr ? 'منشئ مسارات العمل (Flows)' : 'Visual Workflow Builder (Flows)'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2.5">
-                    {p.features?.telegram_bot ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
-                    )}
-                    <span
-                      className={
-                        p.features?.telegram_bot ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'
-                      }
-                    >
-                      {isAr ? 'ربط بوت التلغرام للإشعارات' : 'Telegram Bot Notifications'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2.5">
-                    {p.features?.excel_export ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
-                    )}
-                    <span
-                      className={
-                        p.features?.excel_export ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'
-                      }
-                    >
-                      {isAr ? 'تصدير البيانات إلى Excel' : 'Data Export to Excel'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Action CTA Button */}
-              <div className="pt-8">
-                <Link
-                  href={userLoggedIn ? '/dashboard' : '/signup'}
-                  className={`w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 text-xs font-black transition-all duration-200 shadow-lg ${
-                    isPopular
-                      ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
-                      : 'bg-muted hover:bg-muted/80 text-foreground border border-border'
-                  }`}
-                >
-                  {userLoggedIn
-                    ? isAr
-                      ? 'الانتقال للوحة التحكم'
-                      : 'Go to Dashboard'
-                    : isAr
-                    ? 'اشترك الآن وابدأ التجربة'
-                    : 'Subscribe Now'}
-                  {isAr ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
-                </Link>
               </div>
             </div>
           )

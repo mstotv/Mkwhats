@@ -24,7 +24,9 @@ export async function GET() {
         ),
         profiles (
           id,
+          user_id,
           email,
+          account_role,
           role
         )
       `)
@@ -48,7 +50,7 @@ export async function GET() {
         );
 
         const ownerProfile =
-          (acc.profiles ?? []).find((p: any) => p.role === 'owner') ||
+          (acc.profiles ?? []).find((p: any) => p.account_role === 'owner' || p.role === 'owner') ||
           (acc.profiles ?? [])[0];
 
         return {

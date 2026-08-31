@@ -3,38 +3,20 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/service'
 import {
-  MessageSquare,
-  Sparkles,
-  Zap,
-  ShieldCheck,
-  Users,
   ArrowLeft,
   ArrowRight,
   Bot,
   Radio,
   BarChart3,
   Globe,
-  Star,
-  Shield,
-  Smartphone,
-  Headphones,
-  Check,
-  TrendingUp,
-  Quote,
-  Clock,
-  Send,
-  Layers,
   FileSpreadsheet,
   FileText,
   PlayCircle,
-  Sliders,
 } from 'lucide-react'
-import { LandingPricing } from '@/components/landing/landing-pricing'
-import { LandingFAQ, FAQItem } from '@/components/landing/landing-faq'
+import { LandingNavbar } from '@/components/landing/landing-navbar'
+import { LandingFooter } from '@/components/landing/landing-footer'
 import { LandingHeroMockup } from '@/components/landing/landing-hero-mockup'
 import { FloatingSupport } from '@/components/landing/floating-support'
-import { ModeToggle } from '@/components/layout/mode-toggle'
-import { LanguageSwitcher } from '@/components/language-switcher'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,678 +48,274 @@ export default async function LandingPage() {
 
   const serviceClient = createServiceClient()
 
-  // Fetch site_settings, partners, active plans, and published content pages in parallel
-  const [{ data: settings }, { data: dbPartners }, { data: plans }, { data: contentPages }] =
+  const [{ data: settings }, { data: dbPartners }, { data: contentPages }] =
     await Promise.all([
       serviceClient.from('site_settings').select('*').limit(1).maybeSingle(),
       serviceClient.from('partners').select('*').order('display_order', { ascending: true }),
       serviceClient
-        .from('plans')
-        .select('*')
-        .eq('is_active', true)
-        .order('price_monthly', { ascending: true }),
-      serviceClient
         .from('content_pages')
-        .select('slug, title')
+        .select('slug, title, title_en')
         .eq('is_published', true)
         .order('created_at', { ascending: true }),
     ])
 
   const platformName = isAr
-    ? (settings?.platform_name_ar || settings?.platform_name || '')
-    : (settings?.platform_name_en || settings?.platform_name || '')
+    ? (settings?.platform_name_ar || settings?.platform_name || 'Ethos Automation')
+    : (settings?.platform_name_en || settings?.platform_name || 'Ethos Automation')
   const logoUrl = settings?.logo_url
   const logoHeight = settings?.logo_height || 32
-  const themeColors = (settings?.theme_colors as any) || {}
-  const partnersGap = themeColors.partners_gap || 32
-
-  // Dynamic Content with fallback defaults per locale
-  const defaultHeroAr = {
-    trust_badge_text: 'منصة أتمتة وتسويق الواتساب الأولى للشركات والمتاجر',
-    headline: 'نمِّ عملك مع',
-    headline_highlight: 'واتساب والذكاء الاصطناعي',
-    subtitle:
-      'منصة متكاملة تتيح لك أتمتة المحادثات، إرسال حملات البرودكاست الموجهة، وتوثيق المبيعات مع ربط Google Sheets وتنبيهات Telegram وربط فريقك بالكامل.',
-    primary_cta_text: 'ابدأ مجاناً',
-    secondary_cta_text: 'شاهد العرض التوضيحي',
-  }
-
-  const defaultHeroEn = {
-    trust_badge_text: '#1 WhatsApp Automation & Marketing Platform for Businesses',
-    headline: 'Scale Your Business with',
-    headline_highlight: 'WhatsApp & Gemini AI',
-    subtitle:
-      'All-in-one platform to automate chat responses, trigger targeted broadcast campaigns, sync sales with Google Sheets, and notify your team via Telegram in real-time.',
-    primary_cta_text: 'Get Started Free',
-    secondary_cta_text: 'Watch Live Demo',
-  }
 
   const heroContent = {
     trust_badge_text: isAr
-      ? (settings?.hero_content?.trust_badge_text_ar || settings?.hero_content?.trust_badge_text || defaultHeroAr.trust_badge_text)
-      : (settings?.hero_content?.trust_badge_text_en || defaultHeroEn.trust_badge_text),
+      ? (settings?.hero_content?.trust_badge_text_ar || settings?.hero_content?.trust_badge_text || '#1 منصة أتمتة وتسويق الواتساب للأعمال')
+      : (settings?.hero_content?.trust_badge_text_en || '#1 WhatsApp Automation & Marketing Platform for Businesses'),
     headline: isAr
-      ? (settings?.hero_content?.headline_ar || settings?.hero_content?.headline || defaultHeroAr.headline)
-      : (settings?.hero_content?.headline_en || defaultHeroEn.headline),
+      ? (settings?.hero_content?.headline_ar || settings?.hero_content?.headline || 'نمِّ أعمالك مع')
+      : (settings?.hero_content?.headline_en || 'Scale Your Business with'),
     headline_highlight: isAr
-      ? (settings?.hero_content?.headline_highlight_ar || settings?.hero_content?.headline_highlight || defaultHeroAr.headline_highlight)
-      : (settings?.hero_content?.headline_highlight_en || defaultHeroEn.headline_highlight),
+      ? (settings?.hero_content?.headline_highlight_ar || settings?.hero_content?.headline_highlight || 'واتساب و Gemini AI')
+      : (settings?.hero_content?.headline_highlight_en || 'WhatsApp & Gemini AI'),
     subtitle: isAr
-      ? (settings?.hero_content?.subtitle_ar || settings?.hero_content?.subtitle || defaultHeroAr.subtitle)
-      : (settings?.hero_content?.subtitle_en || defaultHeroEn.subtitle),
+      ? (settings?.hero_content?.subtitle_ar || settings?.hero_content?.subtitle || 'أتمتة المحادثات، تصنيف العملاء المحتملين، وإتمام المبيعات وحجز المواعيد بسلاسة عبر واتساب. جرب قوة التجارة القائمة على الذكاء الاصطناعي.')
+      : (settings?.hero_content?.subtitle_en || 'Automate responses, qualify leads, and close sales seamlessly directly within WhatsApp. Experience the elegant utility of AI-driven conversational commerce.'),
     primary_cta_text: isAr
-      ? (settings?.hero_content?.primary_cta_text_ar || settings?.hero_content?.primary_cta_text || defaultHeroAr.primary_cta_text)
-      : (settings?.hero_content?.primary_cta_text_en || defaultHeroEn.primary_cta_text),
+      ? (settings?.hero_content?.primary_cta_text_ar || settings?.hero_content?.primary_cta_text || 'ابدأ مجاناً الآن')
+      : (settings?.hero_content?.primary_cta_text_en || 'Get Started Free'),
     secondary_cta_text: isAr
-      ? (settings?.hero_content?.secondary_cta_text_ar || settings?.hero_content?.secondary_cta_text || defaultHeroAr.secondary_cta_text)
-      : (settings?.hero_content?.secondary_cta_text_en || defaultHeroEn.secondary_cta_text),
+      ? (settings?.hero_content?.secondary_cta_text_ar || settings?.hero_content?.secondary_cta_text || 'شاهد العرض المباشر')
+      : (settings?.hero_content?.secondary_cta_text_en || 'Watch Live Demo'),
   }
 
-  const defaultFeaturesAr = [
-    {
-      id: '1',
-      title: '1. أتمتة المحادثات الذكية',
-      description:
-        'ردود فورية ومناقشات تفاعلية مدعومة بالذكاء الاصطناعي Gemini AI للإجابة على استفسارات العملاء وإتمام المبيعات 24/7.',
-    },
-    {
-      id: '2',
-      title: '2. إدارة حملات البرودكاست',
-      description:
-        'إرسال رسائل وحملات تسويقية جماعية مخصصة لآلاف العملاء المستهدفين بضغطة زر واحدة مع تتبع دقيق لنسب الوصول والقراءة.',
-    },
-    {
-      id: '3',
-      title: '3. قوالب الرسائل الجاهزة',
-      description:
-        'إنشاء وتنظيم قوالب رسائل ترحيبية وتفاعلية قابلة للتخصيص لإرسال الإشعارات وتسهيل تواصل موظفي المبيعات.',
-    },
-    {
-      id: '4',
-      title: '4. تحليلات وتقارير ذكية',
-      description:
-        'إحصائيات مباشرة لمعدلات استهلاك الرسائل، أداء الحملات، وسجل تفاعل العملاء لاتخاذ قرارات تسويقية صائبة.',
-    },
-    {
-      id: '5',
-      title: '5. ربط Google Sheets و Excel',
-      description:
-        'استخراج وتجميع كافة طلبات العملاء والعناوين والتلفونات تلقائياً وتصديرها بملفات إكسل مصفاة بضغطة زر.',
-    },
-    {
-      id: '6',
-      title: '6. إشعارات Telegram التلقائية',
-      description:
-        'ربط إشعارات المبيعات والطلبات الجديدة ببوت التلغرام لتلقي تنبيه فوري ومباشر على جوالك فور تأكيد العميل للطلب.',
-    },
-  ]
-
-  const defaultFeaturesEn = [
-    {
-      id: '1',
-      title: '1. Smart AI Automation',
-      description:
-        '24/7 automated interactive conversations powered by Gemini AI to answer inquiries and close sales around the clock.',
-    },
-    {
-      id: '2',
-      title: '2. Targeted Broadcasts',
-      description:
-        'Launch bulk WhatsApp marketing campaigns to thousands of targeted customers with 1-click and real-time delivery stats.',
-    },
-    {
-      id: '3',
-      title: '3. Pre-Approved Templates',
-      description:
-        'Create custom quick-reply templates and welcome sequences to speed up team responses and customer workflows.',
-    },
-    {
-      id: '4',
-      title: '4. Live Analytics & Insights',
-      description:
-        'Track campaign performance, message consumption, and customer engagement metrics with real-time dashboards.',
-    },
-    {
-      id: '5',
-      title: '5. Google Sheets & Excel Export',
-      description:
-        'Automatically sync order data, contacts, and phone numbers into structured Excel files and Google Sheets.',
-    },
-    {
-      id: '6',
-      title: '6. Telegram Bot Alerts',
-      description:
-        'Receive instant notifications on your mobile via Telegram whenever a new lead or order is confirmed.',
-    },
-  ]
-
-  const rawFeatures = (settings?.features_content as any[]) || []
-  const featuresList = (rawFeatures.length > 0 ? rawFeatures : defaultFeaturesAr).map((f: any, idx: number) => ({
-    id: f.id || String(idx + 1),
-    title: isAr
-      ? (f.title_ar || f.title || defaultFeaturesAr[idx]?.title || '')
-      : (f.title_en || defaultFeaturesEn[idx]?.title || f.title || ''),
-    description: isAr
-      ? (f.description_ar || f.description || defaultFeaturesAr[idx]?.description || '')
-      : (f.description_en || defaultFeaturesEn[idx]?.description || f.description || ''),
-  }))
-
-  const defaultHowItWorksAr = [
-    {
-      step_number: '1',
-      title: 'اربط واتساب',
-      description:
-        'افتح المنصة وامسح رمز الاستجابة السريعة (QR Code) بجوالك تماماً مثل فتح WhatsApp Web دون أي خبرة برمجة.',
-    },
-    {
-      step_number: '2',
-      title: 'اضبط الرد الآلي',
-      description:
-        'حدد قواعد الرد التلقائي، درّب مساعد الذكاء الاصطناعي Gemini على منتجاتك، وجهز قوالب الحملات.',
-    },
-    {
-      step_number: '3',
-      title: 'ابدأ البيع والنمو',
-      description:
-        'استقبل الطلبات، أرسل البرودكاست، وتابع التقارير وتنبيهات التلغرام وتصدير إكسل بنجاح 24 ساعة يومياً.',
-    },
-  ]
-
-  const defaultHowItWorksEn = [
-    {
-      step_number: '1',
-      title: 'Connect WhatsApp',
-      description:
-        'Scan the QR code with your mobile WhatsApp app in seconds just like WhatsApp Web, zero coding needed.',
-    },
-    {
-      step_number: '2',
-      title: 'Configure AI Rules',
-      description:
-        'Set up automated response rules, train the Gemini AI assistant on your products, and prepare broadcast templates.',
-    },
-    {
-      step_number: '3',
-      title: 'Scale & Close Sales',
-      description:
-        'Receive incoming leads, send broadcasts, track performance, and automate orders 24/7 effortless.',
-    },
-  ]
-
-  const rawHowItWorks = (settings?.how_it_works_content as any[]) || []
-  const howItWorksList = (rawHowItWorks.length > 0 ? rawHowItWorks : defaultHowItWorksAr).map((step: any, idx: number) => ({
-    step_number: step.step_number || String(idx + 1),
-    title: isAr
-      ? (step.title_ar || step.title || defaultHowItWorksAr[idx]?.title || '')
-      : (step.title_en || defaultHowItWorksEn[idx]?.title || step.title || ''),
-    description: isAr
-      ? (step.description_ar || step.description || defaultHowItWorksAr[idx]?.description || '')
-      : (step.description_en || defaultHowItWorksEn[idx]?.description || step.description || ''),
-  }))
-
-  // Bilingual FAQs — use question_ar/question_en and answer_ar/answer_en
-  const rawFaqs = (settings?.faqs as any[]) || []
-  const faqsList: FAQItem[] = rawFaqs.map((f: any) => ({
-    id: f.id || String(Math.random()),
-    question: isAr
-      ? (f.question_ar || f.question || '')
-      : (f.question_en || f.question || ''),
-    answer: isAr
-      ? (f.answer_ar || f.answer || '')
-      : (f.answer_en || f.answer || ''),
-  }))
   const socialLinks = (settings?.social_links as any[]) || []
 
-  // Ensure default partners exist
-  const defaultPartnersMap = new Map([
-    ['Shopify', 'https://cdn.simpleicons.org/shopify/96bf48'],
-    ['WooCommerce', 'https://cdn.simpleicons.org/woocommerce/96588a'],
-    ['Meta (WhatsApp)', 'https://cdn.simpleicons.org/meta/0668E1'],
-    ['Stripe', 'https://cdn.simpleicons.org/stripe/635BFF'],
-    ['Telegram', 'https://cdn.simpleicons.org/telegram/26A5E4'],
-    ['Google Sheets', 'https://cdn.simpleicons.org/google/4285F4'],
-  ])
-
-  const uniquePartnersMap = new Map<string, { name: string; logo_url: string }>()
-  if (dbPartners && dbPartners.length > 0) {
-    dbPartners.forEach((p) => {
-      uniquePartnersMap.set(p.name, { name: p.name, logo_url: p.logo_url })
-    })
-  }
-  defaultPartnersMap.forEach((logoUrl, partnerName) => {
-    if (!uniquePartnersMap.has(partnerName)) {
-      uniquePartnersMap.set(partnerName, { name: partnerName, logo_url: logoUrl })
-    }
-  })
-
-  const partners = Array.from(uniquePartnersMap.values()).map((p) => {
-    let logo = p.logo_url
-    if (!logo || logo.startsWith('/partners/')) {
-      const lower = (p.name || '').toLowerCase()
-      if (lower.includes('shopify')) logo = 'https://cdn.simpleicons.org/shopify/96bf48'
-      else if (lower.includes('woocommerce')) logo = 'https://cdn.simpleicons.org/woocommerce/96588a'
-      else if (lower.includes('meta')) logo = 'https://cdn.simpleicons.org/meta/0668E1'
-      else if (lower.includes('stripe')) logo = 'https://cdn.simpleicons.org/stripe/635BFF'
-      else if (lower.includes('whatsapp')) logo = 'https://cdn.simpleicons.org/whatsapp/25D366'
-      else if (lower.includes('telegram')) logo = 'https://cdn.simpleicons.org/telegram/26A5E4'
-      else if (lower.includes('google')) logo = 'https://cdn.simpleicons.org/google/4285F4'
-      else logo = ''
-    }
-    return { name: p.name, logo_url: logo }
-  })
-
-  const featureIcons = [
-    <Bot key="1" className="h-7 w-7 text-emerald-500" />,
-    <Radio key="2" className="h-7 w-7 text-emerald-500" />,
-    <FileText key="3" className="h-7 w-7 text-emerald-500" />,
-    <BarChart3 key="4" className="h-7 w-7 text-emerald-500" />,
-    <FileSpreadsheet key="5" className="h-7 w-7 text-emerald-500" />,
-    <Send key="6" className="h-7 w-7 text-emerald-500" />,
+  const defaultPartners = [
+    { name: 'WooCommerce', logo_url: 'https://cdn.simpleicons.org/woocommerce/96588a' },
+    { name: 'Shopify', logo_url: 'https://cdn.simpleicons.org/shopify/96bf48' },
+    { name: 'Stripe', logo_url: 'https://cdn.simpleicons.org/stripe/635BFF' },
+    { name: 'Telegram', logo_url: 'https://cdn.simpleicons.org/telegram/26A5E4' },
+    { name: 'Sheets', logo_url: 'https://cdn.simpleicons.org/google/4285F4' },
+    { name: 'HubSpot', logo_url: 'https://cdn.simpleicons.org/hubspot/FF7A59' },
   ]
 
+  const partners = (dbPartners && dbPartners.length > 0) ? dbPartners : defaultPartners
   const ArrowIcon = isAr ? ArrowLeft : ArrowRight
 
   return (
     <div
       dir={isAr ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-background text-foreground font-sans relative overflow-x-hidden transition-colors duration-300"
+      className="min-h-screen bg-[#F9F5F0] dark:bg-[#1A1A1A] text-[#1B1C1C] dark:text-[#F2F0F0] font-sans relative overflow-x-hidden transition-colors duration-300"
     >
-      {/* Dynamic Ambient Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-emerald-500/10 blur-[160px] rounded-full pointer-events-none z-0" />
+      {/* ── 1. Top Navigation Bar ──────────────────────────────── */}
+      <LandingNavbar
+        platformName={platformName}
+        logoUrl={logoUrl}
+        logoHeight={logoHeight}
+        locale={locale}
+        activePage="home"
+        userLoggedIn={Boolean(user)}
+        primaryCtaText={heroContent.primary_cta_text}
+      />
 
-      {/* ── 1. Glassmorphism Top Navigation Bar ──────────────── */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-2xl transition-all">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt={platformName}
-                style={{ height: `${logoHeight}px` }}
-                className="w-auto object-contain"
-              />
-            ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500 text-slate-950 font-black shadow-lg">
-                <MessageSquare className="h-5 w-5" />
-              </div>
-            )}
-            <span className="text-xl font-black tracking-tight text-foreground">{platformName}</span>
-          </div>
-
-          {/* Navigation Items — bilingual from admin header_links */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-bold text-muted-foreground">
-            {((settings?.header_links as any[]) || [
-              { label_ar: 'المميزات', label_en: 'Features', url: '#features' },
-              { label_ar: 'كيف يعمل', label_en: 'How it Works', url: '#how-it-works' },
-              { label_ar: 'الشركاء والتكاملات', label_en: 'Integrations', url: '#partners' },
-              { label_ar: 'التسعير والخطط', label_en: 'Pricing', url: '#pricing' },
-              { label_ar: 'الأسئلة الشائعة', label_en: 'FAQs', url: '#faqs' },
-            ]).map((link: any, idx: number) => (
-              <a key={idx} href={link.url || '#'} className="hover:text-foreground transition-colors">
-                {isAr
-                  ? (link.label_ar || link.label || '')
-                  : (link.label_en || link.label || '')}
-              </a>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <ModeToggle />
-            <LanguageSwitcher />
-
-            {user ? (
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-black text-slate-950 shadow-lg hover:bg-emerald-400 transition-all"
-              >
-                {isAr ? 'الذهاب للوحة التحكم' : 'Go to Dashboard'} <ArrowIcon className="h-4 w-4" />
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="text-xs font-bold text-muted-foreground hover:text-foreground px-3 py-2 transition-colors"
-                >
-                  {isAr ? 'تسجيل الدخول' : 'Sign In'}
-                </Link>
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-black text-slate-950 shadow-lg hover:bg-emerald-400 transition-all hover:scale-[1.02]"
-                >
-                  {heroContent.primary_cta_text || (isAr ? 'ابدأ مجاناً' : 'Get Started Free')} <ArrowIcon className="h-3.5 w-3.5" />
-                </Link>
-              </>
-            )}
-          </div>
+      {/* ── 2. Hero Section ───────────────────────────────────── */}
+      <section id="home" className="relative pt-20 pb-20 md:pt-28 md:pb-28 max-w-6xl mx-auto px-6 sm:px-12 lg:px-16 text-center space-y-8">
+        {/* Pill Badge */}
+        <div className="inline-flex items-center gap-2 bg-[#00685F]/10 dark:bg-[#00685F]/20 border border-[#00685F]/25 rounded-full px-4 py-1.5 shadow-sm">
+          <span className="h-2 w-2 rounded-full bg-[#00685F] dark:bg-[#6BD8CB] animate-pulse" />
+          <span className="text-[12px] sm:text-[13px] font-semibold tracking-wide text-[#00685F] dark:text-[#6BD8CB]">
+            {heroContent.trust_badge_text}
+          </span>
         </div>
-      </header>
 
-      {/* ── 2. Hero Section ─────────────────────────────────── */}
-      <section className="relative pt-12 pb-20 md:pt-20 md:pb-28 border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 text-center sm:px-6 lg:px-8 relative z-10 space-y-8">
-          {/* Trust Rating Pill Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-black text-emerald-500 shadow-sm animate-in fade-in duration-500">
-            <Sparkles className="h-4 w-4" />
-            <span>{heroContent.trust_badge_text}</span>
-          </div>
+        {/* Headline */}
+        <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-[#1B1C1C] dark:text-white leading-[1.15] max-w-4xl mx-auto">
+          {heroContent.headline} <br />
+          <span className="italic text-[#00685F] dark:text-[#6BD8CB]">
+            {heroContent.headline_highlight}
+          </span>
+        </h1>
 
-          {/* Main Headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-foreground leading-[1.15] max-w-4xl mx-auto">
-            {heroContent.headline}{' '}
-            <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-              {heroContent.headline_highlight || (isAr ? 'واتساب والذكاء الاصطناعي' : 'WhatsApp & AI')}
-            </span>
-          </h1>
+        {/* Subtitle */}
+        <p className="text-base sm:text-lg text-[#605E5B] dark:text-[#C9C6C1] max-w-2xl mx-auto leading-relaxed font-normal">
+          {heroContent.subtitle}
+        </p>
 
-          {/* Subtitle */}
-          <p className="text-sm sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
-            {heroContent.subtitle}
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+          <Link
+            href={user ? '/dashboard' : '/signup'}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[4px] bg-[#00685F] hover:bg-[#005049] text-white px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider shadow-sm hover:scale-[1.01] transition-all"
+          >
+            {heroContent.primary_cta_text}
+            <ArrowIcon className="h-4 w-4" />
+          </Link>
+
+          <Link
+            href="/features"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[4px] border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-[#1B1C1C] dark:text-white px-7 py-3.5 text-[13px] font-semibold transition-all shadow-sm"
+          >
+            <PlayCircle className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB]" />
+            {heroContent.secondary_cta_text}
+          </Link>
+        </div>
+
+        {/* Hero Interactive Laptop Showcase */}
+        <LandingHeroMockup />
+      </section>
+
+      {/* ── 3. Integrations Bar ───────────────────────────────── */}
+      <section id="partners" className="py-14 border-y border-[#BCC9C6]/30 dark:border-white/10 bg-white/50 dark:bg-[#242424]/40">
+        <div className="mx-auto max-w-7xl px-6 sm:px-12 lg:px-16 text-center space-y-6">
+          <p className="text-[12px] font-bold uppercase tracking-widest text-[#605E5B] dark:text-[#C9C6C1]">
+            {isAr ? 'يتكامل بسلاسة مع أشهر المنصات والخدمات' : 'SEAMLESSLY INTEGRATES WITH TOP PLATFORMS'}
           </p>
 
-          {/* CTA Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-            <Link
-              href={user ? '/dashboard' : '/signup'}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-8 py-4 text-sm font-black text-slate-950 shadow-2xl shadow-emerald-500/25 hover:bg-emerald-400 hover:scale-105 active:scale-95 transition-all duration-200"
-            >
-              {heroContent.primary_cta_text || (isAr ? 'ابدأ مجاناً الآن' : 'Get Started Free')}
-              <ArrowIcon className="h-4 w-4" />
-            </Link>
-
-            <a
-              href="#how-it-works"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-card/80 px-8 py-4 text-sm font-bold text-foreground hover:bg-muted transition-all duration-200"
-            >
-              <PlayCircle className="h-4 w-4 text-emerald-500" />
-              {heroContent.secondary_cta_text || (isAr ? 'شاهد كيف يعمل' : 'Watch Demo')}
-            </a>
-          </div>
-        </div>
-
-        {/* Live Interactive Hero UI Mockup Showcase */}
-        <div className="mt-12 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <LandingHeroMockup />
-        </div>
-      </section>
-
-      {/* ── 3. Interactive Partners Carousel ───────────────── */}
-      <section id="partners" className="py-14 border-b border-border bg-card/40 overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
-          <p className="text-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {isAr ? 'يتكامل بسلاسة مع أشهر المنصات والخدمات' : 'Seamlessly Integrates With Top Platforms'}
-          </p>
-
-          <div className="relative flex overflow-x-hidden group py-2">
-            <div
-              className="flex shrink-0 animate-marquee-infinite items-center"
-              style={{ gap: `${partnersGap}px` }}
-            >
-              {partners.concat(partners).map((partner, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card/80 px-6 py-3 shadow-md hover:border-emerald-500/40 transition-all shrink-0"
-                >
-                  {partner.logo_url ? (
-                    <img src={partner.logo_url} alt={partner.name} className="h-6 w-6 object-contain" />
-                  ) : (
-                    <Globe className="h-6 w-6 text-emerald-500" />
-                  )}
-                  <span className="text-xs font-bold text-foreground">{partner.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 4. Features Grid Section ────────────────────────── */}
-      <section id="features" className="py-24 border-b border-border">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-16">
-          <div className="text-center space-y-4">
-            <span className="text-xs font-black uppercase tracking-widest border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 px-3.5 py-1 rounded-full">
-              {isAr ? 'مميزات فائقة للنمو والمبيعات' : 'Powerful Features'}
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-black text-foreground">
-              {isAr ? 'كل ما تحتاجه للتحكم الكامل بـ واتساب' : 'Everything You Need to Master WhatsApp'}
-            </h2>
-            <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-              {isAr ? 'أدوات متكاملة مصممة بعناية لزيادة أرباحك، أتمتة الردود، وتسهيل عمل فريقك.' : 'All-in-one suite built to boost revenue, automate responses, and empower your sales team.'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuresList.map((item: any, idx: number) => (
-              <div
-                key={item.id || idx}
-                className="rounded-3xl border border-border bg-card/80 p-8 space-y-5 hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1 backdrop-blur-xl shadow-sm"
-              >
-                <div className="h-14 w-14 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center font-bold shadow-lg">
-                  {featureIcons[idx % featureIcons.length]}
-                </div>
-                <h3 className="text-xl font-black text-foreground">{item.title}</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  {item.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5. How It Works Section (3 Steps) ───────────────── */}
-      <section id="how-it-works" className="py-24 border-b border-border bg-card/30 relative">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-4 mb-16">
-            <span className="text-xs font-black uppercase tracking-widest border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 px-3.5 py-1 rounded-full">
-              {isAr ? 'بساطة مطلقة' : 'Simple Setup'}
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-black text-foreground">
-              {isAr ? 'كيف تعمل المنصة؟' : 'How It Works'}
-            </h2>
-            <p className="text-base text-muted-foreground max-w-xl mx-auto">
-              {isAr ? '3 خطوات بسيطة وسريعة لتشغيل أتمتة ومبيعات الواتساب في أقل من دقيقتين.' : '3 quick steps to automate your WhatsApp sales in less than 2 minutes.'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {howItWorksList.map((step: any, idx: number) => (
-              <div
-                key={idx}
-                className="rounded-3xl border border-border bg-card/60 p-8 space-y-4 text-center relative backdrop-blur-xl"
-              >
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500 text-slate-950 font-black text-xl shadow-lg">
-                  {step.step_number || idx + 1}
-                </div>
-                <h3 className="text-xl font-black text-foreground">{step.title}</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  {step.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 6. Pricing & Plans Section ──────────────────────── */}
-      <section id="pricing" className="py-24 border-b border-border">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-16">
-          <div className="text-center space-y-4">
-            <span className="text-xs font-black uppercase tracking-widest border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 px-3.5 py-1 rounded-full">
-              {isAr ? 'خطط مرنة وشفافة' : 'Flexible Pricing'}
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-black text-foreground">
-              {isAr ? 'اختر الخطة المناسبة لنشاطك' : 'Choose the Perfect Plan for Your Business'}
-            </h2>
-            <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-              {isAr ? 'بدون رسوم خفية، إلغاء في أي وقت، مع خطة تجريبية مجانية بالكامل.' : 'No hidden fees. Cancel anytime. Full feature free trial included.'}
-            </p>
-          </div>
-
-          <LandingPricing
-            plans={(plans as any[]) || []}
-            userLoggedIn={Boolean(user)}
-            primaryColor="#10B981"
-          />
-        </div>
-      </section>
-
-      {/* ── 7. FAQ Section ──────────────────────────────────── */}
-      <section id="faqs" className="py-24 border-b border-border bg-card/30">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-16">
-          <div className="text-center space-y-4">
-            <span className="text-xs font-black uppercase tracking-widest border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 px-3.5 py-1 rounded-full">
-              {isAr ? 'إجابات فورية' : 'FAQs'}
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-black text-foreground">
-              {isAr ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
-            </h2>
-          </div>
-
-          <LandingFAQ items={faqsList} />
-        </div>
-      </section>
-
-      {/* ── 8. Footer ────────────────────────────────────────── */}
-      <footer className="border-t border-border bg-card py-16 text-xs text-muted-foreground">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Column 1: Platform Overview */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                {logoUrl ? (
-                  <img
-                    src={logoUrl}
-                    alt={platformName}
-                    style={{ height: `${logoHeight}px` }}
-                    className="w-auto object-contain"
-                  />
+          <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-14 opacity-80 grayscale hover:grayscale-0 transition-all duration-500">
+            {partners.map((p: any, idx: number) => (
+              <div key={idx} className="flex items-center gap-2.5 text-sm font-semibold text-[#1B1C1C] dark:text-[#F2F0F0]">
+                {p.logo_url ? (
+                  <img src={p.logo_url} alt={p.name} className="h-5 w-5 object-contain" />
                 ) : (
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500 text-slate-950 font-black shadow-lg">
-                    <MessageSquare className="h-5 w-5" />
-                  </div>
+                  <Globe className="h-5 w-5 text-[#00685F]" />
                 )}
-                <span className="text-lg font-black text-foreground">{platformName}</span>
+                <span>{p.name}</span>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {isAr
-                  ? 'منصة أتمتة وتسويق الواتساب والذكاء الاصطناعي الأولى لإدارة المحادثات والحملات ومزامنة الطلبات.'
-                  : '#1 WhatsApp & Gemini AI automation platform for managing chats, broadcasts, and order sync.'}
-              </p>
-              <div className="flex items-center gap-2 text-[11px] text-emerald-500 font-semibold">
-                <ShieldCheck className="h-4 w-4" /> {isAr ? 'حماية وأمان البيانات 100%' : '100% Data Security & Protection'}
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. Bento Grid ("Everything You Need to Master WhatsApp") ── */}
+      <section className="py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-16">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <h2 className="font-serif text-3xl sm:text-5xl font-bold text-[#1B1C1C] dark:text-white">
+            {isAr ? 'كل ما تحتاجه للتحكم الكامل بـ واتساب' : 'Everything You Need to Master WhatsApp'}
+          </h2>
+          <p className="text-sm sm:text-base text-[#605E5B] dark:text-[#C9C6C1]">
+            {isAr
+              ? 'مجموعة متطورة من الأدوات المصممة لأتمتة وتحليل وتوسيع تجارتك بسهولة تامة.'
+              : 'A sophisticated suite of tools designed to automate, analyze, and scale your conversational commerce effortlessly.'}
+          </p>
+        </div>
+
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: Large Featured AI Automation */}
+          <div className="md:col-span-2 rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col justify-between relative overflow-hidden group">
+            <div className="z-10 space-y-5">
+              <div className="h-12 w-12 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
+                <Bot className="h-6 w-6" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-serif text-2xl font-bold text-[#1B1C1C] dark:text-white">
+                  {isAr ? 'أتمتة الذكاء الاصطناعي (Gemini AI)' : 'Gemini AI Automation'}
+                </h3>
+                <p className="text-sm text-[#605E5B] dark:text-[#C9C6C1] max-w-md leading-relaxed">
+                  {isAr
+                    ? 'نشر وكلاء محادثة يفهمون السياق والنية بدقة لتقديم ردود طبيعية شبيهة بالبشر على مدار الساعة.'
+                    : 'Deploy conversational agents that understand context, nuance, and user intent, providing human-like responses 24/7.'}
+                </p>
               </div>
             </div>
 
-            {/* Column 2: Products & Solutions */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-bold text-foreground">{isAr ? 'المنتج والحلول' : 'Product & Solutions'}</h4>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li><a href="#features" className="hover:text-foreground transition-colors">{isAr ? 'حملات البرودكاست' : 'Broadcast Campaigns'}</a></li>
-                <li><a href="#features" className="hover:text-foreground transition-colors">{isAr ? 'مساعد الذكاء الاصطناعي' : 'Gemini AI Assistant'}</a></li>
-                <li><a href="#features" className="hover:text-foreground transition-colors">{isAr ? 'إدارة الفرق والأدوار' : 'Team & Roles Management'}</a></li>
-                <li><a href="#features" className="hover:text-foreground transition-colors">{isAr ? 'تكامل Evolution API' : 'Evolution API Integration'}</a></li>
-              </ul>
-            </div>
-
-            {/* Column 3: Quick Navigation */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-bold text-foreground">{isAr ? 'روابط سريعة' : 'Quick Links'}</h4>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                <li><a href="#pricing" className="hover:text-foreground transition-colors">{isAr ? 'الخطط والأسعار' : 'Plans & Pricing'}</a></li>
-                <li><a href="#partners" className="hover:text-foreground transition-colors">{isAr ? 'شركاء النجاح' : 'Integrations & Partners'}</a></li>
-                <li><Link href="/login" className="hover:text-foreground transition-colors">{isAr ? 'تسجيل الدخول' : 'Sign In'}</Link></li>
-                <li><Link href="/signup" className="hover:text-foreground transition-colors">{isAr ? 'إنشاء حساب مجاني' : 'Sign Up Free'}</Link></li>
-              </ul>
-            </div>
-
-            {/* Column 4: Static Content Pages from DB */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-bold text-foreground">{isAr ? 'الصفحات والمعلومات' : 'Pages & Info'}</h4>
-              <ul className="space-y-2 text-xs text-muted-foreground">
-                {(() => {
-                  const seenSlugs = new Set<string>()
-                  const uniquePages = (contentPages || []).filter((p) => {
-                    const normalized = p.slug.toLowerCase().replace(/_/g, '-')
-                    if (seenSlugs.has(normalized)) return false
-                    seenSlugs.add(normalized)
-                    return true
-                  })
-
-                  return uniquePages.map((page) => {
-                    let displayTitle = page.title
-                    const slugLower = page.slug.toLowerCase()
-                    if (!isAr) {
-                      if (slugLower.includes('privacy')) displayTitle = 'Privacy Policy'
-                      else if (slugLower.includes('term')) displayTitle = 'Terms & Conditions'
-                      else if (slugLower.includes('about')) displayTitle = 'About Us'
-                      else if (slugLower.includes('contact')) displayTitle = 'Contact Us'
-                    } else {
-                      if (slugLower.includes('privacy')) displayTitle = 'سياسة الخصوصية'
-                      else if (slugLower.includes('term')) displayTitle = 'الشروط والأحكام'
-                      else if (slugLower.includes('about')) displayTitle = 'من نحن'
-                      else if (slugLower.includes('contact')) displayTitle = 'اتصل بنا'
-                    }
-                    return (
-                      <li key={page.slug}>
-                        <Link href={`/p/${page.slug}`} className="hover:text-foreground transition-colors">
-                          {displayTitle}
-                        </Link>
-                      </li>
-                    )
-                  })
-                })()}
-              </ul>
+            <div className="pt-8 flex flex-wrap gap-2 z-10">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00685F]/10 text-[#00685F] dark:text-[#6BD8CB] px-3.5 py-1 text-xs font-semibold uppercase tracking-wider">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#00685F] dark:bg-[#6BD8CB] animate-pulse" />
+                Gemini 2.5 & 3.6 Flash Active
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F5F3F3] dark:bg-zinc-800 text-[#605E5B] dark:text-[#C9C6C1] px-3.5 py-1 text-xs font-semibold uppercase tracking-wider">
+                Intent: Purchase High
+              </span>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-border text-xs">
-            <div>
-              {isAr
-                ? `جميع الحقوق محفوظة © ${new Date().getFullYear()} ${platformName}.`
-                : `All rights reserved © ${new Date().getFullYear()} ${platformName}.`}
+          {/* Card 2: Deep Analytics */}
+          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-7 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col justify-between space-y-4">
+            <div className="space-y-3">
+              <div className="h-10 w-10 rounded-[4px] bg-[#F5F3F3] dark:bg-zinc-800 flex items-center justify-center text-[#1B1C1C] dark:text-[#F2F0F0]">
+                <BarChart3 className="h-5 w-5 text-[#00685F] dark:text-[#6BD8CB]" />
+              </div>
+              <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
+                {isAr ? 'تحليلات عميقة' : 'Deep Analytics'}
+              </h3>
+              <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
+                {isAr
+                  ? 'متابعة معدلات التفاعل والتحويل واستهلاك الرسائل الشهرية لحظة بلحظة.'
+                  : 'Track engagement, conversion rates, and agent performance in real-time.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: Targeted Broadcasts */}
+          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-7 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col justify-between space-y-4">
+            <div className="space-y-3">
+              <div className="h-10 w-10 rounded-[4px] bg-[#F5F3F3] dark:bg-zinc-800 flex items-center justify-center text-[#1B1C1C] dark:text-[#F2F0F0]">
+                <Radio className="h-5 w-5 text-[#00685F] dark:text-[#6BD8CB]" />
+              </div>
+              <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
+                {isAr ? 'حملات برودكاست موجهة' : 'Targeted Broadcasts'}
+              </h3>
+              <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
+                {isAr
+                  ? 'إرسال رسائل تسويقية جماعية للجمهور المستهدف بمعدلات آمنة وموثوقة.'
+                  : 'Send personalized bulk messages to segmented audiences securely.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 4: Approved Templates */}
+          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-7 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col justify-between space-y-4">
+            <div className="space-y-3">
+              <div className="h-10 w-10 rounded-[4px] bg-[#F5F3F3] dark:bg-zinc-800 flex items-center justify-center text-[#1B1C1C] dark:text-[#F2F0F0]">
+                <FileText className="h-5 w-5 text-[#00685F] dark:text-[#6BD8CB]" />
+              </div>
+              <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
+                {isAr ? 'قوالب معتمدة' : 'Approved Templates'}
+              </h3>
+              <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
+                {isAr
+                  ? 'إنشاء واستخدام قوالب رسائل تفاعلية لتسريع ردود فريق المبيعات.'
+                  : 'Manage and deploy WhatsApp-approved message templates effortlessly.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 5: Google Sheets & Telegram Sync */}
+          <div className="md:col-span-2 rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="space-y-3 flex-1">
+              <div className="h-10 w-10 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
+                <FileSpreadsheet className="h-5 w-5" />
+              </div>
+              <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
+                {isAr ? 'مزامنة Google Sheets و Telegram' : 'Google Sheets & Telegram Sync'}
+              </h3>
+              <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed max-w-lg">
+                {isAr
+                  ? 'تسجيل العملاء والطلبات تلقائياً في Google Sheets مع تنبيهات فورية على Telegram لفريقك عند تأكيد الطلب.'
+                  : 'Automatically log leads into Google Sheets and trigger instant Telegram alerts for your sales team when high-intent actions occur.'}
+              </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              {socialLinks
-                .filter((s: any) => s && s.url && s.url.trim().length > 0)
-                .map((s: any, idx: number) => {
-                  const rawUrl = (s.url || '').trim()
-                  const formattedHref =
-                    rawUrl.startsWith('http://') || rawUrl.startsWith('https://')
-                      ? rawUrl
-                      : `https://${rawUrl}`
-
-                  const platformKey = (s.platform || s.name || '').toLowerCase()
-                  let iconUrl = ''
-                  if (platformKey.includes('facebook')) iconUrl = 'https://cdn.simpleicons.org/facebook/1877F2'
-                  else if (platformKey.includes('instagram')) iconUrl = 'https://cdn.simpleicons.org/instagram/E4405F'
-                  else if (platformKey.includes('twitter') || platformKey.includes('x')) iconUrl = 'https://cdn.simpleicons.org/x/FFFFFF'
-                  else if (platformKey.includes('linkedin')) iconUrl = 'https://cdn.simpleicons.org/linkedin/0A66C2'
-                  else if (platformKey.includes('youtube')) iconUrl = 'https://cdn.simpleicons.org/youtube/FF0000'
-                  else if (platformKey.includes('tiktok')) iconUrl = 'https://cdn.simpleicons.org/tiktok/FFFFFF'
-                  else if (platformKey.includes('snapchat')) iconUrl = 'https://cdn.simpleicons.org/snapchat/FFFC00'
-
-                  return (
-                    <a
-                      key={idx}
-                      href={formattedHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={s.name || s.platform}
-                      className="h-9 w-9 rounded-xl bg-card border border-border flex items-center justify-center text-muted-foreground hover:border-emerald-500 hover:scale-110 transition-all shadow-sm group"
-                    >
-                      {iconUrl ? (
-                        <img src={iconUrl} alt={s.platform || 'Social'} className="h-4 w-4 object-contain group-hover:brightness-125" />
-                      ) : (
-                        <Globe className="h-4 w-4" />
-                      )}
-                    </a>
-                  )
-                })}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="rounded-[4px] border border-[#EFEDED] dark:border-zinc-800 bg-[#F9F5F0] dark:bg-zinc-800 px-4 py-3 text-center">
+                <div className="text-xs font-bold text-[#1B1C1C] dark:text-[#F2F0F0]">Google Sheets</div>
+                <div className="text-[10px] text-[#00685F] dark:text-[#6BD8CB] font-mono">● Auto-Synced</div>
+              </div>
+              <div className="rounded-[4px] border border-[#EFEDED] dark:border-zinc-800 bg-[#F9F5F0] dark:bg-zinc-800 px-4 py-3 text-center">
+                <div className="text-xs font-bold text-[#1B1C1C] dark:text-[#F2F0F0]">Telegram Bot</div>
+                <div className="text-[10px] text-[#00685F] dark:text-[#6BD8CB] font-mono">● Instant Alert</div>
+              </div>
             </div>
           </div>
         </div>
-      </footer>
+      </section>
+
+      {/* ── 5. Dark Editorial Footer ──────────────────────────── */}
+      <LandingFooter
+        platformName={platformName}
+        locale={locale}
+        contentPages={contentPages || []}
+        socialLinks={socialLinks}
+      />
 
       {/* Floating Interactive Live Support Chat Widget */}
       <FloatingSupport
