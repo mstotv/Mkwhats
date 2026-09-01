@@ -143,6 +143,7 @@ const TRIGGER_OPTIONS: { value: AutomationTriggerType }[] = [
   { value: "ecommerce_order_cancelled" },
   { value: "ecommerce_order_fulfilled" },
   { value: "ecommerce_customer_created" },
+  { value: "ecommerce_cart_abandoned" },
 ]
 
 function cid(): string {

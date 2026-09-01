@@ -108,7 +108,15 @@ export function normalizeWooCommercePayload(
 
   const topicLower = topic.toLowerCase();
 
-  if (topicLower.includes('order.created') || topicLower.includes('new_order') || topicLower.includes('order_created')) {
+  if (
+    topicLower.includes('cart.abandoned') ||
+    topicLower.includes('cart_abandoned') ||
+    topicLower.includes('abandoned_cart') ||
+    topicLower.includes('abandonment') ||
+    status === 'abandoned'
+  ) {
+    eventType = 'cart.abandoned';
+  } else if (topicLower.includes('order.created') || topicLower.includes('new_order') || topicLower.includes('order_created')) {
     eventType = 'order.created';
   } else if (topicLower.includes('order.updated') || topicLower.includes('order.')) {
     if (status === 'completed') eventType = 'order.fulfilled';
@@ -121,26 +129,30 @@ export function normalizeWooCommercePayload(
     eventType = 'order.created';
   }
 
-  const externalId = String(rawPayload.id || deliveryId || Date.now());
+  const externalId = String(rawPayload.id || rawPayload.cart_id || deliveryId || Date.now());
 
   // Parse customer info
   const rawBilling = (rawPayload.billing || {}) as Record<string, unknown>;
   const rawShipping = (rawPayload.shipping || {}) as Record<string, unknown>;
 
   const customerName =
+    (rawPayload.customer_name as string) ||
     [rawBilling.first_name, rawBilling.last_name].filter(Boolean).join(' ') ||
     [rawShipping.first_name, rawShipping.last_name].filter(Boolean).join(' ') ||
-    (rawPayload.first_name ? [rawPayload.first_name, rawPayload.last_name].filter(Boolean).join(' ') : undefined);
+    (rawPayload.first_name ? [rawPayload.first_name, rawPayload.last_name].filter(Boolean).join(' ') : undefined) ||
+    (rawPayload.name as string);
 
   const customerPhone =
+    (rawPayload.customer_phone as string) ||
+    (rawPayload.phone as string) ||
     (rawBilling.phone as string) ||
     (rawShipping.phone as string) ||
-    (rawPayload.phone as string) ||
     '';
 
   const customerEmail =
-    (rawBilling.email as string) ||
+    (rawPayload.customer_email as string) ||
     (rawPayload.email as string) ||
+    (rawBilling.email as string) ||
     '';
 
   const customer: NormalizedCustomer = {

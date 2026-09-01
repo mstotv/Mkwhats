@@ -147,6 +147,21 @@ export async function processNormalizedEcommerceEvent(
       }
     }
 
+    // Cart recovery & abandonment variables
+    if (event.raw_event) {
+      const raw = event.raw_event;
+      const recoveryUrl = String(raw.recovery_url || raw.checkout_url || raw.cart_url || '');
+      if (recoveryUrl) {
+        vars['recovery_url'] = recoveryUrl;
+        vars['checkout_url'] = recoveryUrl;
+        vars['cart.url'] = recoveryUrl;
+      }
+      const cartTotal = raw.cart_total || raw.total || event.order?.total;
+      if (cartTotal != null) {
+        vars['cart.total'] = String(cartTotal);
+      }
+    }
+
     // Resolve or create conversation for the contact so send steps succeed immediately
     let conversationId: string | undefined;
     if (contactId) {

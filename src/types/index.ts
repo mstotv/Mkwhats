@@ -456,7 +456,8 @@ export type AutomationTriggerType =
   | 'ecommerce_order_paid'
   | 'ecommerce_order_cancelled'
   | 'ecommerce_order_fulfilled'
-  | 'ecommerce_customer_created';
+  | 'ecommerce_customer_created'
+  | 'ecommerce_cart_abandoned';
 
 export type AutomationStepType =
   | 'send_message'

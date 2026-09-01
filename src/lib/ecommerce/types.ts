@@ -149,6 +149,7 @@ export const ECOMMERCE_EVENT_TO_TRIGGER: Record<string, string> = {
   'order.cancelled':  'ecommerce_order_cancelled',
   'order.fulfilled':  'ecommerce_order_fulfilled',
   'customer.created': 'ecommerce_customer_created',
+  'cart.abandoned':   'ecommerce_cart_abandoned',
 }
 
 /**
@@ -161,6 +162,7 @@ export const ECOMMERCE_TRIGGER_TYPES = [
   'ecommerce_order_cancelled',
   'ecommerce_order_fulfilled',
   'ecommerce_customer_created',
+  'ecommerce_cart_abandoned',
 ] as const
 
 export type EcommerceTriggerType = (typeof ECOMMERCE_TRIGGER_TYPES)[number]

@@ -944,6 +944,10 @@
         "ecommerce_customer_created": {
           "label": "E-Commerce: Customer Created",
           "hint": "When a new customer registers on your store"
+        },
+        "ecommerce_cart_abandoned": {
+          "label": "E-Commerce: Cart Abandoned",
+          "hint": "When a customer enters contact details but leaves without purchasing"
         }
       },
       "trigger": "Trigger",

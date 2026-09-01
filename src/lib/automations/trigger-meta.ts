@@ -59,6 +59,10 @@ export const TRIGGER_META: Record<AutomationTriggerType, TriggerMeta> = {
     label: 'E-commerce: Customer Created',
     pillClass: 'border-violet-500/30 bg-violet-500/10 text-violet-300',
   },
+  ecommerce_cart_abandoned: {
+    label: 'E-commerce: Cart Abandoned',
+    pillClass: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300',
+  },
 };
 
 export function triggerMeta(t: AutomationTriggerType | string): TriggerMeta {
