@@ -9,6 +9,36 @@ import { checkAccountFeature } from '@/lib/plans/check-usage-limit';
 export const maxDuration = 60;
 
 /**
+ * OPTIONS /api/webhooks/woocommerce — Handle preflight CORS checks
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, HEAD',
+      'Access-Control-Allow-Headers': '*',
+    },
+  });
+}
+
+/**
+ * GET /api/webhooks/woocommerce — Health check or webhook ping from plugins
+ */
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const storeId = url.searchParams.get('store_id');
+  return NextResponse.json({
+    ok: true,
+    success: true,
+    status: 'success',
+    code: 200,
+    message: 'WooCommerce Webhook Endpoint is healthy and active',
+    store_id: storeId,
+  });
+}
+
+/**
  * POST /api/webhooks/woocommerce?store_id=<store_id>
  * Public Webhook endpoint for WooCommerce store events & Cart Abandonment.
  */
@@ -88,14 +118,22 @@ export async function POST(request: Request) {
 
     if (isSample && (!payload.id || payload.id === 'sample' || !payload.billing)) {
       console.log(`[webhooks/woocommerce] Sample trigger / ping received successfully for store ${storeId}`);
-      return NextResponse.json({ ok: true, success: true, received: true, sample: true });
+      return NextResponse.json({
+        ok: true,
+        success: true,
+        status: 'success',
+        code: 200,
+        received: true,
+        sample: true,
+        message: 'Sample webhook received successfully',
+      });
     }
 
     // Normalize event
     const normalized = normalizeWooCommercePayload(topic, payload, store.id, deliveryId);
     if (!normalized) {
       console.log(`[webhooks/woocommerce] Event ignored or unhandled: topic ${topic}`);
-      return NextResponse.json({ ok: true, ignored: true });
+      return NextResponse.json({ ok: true, success: true, ignored: true });
     }
 
     console.log(`[webhooks/woocommerce] Normalized event: ${normalized.event}, customer: ${normalized.customer.phone || normalized.customer.name}, order: ${normalized.order?.number}`);
@@ -107,9 +145,11 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       success: true,
+      status: processResult.status || 'success',
+      code: 200,
       received: true,
-      status: processResult.status,
       trigger: processResult.automationTrigger,
+      message: 'Event processed successfully',
     });
   } catch (err) {
     console.error('[webhooks/woocommerce] Error handling webhook:', err);
