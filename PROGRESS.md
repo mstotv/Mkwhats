@@ -1,5 +1,12 @@
 # حالة المشروع - آخر تحديث: [1/9/2026]
 
+> ⚠️ **قاعدة معمارية ثابتة ودائمة (Plan Features Global Sync Rule):**
+> أي ميزة برمجية جديدة تضاف أو تُعدل في منظومة الباقات بالـ Admin Panel (`plans.features`) يجب **إلزامياً** أن تنعكس وتُعرض متزامنة في كافة واجهات المنصة التالية في آن واحد:
+> 1. **صفحة الهبوط وجدول الأسعار العام (Landing Page & `/pricing`):** عبر [`landing-pricing.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/landing/landing-pricing.tsx).
+> 2. **لوحة تحكم المستخدم وإدارة الخطة (User Panel Settings):** عبر [`plan-usage-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/plan-usage-panel.tsx).
+> 3. **نافذة ترقية وتغيير الباقة للمستخدم (Upgrade Plan Modal):** عبر [`upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/upgrade-plan-modal.tsx).
+> 4. **لوحة تحكم الأدمن لإنشاء وتعديل الباقات (Admin Pricing Manager):** عبر [`plans/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/plans/page.tsx) و [`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/edit-plan-modal.tsx).
+
 - ✅ **نظام تفريغ وفهم الرسائل الصوتية بالذكاء الاصطناعي وإدارة الباقات الفورية (Voice AI: Speech-to-Text Input Adapter, Plan-Gating & Real-Time Controls)**:
   - **طبقة المحول الصوتي المستقلة بالكامل (Isolated Input Adapter Layer - [`src/lib/ai/voice/stt.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/voice/stt.ts))**:
     - بناء موديول معزول تماماً لا يمس منطق الـ AI Core ولا يعيد هيكلته.
@@ -8,9 +15,10 @@
   - **التكامل مع الـ Webhooks وقنوات الواتساب ([`webhook/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/whatsapp/webhook/route.ts) & [`evolution/webhook/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/whatsapp/evolution/webhook/route.ts))**:
     - تحميل ملف الصوت وتفريغه في الخلفية غير المتزامنة داخل `after()` دون تأخير استجابة `200 OK` السريعة لميتا أو Evolution API.
     - حفظ النص المفرغ في عمود `transcribed_text` وتحديث `content_text` في جدول `messages` ليمر بسلاسة كرسالة نصية طبيعية إلى محرك الـ Flows، والأتمتة، والرد الذكي، ونظام جمع الطلبات، وحجز المواعيد.
-  - **التحكم الشامل للأدمن في الباقات وتقييد الميزة (Admin SaaS Plan-Gated Entitlements)**:
+  - **التحكم الشامل للأدمن في الباقات ومزامنة العرض عبر كافة الواجهات (Admin SaaS Plan-Gated Entitlements & Universal Sync)**:
     - **صفحة إدارة الباقات للأدمن ([`src/app/admin/plans/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/plans/page.tsx))**: إضافة خيار ومفتاح ميزة `🎙️ فهم الصوت (Voice STT)` في نموذج إنشاء باقة جديدة، ودرج تعديل الباقات، وبطاقات استعراض الباقات الحالية.
     - **نافذة تعديل الباقات السريعة ([`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/edit-plan-modal.tsx))**: تزويدها بمفتاح تبديل مخصص مع أيقونة الميكروفون `Mic`.
+    - **جدول أسعار صفحة الهبوط وصفحة التسعير العامة ([`landing-pricing.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/landing/landing-pricing.tsx))**: إظهار ميزة `🎙️ فهم وتفريغ الرسائل الصوتية (Voice STT)` للزوار مع علامة الصح الخضراء أو خط الحجب بحسب الخطة.
     - **بطاقات الباقات ونافذة الترقية للمستخدمين ([`plan-usage-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/plan-usage-panel.tsx) & [`upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/upgrade-plan-modal.tsx))**: إظهار شارة وحالة توفر ميزة تفريغ الصوت في مقارنات الخطط.
     - **التحقق البرمجي التلقائي ([`check-usage-limit.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/plans/check-usage-limit.ts))**: فحص صلاحيات الحساب آلياً عبر `checkAccountFeature(accountId, 'voice_transcription')`.
   - **لوحة تحكم إعدادات الذكاء الاصطناعي والتفاعل الفوري ([`ai-config.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/ai-config.tsx) & [`ai/config/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/ai/config/route.ts))**:

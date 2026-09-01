@@ -16,6 +16,7 @@ import { useLocale } from 'next-intl'
 
 export interface PlanFeatureFlags {
   ai_assistant?: boolean
+  voice_transcription?: boolean
   excel_export?: boolean
   telegram_bot?: boolean
   automations?: boolean
@@ -285,7 +286,23 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
                         <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
                       )}
                       <span className={p.features?.ai_assistant ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
-                        {isAr ? 'مساعد الذكاء الاصطناعي (Gemini AI)' : 'Gemini AI Assistant'}
+                        {isAr ? 'مساعد الذكاء الاصطناعي (AI Assistant)' : 'AI Assistant'}
+                      </span>
+                    </div>
+
+                    {/* Voice Transcription STT */}
+                    <div className="flex items-center gap-2.5">
+                      {p.features?.voice_transcription ? (
+                        isPopular ? (
+                          <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                        )
+                      ) : (
+                        <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
+                      )}
+                      <span className={p.features?.voice_transcription ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
+                        {isAr ? 'فهم وتفريغ الرسائل الصوتية (Voice STT)' : 'Voice Message Transcription (STT)'}
                       </span>
                     </div>
 
