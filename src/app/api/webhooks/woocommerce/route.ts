@@ -10,7 +10,7 @@ export const maxDuration = 60;
 
 /**
  * POST /api/webhooks/woocommerce?store_id=<store_id>
- * Public Webhook endpoint for WooCommerce store events.
+ * Public Webhook endpoint for WooCommerce store events & Cart Abandonment.
  */
 export async function POST(request: Request) {
   try {
@@ -62,22 +62,33 @@ export async function POST(request: Request) {
       }
     }
 
-    // Parse JSON
-    let payload: Record<string, unknown>;
-    try {
-      payload = JSON.parse(rawBody);
-    } catch {
-      // Ping event or non-JSON
-      if (rawBody.includes('webhook_id')) {
-        return NextResponse.json({ ok: true, ping: true });
+    // Parse JSON or form-urlencoded payload
+    let payload: Record<string, unknown> = {};
+    if (rawBody && rawBody.trim().length > 0) {
+      try {
+        payload = JSON.parse(rawBody);
+      } catch {
+        try {
+          const params = new URLSearchParams(rawBody);
+          payload = Object.fromEntries(params.entries());
+        } catch {
+          payload = { raw: rawBody };
+        }
       }
-      return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
     }
 
-    // Ignore ping webhook if payload is just verification ping
-    if (topic === 'ping' || (payload.webhook_id && !payload.id && !payload.billing)) {
-      console.log(`[webhooks/woocommerce] Ping received for store ${storeId}`);
-      return NextResponse.json({ ok: true, ping: true });
+    // Handle ping or sample test triggers immediately with 200 OK
+    const isSample =
+      topic === 'ping' ||
+      rawBody.includes('webhook_id') ||
+      rawBody.includes('sample') ||
+      payload.type === 'sample' ||
+      payload.action === 'sample' ||
+      (payload.webhook_id && !payload.id && !payload.billing);
+
+    if (isSample && (!payload.id || payload.id === 'sample' || !payload.billing)) {
+      console.log(`[webhooks/woocommerce] Sample trigger / ping received successfully for store ${storeId}`);
+      return NextResponse.json({ ok: true, success: true, received: true, sample: true });
     }
 
     // Normalize event
@@ -95,6 +106,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
+      success: true,
       received: true,
       status: processResult.status,
       trigger: processResult.automationTrigger,
