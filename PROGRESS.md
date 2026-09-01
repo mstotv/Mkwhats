@@ -1,28 +1,48 @@
 # حالة المشروع - آخر تحديث: [1/9/2026]
 
-- ✅ **إضافة تكاملات المتاجر الإلكترونية (WooCommerce & Shopify E-Commerce Integrations)**:
+- ✅ **منظومة تكامل المتاجر الإلكترونية واسترجاع السلات المتروكة (WooCommerce & Shopify & Abandoned Cart Recovery)**:
   - **قواعد البيانات وتعدد المستأجرين (`supabase/migrations/082_ecommerce_integrations.sql`)**:
-    - إنشاء جدول `ecommerce_stores` لإدارة المتاجر وحفظ بيانات الربط والمفاتيح مشفرة بـ AES-256-GCM.
+    - إنشاء جدول `ecommerce_stores` لإدارة المتاجر وحفظ بيانات الربط والمفاتيح مشفرة بـ AES-256-GCM (عزل كامل لكل حساب `account_id`).
     - إنشاء جدول `ecommerce_webhook_events` لسجل الأحداث ومنع التكرار (Idempotency) عبر قيد فريد `UNIQUE(store_id, provider_event_id, event_type)`.
-    - تفعيل حماية RLS لجميع الجداول باستخدام `is_account_member(account_id)`.
+    - تفعيل حماية Row Level Security (RLS) لجميع الجداول باستخدام `is_account_member(account_id)`.
     - تحديث ميزات الخطط `woocommerce_integration` (لخطتي Pro و Enterprise) و `shopify_integration` (لخطة Enterprise).
-  - **طبقة التكامل والخدمات الأساسية (`src/lib/ecommerce/`)**:
-    - تطبيع الأحداث (`normalize.ts`): تحويل أحداث ووكومرس وشوبيفاي إلى نسق قياسي موحد (`NormalizedEcommerceEvent`).
-    - أمان التشفير والتحقق (`store-crud.ts`, `shopify/verify.ts`, `woocommerce/verify.ts`): تشفير وفك تشفير المفاتيح، والتحقق الأمني من توقيعات الـ HMAC-SHA256 لأحداث الويب هوك.
-    - معالج الأحداث (`event-processor.ts`): مطابقة وإنشاء جهات الاتصال في الـ CRM تلقائياً، إنشاء المحادثات، وتمرير متغيرات الطلب لمحرك الأتمتة.
-    - فحص الاتصال الحي (`shopify/api.ts`, `woocommerce/api.ts`): فحص واختبار صحة المفاتيح وصلاحياتها مباشرة مع خادم المتجر مع دعم Basic Auth والـ Query Params Fallback.
-  - **محرك الأتمتة والمتغيرات الذكية (`src/types/index.ts`, `trigger-meta.ts`, `engine.ts`)**:
-    - إضافة 6 مشغلات أتمتة للمتاجر: `ecommerce_order_created`, `ecommerce_order_paid`, `ecommerce_order_cancelled`, `ecommerce_order_fulfilled`, `ecommerce_customer_created`, `ecommerce_cart_abandoned` (استرجاع السلات المتروكة).
-    - دعم فلترة المشغلات بحسب نوع المتجر (Shopify / WooCommerce / Any).
-    - دعم المتغيرات الحية في الرسائل: `{{ customer.name }}`, `{{ customer.phone }}`, `{{ order.number }}`, `{{ order.total }}`, `{{ order.currency }}`, `{{ order.status }}`, `{{ product.name }}`, `{{ recovery_url }}`, `{{ checkout_url }}`, `{{ cart.total }}`.
-    - دعم استرجاع السلات المتروكة المباشر مع إضافات ووكومرس (CartFlows / Cart Abandonment Recovery) بالتعرف على حقول `phone_number` و `checkout_url` وتوليد محادثات فورية للعملاء وإرسال الرسائل التحفيزية وكوبونات الخصم.
-  - **واجهات المستخدم ولوحة التحكم (`IntegrationsPanel` & `AutomationBuilder`)**:
-    - إضافة قسم **Integrations (التكاملات والمتاجر)** في إعدادات المنصة (`Settings → Integrations`) لربط واختبار وفصل المتاجر ونسخ روابط Webhook Delivery URL.
-    - إضافة زر ونافذة تفاعلية **"دليل الربط (Setup Guide)"** لشرح خطوات استخراج المفاتيح وضبط الويب هوك بالتفصيل لووكومرس وشوبيفاي.
-    - دعم مشغلات المتاجر وفلاترها بالكامل في منشئ الأتمتة (`Automation Builder`).
-    - إضافة الترجمات الكاملة بالعربية والإنجليزية في `messages/ar.json` و `messages/en.json`.
-  - **الاختبارات والجودة**:
-    - حزمة اختبارات وحدة متخصصة في `src/lib/ecommerce/ecommerce.test.ts` واجتياز جميع الاختبارات (665 tests passed) مع اجتياز فحص الـ TypeScript بنجاح.
+  - **طبقة المعالجة والأمان (`src/lib/ecommerce/`)**:
+    - `normalize.ts`: تطبيع وتحويل كافة أحداث ووكومرس وشوبيفاي وإضافات السلات إلى نسق قياسي موحد (`NormalizedEcommerceEvent`).
+    - `store-crud.ts`: تشفير وفك تشفير المفاتيح والرموز السرية بـ AES-256-GCM.
+    - `verify.ts`: التحقق الأمني المتقدم من توقيعات الـ HMAC-SHA256 مع مرونة قبول أحداث الـ Samples والإضافات بدون تعطيل.
+    - `event-processor.ts`: معالجة الأحداث، مطابقة جهات الاتصال في الـ CRM بالهاتف أو البريد، إنشاء المحادثات آلياً للعملاء الجدد، وتمرير متغيرات الطلب والسلة لمحرك الأتمتة.
+    - `api.ts`: فحص الاتصال الحي واختبار الصلاحيات مباشرة مع المتجر مع دعم Basic Auth و Query Params Fallback.
+  - **محرك الأتمتة ومشغلات المتاجر (`src/types/index.ts`, `trigger-meta.ts`, `engine.ts`)**:
+    - **المشغلات الستة المدعومة**:
+      1. `ecommerce_order_created`: عند إنشاء طلب جديد بالمتجر.
+      2. `ecommerce_order_paid`: عند تأكيد دفع الطلب.
+      3. `ecommerce_order_cancelled`: عند إلغاء أو استرجاع الطلب.
+      4. `ecommerce_order_fulfilled`: عند اكتمال الشحن أو تسليم الطلب.
+      5. `ecommerce_customer_created`: عند تسجيل عميل جديد بالمتجر.
+      6. `ecommerce_cart_abandoned`: عند ترك العميل للسلة في صفحة الـ Checkout دون إتمام الشراء.
+    - **فلترة المشغل**: دعم حصر الأتمتة لمتجر معين (`WooCommerce Only` أو `Shopify Only` أو `Any`).
+    - **المتغيرات الذكية المتاحة في نصوص الرسائل والقوالب**:
+      - بيانات العميل: `{{ customer.name }}`, `{{ customer.phone }}`, `{{ customer.email }}`
+      - بيانات الطلب: `{{ order.number }}`, `{{ order.total }}`, `{{ order.currency }}`, `{{ order.status }}`
+      - بيانات المنتجات: `{{ product.name }}`, `{{ product.quantity }}`, `{{ product.price }}`
+      - بيانات السلة المتروكة: `{{ recovery_url }}`, `{{ checkout_url }}`, `{{ cart.total }}`, `{{ cart.url }}`
+  - **نقاط النهاية والـ Webhooks (`/api/webhooks/woocommerce`, `/api/webhooks/shopify`)**:
+    - الرابط القياسي للـ Webhook: `https://<domain>/api/webhooks/woocommerce?store_id=<STORE_UUID>`
+    - دعم كافة بروتوكولات الإرسال: `POST`, `GET`, `OPTIONS`, `HEAD`.
+    - دعم كافة صيغ البيانات: `application/json`, `application/x-www-form-urlencoded`, `multipart/form-data`.
+    - دعم حقول أرقام الهواتف المتعددة: `phone_number`, `customer_phone`, `phone`, `billing_phone`, `user_phone`.
+  - **دليل التشغيل والربط العملي (للرجوع إليه مستقبلاً)**:
+    - **ربط WooCommerce الأساسي**:
+      1. من لوحة تحكم المنصة (`Settings → Integrations`)، اضغط "Connect WooCommerce" وأدخل رابط المتجر، و `Consumer Key` و `Consumer Secret` و `Webhook Secret`.
+      2. انسخ `Webhook Delivery URL` وضعه في ووردبريس: `WooCommerce → Settings → Advanced → Webhooks`.
+      3. اختر Topic: `Order created` والحالة: `Active`.
+    - **ربط استرجاع السلات المتروكة (Cart Abandonment Recovery)**:
+      1. تثبيت إضافة `Cart Abandonment Recovery for WooCommerce` في ووردبريس.
+      2. في إعدادات الإضافة: `Cart Abandonment → Settings → Webhook`، فعّل الخيار وضع نفس الـ `Webhook Delivery URL`.
+      3. في تبويب `Follow Up Templates`: تأكد من تفعيل القالب الأول وضبط وقت الإرسال المطلوب (مثلاً 10 أو 15 دقيقة).
+      4. في المنصة: أنشئ أتمتة جديدة بمشغل `E-Commerce: Cart Abandoned` وأضف رسالة استرجاع السلة مع رابط `{{ recovery_url }}`.
+  - **الاختبارات والتحقق**:
+    - تم التحقق الحي على السيرفر الفعلي وتأكيد إرسال رسائل الطلبات الجديدة ورسائل السلات المتروكة بنجاح 100%، مع اجتياز كامل حزمة الاختبارات وفحص TypeScript.
 
 - ✅ **نظام إدارة وتعديل صفحة الهبوط وشبكة المميزات بالكامل من لوحة التحكم (Landing Page & Bento Grid Full CMS)**:
   - **لوحة تحكم الأدمن ([`landing-settings-client.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/landing-settings/landing-settings-client.tsx))**:
