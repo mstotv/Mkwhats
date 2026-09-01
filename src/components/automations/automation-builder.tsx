@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import {
@@ -33,6 +34,7 @@ import {
   ArrowUp,
   MousePointerClick,
   List,
+  Lock,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -636,6 +638,18 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
   const [state, setState] = useState<BuilderInitial>(initial)
   const [saving, setSaving] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [planFeatures, setPlanFeatures] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    fetch('/api/account/subscription')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.features) {
+          setPlanFeatures(data.features)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   function patchTop<K extends keyof BuilderInitial>(key: K, value: BuilderInitial[K]) {
     setState((s) => ({ ...s, [key]: value }))
@@ -763,6 +777,7 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
               config={state.trigger_config}
               onTypeChange={(tVal) => patchTop("trigger_type", tVal)}
               onConfigChange={(c) => patchTop("trigger_config", c)}
+              planFeatures={planFeatures}
               t={t}
             />
             <StepList
@@ -791,15 +806,22 @@ function TriggerCard({
   config,
   onTypeChange,
   onConfigChange,
+  planFeatures,
   t,
 }: {
   type: AutomationTriggerType
   config: Record<string, unknown>
   onTypeChange: (t: AutomationTriggerType) => void
   onConfigChange: (c: Record<string, unknown>) => void
+  planFeatures?: Record<string, boolean>
   t: ReturnType<typeof useTranslations>
 }) {
   const [open, setOpen] = useState(false)
+  const hasEcommercePlan = Boolean(
+    planFeatures?.woocommerce_integration || planFeatures?.shopify_integration
+  )
+  const isEcommerceTrigger = type.startsWith("ecommerce_")
+
   return (
     // Card width: full on mobile, fixed 320px on sm+. The canvas wrapper
     // (max-w-2xl + px-4) keeps this tidy on tablet/desktop.
@@ -834,15 +856,34 @@ function TriggerCard({
                 onChange={(e) => onTypeChange(e.target.value as AutomationTriggerType)}
                 className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
               >
-                {TRIGGER_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {t(`triggers.${o.value}.label`)}
-                  </option>
-                ))}
+                {TRIGGER_OPTIONS.map((o) => {
+                  const isEcom = o.value.startsWith("ecommerce_")
+                  const isLocked = isEcom && !hasEcommercePlan
+                  return (
+                    <option key={o.value} value={o.value} disabled={isLocked}>
+                      {t(`triggers.${o.value}.label`)} {isLocked ? "🔒 (Pro/Enterprise)" : ""}
+                    </option>
+                  )
+                })}
               </select>
               <p className="mt-1 text-[11px] text-muted-foreground">
                 {t(`triggers.${type}.hint`)}
               </p>
+
+              {isEcommerceTrigger && !hasEcommercePlan && (
+                <div className="mt-2.5 rounded-md border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-300 space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold">
+                    <Lock className="h-3.5 w-3.5" />
+                    <span>يتطلب هذا المشغل باقة Pro أو Enterprise</span>
+                  </div>
+                  <p className="text-[11px] text-amber-300/80">
+                    ربط المتاجر الإلكترونية غير مفعّل في خطتك الحالية. يرجى الترقية لتفعيل مشغلات الطلبات والسلات.
+                  </p>
+                  <Link href="/settings?tab=plan" className="inline-block mt-1 text-[11px] underline font-bold hover:text-amber-200">
+                    ترقية الخطة الآن ←
+                  </Link>
+                </div>
+              )}
             </div>
             {type === "keyword_match" && (
               <KeywordMatchConfig
@@ -885,7 +926,11 @@ function TriggerCard({
               </div>
             )}
             {type.startsWith("ecommerce_") && (
-              <EcommerceTriggerConfigBlock config={config} onChange={onConfigChange} />
+              <EcommerceTriggerConfigBlock
+                config={config}
+                onChange={onConfigChange}
+                planFeatures={planFeatures}
+              />
             )}
           </div>
         )}
@@ -897,11 +942,15 @@ function TriggerCard({
 function EcommerceTriggerConfigBlock({
   config,
   onChange,
+  planFeatures,
 }: {
   config: Record<string, unknown>
   onChange: (c: Record<string, unknown>) => void
+  planFeatures?: Record<string, boolean>
 }) {
   const provider = (config?.provider as string) || "any"
+  const canWc = planFeatures?.woocommerce_integration
+  const canShopify = planFeatures?.shopify_integration
 
   return (
     <div className="space-y-2">
@@ -915,8 +964,12 @@ function EcommerceTriggerConfigBlock({
           className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground focus:outline-none"
         >
           <option value="any">Any Connected Store (Shopify & WooCommerce)</option>
-          <option value="shopify">Shopify Only</option>
-          <option value="woocommerce">WooCommerce Only</option>
+          <option value="shopify" disabled={!canShopify}>
+            Shopify Only {!canShopify ? "🔒 (Enterprise)" : ""}
+          </option>
+          <option value="woocommerce" disabled={!canWc}>
+            WooCommerce Only {!canWc ? "🔒 (Pro / Enterprise)" : ""}
+          </option>
         </select>
         <p className="mt-1 text-[11px] text-muted-foreground">
           Optionally filter triggers to a specific platform.

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import {
   ShoppingBag,
@@ -37,9 +38,15 @@ import { SettingsPanelHead } from './settings-panel-head';
 import type { EcommerceStoreSafe } from '@/lib/ecommerce/types';
 
 export function IntegrationsPanel() {
+  const router = useRouter();
+  const locale = useLocale();
+  const isAr = locale === 'ar';
   const t = useTranslations('Settings');
   const [stores, setStores] = useState<EcommerceStoreSafe[]>([]);
+  const [planFeatures, setPlanFeatures] = useState<Record<string, boolean>>({});
+  const [planName, setPlanName] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [loadingPlan, setLoadingPlan] = useState(true);
 
   // Guide Dialog state
   const [guideProvider, setGuideProvider] = useState<'woocommerce' | 'shopify' | null>(null);
@@ -63,23 +70,36 @@ export function IntegrationsPanel() {
   const [copiedWcWebhook, setCopiedWcWebhook] = useState(false);
   const [copiedShopifyWebhook, setCopiedShopifyWebhook] = useState(false);
 
-  const fetchStores = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/ecommerce/stores');
-      if (res.ok) {
-        const data = await res.json();
-        setStores(data.stores || []);
+      setLoadingPlan(true);
+
+      const [storesRes, subRes] = await Promise.all([
+        fetch('/api/ecommerce/stores'),
+        fetch('/api/account/subscription'),
+      ]);
+
+      if (storesRes.ok) {
+        const storesData = await storesRes.json();
+        setStores(storesData.stores || []);
+      }
+
+      if (subRes.ok) {
+        const subData = await subRes.json();
+        setPlanFeatures(subData.features || {});
+        setPlanName(subData.plan_name || subData.plan?.name || '');
       }
     } catch (err) {
-      console.error('Failed to fetch stores:', err);
+      console.error('Failed to fetch integrations data:', err);
     } finally {
       setLoading(false);
+      setLoadingPlan(false);
     }
   };
 
   useEffect(() => {
-    fetchStores();
+    fetchData();
   }, []);
 
   const woocommerceStore = stores.find((s) => s.provider === 'woocommerce');
@@ -121,7 +141,7 @@ export function IntegrationsPanel() {
       setWcKey('');
       setWcSecret('');
       setWcWebhookSecret('');
-      fetchStores();
+      fetchData();
     } catch (err) {
       toast.error('Failed to connect store');
     } finally {
@@ -159,7 +179,7 @@ export function IntegrationsPanel() {
       toast.success('Shopify store connected successfully!');
       setShopifyToken('');
       setShopifyWebhookSecret('');
-      fetchStores();
+      fetchData();
     } catch (err) {
       toast.error('Failed to connect store');
     } finally {
@@ -201,7 +221,7 @@ export function IntegrationsPanel() {
         return;
       }
       toast.success(`${providerName} disconnected`);
-      fetchStores();
+      fetchData();
     } catch (err) {
       toast.error('Failed to disconnect store');
     }
@@ -219,6 +239,9 @@ export function IntegrationsPanel() {
     toast.success('Webhook URL copied to clipboard');
   };
 
+  const canUseWooCommerce = Boolean(planFeatures.woocommerce_integration);
+  const canUseShopify = Boolean(planFeatures.shopify_integration);
+
   return (
     <div className="space-y-6">
       <SettingsPanelHead
@@ -228,7 +251,7 @@ export function IntegrationsPanel() {
 
       <div className="space-y-6">
         {/* WooCommerce Card */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className={`rounded-xl border ${canUseWooCommerce ? 'border-border bg-card' : 'border-purple-500/30 bg-purple-950/10 dark:bg-purple-950/20'} p-6 shadow-sm transition-all`}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
@@ -237,7 +260,15 @@ export function IntegrationsPanel() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-lg font-semibold text-foreground">WooCommerce</h3>
-                  {woocommerceStore?.status === 'connected' ? (
+                  {loadingPlan ? (
+                    <Badge variant="outline" className="text-muted-foreground text-xs">
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" /> {isAr ? 'جاري التحقق...' : 'Checking...'}
+                    </Badge>
+                  ) : !canUseWooCommerce ? (
+                    <Badge variant="outline" className="border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-semibold">
+                      🔒 {isAr ? 'يتطلب باقة Pro أو Enterprise' : 'Pro / Enterprise Plan'}
+                    </Badge>
+                  ) : woocommerceStore?.status === 'connected' ? (
                     <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                       <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Connected
                     </Badge>
@@ -246,17 +277,19 @@ export function IntegrationsPanel() {
                       Disconnected
                     </Badge>
                   )}
-                  {/* Setup Guide Button */}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setGuideProvider('woocommerce')}
-                    className="h-7 gap-1.5 px-2 text-xs font-medium text-purple-600 hover:bg-purple-500/10 dark:text-purple-400"
-                  >
-                    <BookOpen className="h-3.5 w-3.5" />
-                    دليل الربط (Setup Guide)
-                  </Button>
+                  {/* Setup Guide Button (only when feature is unlocked) */}
+                  {canUseWooCommerce && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setGuideProvider('woocommerce')}
+                      className="h-7 gap-1.5 px-2 text-xs font-medium text-purple-600 hover:bg-purple-500/10 dark:text-purple-400"
+                    >
+                      <BookOpen className="h-3.5 w-3.5" />
+                      {isAr ? 'دليل الربط (Setup Guide)' : 'Setup Guide'}
+                    </Button>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Connect your WordPress WooCommerce store via REST API keys and Webhooks.
@@ -265,7 +298,63 @@ export function IntegrationsPanel() {
             </div>
           </div>
 
-          {woocommerceStore ? (
+          {loadingPlan ? (
+            <div className="mt-6 flex items-center justify-center p-8 text-sm text-muted-foreground">
+              <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
+              {isAr ? 'جاري فحص صلاحيات الخطة...' : 'Checking plan entitlements...'}
+            </div>
+          ) : !canUseWooCommerce ? (
+            /* Upgrade Wall for WooCommerce */
+            <div className="mt-6 rounded-xl border border-purple-500/20 bg-gradient-to-b from-purple-500/5 via-purple-500/[0.02] to-transparent p-6 text-center sm:text-start">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-500 border border-purple-500/20 shadow-inner">
+                  <Lock className="h-6 w-6" />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <h4 className="text-base font-semibold text-foreground">
+                      {isAr ? 'ربط ووكومرس غير متاح في خطتك الحالية' : 'WooCommerce Integration Unavailable on Current Plan'}
+                    </h4>
+                    <Badge variant="outline" className="border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium text-xs">
+                      {planName || (isAr ? 'الخطة الحالية' : 'Current Plan')}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {isAr
+                      ? 'خطتك الحالية لا تدعم الربط المباشر مع متجر ووكومرس. قم بترقية خطتك إلى Pro أو Enterprise للاستفادة من الأتمتة الكاملة للطلبات والسلات المتروكة:'
+                      : 'Your current subscription does not support direct WooCommerce store integration. Upgrade to Pro or Enterprise to unlock automated order lifecycle and cart recovery messaging:'}
+                  </p>
+                  <ul className="grid gap-2 pt-2 text-xs text-foreground sm:grid-cols-2 text-start">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-purple-500 shrink-0" />
+                      <span>{isAr ? 'إشعارات تأكيد الطلبات فوراً للزبائن على WhatsApp' : 'Instant WhatsApp order confirmation alerts'}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-purple-500 shrink-0" />
+                      <span>{isAr ? 'استرجاع السلات المتروكة بكوبونات ورابط استعادة ذكي' : 'Automated cart abandonment recovery with discount coupons'}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-purple-500 shrink-0" />
+                      <span>{isAr ? 'مزامنة جهات الاتصال والزبائن في الـ CRM آلياً' : 'Auto-sync store customers to CRM contacts'}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-purple-500 shrink-0" />
+                      <span>{isAr ? 'أتمتة تحديثات حالات الدفع والشحن' : 'Automate payment and fulfillment status updates'}</span>
+                    </li>
+                  </ul>
+                  <div className="pt-4 flex justify-center sm:justify-start">
+                    <Button
+                      onClick={() => router.push('/settings?tab=plan')}
+                      className="bg-purple-600 hover:bg-purple-700 text-white shadow-md gap-2 font-medium"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {isAr ? 'ترقية الخطة لتفعيل ووكومرس 🚀' : 'Upgrade Plan to Unlock WooCommerce 🚀'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : woocommerceStore ? (
             <div className="mt-6 space-y-4 rounded-lg border border-border/60 bg-muted/40 p-4">
               <div className="grid gap-2 text-sm sm:grid-cols-2">
                 <div>
@@ -407,7 +496,7 @@ export function IntegrationsPanel() {
         </div>
 
         {/* Shopify Card */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className={`rounded-xl border ${canUseShopify ? 'border-border bg-card' : 'border-emerald-500/30 bg-emerald-950/10 dark:bg-emerald-950/20'} p-6 shadow-sm transition-all`}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -416,7 +505,15 @@ export function IntegrationsPanel() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-lg font-semibold text-foreground">Shopify</h3>
-                  {shopifyStore?.status === 'connected' ? (
+                  {loadingPlan ? (
+                    <Badge variant="outline" className="text-muted-foreground text-xs">
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" /> {isAr ? 'جاري التحقق...' : 'Checking...'}
+                    </Badge>
+                  ) : !canUseShopify ? (
+                    <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                      🔒 {isAr ? 'حصرياً في باقة Enterprise' : 'Enterprise Plan Only'}
+                    </Badge>
+                  ) : shopifyStore?.status === 'connected' ? (
                     <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                       <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Connected
                     </Badge>
@@ -425,17 +522,19 @@ export function IntegrationsPanel() {
                       Disconnected
                     </Badge>
                   )}
-                  {/* Setup Guide Button */}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setGuideProvider('shopify')}
-                    className="h-7 gap-1.5 px-2 text-xs font-medium text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
-                  >
-                    <BookOpen className="h-3.5 w-3.5" />
-                    دليل الربط (Setup Guide)
-                  </Button>
+                  {/* Setup Guide Button (only when feature is unlocked) */}
+                  {canUseShopify && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setGuideProvider('shopify')}
+                      className="h-7 gap-1.5 px-2 text-xs font-medium text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
+                    >
+                      <BookOpen className="h-3.5 w-3.5" />
+                      {isAr ? 'دليل الربط (Setup Guide)' : 'Setup Guide'}
+                    </Button>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Connect your Shopify store using a Custom App Admin API Access Token.
@@ -444,7 +543,63 @@ export function IntegrationsPanel() {
             </div>
           </div>
 
-          {shopifyStore ? (
+          {loadingPlan ? (
+            <div className="mt-6 flex items-center justify-center p-8 text-sm text-muted-foreground">
+              <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
+              {isAr ? 'جاري فحص صلاحيات الخطة...' : 'Checking plan entitlements...'}
+            </div>
+          ) : !canUseShopify ? (
+            /* Upgrade Wall for Shopify */
+            <div className="mt-6 rounded-xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/5 via-emerald-500/[0.02] to-transparent p-6 text-center sm:text-start">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-inner">
+                  <Lock className="h-6 w-6" />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <h4 className="text-base font-semibold text-foreground">
+                      {isAr ? 'ربط شوبيفاي متاح حصرياً في باقة Enterprise' : 'Shopify Integration is Exclusive to Enterprise'}
+                    </h4>
+                    <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium text-xs">
+                      {planName || (isAr ? 'الخطة الحالية' : 'Current Plan')}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {isAr
+                      ? 'خطتك الحالية لا تدعم الربط المباشر مع متجر Shopify. قم بالترقية إلى باقة Enterprise للحصول على أعلى مستويات التكامل والأداء والأمان:'
+                      : 'Your current subscription does not include direct Shopify integration. Upgrade to the Enterprise plan for seamless Admin API sync and automated messaging:'}
+                  </p>
+                  <ul className="grid gap-2 pt-2 text-xs text-foreground sm:grid-cols-2 text-start">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span>{isAr ? 'ربط فوري عبر Shopify Admin API مشفر ومؤمّن' : 'Direct secure connection via Shopify Admin API'}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span>{isAr ? 'تأكيد الطلبات وتتبع الشحنات عبر واتساب' : 'Order confirmation & shipment tracking alerts'}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span>{isAr ? 'استرجاع زبائن السلات المتروكة Checkout آلياً' : 'Shopify abandoned checkout recovery automation'}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span>{isAr ? 'تشفير المفاتيح والبيانات بـ AES-256-GCM' : 'Enterprise-grade AES-256 encrypted credentials'}</span>
+                    </li>
+                  </ul>
+                  <div className="pt-4 flex justify-center sm:justify-start">
+                    <Button
+                      onClick={() => router.push('/settings?tab=plan')}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md gap-2 font-medium"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {isAr ? 'ترقية الخطة إلى Enterprise 🚀' : 'Upgrade to Enterprise Plan 🚀'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : shopifyStore ? (
             <div className="mt-6 space-y-4 rounded-lg border border-border/60 bg-muted/40 p-4">
               <div className="grid gap-2 text-sm sm:grid-cols-2">
                 <div>

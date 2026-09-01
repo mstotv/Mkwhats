@@ -91,7 +91,59 @@ export async function POST(request: Request) {
         ? (Number(targetPlan.price_yearly_discounted) > 0 ? Number(targetPlan.price_yearly_discounted) : Number(targetPlan.price_yearly))
         : (Number(targetPlan.price_monthly_discounted) > 0 ? Number(targetPlan.price_monthly_discounted) : Number(targetPlan.price_monthly))
 
-    // 5. Insert upgrade request into database (status = 'pending')
+    // 5. If target plan is Free ($0), activate immediately without calling any payment gateway
+    const isFree = planPrice <= 0 || targetPlan.slug === 'free' || targetPlan.price_monthly === 0
+    if (isFree) {
+      const now = new Date()
+      const periodEnd = new Date(now)
+      periodEnd.setFullYear(periodEnd.getFullYear() + 10)
+
+      await serviceClient
+        .from('accounts')
+        .update({ plan_id: targetPlan.id, updated_at: now.toISOString() })
+        .eq('id', accountId)
+
+      await serviceClient
+        .from('subscriptions')
+        .update({ status: 'canceled', canceled_at: now.toISOString(), updated_at: now.toISOString() })
+        .eq('account_id', accountId)
+        .in('status', ['active', 'trialing'])
+
+      await serviceClient
+        .from('subscriptions')
+        .insert({
+          account_id: accountId,
+          plan_id: targetPlan.id,
+          status: 'active',
+          billing_cycle: 'monthly',
+          current_period_start: now.toISOString(),
+          current_period_end: periodEnd.toISOString(),
+          created_at: now.toISOString(),
+          updated_at: now.toISOString(),
+        })
+
+      await serviceClient
+        .from('upgrade_requests')
+        .insert({
+          account_id: accountId,
+          requested_by: user.id,
+          current_plan_id: currentPlanId,
+          target_plan_id: targetPlan.id,
+          billing_cycle,
+          status: 'approved',
+          notes: notes || 'Activated free plan directly',
+        })
+
+      return NextResponse.json({
+        success: true,
+        payment_method: 'free',
+        free_activated: true,
+        target_plan_name: targetPlan.name,
+        message: 'تم تفعيل الخطة المجانية لحسابك بنجاح 🎁',
+      })
+    }
+
+    // 6. Insert upgrade request into database for paid plans (status = 'pending')
     const { data: requestRow, error: insertError } = await serviceClient
       .from('upgrade_requests')
       .insert({
@@ -109,12 +161,12 @@ export async function POST(request: Request) {
     if (insertError || !requestRow) {
       console.error('[UpgradeRequestAPI] Insert error:', insertError)
       return NextResponse.json(
-        { error: 'فشل تسليط طلب الترقية في قاعدة البيانات' },
+        { error: 'فشل تسجيل طلب الترقية في قاعدة البيانات' },
         { status: 500 }
       )
     }
 
-    // 6. Check if Plisio Payment Gateway is configured and enabled site-wide
+    // 7. Check if Plisio Payment Gateway is configured and enabled site-wide
     console.log('[UpgradeRequestAPI] Debug siteSettings fetched:', siteSettings)
 
     const plisioEnabled = Boolean(siteSettings?.plisio_enabled)
@@ -131,7 +183,7 @@ export async function POST(request: Request) {
     const protocol = reqHeaders.get('x-forwarded-proto') || 'https'
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`
 
-    if (plisioEnabled && plisioApiKey) {
+    if (planPrice > 0 && plisioEnabled && plisioApiKey) {
       try {
         const callbackUrl = `${siteUrl}/api/v1/webhooks/plisio?json=true`
         const redirectUrl = `${siteUrl}/settings/upgrade-success?request_id=${requestRow.id}`

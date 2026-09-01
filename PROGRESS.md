@@ -1,5 +1,47 @@
 # حالة المشروع - آخر تحديث: [1/9/2026]
 
+- ✅ **التدقيق الأمني الشامل وتعزيز حماية الـ Webhooks والحزم (Comprehensive Security Audit & Webhook Hardening)**:
+  - **حماية وتحصين الـ Webhooks للمتاجر ([`shopify/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/webhooks/shopify/route.ts) & [`woocommerce/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/webhooks/woocommerce/route.ts))**:
+    - إلزامية وجود ترويسة التوقيع المشفر (`x-shopify-hmac-sha256` / `x-wc-webhook-signature`) عند تكوين مفتاح الـ Webhook Secret ورفض أي طلبات غير موقعة مع تسجيل تحذير أمني `401 Unauthorized`.
+  - **معالجة ثغرات الحزم البرمجية (Dependency Hardening)**:
+    - تنفيذ `npm audit fix` لتحديث الحزم المصابة وإغلاق الثغرات الأمنية للتبعيات غير المتعارضة بأمان تام.
+  - **اجتياز كامل منظومة الاختبارات الآلية (Automated Test Suite Coverage)**:
+    - تشغيل واجتياز **100% من الاختبارات الآلية (665 من أصل 665 اختباراً في 69 ملف اختبار)** بما فيها اختبارات التشفير، عزل البيانات (Multi-Tenancy)، منع الـ SSRF، وحدود الاستهلاك (Rate Limits).
+
+- ✅ **إعادة تصميم وتحديث منظومة الباقات والاشتراكات والمزامنة الفورية (SaaS Plans Ecosystem, Live Sync & Luxury UI Redesign)**:
+  - **التصميم العصري والفاخر لبطاقات الباقات ([`plan-usage-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/plan-usage-panel.tsx))**:
+    - التخلص التام من الصناديق والمربعات الرمادية المكدسة (Blocky UI) واستبدالها بتصميم زجاجي رشيق وفخم مستوحى من واجهات كبرى شركات الـ SaaS العالمية (Stripe / Linear / Vercel).
+    - تحويل الحدود التشغيلية إلى شبكة إحصائيات مصغرة أنيقة متناسقة (`2-column micro-stats grid`) مع أيقونات ملونة لطيفة وأرقام بارزة واضحة.
+    - عرض الأسعار بأرقام عريضة بارزة مع شارة توفير الفوترة السنوية (20% Save) وتأثير الشطب على الأسعار الأصلية عند الخصم دون خلفيات رمادية ثقيلة.
+    - تضمين قائمة الميزات السبع بالكامل في كل بطاقة مع أيقونات الحالة الحية (الذكاء الاصطناعي، الأتمتة، منشئ الـ Flows، تيليجرام، Excel، ووكومرس، شوبيفاي).
+    - إضافة وسام التميز العائم `⭐ الأكثر طلباً (MOST POPULAR)` لباقة Pro مع توهج كهرماني خفيف، وشارة `باقتك الحالية` للباقة النشطة.
+    - تحسين أزرار الترقية (CTA Buttons) بتدرجات زمردية براقة وارتفاع رشيق وتأثيرات تحويم ديناميكية.
+  - **مزامنة التعديلات وإبطال الكاش فورياً من لوحة الأدمن ([`plans/[id]/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/admin/plans/%5Bid%5D/route.ts))**:
+    - استدعاء `revalidatePath` لمسارات `/pricing`, `/`, `/settings`, `/admin/plans` عند حفظ أي تعديل للباقة في الأدمن بانل لضمان انعكاس التغييرات فوراً لكافة الزوار والمستخدمين.
+    - تمكين مفاتيح التبديل لكافة ميزات المنصة في نافذة تعديل الخطط ([`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/edit-plan-modal.tsx)).
+  - **منع التخزين المؤقت وحل مشكلة تفعيل الخطة المجانية ([`subscription/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/account/subscription/route.ts) & [`upgrade-request/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/account/upgrade-request/route.ts))**:
+    - ضبط `export const dynamic = 'force-dynamic'` و `export const revalidate = 0` وترويسات `Cache-Control: no-store, max-age=0` لضمان سحب أحدث بيانات الخطط الحية مباشرة من قاعدة البيانات.
+    - معالجة طلب التبديل إلى الخطة المجانية ($0 Free Plan) فورياً ومباشرة في قاعدة البيانات دون إرسال فاتورة بمبلغ 0$ إلى بوابة Plisio لتفادي خطأ `422 Amount value is invalid: 0.000000`.
+    - تحديث نافذة الترقية ([`upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/upgrade-plan-modal.tsx)) لإغلاق النافذة وتنبيه المستخدم فور نجاح تفعيل الخطة المجانية.
+  - **دعم الترجمة الكاملة وثنائية اللغة ([`integrations-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/integrations-panel.tsx) & [`plan-usage-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/plan-usage-panel.tsx))**:
+    - تعريب وترجمة شارات التحقق (`Checking...` / `جاري التحقق...`)، وحالات فحص صلاحيات الخطة (`Checking plan entitlements...` / `جاري فحص صلاحيات الخطة...`)، وأزرار أدلة الربط (`Setup Guide` / `دليل الربط`).
+    - ضبط اختصار وحدات الحصص الشهرية للرسائل والبرودكاست لتظهر `100 / mo` عند اختيار اللغة الإنجليزية و `100 / ش` عند اختيار اللغة العربية.
+
+- ✅ **تقييد ميزات المتاجر الإلكترونية (WooCommerce & Shopify) حسب باقات الاشتراك (Plan-Gated E-Commerce & Upgrade Walls)**:
+  - **حماية الباك إند ومنع التجاوز ([`route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/ecommerce/stores/route.ts))**:
+    - فحص صلاحيات الخطة عبر `checkAccountFeature(ctx.accountId, 'woocommerce_integration')` و `'shopify_integration'`.
+    - إرجاع خطأ `403 Forbidden` فوري مع رسالة ترقية واضحة إذا حاول مستخدم غير مخول إرسال طلب ربط متجر.
+  - **لوحة الإعدادات والتحكم بالمتاجر ([`integrations-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/integrations-panel.tsx))**:
+    - جلب ميزات الخطة النشطة للمستخدم تلقائياً عند فتح التبويب.
+    - عرض **شاشة ترقية فاخرة (Luxury Upgrade Wall)** لكل متجر (WooCommerce / Shopify) غير مفعل في خطة المستخدم مع شارة القفل 🔒، قائمة المميزات، وزر مباشر للترقية `🚀 ترقية الخطة الآن` يوجه لـ `/settings?tab=plan`.
+    - إخفاء نماذج الإدخال وأزرار الربط وأدلة الإعداد تماماً للمستخدمين الذين لا تشمل خطتهم هذه الميزات.
+  - **محرر الأتمتة ومشغلات المتاجر ([`automation-builder.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/automations/automation-builder.tsx))**:
+    - قفل مشغلات المتاجر الإلكترونية الستة في قائمة المشغلات (Triggers) مع بادج `🔒 (Pro/Enterprise)` ومنع اختيارها لمن لا يملكون الخطة المناسبة.
+    - تقييد منتقي منصة المتجر (Store Platform) لتعطيل الخيارات غير المتاحة مع شارات الترقية.
+  - **لوحة تحكم الأدمن في الخطط ([`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/edit-plan-modal.tsx) & [`plans/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/plans/page.tsx))**:
+    - إضافة مفاتيح تفعيل صريحة لربط **WooCommerce** و **Shopify** في نافذة تعديل الخطط وإضافة الخطط الجديدة.
+    - إظهار حالة توفر الميزتين في بطاقات الخطط لجميع الباقات.
+
 - ✅ **ربط وتكامل إدارة شريط الشركاء والمنصات (Partners & Integrations Bar CMS)**:
   - **صفحة اللاندينغ بيج ([`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/page.tsx))**:
     - ربط قسم `SEAMLESSLY INTEGRATES WITH TOP PLATFORMS` مباشرة بقائمة الشركاء `settings.partners` القادمة من لوحة تحكم الأدمن.

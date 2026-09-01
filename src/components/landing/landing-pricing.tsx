@@ -20,6 +20,8 @@ export interface PlanFeatureFlags {
   telegram_bot?: boolean
   automations?: boolean
   flows_builder?: boolean
+  woocommerce_integration?: boolean
+  shopify_integration?: boolean
 }
 
 export interface Plan {
@@ -348,6 +350,38 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
                       )}
                       <span className={p.features?.excel_export ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
                         {isAr ? 'تصدير البيانات إلى Excel' : 'Excel Data Export'}
+                      </span>
+                    </div>
+
+                    {/* WooCommerce Integration */}
+                    <div className="flex items-center gap-2.5">
+                      {p.features?.woocommerce_integration ? (
+                        isPopular ? (
+                          <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                        )
+                      ) : (
+                        <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
+                      )}
+                      <span className={p.features?.woocommerce_integration ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
+                        {isAr ? 'ربط متجر ووكومرس (WooCommerce)' : 'WooCommerce Store Integration'}
+                      </span>
+                    </div>
+
+                    {/* Shopify Integration */}
+                    <div className="flex items-center gap-2.5">
+                      {p.features?.shopify_integration ? (
+                        isPopular ? (
+                          <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                        )
+                      ) : (
+                        <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
+                      )}
+                      <span className={p.features?.shopify_integration ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
+                        {isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Store Integration'}
                       </span>
                     </div>
                   </div>

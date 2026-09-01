@@ -45,6 +45,8 @@ interface PlanRow {
     excel_export?: boolean;
     telegram_bot?: boolean;
     custom_webhooks?: boolean;
+    woocommerce_integration?: boolean;
+    shopify_integration?: boolean;
   };
   is_active: boolean;
 }
@@ -83,6 +85,8 @@ export default function AdminPlansPage() {
       excel_export: true,
       telegram_bot: false,
       custom_webhooks: false,
+      woocommerce_integration: false,
+      shopify_integration: false,
     },
   });
 
@@ -458,6 +462,36 @@ export default function AdminPlansPage() {
                 />
                 <span className="font-semibold text-foreground">🔀 {isAr ? 'منشئ مسارات العمل (Flows)' : 'Visual Flow Builder'}</span>
               </label>
+
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
+                <input
+                  type="checkbox"
+                  checked={!!newPlan.features?.woocommerce_integration}
+                  onChange={(e) =>
+                    setNewPlan({
+                      ...newPlan,
+                      features: { ...newPlan.features, woocommerce_integration: e.target.checked },
+                    })
+                  }
+                  className="rounded border-border text-amber-500 focus:ring-amber-500"
+                />
+                <span className="font-semibold text-foreground">🛍️ {isAr ? 'ربط ووكومرس (WooCommerce)' : 'WooCommerce Integration'}</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
+                <input
+                  type="checkbox"
+                  checked={!!newPlan.features?.shopify_integration}
+                  onChange={(e) =>
+                    setNewPlan({
+                      ...newPlan,
+                      features: { ...newPlan.features, shopify_integration: e.target.checked },
+                    })
+                  }
+                  className="rounded border-border text-amber-500 focus:ring-amber-500"
+                />
+                <span className="font-semibold text-foreground">🛒 {isAr ? 'ربط شوبيفاي (Shopify)' : 'Shopify Integration'}</span>
+              </label>
             </div>
           </div>
 
@@ -639,6 +673,28 @@ export default function AdminPlansPage() {
                       )}
                       <span className={plan.features?.flows_builder ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
                         {isAr ? 'منشئ الأتمتة ومسارات العمل (Flows)' : 'Visual Workflow Builder'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {plan.features?.woocommerce_integration ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      )}
+                      <span className={plan.features?.woocommerce_integration ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
+                        {isAr ? 'ربط متجر ووكومرس (WooCommerce)' : 'WooCommerce Integration'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {plan.features?.shopify_integration ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      )}
+                      <span className={plan.features?.shopify_integration ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
+                        {isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Integration'}
                       </span>
                     </div>
                   </div>
@@ -885,6 +941,36 @@ export default function AdminPlansPage() {
                   className="rounded border-border text-amber-500"
                 />
                 <span className="font-semibold text-foreground">🔀 {isAr ? 'منشئ مسارات العمل (Flows)' : 'Visual Flow Builder'}</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
+                <input
+                  type="checkbox"
+                  checked={!!editingPlan.features?.woocommerce_integration}
+                  onChange={(e) =>
+                    setEditingPlan({
+                      ...editingPlan,
+                      features: { ...editingPlan.features, woocommerce_integration: e.target.checked },
+                    })
+                  }
+                  className="rounded border-border text-amber-500"
+                />
+                <span className="font-semibold text-foreground">🛍️ {isAr ? 'ربط ووكومرس (WooCommerce)' : 'WooCommerce Integration'}</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
+                <input
+                  type="checkbox"
+                  checked={!!editingPlan.features?.shopify_integration}
+                  onChange={(e) =>
+                    setEditingPlan({
+                      ...editingPlan,
+                      features: { ...editingPlan.features, shopify_integration: e.target.checked },
+                    })
+                  }
+                  className="rounded border-border text-amber-500"
+                />
+                <span className="font-semibold text-foreground">🛒 {isAr ? 'ربط شوبيفاي (Shopify)' : 'Shopify Integration'}</span>
               </label>
             </div>
           </div>

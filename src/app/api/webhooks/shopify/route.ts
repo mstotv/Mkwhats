@@ -47,6 +47,10 @@ export async function POST(request: Request) {
     // Verify webhook signature if webhook secret is configured
     const creds = getDecryptedCredentials(store);
     if (creds.webhookSecret) {
+      if (!signature) {
+        console.warn(`[webhooks/shopify] Missing HMAC signature header for store ${storeId}`);
+        return NextResponse.json({ error: 'Missing webhook signature' }, { status: 401 });
+      }
       const isValid = verifyShopifyWebhook(rawBody, signature, creds.webhookSecret);
       if (!isValid) {
         console.warn(`[webhooks/shopify] Invalid HMAC signature for store ${storeId}`);

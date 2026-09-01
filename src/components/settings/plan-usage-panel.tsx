@@ -68,6 +68,8 @@ interface PlanData {
     excel_export?: boolean
     telegram_bot?: boolean
     custom_webhooks?: boolean
+    woocommerce_integration?: boolean
+    shopify_integration?: boolean
   }
 }
 
@@ -179,10 +181,10 @@ export function PlanUsagePanel() {
     try {
       setLoading(true)
       const [subRes, settingsRes, offlineRes, methodsRes] = await Promise.all([
-        fetch('/api/account/subscription').then((r) => r.json()),
-        fetch('/api/site-settings').then((r) => (r.ok ? r.json() : { settings: {} })),
-        fetch('/api/account/offline-payment').then((r) => (r.ok ? r.json() : { submissions: [] })),
-        fetch('/api/offline-methods').then((r) => (r.ok ? r.json() : { methods: [] })),
+        fetch('/api/account/subscription', { cache: 'no-store' }).then((r) => r.json()),
+        fetch('/api/site-settings', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : { settings: {} })),
+        fetch('/api/account/offline-payment', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : { submissions: [] })),
+        fetch('/api/offline-methods', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : { methods: [] })),
       ])
 
       if (!subRes || subRes.error) {
@@ -439,6 +441,18 @@ export function PlanUsagePanel() {
       label: isAr ? 'ربط بوت التلغرام للإشعارات' : 'Telegram Bot Notifications',
       icon: Send,
       enabled: Boolean(plan.features?.telegram_bot),
+    },
+    {
+      key: 'woocommerce_integration',
+      label: isAr ? 'ربط متجر ووكومرس (WooCommerce)' : 'WooCommerce Store Integration',
+      icon: ShoppingBag,
+      enabled: Boolean(plan.features?.woocommerce_integration),
+    },
+    {
+      key: 'shopify_integration',
+      label: isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Store Integration',
+      icon: ShoppingBag,
+      enabled: Boolean(plan.features?.shopify_integration),
     },
   ]
 
@@ -765,48 +779,55 @@ export function PlanUsagePanel() {
         </CardContent>
       </Card>
 
-      <div className="space-y-4 pt-4 border-t border-border">
+      <div className="space-y-6 pt-6 border-t border-border">
+        {/* Section Header & Billing Switcher */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-extrabold text-foreground flex items-center gap-2">
+            <h3 className="text-xl font-black text-foreground flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-amber-500" />
-              {isAr ? 'باقات العضوية المتاحة والترقية (Available Plans)' : 'Available Subscription Plans & Upgrades'}
+              {isAr ? 'باقات الاشتراك والترقية المتاحة' : 'Available Subscription Plans & Upgrades'}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {isAr ? 'اختر الباقة المناسبة لاحتياجات فريقك ودورة الفوترة (شهرياً أو سنوياً)' : 'Choose the best plan for your team size and billing cycle (Monthly or Yearly)'}
+              {isAr
+                ? 'اختر الباقة المناسبة لتوسيع نشاطك التجاري، مع مرونة الترقية والإلغاء في أي وقت'
+                : 'Choose the ideal plan to scale your business. Upgrade or cancel anytime.'}
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:flex items-center gap-1 p-1 bg-muted rounded-xl border border-border w-full sm:w-auto">
+          {/* Sleek Pill Switcher */}
+          <div className="inline-flex items-center gap-1.5 p-1 bg-muted/80 backdrop-blur-sm rounded-xl border border-border self-start sm:self-auto">
             <button
               type="button"
               onClick={() => setBillingCycle('monthly')}
-              className={`px-3 sm:px-4 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all text-center justify-center ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 billingCycle === 'monthly'
-                  ? 'bg-background text-foreground shadow-sm'
+                  ? 'bg-card text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {isAr ? '📅 فوترة شهرية' : '📅 Monthly Billing'}
+              {isAr ? 'فوترة شهرية' : 'Monthly'}
             </button>
             <button
               type="button"
               onClick={() => setBillingCycle('yearly')}
-              className={`px-3 sm:px-4 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 billingCycle === 'yearly'
-                  ? 'bg-amber-500 text-slate-950 shadow-sm font-black'
-                  : 'text-amber-400 hover:text-amber-300'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <span>{isAr ? '🎁 فوترة سنوية' : '🎁 Yearly Billing'}</span>
-              <span className="text-[10px] bg-slate-950/20 px-1.5 py-0.5 rounded font-mono hidden xs:inline">
-                {isAr ? 'توفير' : 'Save'}
+              <span>{isAr ? 'فوترة سنوية' : 'Yearly'}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                billingCycle === 'yearly' ? 'bg-white/20 text-white' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+              }`}>
+                {isAr ? 'وفر 20%' : 'Save 20%'}
               </span>
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+        {/* Modern Pricing Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {availablePlans.map((p: any) => {
             const isCurrent = p.id === plan.id;
             const isYearly = billingCycle === 'yearly';
@@ -824,195 +845,221 @@ export function PlanUsagePanel() {
               : Boolean(p.price_monthly_discounted && p.price_monthly_discounted > 0);
 
             return (
-              <Card
+              <div
                 key={p.id}
-                className={`relative flex flex-col justify-between p-5 sm:p-6 rounded-2xl transition-all duration-300 ${
+                className={`relative flex flex-col justify-between p-6 rounded-2xl transition-all duration-300 ${
                   isCurrent
-                    ? 'border-2 border-emerald-500/80 bg-emerald-950/10 shadow-xl shadow-emerald-500/10 ring-1 ring-emerald-500/30'
+                    ? 'border-2 border-emerald-500 bg-emerald-500/[0.03] shadow-lg ring-1 ring-emerald-500/20'
                     : p.is_popular
-                      ? 'border-2 border-amber-500/80 bg-amber-950/10 shadow-xl shadow-amber-500/10 ring-1 ring-amber-500/30 scale-100 md:scale-[1.02] z-10'
-                      : 'border border-border/80 bg-card hover:border-muted-foreground/30 hover:shadow-lg'
+                      ? 'border-2 border-amber-500 bg-amber-500/[0.03] shadow-lg ring-1 ring-amber-500/20 md:scale-[1.02] z-10'
+                      : 'border border-border/80 bg-card hover:border-border hover:shadow-md'
                 }`}
               >
+                {/* Popular Pill Floating Badge */}
                 {p.is_popular && (
-                  <div className="-mt-2 mb-4 flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/50 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 px-3 py-1.5 text-xs font-black text-amber-300 shadow-sm backdrop-blur-sm">
-                    <Sparkles className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
-                    <span>{isAr ? 'الباقة الأكثر رواجاً ومبيعاً (Most Popular)' : 'Most Popular Plan 🔥'}</span>
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 text-[10px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full shadow-md whitespace-nowrap">
+                    {isAr ? '⭐ الأكثر طلباً' : '⭐ MOST POPULAR'}
                   </div>
                 )}
 
-                <div className="space-y-4 sm:space-y-5">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-4">
+                  {/* Card Header: Title & Badges */}
+                  <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h4 className="text-lg sm:text-xl font-black text-foreground tracking-tight">{p.name}</h4>
-                      <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 font-mono">
-                        {p.slug?.toUpperCase()}
+                      <h4 className="text-xl font-black text-foreground tracking-tight">{p.name}</h4>
+                      <p className="text-[11px] text-muted-foreground font-mono uppercase mt-0.5">
+                        {p.slug}
                       </p>
                     </div>
                     {isCurrent && (
-                      <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1">
-                        {isAr ? 'باقتك الحالية ✓' : 'Current Active Plan ✓'}
-                      </Badge>
+                      <span className="inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-0.5 rounded-full shrink-0">
+                        <Check className="h-3 w-3" />
+                        {isAr ? 'باقتك الحالية' : 'Current Plan'}
+                      </span>
                     )}
                   </div>
 
-                  <div className="rounded-xl bg-muted/40 p-3 sm:p-3.5 border border-border/50">
-                    <div className="flex items-baseline justify-between flex-wrap gap-2">
-                      <div className="flex items-baseline gap-1.5 sm:gap-2 dir-ltr">
-                        {hasDiscount ? (
-                          <>
-                            <span className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight">
-                              ${priceActive}
-                            </span>
-                            <span className="text-xs sm:text-sm font-semibold text-muted-foreground/60 line-through">
-                              ${priceOriginal}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
-                            ${priceActive}
-                          </span>
-                        )}
-                        <span className="text-[11px] sm:text-xs font-medium text-muted-foreground">
-                          {isYearly ? (isAr ? '/سنوياً' : '/year') : (isAr ? '/شهرياً' : '/month')}
+                  {/* Price Block (Clean & Sleek without chunky boxes) */}
+                  <div className="py-3 border-y border-border/50">
+                    <div className="flex items-baseline gap-1.5 dir-ltr">
+                      <span className="text-4xl sm:text-5xl font-black text-foreground tracking-tight">
+                        ${priceActive === 0 ? '0' : priceActive}
+                      </span>
+                      {hasDiscount && (
+                        <span className="text-sm font-semibold text-muted-foreground/60 line-through">
+                          ${priceOriginal}
+                        </span>
+                      )}
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        /{isYearly ? (isAr ? 'سنة' : 'yr') : (isAr ? 'شهر' : 'mo')}
+                      </span>
+                    </div>
+                    {hasDiscount && (
+                      <div className="mt-1">
+                        <span className="inline-block text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                          {isAr ? 'وفر 20% مع الفوترة السنوية 🎉' : 'Save 20% on Yearly 🎉'}
                         </span>
                       </div>
-                      {hasDiscount && (
-                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                          {isAr ? 'خصم خاص 🏷️' : 'Special Offer 🏷️'}
+                    )}
+                  </div>
+
+                  {/* Compact Operational Limits Spec Grid */}
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {isAr ? 'الحدود التشغيلية' : 'Operational Limits'}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-xl bg-muted/40 p-2.5 border border-border/40">
+                        <span className="text-[10px] text-muted-foreground block flex items-center gap-1">
+                          <Users className="h-3 w-3 text-indigo-400 shrink-0" />
+                          {isAr ? 'أعضاء الفريق' : 'Team Members'}
                         </span>
-                      )}
+                        <span className="font-bold text-foreground mt-0.5 block text-xs">
+                          {p.max_users === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (isAr ? `${p.max_users} أعضاء` : `${p.max_users} Seats`)}
+                        </span>
+                      </div>
+                      <div className="rounded-xl bg-muted/40 p-2.5 border border-border/40">
+                        <span className="text-[10px] text-muted-foreground block flex items-center gap-1">
+                          <UsersRound className="h-3 w-3 text-indigo-400 shrink-0" />
+                          {isAr ? 'جهات الاتصال' : 'Contacts'}
+                        </span>
+                        <span className="font-bold text-foreground mt-0.5 block text-xs">
+                          {p.max_contacts === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (p.max_contacts || 1000).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="rounded-xl bg-muted/40 p-2.5 border border-border/40">
+                        <span className="text-[10px] text-muted-foreground block flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3 text-indigo-400 shrink-0" />
+                          {isAr ? 'الرسائل' : 'Messages'}
+                        </span>
+                        <span className="font-bold text-foreground mt-0.5 block text-xs">
+                          {p.max_messages_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : `${(p.max_messages_monthly || 1000).toLocaleString()}${isAr ? ' /ش' : ' /mo'}`}
+                        </span>
+                      </div>
+                      <div className="rounded-xl bg-muted/40 p-2.5 border border-border/40">
+                        <span className="text-[10px] text-muted-foreground block flex items-center gap-1">
+                          <Radio className="h-3 w-3 text-indigo-400 shrink-0" />
+                          {isAr ? 'البرودكاست' : 'Broadcasts'}
+                        </span>
+                        <span className="font-bold text-foreground mt-0.5 block text-xs">
+                          {p.max_broadcasts_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : `${(p.max_broadcasts_monthly || 10).toLocaleString()}${isAr ? ' /ش' : ' /mo'}`}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 border-t border-border/50 pt-4 text-xs">
-                    <div className="flex items-center justify-between rounded-lg bg-background/60 px-3 py-2 border border-border/40">
-                      <span className="text-muted-foreground flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5 text-muted-foreground/70" />
-                        {isAr ? 'أعضاء الفريق:' : 'Team Members:'}
-                      </span>
-                      <span className="font-bold text-foreground">
-                        {p.max_users === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : p.max_users}
-                      </span>
+                  {/* Included Features Checklist (All 7 Platform Features) */}
+                  <div className="space-y-2 border-t border-border/50 pt-3 text-xs">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+                      {isAr ? 'الميزات المتوفرة في الخطة' : 'Included Features'}
                     </div>
 
-                    <div className="flex items-center justify-between rounded-lg bg-background/60 px-3 py-2 border border-border/40">
-                      <span className="text-muted-foreground flex items-center gap-1.5">
-                        <UsersRound className="h-3.5 w-3.5 text-muted-foreground/70" />
-                        {isAr ? 'سقف جهات الاتصال:' : 'Contacts Limit:'}
-                      </span>
-                      <span className="font-bold text-foreground">
-                        {p.max_contacts === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (p.max_contacts || 1000).toLocaleString()}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg bg-background/60 px-3 py-2 border border-border/40">
-                      <span className="text-muted-foreground flex items-center gap-1.5">
-                        <MessageSquare className="h-3.5 w-3.5 text-muted-foreground/70" />
-                        {isAr ? 'الرسائل الشهرية:' : 'Monthly Messages:'}
-                      </span>
-                      <span className="font-bold text-foreground">
-                        {p.max_messages_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (p.max_messages_monthly || 1000).toLocaleString()}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg bg-background/60 px-3 py-2 border border-border/40">
-                      <span className="text-muted-foreground flex items-center gap-1.5">
-                        <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground/70" />
-                        {isAr ? 'الطلبات والمبيعات:' : 'Orders & Sales:'}
-                      </span>
-                      <span className="font-bold text-foreground">
-                        {p.max_orders_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (p.max_orders_monthly || 500).toLocaleString()}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg bg-background/60 px-3 py-2 border border-border/40">
-                      <span className="text-muted-foreground flex items-center gap-1.5">
-                        <Radio className="h-3.5 w-3.5 text-muted-foreground/70" />
-                        {isAr ? 'حملات البرودكاست:' : 'Broadcast Campaigns:'}
-                      </span>
-                      <span className="font-bold text-foreground">
-                        {p.max_broadcasts_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (p.max_broadcasts_monthly || 50).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 border-t border-border/50 pt-4 text-xs">
-                    <div className="flex items-center gap-2.5">
+                    {/* AI Assistant */}
+                    <div className="flex items-center gap-2">
                       {p.features?.ai_assistant ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
+                        <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
                       )}
                       <span className={p.features?.ai_assistant ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        {isAr ? 'مساعد الذكاء الاصطناعي (AI)' : 'Gemini AI Assistant'}
+                        {isAr ? 'مساعد الذكاء الاصطناعي (Gemini AI)' : 'Gemini AI Assistant'}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
+                    {/* Automations */}
+                    <div className="flex items-center gap-2">
                       {p.features?.automations ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
+                        <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
                       )}
                       <span className={p.features?.automations ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        {isAr ? 'الأتمتة والردود الآلية' : 'Automations & Auto-Replies'}
+                        {isAr ? 'الأتمتة والردود الذكية' : 'Smart Automations'}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
+                    {/* Flows Builder */}
+                    <div className="flex items-center gap-2">
                       {p.features?.flows_builder ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
+                        <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
                       )}
                       <span className={p.features?.flows_builder ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        {isAr ? 'منشئ مسارات العمل (Flows)' : 'Flows Builder'}
+                        {isAr ? 'منشئ مسارات العمل (Flows)' : 'Visual Flows Builder'}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
+                    {/* Telegram Bot */}
+                    <div className="flex items-center gap-2">
                       {p.features?.telegram_bot ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
+                        <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
                       )}
                       <span className={p.features?.telegram_bot ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        {isAr ? 'ربط بوت التلغرام للإشعارات' : 'Telegram Bot Notifications'}
+                        {isAr ? 'إشعارات بوت تيليجرام' : 'Telegram Bot Alerts'}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
+                    {/* Excel Export */}
+                    <div className="flex items-center gap-2">
                       {p.features?.excel_export ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-muted-foreground/30 shrink-0" />
+                        <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
                       )}
                       <span className={p.features?.excel_export ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        {isAr ? 'تصدير البيانات إلى Excel' : 'Excel Export'}
+                        {isAr ? 'تصدير التقارير إلى Excel' : 'Excel Report Export'}
+                      </span>
+                    </div>
+
+                    {/* WooCommerce Integration */}
+                    <div className="flex items-center gap-2">
+                      {p.features?.woocommerce_integration ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
+                      )}
+                      <span className={p.features?.woocommerce_integration ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
+                        {isAr ? 'ربط متجر ووكومرس (WooCommerce)' : 'WooCommerce Integration'}
+                      </span>
+                    </div>
+
+                    {/* Shopify Integration */}
+                    <div className="flex items-center gap-2">
+                      {p.features?.shopify_integration ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
+                      )}
+                      <span className={p.features?.shopify_integration ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
+                        {isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Integration'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-border/50 space-y-2">
+                {/* Sleek CTA Button */}
+                <div className="mt-6 pt-4 border-t border-border/50">
                   {isCurrent ? (
                     <Button
                       disabled
-                      className="w-full text-xs font-bold bg-muted/60 text-muted-foreground border border-border/50 py-3.5 rounded-xl cursor-not-allowed"
+                      className="w-full text-xs font-bold bg-muted/60 text-muted-foreground border border-border/60 h-11 rounded-xl cursor-default"
                     >
-                      {isAr ? 'باقتك الحالية المفعلة ✓' : 'Current Active Plan ✓'}
+                      <Check className="h-3.5 w-3.5 me-1.5 text-emerald-500" />
+                      {isAr ? 'خطتك الحالية المفعلة' : 'Current Active Plan'}
                     </Button>
                   ) : p.price_monthly === 0 || p.slug === 'free' ? (
                     <Button
                       onClick={() => handleFreeActivate(p)}
                       disabled={upgradingPlanId === p.id}
-                      className="w-full text-xs font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white shadow-lg shadow-emerald-500/20 hover:opacity-95 py-3.5 rounded-xl transition-all"
+                      className="w-full text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 h-11 rounded-xl transition-all"
                     >
                       {upgradingPlanId === p.id ? (
                         <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                       ) : (
-                        isAr ? 'الانتقال للخطة المجانية (تفعيل مجاني) 🎁' : 'Switch to Free Plan 🎁'
+                        isAr ? 'تفعيل الخطة المجانية 🎁' : 'Switch to Free Plan 🎁'
                       )}
                     </Button>
                   ) : (
@@ -1021,14 +1068,14 @@ export function PlanUsagePanel() {
                         setSelectedPlanForCheckout(p)
                         setOfflineError(null)
                       }}
-                      className="w-full text-xs font-black bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white shadow-lg shadow-emerald-500/20 hover:opacity-95 py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                      className="w-full text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-600/25 hover:shadow-lg h-11 rounded-xl transition-all flex items-center justify-center gap-2 group cursor-pointer"
                     >
-                      <Sparkles className="h-4 w-4 text-emerald-300 group-hover:scale-110 transition-transform" />
-                      <span>{isAr ? `ادفع الآن وارتقِ بالخطة 🚀` : `Pay Now & Upgrade 🚀`}</span>
+                      <Sparkles className="h-3.5 w-3.5 text-emerald-200 group-hover:scale-125 transition-transform" />
+                      <span>{isAr ? 'ترقية واشتراك الآن 🚀' : 'Pay Now & Upgrade 🚀'}</span>
                     </Button>
                   )}
                 </div>
-              </Card>
+              </div>
             )
           })}
         </div>

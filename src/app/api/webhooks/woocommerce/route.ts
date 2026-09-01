@@ -82,9 +82,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Plan does not allow WooCommerce integration' }, { status: 403 });
     }
 
-    // Verify webhook signature if webhook secret is configured and signature header is sent
+    // Verify webhook signature if webhook secret is configured
     const creds = getDecryptedCredentials(store);
-    if (creds.webhookSecret && signature) {
+    if (creds.webhookSecret) {
+      if (!signature) {
+        console.warn(`[webhooks/woocommerce] Missing HMAC signature header for store ${storeId}`);
+        return NextResponse.json({ error: 'Missing webhook signature' }, { status: 401 });
+      }
       const isValid = verifyWooCommerceWebhook(rawBody, signature, creds.webhookSecret);
       if (!isValid) {
         console.warn(`[webhooks/woocommerce] Invalid HMAC signature for store ${storeId}`);

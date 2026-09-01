@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Loader2, Save, Bot, FileSpreadsheet, Send } from 'lucide-react'
+import { Loader2, Save, Bot, FileSpreadsheet, Send, ShoppingBag, Zap, Workflow } from 'lucide-react'
 
 export interface Plan {
   id: string
@@ -32,6 +32,10 @@ export interface Plan {
     ai_assistant?: boolean
     excel_export?: boolean
     telegram_bot?: boolean
+    automations?: boolean
+    flows_builder?: boolean
+    woocommerce_integration?: boolean
+    shopify_integration?: boolean
   }
   is_active: boolean
   subscriber_count?: number
@@ -69,6 +73,10 @@ export function EditPlanModal({
       ai_assistant: true,
       excel_export: true,
       telegram_bot: false,
+      automations: false,
+      flows_builder: false,
+      woocommerce_integration: false,
+      shopify_integration: false,
     },
     is_active: true,
   })
@@ -91,6 +99,10 @@ export function EditPlanModal({
           ai_assistant: Boolean(plan.features?.ai_assistant),
           excel_export: Boolean(plan.features?.excel_export),
           telegram_bot: Boolean(plan.features?.telegram_bot),
+          automations: Boolean(plan.features?.automations),
+          flows_builder: Boolean(plan.features?.flows_builder),
+          woocommerce_integration: Boolean(plan.features?.woocommerce_integration),
+          shopify_integration: Boolean(plan.features?.shopify_integration),
         },
         is_active: plan.is_active ?? true,
       })
@@ -334,6 +346,82 @@ export function EditPlanModal({
                     setFormData({
                       ...formData,
                       features: { ...formData.features, telegram_bot: checked },
+                    })
+                  }
+                />
+              </div>
+
+              {/* Automations */}
+              <div className="flex items-center justify-between rounded-lg bg-slate-950/60 border border-slate-800/80 p-2.5">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-amber-400" />
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-medium text-slate-200">الأتمتة والردود الذكية</Label>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.features.automations}
+                  onCheckedChange={(checked) =>
+                    setFormData({
+                      ...formData,
+                      features: { ...formData.features, automations: checked },
+                    })
+                  }
+                />
+              </div>
+
+              {/* Flows Builder */}
+              <div className="flex items-center justify-between rounded-lg bg-slate-950/60 border border-slate-800/80 p-2.5">
+                <div className="flex items-center gap-2">
+                  <Workflow className="h-4 w-4 text-cyan-400" />
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-medium text-slate-200">منشئ مسارات العمل (Flows)</Label>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.features.flows_builder}
+                  onCheckedChange={(checked) =>
+                    setFormData({
+                      ...formData,
+                      features: { ...formData.features, flows_builder: checked },
+                    })
+                  }
+                />
+              </div>
+
+              {/* WooCommerce Integration */}
+              <div className="flex items-center justify-between rounded-lg bg-slate-950/60 border border-slate-800/80 p-2.5">
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4 text-purple-400" />
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-medium text-slate-200">ربط ووكومرس (WooCommerce)</Label>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.features.woocommerce_integration}
+                  onCheckedChange={(checked) =>
+                    setFormData({
+                      ...formData,
+                      features: { ...formData.features, woocommerce_integration: checked },
+                    })
+                  }
+                />
+              </div>
+
+              {/* Shopify Integration */}
+              <div className="flex items-center justify-between rounded-lg bg-slate-950/60 border border-slate-800/80 p-2.5">
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4 text-emerald-400" />
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-medium text-slate-200">ربط شوبيفاي (Shopify)</Label>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.features.shopify_integration}
+                  onCheckedChange={(checked) =>
+                    setFormData({
+                      ...formData,
+                      features: { ...formData.features, shopify_integration: checked },
                     })
                   }
                 />

@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 
 import { useLocale } from 'next-intl'
+import { toast } from 'sonner'
 
 export interface PlanItem {
   id: string
@@ -47,6 +48,10 @@ export interface PlanItem {
     ai_assistant?: boolean
     excel_export?: boolean
     telegram_bot?: boolean
+    automations?: boolean
+    flows_builder?: boolean
+    woocommerce_integration?: boolean
+    shopify_integration?: boolean
   }
 }
 
@@ -208,6 +213,13 @@ export function UpgradePlanModal({
 
       if (!res.ok || data.error) {
         setError(data.error || (isAr ? 'حدث خطأ أثناء إرسال طلب الترقية' : 'Error sending upgrade request'))
+        return
+      }
+
+      if (data.free_activated) {
+        toast.success(data.message || (isAr ? 'تم تفعيل الخطة المجانية بنجاح! 🎁' : 'Free plan activated! 🎁'))
+        if (onSuccess) onSuccess()
+        onOpenChange(false)
         return
       }
 
@@ -457,6 +469,36 @@ export function UpgradePlanModal({
                         )}
                         <span className={plan.features?.telegram_bot ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
                           {isAr ? 'إشعارات بوت Telegram الفورية' : 'Instant Telegram Bot Notifications'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        {plan.features?.automations ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
+                        )}
+                        <span className={plan.features?.automations ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
+                          {isAr ? 'أتمتة المحادثات والردود الذكية' : 'Smart Automations'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        {plan.features?.woocommerce_integration ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
+                        )}
+                        <span className={plan.features?.woocommerce_integration ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
+                          {isAr ? 'ربط متجر ووكومرس (WooCommerce)' : 'WooCommerce Store Integration'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        {plan.features?.shopify_integration ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
+                        )}
+                        <span className={plan.features?.shopify_integration ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
+                          {isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Store Integration'}
                         </span>
                       </div>
                     </div>

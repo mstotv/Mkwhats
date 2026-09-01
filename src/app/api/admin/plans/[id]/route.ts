@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { revalidatePath } from 'next/cache'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 
@@ -102,6 +103,15 @@ export async function PATCH(
     if (updateError) {
       console.error('[AdminPlansPatchAPI] Error updating plan:', updateError)
       return NextResponse.json({ error: 'Failed to update plan' }, { status: 500 })
+    }
+
+    try {
+      revalidatePath('/pricing')
+      revalidatePath('/')
+      revalidatePath('/settings')
+      revalidatePath('/admin/plans')
+    } catch (revalErr) {
+      console.error('[AdminPlansPatchAPI] Revalidation error:', revalErr)
     }
 
     return NextResponse.json({ success: true, plan: updatedPlan })
