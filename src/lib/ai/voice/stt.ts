@@ -68,7 +68,7 @@ async function transcribeWithOpenAiWhisper(
     : 'ogg'
 
   const formData = new FormData()
-  const blob = new Blob([buffer], { type: mimeType || 'audio/ogg' })
+  const blob = new Blob([buffer as unknown as BlobPart], { type: mimeType || 'audio/ogg' })
   formData.append('file', blob, `audio.${ext}`)
   formData.append('model', 'whisper-1')
 

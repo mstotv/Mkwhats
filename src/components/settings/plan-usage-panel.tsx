@@ -64,6 +64,7 @@ interface PlanData {
   is_popular?: boolean
   features: {
     ai_assistant?: boolean
+    voice_transcription?: boolean
     automations?: boolean
     flows_builder?: boolean
     excel_export?: boolean
