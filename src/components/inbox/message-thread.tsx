@@ -109,6 +109,7 @@ interface MessageThreadProps {
    */
   contactPanelOpen?: boolean;
   onToggleContactPanel?: () => void;
+  connectionType?: 'meta' | 'evolution' | string | null;
 }
 
 function formatDateSeparator(dateStr: string, t: ReturnType<typeof useTranslations>): string {
@@ -167,6 +168,7 @@ export function MessageThread({
   onRefresh,
   contactPanelOpen,
   onToggleContactPanel,
+  connectionType,
 }: MessageThreadProps) {
   const t = useTranslations("Inbox.messageThread");
   const tTimer = useTranslations("Inbox.sessionTimer");
@@ -226,8 +228,12 @@ export function MessageThread({
     };
   }, []);
 
-  // 24-hour session timer
+  // 24-hour session timer (applies only to official Meta Cloud API, Evolution QR has no 24h window)
   const sessionInfo = useMemo(() => {
+    if (connectionType === 'evolution') {
+      return { expired: false, remaining: "" };
+    }
+
     if (!messages.length) return { expired: false, remaining: "" };
 
     // Find last customer message
@@ -251,7 +257,7 @@ export function MessageThread({
         : tTimer("xmRemaining", { minutes: Math.floor(hoursLeft * 60) });
 
     return { expired, remaining };
-  }, [messages, tTimer]);
+  }, [messages, tTimer, connectionType]);
 
   // Store latest callback in a ref so fetchMessages doesn't need to
   // depend on `onMessagesLoaded` — otherwise parent re-renders cause

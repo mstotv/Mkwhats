@@ -7,7 +7,15 @@
 > 3. **نافذة ترقية وتغيير الباقة للمستخدم (Upgrade Plan Modal):** عبر [`upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/upgrade-plan-modal.tsx).
 > 4. **لوحة تحكم الأدمن لإنشاء وتعديل الباقات (Admin Pricing Manager):** عبر [`plans/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/plans/page.tsx) و [`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/edit-plan-modal.tsx).
 
-- ✅ **نظام تفريغ وفهم الرسائل الصوتية بالذكاء الاصطناعي وإدارة الباقات الفورية (Voice AI: Speech-to-Text Input Adapter, Plan-Gating & Real-Time Controls)**:
+- ✅ **إصلاح وتحديث واجهة ربط الواتساب وتأمين استقبال رسائل Evolution API (WhatsApp Connection UI & Evolution Webhook Reliability)**:
+  - **إعادة تصميم وتحديث ألوان واجهة الربط ([`whatsapp-config.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/whatsapp-config.tsx))**:
+    - استبدال التنسيقات والخلفيات الباهتة بتصميم زجاجي عصري شديد النقاء بتباين لوني عالي في الوضعين الفاتح والداكن (Light & Dark Themes).
+    - تحسين شارة طريقة الربط النشطة، وتنبيهات الاتصال الناجح، وبطاقة الجاهزية الخضراء، وصندوق تلميح تحديث رمز الـ QR.
+  - **تأمين واستقبال رسائل Evolution API بالكامل ([`evolution/webhook/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/whatsapp/evolution/webhook/route.ts))**:
+    - معالجة تحقق الـ Webhook حتى لا يتم رفض رسائل خادم Evolution بـ `401 Unauthorized` عندما يُرسل الخادم الأحداث بدون ترويسة `apikey` مخصصة، مع التحقق الأمني من تسجيل ومعرف الـ Instance في قاعدة البيانات.
+    - دعم واستخراج كافة هياكل الرسائل الواردة من Baileys بما فيها الرسائل المؤقتة (Ephemeral Messages)، والرسائل التفاعلية، والرسائل الصوتية.
+  - **إلغاء قيود نافذة الـ 24 ساعة لربط Evolution بالـ Inbox ([`inbox/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/(dashboard)/inbox/page.tsx) & [`message-thread.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/inbox/message-thread.tsx))**:
+    - قيود الـ 24 ساعة وقوالب Meta تطبق حصرياً على الـ Cloud API الرسمي؛ تم تمكين الإرسال والرد المباشر بدون أي حظر عند استخدام ربط Evolution (QR Code).
   - **طبقة المحول الصوتي المستقلة بالكامل (Isolated Input Adapter Layer - [`src/lib/ai/voice/stt.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/voice/stt.ts))**:
     - بناء موديول معزول تماماً لا يمس منطق الـ AI Core ولا يعيد هيكلته.
     - دعم التفريغ الصوتي التلقائي عبر **OpenAI Whisper API (`whisper-1`)** لمستخدمي OpenAI وعبر **Google Gemini Multimodal Audio (`gemini-1.5-flash`)** لمستخدمي Gemini باستخدام مفتاح الحساب المشفر نفسه بأمان تام.

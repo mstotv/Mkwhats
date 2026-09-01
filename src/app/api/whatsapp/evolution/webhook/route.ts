@@ -73,8 +73,7 @@ export async function POST(request: Request) {
 
   if (expectedGlobalKey && incomingKey && incomingKey === expectedGlobalKey) {
     authorized = true
-  } else if (instanceName && incomingKey) {
-    // Authorize if incomingKey matches the instance's encrypted evolution_api_key
+  } else if (instanceName) {
     try {
       const { data: validConfig } = await supabaseAdmin()
         .from('whatsapp_config')
@@ -83,13 +82,18 @@ export async function POST(request: Request) {
         .eq('connection_type', 'evolution')
         .maybeSingle()
 
-      if (validConfig?.evolution_api_key) {
-        let instanceApiKey = validConfig.evolution_api_key
-        try {
-          instanceApiKey = decrypt(validConfig.evolution_api_key)
-        } catch {}
-        if (instanceApiKey === incomingKey) {
+      if (validConfig) {
+        if (!incomingKey) {
+          // Evolution v2 webhook delivers without custom headers by default
           authorized = true
+        } else if (validConfig.evolution_api_key) {
+          let instanceApiKey = validConfig.evolution_api_key
+          try {
+            instanceApiKey = decrypt(validConfig.evolution_api_key)
+          } catch {}
+          if (instanceApiKey === incomingKey || incomingKey === expectedGlobalKey) {
+            authorized = true
+          }
         }
       }
     } catch (authErr) {

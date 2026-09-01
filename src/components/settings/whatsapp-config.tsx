@@ -581,29 +581,39 @@ export function WhatsAppConfig() {
 
       {/* ── Active Connection Badge (If Saved) ────────────────── */}
       {config && (
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
-          <div className="flex items-center gap-2">
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-border bg-card/80 backdrop-blur px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-2.5">
             {config.connection_type === 'evolution' ? (
-              <QrCode className="size-5 text-emerald-500" />
+              <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <QrCode className="size-4" />
+              </div>
             ) : (
-              <Building2 className="size-5 text-primary" />
+              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Building2 className="size-4" />
+              </div>
             )}
             <div>
-              <span className="text-sm font-medium text-foreground">
-                {t('activeMethod')}{' '}
+              <span className="text-xs text-muted-foreground block">
+                {t('activeMethod')}
+              </span>
+              <span className="text-sm font-bold text-foreground">
                 {config.connection_type === 'evolution'
                   ? t('evolutionQrTitle')
                   : t('metaTitle')}
               </span>
             </div>
           </div>
+          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            {connectionStatus === 'connected' ? (isRegistered || config.connection_type === 'evolution' ? 'متصل وجاهز ✓' : 'متصل') : 'تم التكوين'}
+          </span>
         </div>
       )}
 
       {/* ── EVOLUTION API PANEL ───────────────────────────────── */}
       {selectedMethod === 'evolution' && (
         <div className="space-y-6">
-          <Card className="border-border">
+          <Card className="border-border shadow-sm">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2 text-lg">
                 <QrCode className="size-5 text-emerald-500" />
@@ -616,63 +626,71 @@ export function WhatsAppConfig() {
             <CardContent className="space-y-6">
 
               {/* Status Alert */}
-              <Alert
-                className={
+              <div
+                className={`flex items-center justify-between flex-wrap gap-3 rounded-xl border p-4 transition-colors ${
                   evolutionConnected
-                    ? 'bg-emerald-950/30 border-emerald-700/50'
-                    : 'bg-amber-950/30 border-amber-700/50'
-                }
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-950 dark:text-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-700/50'
+                    : 'border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100 dark:bg-amber-950/40 dark:border-amber-700/50'
+                }`}
               >
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex items-center gap-2">
-                    {evolutionConnected ? (
-                      <CheckCircle2 className="size-5 text-emerald-400 shrink-0" />
-                    ) : (
-                      <AlertTriangle className="size-5 text-amber-400 shrink-0" />
-                    )}
-                    <div>
-                      <AlertTitle className="text-foreground font-semibold mb-0">
-                        {evolutionConnected ? t('connectedStatus') : t('disconnectedStatus')}
-                      </AlertTitle>
-                      {evolutionPhone && (
-                        <p className="text-xs text-emerald-300 mt-0.5">
-                          {t('pairedNumber', { phone: evolutionPhone })}
-                        </p>
-                      )}
+                <div className="flex items-center gap-3">
+                  {evolutionConnected ? (
+                    <div className="flex size-9 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
+                      <CheckCircle2 className="size-5" />
                     </div>
-                  </div>
-
-                  {evolutionConnected && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDeleteEvolutionInstance}
-                      disabled={evolutionDeleting}
-                      className="border-red-900 text-red-400 hover:bg-red-950/40 hover:text-red-300"
-                    >
-                      {evolutionDeleting ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="size-4" />
-                      )}
-                      {t('disconnect')}
-                    </Button>
+                  ) : (
+                    <div className="flex size-9 items-center justify-center rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                      <AlertTriangle className="size-5" />
+                    </div>
                   )}
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground">
+                      {evolutionConnected ? t('connectedStatus') : t('disconnectedStatus')}
+                    </h4>
+                    {evolutionPhone ? (
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300 font-mono mt-0.5 font-medium">
+                        {t('pairedNumber', { phone: evolutionPhone })}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {evolutionConnected ? t('readyTitle') : t('evolutionConnectDesc')}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </Alert>
+
+                {evolutionConnected && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDeleteEvolutionInstance}
+                    disabled={evolutionDeleting}
+                    className="border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/50 text-xs font-semibold gap-1.5"
+                  >
+                    {evolutionDeleting ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="size-3.5" />
+                    )}
+                    {t('disconnect')}
+                  </Button>
+                )}
+              </div>
 
               {/* Connected Info */}
               {evolutionConnected ? (
-                <div className="rounded-lg border border-emerald-800/40 bg-emerald-950/20 p-6 text-center space-y-3">
-                  <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
-                    <Smartphone className="size-6" />
+                <div className="rounded-xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/10 to-emerald-500/5 p-8 text-center space-y-3 dark:border-emerald-800/40 dark:from-emerald-950/30 dark:to-emerald-950/10 shadow-sm">
+                  <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shadow-sm">
+                    <Smartphone className="size-7" />
                   </div>
-                  <h3 className="text-lg font-semibold text-emerald-200">
-                    {t('readyTitle')}
-                  </h3>
-                  <p className="text-xs text-emerald-400/80 max-w-md mx-auto">
-                    {t('readyDesc')}
-                  </p>
+                  <div className="space-y-1.5">
+                    <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
+                      {t('readyTitle')}
+                    </h3>
+                    <p className="text-xs text-emerald-800 dark:text-emerald-300/90 max-w-md mx-auto leading-relaxed font-medium">
+                      {t('readyDesc')}
+                    </p>
+                  </div>
                 </div>
               ) : (
                 /* Not Connected: Display QR or Create Button */
@@ -788,8 +806,9 @@ export function WhatsAppConfig() {
                           <li>{t('step3')}</li>
                           <li>{t('step4')}</li>
                         </ol>
-                        <p className="text-xs text-amber-400 bg-amber-950/30 border border-amber-800/40 p-3 rounded-md">
-                          {t('qrAutoRefreshHint')}
+                        <p className="text-xs text-amber-900 dark:text-amber-200 bg-amber-500/10 border border-amber-500/30 p-3 rounded-lg flex items-center gap-2 leading-relaxed">
+                          <AlertTriangle className="size-4 text-amber-500 shrink-0" />
+                          <span>{t('qrAutoRefreshHint')}</span>
                         </p>
                       </div>
                     </div>
