@@ -113,7 +113,8 @@ export function normalizeWooCommercePayload(
     topicLower.includes('cart_abandoned') ||
     topicLower.includes('abandoned_cart') ||
     topicLower.includes('abandonment') ||
-    status === 'abandoned'
+    status === 'abandoned' ||
+    Boolean(rawPayload.recovery_url || rawPayload.checkout_url || rawPayload.cart_id || rawPayload.cart_total)
   ) {
     eventType = 'cart.abandoned';
   } else if (topicLower.includes('order.created') || topicLower.includes('new_order') || topicLower.includes('order_created')) {

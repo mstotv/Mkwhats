@@ -52,9 +52,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Plan does not allow WooCommerce integration' }, { status: 403 });
     }
 
-    // Verify webhook signature if webhook secret is configured
+    // Verify webhook signature if webhook secret is configured and signature header is sent
     const creds = getDecryptedCredentials(store);
-    if (creds.webhookSecret) {
+    if (creds.webhookSecret && signature) {
       const isValid = verifyWooCommerceWebhook(rawBody, signature, creds.webhookSecret);
       if (!isValid) {
         console.warn(`[webhooks/woocommerce] Invalid HMAC signature for store ${storeId}`);
