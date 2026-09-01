@@ -144,8 +144,11 @@ export function normalizeWooCommercePayload(
     (rawPayload.name as string);
 
   const customerPhone =
+    (rawPayload.phone_number as string) ||
     (rawPayload.customer_phone as string) ||
     (rawPayload.phone as string) ||
+    (rawPayload.billing_phone as string) ||
+    (rawPayload.user_phone as string) ||
     (rawBilling.phone as string) ||
     (rawShipping.phone as string) ||
     '';
