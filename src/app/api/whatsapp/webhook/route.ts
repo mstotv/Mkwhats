@@ -13,6 +13,9 @@ import {
   handleTemplateWebhookChange,
   isTemplateWebhookField,
 } from '@/lib/whatsapp/template-webhook'
+import { transcribeAudioMessage } from '@/lib/ai/voice/stt'
+import { loadAiConfig } from '@/lib/ai/config'
+import { checkAccountFeature } from '@/lib/plans/check-usage-limit'
 
 // The `after()` callback in POST runs within this route's max duration.
 // Inbound processing can fan out to per-media Meta verification calls, so
@@ -615,6 +618,38 @@ async function processMessage(
   const { contentText, mediaUrl, mediaType, interactiveReplyId } =
     await parseMessageContent(message, accessToken)
 
+  // Voice STT Input Adapter: If inbound is audio, check plan entitlements & account AI config
+  let effectiveContentText = contentText
+  let transcribedText: string | null = null
+
+  if (message.type === 'audio' && message.audio?.id) {
+    try {
+      const { allowed: planAllowsVoice } = await checkAccountFeature(accountId, 'voice_transcription')
+      if (planAllowsVoice) {
+        const aiConf = await loadAiConfig(supabaseAdmin(), accountId)
+        if (aiConf?.isActive && aiConf?.voiceTranscriptionEnabled) {
+          const mediaUrlRes = await getMediaUrl({ mediaId: message.audio.id, accessToken })
+          if (mediaUrlRes?.url) {
+            const { buffer } = await downloadMedia({ downloadUrl: mediaUrlRes.url, accessToken })
+            const transcription = await transcribeAudioMessage({
+              buffer,
+              mimeType: message.audio.mime_type || 'audio/ogg',
+              provider: aiConf.provider,
+              apiKey: aiConf.apiKey,
+            })
+            if (transcription) {
+              effectiveContentText = transcription
+              transcribedText = transcription
+              console.log('[webhook] Voice message transcribed successfully | len:', transcription.length)
+            }
+          }
+        }
+      }
+    } catch (sttErr) {
+      console.error('[webhook] voice transcription skipped safely:', sttErr instanceof Error ? sttErr.message : String(sttErr))
+    }
+  }
+
   // Resolve swipe-reply context if present. A missing parent is fine —
   // we just store NULL and the UI renders the message without a quote.
   let replyToInternalId: string | null = null
@@ -670,7 +705,8 @@ async function processMessage(
     conversation_id: conversation.id,
     sender_type: 'customer',
     content_type: contentType,
-    content_text: contentText,
+    content_text: effectiveContentText,
+    transcribed_text: transcribedText,
     media_url: mediaUrl,
     message_id: message.id,
     status: 'delivered',
@@ -736,12 +772,12 @@ async function processMessage(
         ? {
             kind: 'interactive_reply',
             reply_id: interactiveReplyId,
-            reply_title: contentText ?? '',
+            reply_title: effectiveContentText ?? '',
             meta_message_id: message.id,
           }
         : {
             kind: 'text',
-            text: contentText ?? message.text?.body ?? '',
+            text: effectiveContentText ?? message.text?.body ?? '',
             meta_message_id: message.id,
           },
     isFirstInboundMessage,
@@ -753,7 +789,7 @@ async function processMessage(
   // message all exist before any step — including send_message — runs.
   // Fire-and-forget: a slow or failing automation must not block the
   // webhook's 200 OK response to Meta.
-  const inboundText = contentText ?? message.text?.body ?? ''
+  const inboundText = effectiveContentText ?? message.text?.body ?? ''
   const automationTriggers: (
     | 'new_contact_created'
     | 'first_inbound_message'

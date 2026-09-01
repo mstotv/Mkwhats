@@ -24,6 +24,7 @@ import {
   Lock,
   Bell,
   ShoppingBag,
+  LogIn,
 } from 'lucide-react'
 import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { LandingFooter } from '@/components/landing/landing-footer'
@@ -142,9 +143,7 @@ export default async function LandingPage() {
     primary_cta_text: isAr
       ? (settings?.hero_content?.primary_cta_text_ar || settings?.hero_content?.primary_cta_text || 'ابدأ مجاناً الآن')
       : (settings?.hero_content?.primary_cta_text_en || 'Get Started Free'),
-    secondary_cta_text: isAr
-      ? (settings?.hero_content?.secondary_cta_text_ar || settings?.hero_content?.secondary_cta_text || 'شاهد العرض المباشر')
-      : (settings?.hero_content?.secondary_cta_text_en || 'Watch Live Demo'),
+    secondary_cta_text: isAr ? 'تسجيل الدخول' : 'Login',
   }
 
   // Bento Grid / Features content configuration with full fallback
@@ -294,6 +293,15 @@ export default async function LandingPage() {
             {heroContent.primary_cta_text}
             <ArrowIcon className="h-4 w-4" />
           </Link>
+          {!user && (
+            <Link
+              href="/login"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[4px] border border-[#00685F]/30 dark:border-white/20 bg-white/60 dark:bg-white/5 hover:bg-[#00685F]/10 dark:hover:bg-white/10 text-[#00685F] dark:text-[#6BD8CB] px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider shadow-sm hover:scale-[1.01] transition-all backdrop-blur-sm"
+            >
+              <LogIn className="h-4 w-4" />
+              {heroContent.secondary_cta_text}
+            </Link>
+          )}
         </div>
 
         {/* Hero Interactive Laptop Showcase */}

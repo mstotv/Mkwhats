@@ -46,6 +46,7 @@ export interface PlanItem {
   max_broadcasts_monthly: number
   features: {
     ai_assistant?: boolean
+    voice_transcription?: boolean
     excel_export?: boolean
     telegram_bot?: boolean
     automations?: boolean
@@ -448,7 +449,17 @@ export function UpgradePlanModal({
                           <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
                         )}
                         <span className={plan.features?.ai_assistant ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
-                          {isAr ? 'مساعد الردود الذكي (AI Assistant)' : 'Gemini AI Assistant'}
+                          {isAr ? 'مساعد الردود الذكي (AI Assistant)' : 'AI Assistant'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        {plan.features?.voice_transcription ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
+                        )}
+                        <span className={plan.features?.voice_transcription ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
+                          {isAr ? 'فهم وتفريغ الرسائل الصوتية (Voice STT)' : 'Voice Message Transcription (STT)'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2.5">

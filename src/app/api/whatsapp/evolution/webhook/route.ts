@@ -14,6 +14,9 @@ import {
   fetchEvolutionProfilePictureUrl,
   fetchEvolutionMediaBase64,
 } from '@/lib/whatsapp/evolution-api'
+import { transcribeAudioMessage } from '@/lib/ai/voice/stt'
+import { loadAiConfig } from '@/lib/ai/config'
+import { checkAccountFeature } from '@/lib/plans/check-usage-limit'
 
 // Same max-duration approach as the Meta webhook — Evolution events
 // can fan out to automations/AI, so give the after() callback headroom.
@@ -273,7 +276,7 @@ async function processInboundMessage(
   console.log('[DIAG][evolution/webhook] processInboundMessage | isFromMe:', isFromMe, '| phone:', senderPhone, '| msgId:', whatsappMessageId)
 
   // Extract and process media (uploads to Supabase Storage if base64/media present)
-  const { contentType, contentText, mediaUrl } = await extractAndProcessMedia(
+  const { contentType, contentText, mediaUrl, transcribedText } = await extractAndProcessMedia(
     msg,
     accountId,
     instanceName,
@@ -372,6 +375,7 @@ async function processInboundMessage(
       sender_id: contactRecord.id,
       content_type: contentType,
       content_text: contentText ?? null,
+      transcribed_text: transcribedText ?? null,
       media_url: mediaUrl ?? null,
       message_id: whatsappMessageId,
       status: 'delivered',
@@ -500,16 +504,17 @@ async function extractAndProcessMedia(
 ): Promise<{
   contentType: string
   contentText: string | null
+  transcribedText?: string | null
   mediaUrl: string | null
 }> {
   const m = msg.message
-  if (!m) return { contentType: 'text', contentText: null, mediaUrl: null }
+  if (!m) return { contentType: 'text', contentText: null, transcribedText: null, mediaUrl: null }
 
   if (m.conversation)
-    return { contentType: 'text', contentText: m.conversation, mediaUrl: null }
+    return { contentType: 'text', contentText: m.conversation, transcribedText: null, mediaUrl: null }
 
   if (m.extendedTextMessage?.text)
-    return { contentType: 'text', contentText: m.extendedTextMessage.text, mediaUrl: null }
+    return { contentType: 'text', contentText: m.extendedTextMessage.text, transcribedText: null, mediaUrl: null }
 
   let mediaType: 'image' | 'video' | 'document' | 'audio' | null = null
   let caption: string | null = null
@@ -613,6 +618,35 @@ async function extractAndProcessMedia(
           console.log('[DIAG][evolution/webhook] Permanent Supabase Storage URL generated:', finalMediaUrl)
         }
       }
+
+      // Voice STT Input Adapter: Transcribe audio if enabled
+      if (mediaType === 'audio' && buffer.length > 0) {
+        try {
+          const { allowed: planAllowsVoice } = await checkAccountFeature(accountId, 'voice_transcription')
+          if (planAllowsVoice) {
+            const aiConf = await loadAiConfig(supabaseAdmin(), accountId)
+            if (aiConf?.isActive && aiConf?.voiceTranscriptionEnabled) {
+              const transcription = await transcribeAudioMessage({
+                buffer,
+                mimeType: mimetype || 'audio/ogg',
+                provider: aiConf.provider,
+                apiKey: aiConf.apiKey,
+              })
+              if (transcription) {
+                console.log('[evolution/webhook] Voice message transcribed successfully | len:', transcription.length)
+                return {
+                  contentType: 'audio',
+                  contentText: transcription,
+                  transcribedText: transcription,
+                  mediaUrl: finalMediaUrl,
+                }
+              }
+            }
+          }
+        } catch (sttErr) {
+          console.error('[evolution/webhook] voice transcription skipped safely:', sttErr instanceof Error ? sttErr.message : String(sttErr))
+        }
+      }
     } catch (err) {
       console.error('[DIAG][evolution/webhook] Exception during media upload process:', err)
     }
@@ -621,6 +655,7 @@ async function extractAndProcessMedia(
   return {
     contentType: mediaType,
     contentText: caption || fileName || null,
+    transcribedText: null,
     mediaUrl: finalMediaUrl,
   }
 }

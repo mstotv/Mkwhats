@@ -166,11 +166,21 @@ function MessageContent({ message, t }: { message: Message, t: ReturnType<typeof
 
     case "audio":
       return (
-        <div>
+        <div className="space-y-1.5">
           {message.media_url ? (
             <audio src={message.media_url} controls className="max-w-60" />
           ) : (
             <MediaUnavailable label={t("audio")} t={t} />
+          )}
+          {message.content_text && (
+            <div className="rounded-md bg-background/50 border border-border/40 p-2 text-xs text-foreground/90 space-y-0.5 max-w-60">
+              <span className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
+                <span>📝</span> تفريغ صوتي
+              </span>
+              <p className="whitespace-pre-wrap break-words italic">
+                "{message.content_text}"
+              </p>
+            </div>
           )}
         </div>
       );

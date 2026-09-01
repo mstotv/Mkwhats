@@ -1,5 +1,40 @@
 # حالة المشروع - آخر تحديث: [1/9/2026]
 
+- ✅ **نظام تفريغ وفهم الرسائل الصوتية بالذكاء الاصطناعي وإدارة الباقات الفورية (Voice AI: Speech-to-Text Input Adapter, Plan-Gating & Real-Time Controls)**:
+  - **طبقة المحول الصوتي المستقلة بالكامل (Isolated Input Adapter Layer - [`src/lib/ai/voice/stt.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/voice/stt.ts))**:
+    - بناء موديول معزول تماماً لا يمس منطق الـ AI Core ولا يعيد هيكلته.
+    - دعم التفريغ الصوتي التلقائي عبر **OpenAI Whisper API (`whisper-1`)** لمستخدمي OpenAI وعبر **Google Gemini Multimodal Audio (`gemini-1.5-flash`)** لمستخدمي Gemini باستخدام مفتاح الحساب المشفر نفسه بأمان تام.
+    - حماية صارمة وسرية تامة للسجلات (Safe Logging): حجب وإخفاء أي مفاتيح API أو Bearer tokens أو نصوص حساسة في الـ Logs عند حدوث أي خطأ، مع تفادي إرسال أي ردود عشوائية أو خاطئة للعميل عند تعذر التفريغ.
+  - **التكامل مع الـ Webhooks وقنوات الواتساب ([`webhook/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/whatsapp/webhook/route.ts) & [`evolution/webhook/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/whatsapp/evolution/webhook/route.ts))**:
+    - تحميل ملف الصوت وتفريغه في الخلفية غير المتزامنة داخل `after()` دون تأخير استجابة `200 OK` السريعة لميتا أو Evolution API.
+    - حفظ النص المفرغ في عمود `transcribed_text` وتحديث `content_text` في جدول `messages` ليمر بسلاسة كرسالة نصية طبيعية إلى محرك الـ Flows، والأتمتة، والرد الذكي، ونظام جمع الطلبات، وحجز المواعيد.
+  - **التحكم الشامل للأدمن في الباقات وتقييد الميزة (Admin SaaS Plan-Gated Entitlements)**:
+    - **صفحة إدارة الباقات للأدمن ([`src/app/admin/plans/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/plans/page.tsx))**: إضافة خيار ومفتاح ميزة `🎙️ فهم الصوت (Voice STT)` في نموذج إنشاء باقة جديدة، ودرج تعديل الباقات، وبطاقات استعراض الباقات الحالية.
+    - **نافذة تعديل الباقات السريعة ([`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/edit-plan-modal.tsx))**: تزويدها بمفتاح تبديل مخصص مع أيقونة الميكروفون `Mic`.
+    - **بطاقات الباقات ونافذة الترقية للمستخدمين ([`plan-usage-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/plan-usage-panel.tsx) & [`upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/upgrade-plan-modal.tsx))**: إظهار شارة وحالة توفر ميزة تفريغ الصوت في مقارنات الخطط.
+    - **التحقق البرمجي التلقائي ([`check-usage-limit.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/plans/check-usage-limit.ts))**: فحص صلاحيات الحساب آلياً عبر `checkAccountFeature(accountId, 'voice_transcription')`.
+  - **لوحة تحكم إعدادات الذكاء الاصطناعي والتفاعل الفوري ([`ai-config.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/ai-config.tsx) & [`ai/config/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/ai/config/route.ts))**:
+    - تزويد مفاتيح التحكم (تفعيل المساعد، الرد التلقائي، تفريغ الصوت) بدالة **`handleQuickToggle`** لتحديث وحفظ الحالة فورياً في قاعدة البيانات بمجرد النقر عليها، مع إشعارات تأكيد فورية (`Toast`) دون الحاجة للنزول لأسفل الصفحة والضغط على حفظ يدوي.
+    - إضافة مفتاح مخصص: "🎙️ فهم الرسائل الصوتية وتفريغها (Voice STT)".
+  - **عرض التفريغ الصوتي في صندوق الوارد ([`message-bubble.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/inbox/message-bubble.tsx))**:
+    - إظهار النص المفرغ بتصميم راقٍ ومريح للموظفين أسفل مشغل الصوت للرسائل الصوتية مع وسم `📝 تفريغ صوتي`.
+  - **قواعد البيانات واجتياز الاختبارات الكاملة بنسبة 100% ([`084_voice_transcription_and_plan_features.sql`](file:///c:/Users/Mustafa/Desktop/mk%20whats/supabase/migrations/084_voice_transcription_and_plan_features.sql) & [`stt.test.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/voice/stt.test.ts))**:
+    - إنشاء مايقريشن 084 المتوافق مع معايير الـ Multi-Tenancy و Row Level Security (RLS).
+    - اجتياز **100% من الاختبارات الآلية (670 من أصل 670 اختباراً عبر 70 ملف اختبار)** دون أي كسر لأي وظيفة سابقة.
+
+
+- ✅ **إضافة زر تسجيل الدخول (Login / Sign In) وإزالة زر (Watch Live Demo) من صفحة الهبوط (Landing Page Hero, Navbar & CMS)**:
+  - **قسم البطل الرئيسي ([`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/page.tsx))**:
+    - إضافة زر ثانوي راقٍ بتصميم زجاجي ناعم `تسجيل الدخول / Login` بجانب زر البدء `Get Started Free / ابدأ مجاناً الآن`.
+    - ربط الزر مباشرة بمسار تسجيل الدخول [`/login`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/(auth)/login/page.tsx) مع أيقونة `LogIn`، وإخفاؤه تلقائياً عند تسجيل دخول المستخدم وتوجيه الزر الأساسي إلى `/dashboard`.
+    - الإزالة التامة والدائمة لأي إشارة أو زر قديم لـ `Watch Live Demo` / `شاهد العرض التوضيحي`.
+  - **شريط التنقل العلوي وقائمة الجوال ([`landing-navbar.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/landing/landing-navbar.tsx))**:
+    - إضافة خيار ورابط `Sign In` / `تسجيل الدخول` في الهيدر المكتبي (Desktop Header).
+    - إضافة زر `تسجيل الدخول` داخل القائمة المنسدلة للهواتف الذكية (Mobile Navigation Drawer) لتسهيل دخول الزوار المسجلين من جميع الأجهزة.
+  - **لوحة تحكم الأدمن والـ CMS وقاعدة البيانات ([`landing-settings-client.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/landing-settings/landing-settings-client.tsx) & [`settings/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/settings/page.tsx))**:
+    - تحديث النصوص الافتراضية للزر الثانوي والحقول التوضيحية في الـ CMS لتكون `تسجيل الدخول` و `Login`.
+    - تحديث سجل `site_settings` في قاعدة البيانات لضمان ثبات النص الجديد وعدم ارتداده للقيم القديمة.
+
 - ✅ **التدقيق الأمني الشامل وتعزيز حماية الـ Webhooks والحزم (Comprehensive Security Audit & Webhook Hardening)**:
   - **حماية وتحصين الـ Webhooks للمتاجر ([`shopify/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/webhooks/shopify/route.ts) & [`woocommerce/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/webhooks/woocommerce/route.ts))**:
     - إلزامية وجود ترويسة التوقيع المشفر (`x-shopify-hmac-sha256` / `x-wc-webhook-signature`) عند تكوين مفتاح الـ Webhook Secret ورفض أي طلبات غير موقعة مع تسجيل تحذير أمني `401 Unauthorized`.

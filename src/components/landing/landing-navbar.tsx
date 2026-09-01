@@ -87,12 +87,20 @@ export function LandingNavbar({
               {isAr ? 'لوحة التحكم' : 'Dashboard'} <ArrowIcon className="h-3.5 w-3.5" />
             </Link>
           ) : (
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#00685F] hover:bg-[#005049] dark:bg-[#008378] dark:hover:bg-[#00685F] text-white px-4 lg:px-6 py-2.5 text-xs lg:text-[13px] font-semibold uppercase tracking-wider shadow-sm transition-all"
-            >
-              {primaryCtaText || (isAr ? 'إنشاء حساب مجاني' : 'Sign Up Free')}
-            </Link>
+            <>
+              <Link
+                href="/login"
+                className="hidden lg:inline-flex items-center gap-1.5 text-xs lg:text-[13px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1] hover:text-[#00685F] dark:hover:text-[#6BD8CB] px-3 py-2 transition-colors"
+              >
+                {isAr ? 'تسجيل الدخول' : 'Sign In'}
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#00685F] hover:bg-[#005049] dark:bg-[#008378] dark:hover:bg-[#00685F] text-white px-4 lg:px-6 py-2.5 text-xs lg:text-[13px] font-semibold uppercase tracking-wider shadow-sm transition-all"
+              >
+                {primaryCtaText || (isAr ? 'إنشاء حساب مجاني' : 'Sign Up Free')}
+              </Link>
+            </>
           )}
         </div>
 
@@ -144,13 +152,22 @@ export function LandingNavbar({
                 {isAr ? 'لوحة التحكم' : 'Dashboard'} <ArrowIcon className="h-4 w-4" />
               </Link>
             ) : (
-              <Link
-                href="/signup"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 rounded-[4px] bg-[#00685F] text-white py-3 text-xs font-bold uppercase tracking-wider shadow-sm"
-              >
-                {primaryCtaText || (isAr ? 'إنشاء حساب مجاني' : 'Sign Up Free')}
-              </Link>
+              <>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-center gap-2 rounded-[4px] bg-[#00685F] text-white py-3 text-xs font-bold uppercase tracking-wider shadow-sm"
+                >
+                  {primaryCtaText || (isAr ? 'إنشاء حساب مجاني' : 'Sign Up Free')}
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-center gap-2 rounded-[4px] border border-[#00685F]/30 dark:border-white/20 bg-white/50 dark:bg-white/5 text-[#00685F] dark:text-[#6BD8CB] py-3 text-xs font-bold uppercase tracking-wider shadow-sm"
+                >
+                  {isAr ? 'تسجيل الدخول' : 'Sign In'}
+                </Link>
+              </>
             )}
           </div>
         </div>

@@ -64,6 +64,8 @@ export interface AiConfig {
    *  account: it injects business hours and booking rules into the system
    *  prompt and validates slot availability. */
   appointmentsEnabled: boolean
+  /** When true the auto-reply bot transcribes inbound voice notes (STT) into text. */
+  voiceTranscriptionEnabled?: boolean
 }
 
 /**

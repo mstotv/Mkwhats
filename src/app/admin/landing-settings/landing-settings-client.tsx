@@ -320,13 +320,13 @@ function normalizeHero(h: any): HeroContent {
     headline_highlight_ar: h.headline_highlight_ar || h.headline_highlight || 'واتساب والذكاء الاصطناعي',
     subtitle_ar: h.subtitle_ar || h.subtitle || 'منصة متكاملة تتيح لك أتمتة المحادثات، إرسال حملات البرودكاست الموجهة، وتوثيق المبيعات.',
     primary_cta_text_ar: h.primary_cta_text_ar || h.primary_cta_text || 'ابدأ مجاناً',
-    secondary_cta_text_ar: h.secondary_cta_text_ar || h.secondary_cta_text || 'شاهد العرض التوضيحي',
+    secondary_cta_text_ar: h.secondary_cta_text_ar || h.secondary_cta_text || 'تسجيل الدخول',
     trust_badge_text_en: h.trust_badge_text_en || '#1 WhatsApp Automation & Marketing Platform for Businesses',
     headline_en: h.headline_en || 'Scale Your Business with',
     headline_highlight_en: h.headline_highlight_en || 'WhatsApp & Gemini AI',
     subtitle_en: h.subtitle_en || 'All-in-one platform to automate chat responses, trigger targeted broadcast campaigns, sync sales with Google Sheets, and notify your team via Telegram in real-time.',
     primary_cta_text_en: h.primary_cta_text_en || 'Get Started Free',
-    secondary_cta_text_en: h.secondary_cta_text_en || 'Watch Live Demo',
+    secondary_cta_text_en: h.secondary_cta_text_en || 'Login',
   }
 }
 
@@ -988,11 +988,11 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
                     <p className="text-[11px] font-bold text-muted-foreground">{isAr ? 'الزر الثانوي' : 'Secondary Button'}</p>
                     <div className="space-y-1">
                       <span className="text-[10px] font-black text-amber-500">🇸🇦 العربية</span>
-                      <Input value={settings.hero_content.secondary_cta_text_ar} onChange={(e) => updateHero('secondary_cta_text_ar', e.target.value)} className="bg-background text-sm font-bold" dir="rtl" placeholder="شاهد العرض التوضيحي" />
+                      <Input value={settings.hero_content.secondary_cta_text_ar} onChange={(e) => updateHero('secondary_cta_text_ar', e.target.value)} className="bg-background text-sm font-bold" dir="rtl" placeholder="تسجيل الدخول" />
                     </div>
                     <div className="space-y-1">
                       <span className="text-[10px] font-black text-sky-500">🇬🇧 English</span>
-                      <Input value={settings.hero_content.secondary_cta_text_en} onChange={(e) => updateHero('secondary_cta_text_en', e.target.value)} className="bg-background text-sm font-bold" dir="ltr" placeholder="Watch Live Demo" />
+                      <Input value={settings.hero_content.secondary_cta_text_en} onChange={(e) => updateHero('secondary_cta_text_en', e.target.value)} className="bg-background text-sm font-bold" dir="ltr" placeholder="Login" />
                     </div>
                   </div>
                 </div>

@@ -219,8 +219,8 @@ export default function AdminSettingsPage() {
       'All-in-one platform to automate chat responses, trigger targeted broadcast campaigns, sync sales with Google Sheets, and notify your team via Telegram in real-time.',
     primary_cta_text: 'ابدأ مجاناً',
     primary_cta_text_en: 'Get Started Free',
-    secondary_cta_text: 'شاهد العرض التوضيحي',
-    secondary_cta_text_en: 'Watch Live Demo',
+    secondary_cta_text: 'تسجيل الدخول',
+    secondary_cta_text_en: 'Login',
   });
 
   const [featuresContent, setFeaturesContent] = useState<FeatureItem[]>([
@@ -1542,7 +1542,7 @@ export default function AdminSettingsPage() {
                       <div className="grid grid-cols-1 gap-2">
                         <Input
                           type="text"
-                          placeholder={isAr ? '🇸🇦 بالعربية (مثال: شاهد العرض)' : '🇸🇦 In Arabic'}
+                          placeholder={isAr ? '🇸🇦 بالعربية (مثال: تسجيل الدخول)' : '🇸🇦 In Arabic'}
                           value={heroContent.secondary_cta_text}
                           onChange={(e) =>
                             setHeroContent({ ...heroContent, secondary_cta_text: e.target.value })
@@ -1551,7 +1551,7 @@ export default function AdminSettingsPage() {
                         />
                         <Input
                           type="text"
-                          placeholder={isAr ? '🇬🇧 In English (e.g. Watch Demo)' : '🇬🇧 In English'}
+                          placeholder={isAr ? '🇬🇧 In English (e.g. Login)' : '🇬🇧 In English'}
                           value={heroContent.secondary_cta_text_en || ''}
                           onChange={(e) =>
                             setHeroContent({ ...heroContent, secondary_cta_text_en: e.target.value })

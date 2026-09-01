@@ -41,6 +41,7 @@ import {
   Check,
   ChevronRight,
   Building2,
+  Mic,
 } from 'lucide-react'
 import { UpgradePlanModal, type PlanItem } from './upgrade-plan-modal'
 import { useTranslations, useLocale } from 'next-intl'
@@ -414,9 +415,15 @@ export function PlanUsagePanel() {
   const featuresList = [
     {
       key: 'ai_assistant',
-      label: isAr ? 'مساعد الذكاء الاصطناعي (AI Assistant)' : 'Gemini AI Assistant',
+      label: isAr ? 'مساعد الذكاء الاصطناعي (AI Assistant)' : 'AI Assistant Auto-Reply',
       icon: Bot,
       enabled: Boolean(plan.features?.ai_assistant),
+    },
+    {
+      key: 'voice_transcription',
+      label: isAr ? 'فهم الرسائل الصوتية (Voice STT)' : 'Voice Message Transcription (STT)',
+      icon: Mic,
+      enabled: Boolean(plan.features?.voice_transcription),
     },
     {
       key: 'automations',
@@ -962,7 +969,19 @@ export function PlanUsagePanel() {
                         <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
                       )}
                       <span className={p.features?.ai_assistant ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        {isAr ? 'مساعد الذكاء الاصطناعي (Gemini AI)' : 'Gemini AI Assistant'}
+                        {isAr ? 'مساعد الذكاء الاصطناعي (AI Assistant)' : 'AI Assistant Auto-Reply'}
+                      </span>
+                    </div>
+
+                    {/* Voice Transcription STT */}
+                    <div className="flex items-center gap-2">
+                      {p.features?.voice_transcription ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
+                      )}
+                      <span className={p.features?.voice_transcription ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
+                        {isAr ? 'فهم الرسائل الصوتية (Voice STT)' : 'Voice Message Transcription (STT)'}
                       </span>
                     </div>
 

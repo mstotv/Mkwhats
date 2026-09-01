@@ -14,10 +14,11 @@ interface AiConfigRow {
   embeddings_api_key: string | null
   order_collection_enabled: boolean
   appointments_enabled?: boolean
+  voice_transcription_enabled?: boolean
 }
 
 const CONFIG_COLUMNS =
-  'provider, model, api_key, system_prompt, is_active, auto_reply_enabled, auto_reply_max_per_conversation, handoff_agent_id, embeddings_api_key, order_collection_enabled, appointments_enabled'
+  'provider, model, api_key, system_prompt, is_active, auto_reply_enabled, auto_reply_max_per_conversation, handoff_agent_id, embeddings_api_key, order_collection_enabled, appointments_enabled, voice_transcription_enabled'
 
 /**
  * Load and decrypt the account's AI config for *use* (draft or
@@ -83,6 +84,7 @@ export async function loadAiConfig(
     embeddingsApiKey,
     orderCollectionEnabled: row.order_collection_enabled ?? false,
     appointmentsEnabled: row.appointments_enabled ?? false,
+    voiceTranscriptionEnabled: row.voice_transcription_enabled ?? false,
   }
 }
 

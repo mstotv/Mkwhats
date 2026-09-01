@@ -80,6 +80,7 @@ export function AiConfig() {
   const [members, setMembers] = useState<AccountMember[]>([]);
   const [orderCollectionEnabled, setOrderCollectionEnabled] = useState(false);
   const [savingOrderToggle, setSavingOrderToggle] = useState(false);
+  const [voiceTranscriptionEnabled, setVoiceTranscriptionEnabled] = useState(false);
 
   // Guard keyed on the account (not a bare boolean) so an in-place
   // account switch — ownership transfer, multi-account membership —
@@ -112,6 +113,7 @@ export function AiConfig() {
         setEmbeddingsKey(data.has_embeddings_key ? MASKED_KEY : '');
         setEmbeddingsKeyEdited(false);
         setOrderCollectionEnabled(Boolean(data.order_collection_enabled));
+        setVoiceTranscriptionEnabled(Boolean(data.voice_transcription_enabled));
       }
     } catch {
       toast.error(t('loadFailed'));
@@ -158,7 +160,50 @@ export function AiConfig() {
     auto_reply_max_per_conversation: maxPerConversation,
     handoff_agent_id: handoffAgentId || null,
     order_collection_enabled: orderCollectionEnabled,
+    voice_transcription_enabled: voiceTranscriptionEnabled,
   });
+
+  const handleQuickToggle = async (
+    field: 'is_active' | 'auto_reply_enabled' | 'voice_transcription_enabled',
+    value: boolean
+  ) => {
+    if (field === 'is_active') setIsActive(value);
+    if (field === 'auto_reply_enabled') setAutoReplyEnabled(value);
+    if (field === 'voice_transcription_enabled') setVoiceTranscriptionEnabled(value);
+
+    if (configured) {
+      try {
+        const payload = {
+          ...buildBody(),
+          [field]: value,
+        };
+        const res = await fetch('/api/ai/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const fieldNames: Record<string, string> = {
+            is_active: 'مساعد الذكاء الاصطناعي',
+            auto_reply_enabled: 'الرد التلقائي على الرسائل',
+            voice_transcription_enabled: 'فهم وتفريغ الرسائل الصوتية',
+          };
+          toast.success(value ? `تم تفعيل ${fieldNames[field]} بنجاح ✅` : `تم إيقاف ${fieldNames[field]} بنجاح ⏸️`);
+        } else {
+          const d = await res.json();
+          toast.error(d.error || t('saveFailed'));
+          if (field === 'is_active') setIsActive(!value);
+          if (field === 'auto_reply_enabled') setAutoReplyEnabled(!value);
+          if (field === 'voice_transcription_enabled') setVoiceTranscriptionEnabled(!value);
+        }
+      } catch {
+        toast.error(t('saveFailed'));
+        if (field === 'is_active') setIsActive(!value);
+        if (field === 'auto_reply_enabled') setAutoReplyEnabled(!value);
+        if (field === 'voice_transcription_enabled') setVoiceTranscriptionEnabled(!value);
+      }
+    }
+  };
 
   const handleTest = async () => {
     setTesting(true);
@@ -427,7 +472,7 @@ export function AiConfig() {
               </div>
               <Switch
                 checked={isActive}
-                onCheckedChange={setIsActive}
+                onCheckedChange={(checked) => handleQuickToggle('is_active', checked)}
                 disabled={disabled}
               />
             </div>
@@ -443,8 +488,24 @@ export function AiConfig() {
               </div>
               <Switch
                 checked={autoReplyEnabled}
-                onCheckedChange={setAutoReplyEnabled}
-                disabled={disabled || !isActive}
+                onCheckedChange={(checked) => handleQuickToggle('auto_reply_enabled', checked)}
+                disabled={disabled}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-md border border-border p-3">
+              <div>
+                <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                  <span>🎙️</span> فهم الرسائل الصوتية وتفريغها (Voice STT)
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  عند التفعيل، سيقوم الذكاء الاصطناعي بالاستماع للرسائل الصوتية الواردة وتفريغها وفهم طلبات ومواعيد العملاء والرد عليها مباشرة.
+                </p>
+              </div>
+              <Switch
+                checked={voiceTranscriptionEnabled}
+                onCheckedChange={(checked) => handleQuickToggle('voice_transcription_enabled', checked)}
+                disabled={disabled}
               />
             </div>
 

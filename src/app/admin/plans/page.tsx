@@ -40,6 +40,7 @@ interface PlanRow {
   is_popular: boolean;
   features: {
     ai_assistant?: boolean;
+    voice_transcription?: boolean;
     automations?: boolean;
     flows_builder?: boolean;
     excel_export?: boolean;
@@ -80,6 +81,7 @@ export default function AdminPlansPage() {
     is_active: true,
     features: {
       ai_assistant: true,
+      voice_transcription: true,
       automations: true,
       flows_builder: true,
       excel_export: true,
@@ -400,7 +402,22 @@ export default function AdminPlansPage() {
                   }
                   className="rounded border-border text-amber-500 focus:ring-amber-500"
                 />
-                <span className="font-semibold text-foreground">🤖 {isAr ? 'الذكاء الاصطناعي (AI)' : 'Gemini AI Assistant'}</span>
+                <span className="font-semibold text-foreground">🤖 {isAr ? 'الذكاء الاصطناعي (AI)' : 'AI Assistant'}</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
+                <input
+                  type="checkbox"
+                  checked={!!newPlan.features?.voice_transcription}
+                  onChange={(e) =>
+                    setNewPlan({
+                      ...newPlan,
+                      features: { ...newPlan.features, voice_transcription: e.target.checked },
+                    })
+                  }
+                  className="rounded border-border text-amber-500 focus:ring-amber-500"
+                />
+                <span className="font-semibold text-foreground">🎙️ {isAr ? 'فهم الصوت (Voice STT)' : 'Voice STT'}</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
@@ -628,7 +645,18 @@ export default function AdminPlansPage() {
                         <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                       )}
                       <span className={plan.features?.ai_assistant ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
-                        {isAr ? 'مساعد الذكاء الاصطناعي (AI)' : 'Gemini AI Assistant'}
+                        {isAr ? 'مساعد الذكاء الاصطناعي (AI)' : 'AI Assistant'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {plan.features?.voice_transcription ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      )}
+                      <span className={plan.features?.voice_transcription ? 'font-medium text-foreground' : 'text-muted-foreground line-through'}>
+                        {isAr ? 'فهم الرسائل الصوتية (Voice STT)' : 'Voice STT'}
                       </span>
                     </div>
 
@@ -880,7 +908,22 @@ export default function AdminPlansPage() {
                   }
                   className="rounded border-border text-amber-500"
                 />
-                <span className="font-semibold text-foreground">🤖 {isAr ? 'الذكاء الاصطناعي (AI)' : 'Gemini AI Assistant'}</span>
+                <span className="font-semibold text-foreground">🤖 {isAr ? 'الذكاء الاصطناعي (AI)' : 'AI Assistant'}</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
+                <input
+                  type="checkbox"
+                  checked={!!editingPlan.features?.voice_transcription}
+                  onChange={(e) =>
+                    setEditingPlan({
+                      ...editingPlan,
+                      features: { ...editingPlan.features, voice_transcription: e.target.checked },
+                    })
+                  }
+                  className="rounded border-border text-amber-500"
+                />
+                <span className="font-semibold text-foreground">🎙️ {isAr ? 'فهم الصوت (Voice STT)' : 'Voice STT'}</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-border/60 hover:bg-muted/40">
