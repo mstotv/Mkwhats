@@ -480,36 +480,48 @@ export async function fetchEvolutionMediaBase64(args: {
   messageKey: { remoteJid: string; fromMe: boolean; id: string }
   message: Record<string, unknown>
 }): Promise<{ base64: string; mimetype?: string } | null> {
+  const keysToTry: string[] = []
+  if (args.instanceApiKey) keysToTry.push(args.instanceApiKey)
   try {
-    let apiKey = args.instanceApiKey
-    try {
-      apiKey = getEvolutionGlobalApiKey()
-    } catch {
-      // fallback to instance key if global key not set
-    }
+    const gKey = getEvolutionGlobalApiKey()
+    if (gKey && !keysToTry.includes(gKey)) keysToTry.push(gKey)
+  } catch {}
 
-    const data = await evolutionFetch<{ base64?: string; mimetype?: string }>(
-      `/chat/getBase64FromMediaMessage/${args.instanceName}`,
-      {
-        method: 'POST',
-        apiKey,
-        body: JSON.stringify({
-          message: {
-            key: args.messageKey,
-            message: args.message,
-          },
-          convertToMp4: false,
-        }),
+  for (const apiKey of keysToTry) {
+    try {
+      const data = await evolutionFetch<{
+        base64?: string
+        mimetype?: string
+        data?: { base64?: string; mimetype?: string }
+        media?: string
+      }>(
+        `/chat/getBase64FromMediaMessage/${args.instanceName}`,
+        {
+          method: 'POST',
+          apiKey,
+          body: JSON.stringify({
+            message: {
+              key: args.messageKey,
+              message: args.message,
+            },
+            convertToMp4: false,
+          }),
+        }
+      )
+
+      const rawBase64 = data?.base64 ?? data?.data?.base64 ?? (data as any)?.media ?? null
+      if (rawBase64) {
+        return {
+          base64: rawBase64,
+          mimetype: data?.mimetype ?? data?.data?.mimetype,
+        }
       }
-    )
-    if (data?.base64) {
-      return { base64: data.base64, mimetype: data.mimetype }
+    } catch (err) {
+      console.warn(`[fetchEvolutionMediaBase64] attempt with key failed:`, err instanceof Error ? err.message : String(err))
     }
-    return null
-  } catch (err) {
-    console.warn('[fetchEvolutionMediaBase64] failed:', err)
-    return null
   }
+
+  return null
 }
 
 // ─── Webhook payload types ────────────────────────────────────

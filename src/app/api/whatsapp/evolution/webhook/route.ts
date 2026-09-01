@@ -532,25 +532,32 @@ async function extractAndProcessMedia(
     caption = m.imageMessage.caption ?? null
     directUrl = m.imageMessage.url ?? null
     mimetype = m.imageMessage.mimetype ?? 'image/jpeg'
-    payloadBase64 = (m.imageMessage as any).base64 ?? (m as any).base64 ?? null
+    payloadBase64 = (m.imageMessage as any).base64 ?? (m as any).base64 ?? (msg as any).base64 ?? (msg as any).data?.base64 ?? null
   } else if (m.videoMessage) {
     mediaType = 'video'
     caption = m.videoMessage.caption ?? null
     directUrl = m.videoMessage.url ?? null
     mimetype = m.videoMessage.mimetype ?? 'video/mp4'
-    payloadBase64 = (m.videoMessage as any).base64 ?? (m as any).base64 ?? null
+    payloadBase64 = (m.videoMessage as any).base64 ?? (m as any).base64 ?? (msg as any).base64 ?? (msg as any).data?.base64 ?? null
   } else if (m.documentMessage) {
     mediaType = 'document'
     caption = m.documentMessage.fileName ?? null
     fileName = m.documentMessage.fileName ?? null
     directUrl = m.documentMessage.url ?? null
     mimetype = m.documentMessage.mimetype ?? 'application/pdf'
-    payloadBase64 = (m.documentMessage as any).base64 ?? (m as any).base64 ?? null
+    payloadBase64 = (m.documentMessage as any).base64 ?? (m as any).base64 ?? (msg as any).base64 ?? (msg as any).data?.base64 ?? null
   } else if (m.audioMessage) {
     mediaType = 'audio'
     directUrl = m.audioMessage.url ?? null
     mimetype = m.audioMessage.mimetype ?? 'audio/ogg'
-    payloadBase64 = (m.audioMessage as any).base64 ?? (m as any).base64 ?? null
+    const audioAny = m.audioMessage as any
+    payloadBase64 =
+      audioAny.base64 ??
+      (audioAny.url?.startsWith('data:') ? audioAny.url : null) ??
+      (m as any).base64 ??
+      (msg as any).base64 ??
+      (msg as any).data?.base64 ??
+      null
   } else if (m.locationMessage) {
     return {
       contentType: 'location',
@@ -566,11 +573,11 @@ async function extractAndProcessMedia(
   console.log(`[DIAG][evolution/webhook] Media message detected | type: ${mediaType} | directUrl: ${directUrl?.slice(0, 60)} | payloadHasBase64: ${Boolean(payloadBase64)}`)
 
   let base64Data = payloadBase64
-  if (!base64Data && instanceName && instanceApiKey && msg.key) {
+  if (!base64Data && instanceName && msg.key) {
     console.log('[DIAG][evolution/webhook] Fetching media base64 from Evolution API...')
     const res = await fetchEvolutionMediaBase64({
       instanceName,
-      instanceApiKey,
+      instanceApiKey: instanceApiKey || '',
       messageKey: msg.key,
       message: m as Record<string, unknown>,
     })
@@ -583,7 +590,7 @@ async function extractAndProcessMedia(
     }
   }
 
-  let finalMediaUrl: string | null = directUrl
+  let finalMediaUrl: string | null = directUrl?.startsWith('http') && !directUrl.includes('whatsapp.net') ? directUrl : null
 
   if (base64Data) {
     try {
@@ -626,9 +633,12 @@ async function extractAndProcessMedia(
       // Voice STT Input Adapter: Transcribe audio if enabled
       if (mediaType === 'audio' && buffer.length > 0) {
         try {
+          console.log('[evolution/webhook] Checking Voice STT eligibility | buffer size:', buffer.length)
           const { allowed: planAllowsVoice } = await checkAccountFeature(accountId, 'voice_transcription')
+          console.log('[evolution/webhook] Plan allows voice_transcription:', planAllowsVoice)
           if (planAllowsVoice) {
             const aiConf = await loadAiConfig(supabaseAdmin(), accountId)
+            console.log('[evolution/webhook] AI Config loaded | isActive:', aiConf?.isActive, '| voiceTranscriptionEnabled:', aiConf?.voiceTranscriptionEnabled)
             if (aiConf?.isActive && aiConf?.voiceTranscriptionEnabled) {
               const transcription = await transcribeAudioMessage({
                 buffer,
@@ -637,7 +647,7 @@ async function extractAndProcessMedia(
                 apiKey: aiConf.apiKey,
               })
               if (transcription) {
-                console.log('[evolution/webhook] Voice message transcribed successfully | len:', transcription.length)
+                console.log('[evolution/webhook] Voice message transcribed successfully | text:', transcription)
                 return {
                   contentType: 'audio',
                   contentText: transcription,
@@ -645,7 +655,11 @@ async function extractAndProcessMedia(
                   mediaUrl: finalMediaUrl,
                 }
               }
+            } else {
+              console.warn('[evolution/webhook] Voice STT is not enabled in account AI Settings (tab=ai). Please toggle ON "فهم الرسائل الصوتية وتفريغها"')
             }
+          } else {
+            console.warn('[evolution/webhook] Account plan does not have voice_transcription feature enabled by Admin.')
           }
         } catch (sttErr) {
           console.error('[evolution/webhook] voice transcription skipped safely:', sttErr instanceof Error ? sttErr.message : String(sttErr))
