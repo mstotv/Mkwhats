@@ -12,9 +12,10 @@
     - معالج الأحداث (`event-processor.ts`): مطابقة وإنشاء جهات الاتصال في الـ CRM تلقائياً، إنشاء المحادثات، وتمرير متغيرات الطلب لمحرك الأتمتة.
     - فحص الاتصال الحي (`shopify/api.ts`, `woocommerce/api.ts`): فحص واختبار صحة المفاتيح وصلاحياتها مباشرة مع خادم المتجر مع دعم Basic Auth والـ Query Params Fallback.
   - **محرك الأتمتة والمتغيرات الذكية (`src/types/index.ts`, `trigger-meta.ts`, `engine.ts`)**:
-    - إضافة 5 مشغلات أتمتة جديدة: `ecommerce_order_created`, `ecommerce_order_paid`, `ecommerce_order_cancelled`, `ecommerce_order_fulfilled`, `ecommerce_customer_created`.
+    - إضافة 6 مشغلات أتمتة للمتاجر: `ecommerce_order_created`, `ecommerce_order_paid`, `ecommerce_order_cancelled`, `ecommerce_order_fulfilled`, `ecommerce_customer_created`, `ecommerce_cart_abandoned` (استرجاع السلات المتروكة).
     - دعم فلترة المشغلات بحسب نوع المتجر (Shopify / WooCommerce / Any).
-    - دعم المتغيرات الحية في الرسائل: `{{ customer.name }}`, `{{ customer.phone }}`, `{{ order.number }}`, `{{ order.total }}`, `{{ order.currency }}`, `{{ order.status }}`, `{{ product.name }}`.
+    - دعم المتغيرات الحية في الرسائل: `{{ customer.name }}`, `{{ customer.phone }}`, `{{ order.number }}`, `{{ order.total }}`, `{{ order.currency }}`, `{{ order.status }}`, `{{ product.name }}`, `{{ recovery_url }}`, `{{ checkout_url }}`, `{{ cart.total }}`.
+    - دعم استرجاع السلات المتروكة المباشر مع إضافات ووكومرس (CartFlows / Cart Abandonment Recovery) بالتعرف على حقول `phone_number` و `checkout_url` وتوليد محادثات فورية للعملاء وإرسال الرسائل التحفيزية وكوبونات الخصم.
   - **واجهات المستخدم ولوحة التحكم (`IntegrationsPanel` & `AutomationBuilder`)**:
     - إضافة قسم **Integrations (التكاملات والمتاجر)** في إعدادات المنصة (`Settings → Integrations`) لربط واختبار وفصل المتاجر ونسخ روابط Webhook Delivery URL.
     - إضافة زر ونافذة تفاعلية **"دليل الربط (Setup Guide)"** لشرح خطوات استخراج المفاتيح وضبط الويب هوك بالتفصيل لووكومرس وشوبيفاي.
