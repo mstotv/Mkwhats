@@ -22,6 +22,7 @@ import { PlanUsagePanel } from '@/components/settings/plan-usage-panel';
 import { SupportPanel } from '@/components/settings/support-panel';
 import { TelegramSettingsPanel } from '@/components/settings/telegram-settings-panel';
 import { AppointmentsSettings } from '@/components/settings/appointments-settings';
+import { IntegrationsPanel } from '@/components/settings/integrations-panel';
 import {
   resolveSection,
   type SettingsSection,
@@ -83,6 +84,7 @@ function SettingsPageInner() {
     appointments: <AppointmentsSettings />,
     whatsapp: <WhatsAppConfig />,
     telegram: <TelegramSettingsPanel />,
+    integrations: <IntegrationsPanel />,
     templates: <TemplateManager />,
     'quick-replies': <QuickRepliesManager />,
     fields: <FieldsAndTagsPanel />,

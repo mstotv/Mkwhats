@@ -39,7 +39,27 @@ export const TRIGGER_META: Record<AutomationTriggerType, TriggerMeta> = {
     label: 'Button / List Reply',
     pillClass: 'border-pink-500/30 bg-pink-500/10 text-pink-300',
   },
-}
+  ecommerce_order_created: {
+    label: 'E-commerce: Order Created',
+    pillClass: 'border-orange-500/30 bg-orange-500/10 text-orange-300',
+  },
+  ecommerce_order_paid: {
+    label: 'E-commerce: Order Paid',
+    pillClass: 'border-green-500/30 bg-green-500/10 text-green-300',
+  },
+  ecommerce_order_cancelled: {
+    label: 'E-commerce: Order Cancelled',
+    pillClass: 'border-red-500/30 bg-red-500/10 text-red-300',
+  },
+  ecommerce_order_fulfilled: {
+    label: 'E-commerce: Order Fulfilled',
+    pillClass: 'border-teal-500/30 bg-teal-500/10 text-teal-300',
+  },
+  ecommerce_customer_created: {
+    label: 'E-commerce: Customer Created',
+    pillClass: 'border-violet-500/30 bg-violet-500/10 text-violet-300',
+  },
+};
 
 export function triggerMeta(t: AutomationTriggerType | string): TriggerMeta {
   return (

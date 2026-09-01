@@ -643,13 +643,28 @@ async function resolveConversationId(args: ExecuteArgs): Promise<string> {
     .eq('contact_id', args.contactId)
     .maybeSingle()
   if (error) throw new Error(`conversation lookup failed: ${error.message}`)
-  if (!data?.id) {
-    const prefix = args.triggerEvent === 'tag_added'
-      ? 'tag_added automation cannot send'
-      : 'cannot send'
-    throw new Error(`${prefix}: contact has no existing conversation`)
+  if (data?.id) {
+    return data.id as string
   }
-  return data.id as string
+
+  // If no conversation exists for the contact in this account yet
+  // (e.g. newly created e-commerce contact or outbound trigger), auto-create one.
+  const { data: newConv, error: createErr } = await supabaseAdmin()
+    .from('conversations')
+    .insert({
+      account_id: args.automation.account_id,
+      user_id: args.automation.user_id,
+      contact_id: args.contactId,
+      status: 'open',
+      unread_count: 0,
+    })
+    .select('id')
+    .single()
+
+  if (createErr || !newConv) {
+    throw new Error(`cannot create conversation for contact: ${createErr?.message || 'unknown error'}`)
+  }
+  return newConv.id as string
 }
 
 export function triggerMatches(automation: Automation, ctx: AutomationContext | undefined): boolean {
@@ -681,6 +696,16 @@ export function triggerMatches(automation: Automation, ctx: AutomationContext | 
     const cfg = automation.trigger_config as TagTriggerConfig
     const tagId = ctx?.tag_id
     return Boolean(tagId && cfg?.tag_id && cfg.tag_id === tagId)
+  }
+
+  if (automation.trigger_type.startsWith('ecommerce_')) {
+    const cfg = automation.trigger_config as { provider?: string; store_id?: string } | undefined
+    if (cfg?.provider && cfg.provider !== 'any') {
+      if (ctx?.vars?.provider && ctx.vars.provider !== cfg.provider) return false
+    }
+    if (cfg?.store_id) {
+      if (ctx?.vars?.store_id && ctx.vars.store_id !== cfg.store_id) return false
+    }
   }
 
   return true
@@ -745,9 +770,16 @@ function waitMs(cfg: WaitStepConfig): number {
 
 function interpolate(s: string, args: ExecuteArgs): string {
   return s.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, key) => {
-    const [ns, prop] = String(key).split('.')
+    const [ns, ...rest] = String(key).split('.')
+    const prop = rest.join('.')
     if (ns === 'message' && prop === 'text') return String(args.context.message_text ?? '')
     if (ns === 'vars' && prop) return String(args.context.vars?.[prop] ?? '')
+    if ((ns === 'customer' || ns === 'order' || ns === 'product') && prop) {
+      return String(args.context.vars?.[`${ns}.${prop}`] ?? '')
+    }
+    if (args.context.vars && key in args.context.vars) {
+      return String(args.context.vars[key] ?? '')
+    }
     return ''
   })
 }

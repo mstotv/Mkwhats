@@ -1,5 +1,28 @@
 # حالة المشروع - آخر تحديث: [1/9/2026]
 
+- ✅ **إضافة تكاملات المتاجر الإلكترونية (WooCommerce & Shopify E-Commerce Integrations)**:
+  - **قواعد البيانات وتعدد المستأجرين (`supabase/migrations/082_ecommerce_integrations.sql`)**:
+    - إنشاء جدول `ecommerce_stores` لإدارة المتاجر وحفظ بيانات الربط والمفاتيح مشفرة بـ AES-256-GCM.
+    - إنشاء جدول `ecommerce_webhook_events` لسجل الأحداث ومنع التكرار (Idempotency) عبر قيد فريد `UNIQUE(store_id, provider_event_id, event_type)`.
+    - تفعيل حماية RLS لجميع الجداول باستخدام `is_account_member(account_id)`.
+    - تحديث ميزات الخطط `woocommerce_integration` (لخطتي Pro و Enterprise) و `shopify_integration` (لخطة Enterprise).
+  - **طبقة التكامل والخدمات الأساسية (`src/lib/ecommerce/`)**:
+    - تطبيع الأحداث (`normalize.ts`): تحويل أحداث ووكومرس وشوبيفاي إلى نسق قياسي موحد (`NormalizedEcommerceEvent`).
+    - أمان التشفير والتحقق (`store-crud.ts`, `shopify/verify.ts`, `woocommerce/verify.ts`): تشفير وفك تشفير المفاتيح، والتحقق الأمني من توقيعات الـ HMAC-SHA256 لأحداث الويب هوك.
+    - معالج الأحداث (`event-processor.ts`): مطابقة وإنشاء جهات الاتصال في الـ CRM تلقائياً، إنشاء المحادثات، وتمرير متغيرات الطلب لمحرك الأتمتة.
+    - فحص الاتصال الحي (`shopify/api.ts`, `woocommerce/api.ts`): فحص واختبار صحة المفاتيح وصلاحياتها مباشرة مع خادم المتجر مع دعم Basic Auth والـ Query Params Fallback.
+  - **محرك الأتمتة والمتغيرات الذكية (`src/types/index.ts`, `trigger-meta.ts`, `engine.ts`)**:
+    - إضافة 5 مشغلات أتمتة جديدة: `ecommerce_order_created`, `ecommerce_order_paid`, `ecommerce_order_cancelled`, `ecommerce_order_fulfilled`, `ecommerce_customer_created`.
+    - دعم فلترة المشغلات بحسب نوع المتجر (Shopify / WooCommerce / Any).
+    - دعم المتغيرات الحية في الرسائل: `{{ customer.name }}`, `{{ customer.phone }}`, `{{ order.number }}`, `{{ order.total }}`, `{{ order.currency }}`, `{{ order.status }}`, `{{ product.name }}`.
+  - **واجهات المستخدم ولوحة التحكم (`IntegrationsPanel` & `AutomationBuilder`)**:
+    - إضافة قسم **Integrations (التكاملات والمتاجر)** في إعدادات المنصة (`Settings → Integrations`) لربط واختبار وفصل المتاجر ونسخ روابط Webhook Delivery URL.
+    - إضافة زر ونافذة تفاعلية **"دليل الربط (Setup Guide)"** لشرح خطوات استخراج المفاتيح وضبط الويب هوك بالتفصيل لووكومرس وشوبيفاي.
+    - دعم مشغلات المتاجر وفلاترها بالكامل في منشئ الأتمتة (`Automation Builder`).
+    - إضافة الترجمات الكاملة بالعربية والإنجليزية في `messages/ar.json` و `messages/en.json`.
+  - **الاختبارات والجودة**:
+    - حزمة اختبارات وحدة متخصصة في `src/lib/ecommerce/ecommerce.test.ts` واجتياز جميع الاختبارات (665 tests passed) مع اجتياز فحص الـ TypeScript بنجاح.
+
 - ✅ **نظام إدارة وتعديل صفحة الهبوط وشبكة المميزات بالكامل من لوحة التحكم (Landing Page & Bento Grid Full CMS)**:
   - **لوحة تحكم الأدمن ([`landing-settings-client.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/landing-settings/landing-settings-client.tsx))**:
     - إضافة تبويب مخصص بالكامل لإدارة المميزات: **"المميزات Bento" (Features & Bento Grid Management)**.

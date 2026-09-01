@@ -924,6 +924,26 @@
         "time_based": {
           "label": "Time-Based",
           "hint": "On a recurring schedule"
+        },
+        "ecommerce_order_created": {
+          "label": "E-Commerce: Order Created",
+          "hint": "When a new order is placed in your online store"
+        },
+        "ecommerce_order_paid": {
+          "label": "E-Commerce: Order Paid",
+          "hint": "When an order payment is marked successful or processing"
+        },
+        "ecommerce_order_cancelled": {
+          "label": "E-Commerce: Order Cancelled",
+          "hint": "When an order is cancelled or refunded"
+        },
+        "ecommerce_order_fulfilled": {
+          "label": "E-Commerce: Order Fulfilled",
+          "hint": "When an order is shipped or marked completed"
+        },
+        "ecommerce_customer_created": {
+          "label": "E-Commerce: Customer Created",
+          "hint": "When a new customer registers on your store"
         }
       },
       "trigger": "Trigger",
@@ -1297,6 +1317,7 @@
       "appointments": "Appointments",
       "whatsapp": "WhatsApp",
       "telegram": "Telegram Bot",
+      "integrations": "Integrations",
       "templates": "Templates",
       "quick-replies": "Quick replies",
       "fields": "Fields & tags",

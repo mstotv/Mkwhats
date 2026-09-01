@@ -944,6 +944,26 @@
         "time_based": {
           "label": "Time-Based",
           "hint": "On a recurring schedule"
+        },
+        "ecommerce_order_created": {
+          "label": "متجر إلكتروني: طلب جديد",
+          "hint": "عند إنشاء طلب جديد في متجرك الإلكتروني"
+        },
+        "ecommerce_order_paid": {
+          "label": "متجر إلكتروني: تم دفع الطلب",
+          "hint": "عند تأكيد دفع الطلب بنجاح"
+        },
+        "ecommerce_order_cancelled": {
+          "label": "متجر إلكتروني: تم إلغاء الطلب",
+          "hint": "عند إلغاء الطلب أو استرجاعه"
+        },
+        "ecommerce_order_fulfilled": {
+          "label": "متجر إلكتروني: تم تنفيذ الطلب",
+          "hint": "عند شحن الطلب أو اكتماله"
+        },
+        "ecommerce_customer_created": {
+          "label": "متجر إلكتروني: عميل جديد",
+          "hint": "عند تسجيل عميل جديد في متجرك"
         }
       },
       "trigger": "Trigger",
@@ -1289,6 +1309,7 @@
       "appointments": "المواعيد وساعات العمل",
       "whatsapp": "إعدادات الواتساب",
       "telegram": "إعدادات التليجرام",
+      "integrations": "التكاملات والمتاجر",
       "templates": "قوالب الرسائل",
       "quick-replies": "الردود السريعة",
       "fields": "الوسوم والحقول",

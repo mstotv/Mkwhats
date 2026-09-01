@@ -138,6 +138,11 @@ const TRIGGER_OPTIONS: { value: AutomationTriggerType }[] = [
   { value: "conversation_assigned" },
   { value: "tag_added" },
   { value: "time_based" },
+  { value: "ecommerce_order_created" },
+  { value: "ecommerce_order_paid" },
+  { value: "ecommerce_order_cancelled" },
+  { value: "ecommerce_order_fulfilled" },
+  { value: "ecommerce_customer_created" },
 ]
 
 function cid(): string {
@@ -878,8 +883,43 @@ function TriggerCard({
                 </p>
               </div>
             )}
+            {type.startsWith("ecommerce_") && (
+              <EcommerceTriggerConfigBlock config={config} onChange={onConfigChange} />
+            )}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+function EcommerceTriggerConfigBlock({
+  config,
+  onChange,
+}: {
+  config: Record<string, unknown>
+  onChange: (c: Record<string, unknown>) => void
+}) {
+  const provider = (config?.provider as string) || "any"
+
+  return (
+    <div className="space-y-2">
+      <div>
+        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+          Store Platform
+        </label>
+        <select
+          value={provider}
+          onChange={(e) => onChange({ ...config, provider: e.target.value })}
+          className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground focus:outline-none"
+        >
+          <option value="any">Any Connected Store (Shopify & WooCommerce)</option>
+          <option value="shopify">Shopify Only</option>
+          <option value="woocommerce">WooCommerce Only</option>
+        </select>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Optionally filter triggers to a specific platform.
+        </p>
       </div>
     </div>
   )

@@ -450,7 +450,13 @@ export type AutomationTriggerType =
   | 'time_based'
   /** Customer tapped a reply button / list row whose id matches; lets
    *  multi-step menus be chained across automations. */
-  | 'interactive_reply';
+  | 'interactive_reply'
+  /** E-commerce store events (migration 082) */
+  | 'ecommerce_order_created'
+  | 'ecommerce_order_paid'
+  | 'ecommerce_order_cancelled'
+  | 'ecommerce_order_fulfilled'
+  | 'ecommerce_customer_created';
 
 export type AutomationStepType =
   | 'send_message'
@@ -490,12 +496,18 @@ export interface InteractiveReplyTriggerConfig {
   reply_ids: string[];
 }
 
+export interface EcommerceAutomationTriggerConfig {
+  provider?: 'shopify' | 'woocommerce' | 'any';
+  store_id?: string;
+}
+
 export type AutomationTriggerConfig =
   | Record<string, never>
   | KeywordMatchTriggerConfig
   | TagTriggerConfig
   | TimeBasedTriggerConfig
   | InteractiveReplyTriggerConfig
+  | EcommerceAutomationTriggerConfig
   | Record<string, unknown>;
 
 export interface SendMessageStepConfig {
