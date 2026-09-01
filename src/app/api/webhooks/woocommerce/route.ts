@@ -1,4 +1,4 @@
-import { NextResponse, after } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/automations/admin-client';
 import { getRawStoreById, getDecryptedCredentials } from '@/lib/ecommerce/store-crud';
 import { verifyWooCommerceWebhook } from '@/lib/ecommerce/woocommerce/verify';
@@ -18,6 +18,7 @@ export async function POST(request: Request) {
     const storeId = url.searchParams.get('store_id');
 
     if (!storeId) {
+      console.warn('[webhooks/woocommerce] Missing store_id in query params');
       return NextResponse.json({ error: 'Missing store_id parameter' }, { status: 400 });
     }
 
@@ -29,14 +30,18 @@ export async function POST(request: Request) {
       request.headers.get('x-wc-webhook-id') ||
       '';
 
+    console.log(`[webhooks/woocommerce] Received webhook for store ${storeId}, topic: ${topic}, deliveryId: ${deliveryId}`);
+
     const db = supabaseAdmin();
     const store = await getRawStoreById(db, storeId);
 
     if (!store || store.provider !== 'woocommerce') {
+      console.warn(`[webhooks/woocommerce] Store not found: ${storeId}`);
       return NextResponse.json({ error: 'Store not found or invalid provider' }, { status: 404 });
     }
 
     if (store.status === 'disconnected') {
+      console.warn(`[webhooks/woocommerce] Store is disconnected: ${storeId}`);
       return NextResponse.json({ error: 'Store is disconnected' }, { status: 400 });
     }
 
@@ -70,26 +75,30 @@ export async function POST(request: Request) {
     }
 
     // Ignore ping webhook if payload is just verification ping
-    if (topic === 'ping' || payload.webhook_id && !payload.id && !payload.billing) {
+    if (topic === 'ping' || (payload.webhook_id && !payload.id && !payload.billing)) {
+      console.log(`[webhooks/woocommerce] Ping received for store ${storeId}`);
       return NextResponse.json({ ok: true, ping: true });
     }
 
     // Normalize event
     const normalized = normalizeWooCommercePayload(topic, payload, store.id, deliveryId);
     if (!normalized) {
+      console.log(`[webhooks/woocommerce] Event ignored or unhandled: topic ${topic}`);
       return NextResponse.json({ ok: true, ignored: true });
     }
 
-    // Process event asynchronously in after() block
-    after(async () => {
-      try {
-        await processNormalizedEcommerceEvent(normalized, store.account_id);
-      } catch (err) {
-        console.error('[webhooks/woocommerce] Background processing failed:', err);
-      }
-    });
+    console.log(`[webhooks/woocommerce] Normalized event: ${normalized.event}, customer: ${normalized.customer.phone || normalized.customer.name}, order: ${normalized.order?.number}`);
 
-    return NextResponse.json({ ok: true, received: true });
+    // Process event directly and return result
+    const processResult = await processNormalizedEcommerceEvent(normalized, store.account_id);
+    console.log(`[webhooks/woocommerce] Process result:`, processResult);
+
+    return NextResponse.json({
+      ok: true,
+      received: true,
+      status: processResult.status,
+      trigger: processResult.automationTrigger,
+    });
   } catch (err) {
     console.error('[webhooks/woocommerce] Error handling webhook:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

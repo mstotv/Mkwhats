@@ -106,14 +106,16 @@ export function normalizeWooCommercePayload(
 
   const status = String(rawPayload.status || '').toLowerCase();
 
-  if (topic.includes('order.created')) {
+  const topicLower = topic.toLowerCase();
+
+  if (topicLower.includes('order.created') || topicLower.includes('new_order') || topicLower.includes('order_created')) {
     eventType = 'order.created';
-  } else if (topic.includes('order.updated') || topic.includes('order.')) {
+  } else if (topicLower.includes('order.updated') || topicLower.includes('order.')) {
     if (status === 'completed') eventType = 'order.fulfilled';
     else if (status === 'cancelled' || status === 'refunded' || status === 'failed') eventType = 'order.cancelled';
     else if (status === 'processing' || status === 'on-hold') eventType = 'order.paid';
     else eventType = 'order.created';
-  } else if (topic.includes('customer.created')) {
+  } else if (topicLower.includes('customer.created') || topicLower.includes('customer_created')) {
     eventType = 'customer.created';
   } else {
     eventType = 'order.created';
