@@ -23,10 +23,12 @@ import {
   Layers,
   Lock,
   Bell,
+  ShoppingBag,
 } from 'lucide-react'
 import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { LandingFooter } from '@/components/landing/landing-footer'
 import { LandingHeroMockup } from '@/components/landing/landing-hero-mockup'
+import { LandingEcommerceSection } from '@/components/landing/landing-ecommerce-section'
 import { FloatingSupport } from '@/components/landing/floating-support'
 
 export const dynamic = 'force-dynamic'
@@ -70,6 +72,8 @@ function getFeatureIcon(iconName: string) {
       return <Lock {...smIconProps} />
     case 'Bell':
       return <Bell {...smIconProps} />
+    case 'ShoppingBag':
+      return <ShoppingBag {...smIconProps} />
     case 'Globe':
       return <Globe {...smIconProps} />
     default:
@@ -237,7 +241,9 @@ export default async function LandingPage() {
     { name: 'HubSpot', logo_url: 'https://cdn.simpleicons.org/hubspot/FF7A59' },
   ]
 
-  const partners = (dbPartners && dbPartners.length > 0) ? dbPartners : defaultPartners
+  const partners = (Array.isArray(settings?.partners) && settings.partners.length > 0)
+    ? settings.partners
+    : ((dbPartners && dbPartners.length > 0) ? dbPartners : defaultPartners)
   const ArrowIcon = isAr ? ArrowLeft : ArrowRight
 
   return (
@@ -316,7 +322,10 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── 4. Bento Grid (Dynamic CMS Features) ── */}
+      {/* ── 4. E-Commerce Integration Showcase (WooCommerce & Shopify) ── */}
+      <LandingEcommerceSection isAr={isAr} userLoggedIn={Boolean(user)} content={settings?.ecommerce_content || settings?.how_it_works_content} />
+
+      {/* ── 5. Bento Grid (Dynamic CMS Features) ── */}
       <section id="features" className="py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-16">
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <h2 className="font-serif text-3xl sm:text-5xl font-bold text-[#1B1C1C] dark:text-white">

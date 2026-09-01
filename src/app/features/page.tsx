@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { LandingFooter } from '@/components/landing/landing-footer'
+import { LandingEcommerceSection } from '@/components/landing/landing-ecommerce-section'
 import { FloatingSupport } from '@/components/landing/floating-support'
 
 export const dynamic = 'force-dynamic'
@@ -206,6 +207,9 @@ export default async function FeaturesPage() {
           </div>
         </div>
       </section>
+
+      {/* ── E-Commerce & Store Integrations (WooCommerce & Shopify) ── */}
+      <LandingEcommerceSection isAr={isAr} userLoggedIn={Boolean(user)} />
 
       {/* ── 4. Built for High-Velocity Businesses ─────────────── */}
       <section className="py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-12">

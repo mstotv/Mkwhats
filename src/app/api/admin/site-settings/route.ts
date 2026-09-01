@@ -11,8 +11,13 @@ export async function GET() {
       .limit(1)
       .maybeSingle();
 
+    const formattedData = data ? {
+      ...data,
+      ecommerce_content: data.ecommerce_content || data.how_it_works_content,
+    } : null;
+
     return NextResponse.json({
-      settings: data ?? {
+      settings: formattedData ?? {
         platform_name: '',
         platform_name_ar: '',
         platform_name_en: '',
@@ -97,7 +102,12 @@ export async function POST(req: Request) {
 
     if (payload.hero_content !== undefined) updateObj.hero_content = payload.hero_content;
     if (payload.features_content !== undefined) updateObj.features_content = payload.features_content;
-    if (payload.how_it_works_content !== undefined) updateObj.how_it_works_content = payload.how_it_works_content;
+    if (payload.ecommerce_content !== undefined) {
+      updateObj.ecommerce_content = payload.ecommerce_content;
+      updateObj.how_it_works_content = payload.ecommerce_content; // Guarantees persistence even if new column migration is pending
+    } else if (payload.how_it_works_content !== undefined) {
+      updateObj.how_it_works_content = payload.how_it_works_content;
+    }
     if (payload.testimonials !== undefined) updateObj.testimonials = payload.testimonials;
     if (payload.faqs !== undefined) updateObj.faqs = payload.faqs;
     if (payload.cta_banner_content !== undefined) updateObj.cta_banner_content = payload.cta_banner_content;
@@ -110,25 +120,46 @@ export async function POST(req: Request) {
     if (payload.support_floating_enabled !== undefined) updateObj.support_floating_enabled = payload.support_floating_enabled;
     if (payload.user_panel_support_enabled !== undefined) updateObj.user_panel_support_enabled = payload.user_panel_support_enabled;
 
-    const { error } = await supabase
+    let { error } = await supabase
       .from('site_settings')
       .update(updateObj)
       .eq('id', targetId);
 
     if (error) {
-      console.warn('[SiteSettingsAPI] Column update note:', error.message);
+      console.warn('[SiteSettingsAPI] First update attempt note:', error.message);
 
-      // Graceful fallback to updating platform_name if new columns are pending migration
-      await supabase
+      // If ecommerce_content column does not exist yet in DB schema, retry without ecommerce_content column
+      // (how_it_works_content will safely retain the ecommerce payload)
+      if (updateObj.ecommerce_content !== undefined) {
+        delete updateObj.ecommerce_content;
+      }
+
+      const retryRes = await supabase
         .from('site_settings')
-        .update({ platform_name: payload.platform_name || 'wacrm' })
+        .update(updateObj)
         .eq('id', targetId);
+
+      if (retryRes.error) {
+        console.warn('[SiteSettingsAPI] Retry update error:', retryRes.error.message);
+      }
     }
+
+    const { data: refreshedSettings } = await supabase
+      .from('site_settings')
+      .select('*')
+      .limit(1)
+      .maybeSingle();
+
+    // Ensure ecommerce_content is populated from how_it_works_content if column was pending
+    const finalSettings = refreshedSettings ? {
+      ...refreshedSettings,
+      ecommerce_content: refreshedSettings.ecommerce_content || refreshedSettings.how_it_works_content,
+    } : null;
 
     return NextResponse.json({
       success: true,
-      settings: (await createServiceClient().from('site_settings').select('*').limit(1).maybeSingle()).data,
-      message: 'تم حفظ إعدادات النظام العامة وبوابات الدفع (Stripe & Plisio) بنجاح 🎉',
+      settings: finalSettings,
+      message: 'تم حفظ إعدادات صفحة الهبوط وقسم المتاجر بنجاح 🎉',
     });
   } catch (err) {
     console.error('[SiteSettingsAPI] POST exception:', err);

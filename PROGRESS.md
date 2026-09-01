@@ -1,5 +1,32 @@
 # حالة المشروع - آخر تحديث: [1/9/2026]
 
+- ✅ **ربط وتكامل إدارة شريط الشركاء والمنصات (Partners & Integrations Bar CMS)**:
+  - **صفحة اللاندينغ بيج ([`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/page.tsx))**:
+    - ربط قسم `SEAMLESSLY INTEGRATES WITH TOP PLATFORMS` مباشرة بقائمة الشركاء `settings.partners` القادمة من لوحة تحكم الأدمن.
+    - دعم العرض الفوري والتلقائي لجميع المنصات والشعارات المضافة أو المعدلة أو المحذوفة من الأدمن.
+  - **لوحة تحكم الأدمن ([`landing-settings-client.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/landing-settings/landing-settings-client.tsx) & [`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/landing-settings/page.tsx))**:
+    - تحميل كامل قائمة المنصات الـ 16 الافتراضية تلقائياً عند فتح تبويب "الشركاء" (Shopify, WooCommerce, Meta, Stripe, WhatsApp, Telegram, n8n, Zapier, AliExpress, Alibaba, Instagram, Facebook, Google, Amazon, Salesforce, PayPal).
+    - إضافة أزرار التحريك لأعلى ولأسفل (Reorder Buttons ↑ / ↓) لترتيب ظهور الشركات في الصفحة الرئيسية.
+    - دعم إضافة أي شركة أو منصة جديدة (`+ إضافة شريك جديد`) مع معاينة حية للشعار وحذف أي منصة فورياً.
+
+
+- ✅ **نظام إدارة وتعديل قسم المتاجر ومحاكاة إشعارات الواتساب ثلاثية الأبعاد (3D WhatsApp Notification Mockup & E-Commerce Full CMS)**:
+  - **التصميم البصري والمحاكاة ثلاثية الأبعاد ([`landing-ecommerce-section.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/landing/landing-ecommerce-section.tsx))**:
+    - **استوديو الإشعارات الداكن (Studio Matte Spotlight Container)**: تصميم صندوق داكن بلون الفحم غير اللامع (`#14171B`) مع إضاءة محيطية خافتة وتأثيرات العمق ثلاثي الأبعاد.
+    - **البطاقات المتراصة ثلاثية الأبعاد (3D Frosted Glass Stacked Cards)**:
+      1. **البطاقة العلوية (Top Layer)**: زجاج مصنفر شبه شفاف (`bg-white/[0.08]` و `backdrop-blur-xl`) متراجعة للأعلى وللخلف مع طابع زمني وصورة منتج.
+      2. **البطاقة المركزية البارزة (Hero Focal Card)**: بطاقة بيضاء ناصعة بارزة للأمام مع ظل واقعي عميق `shadow-[0_25px_60px_-10px_rgba(0,0,0,0.6)]`، حافة جانبية مضيئة بتدرج كهرماني/زمردي، أيقونة واتساب الخضراء البارزة مع ظل منبثق `shadow-[0_6px_16px_rgba(37,211,102,0.4)]`، وشارة التوثيق الزرقاء (`Verified Badge`)، وتأثير حركة سلسة عند التحويم `hover:scale-[1.02]`.
+      3. **البطاقة السفلية (Bottom Layer)**: زجاج مصنفر شبه شفاف متراجعة للأسفل وللخلف.
+    - **زر إجراء الربط (Interactive CTA Button)**: زر زمردي/تيل داكن في أسفل الصندوق (`Connect Your Store Now →` / `اربط متجرك الآن مجاناً`) مع تأثيرات تحويم وظلال.
+  - **التحكم الكامل بالإشعارات والمتاجر من لوحة تحكم الأدمن ([`landing-settings-client.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/landing-settings/landing-settings-client.tsx) & [`ecommerce-tab.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/landing-settings/ecommerce-tab.tsx))**:
+    - إضافة تبويب **"المتاجر 🛒"** في الأدمن بانل لإدارة جميع عناصر الصورة التوضيحية:
+      - **إدارة محاكاة إشعارات الواتساب**: تعديل أسماء العملاء (سارة / Sarah, إيميلي / Emily, محمد / Michael)، وحالات الطلبات وعناوينها، ونصوص الرسائل، والطوابع الزمنية، وروابط صور المنتجات المصغرة مع صندوق معاينة مصغرة حية للصور (Live Thumbnail Preview).
+      - **إدارة زر الدعوة للربط (CTA)**: تعديل نصه بالعربية والإنجليزية والرابط وإمكانية إخفائه/إظهاره.
+      - **إدارة بطاقات المتاجر (WooCommerce & Shopify & Custom Stores)**: إضافة متاجر جديدة غير محدودة، تعديل ألوانها ونقاط مميزاتها، وشارات الربط، وإعادة ترتيبها أو حذفها.
+      - **إدارة الهيدر والمقاييس**: تعديل الشارة والعناوين والوصف وأرقام المقاييس السفلية (`+30%`, `< 1 sec`, `100% No-Code`) باللغتين العربية 🇸🇦 والإنجليزية 🇬🇧.
+  - **قواعد البيانات والربط الحي ([`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/page.tsx) & [`083_ecommerce_section_cms.sql`](file:///c:/Users/Mustafa/Desktop/mk%20whats/supabase/migrations/083_ecommerce_section_cms.sql))**:
+    - تخزين وتحديث البيانات واسترجاعها فورياً في `LandingPage` مع دعم الـ Fallback الشامل لضمان دوام عمل التصميم الفخم دون انقطاع.
+
 - ✅ **منظومة تكامل المتاجر الإلكترونية واسترجاع السلات المتروكة (WooCommerce & Shopify & Abandoned Cart Recovery)**:
   - **قواعد البيانات وتعدد المستأجرين (`supabase/migrations/082_ecommerce_integrations.sql`)**:
     - إنشاء جدول `ecommerce_stores` لإدارة المتاجر وحفظ بيانات الربط والمفاتيح مشفرة بـ AES-256-GCM (عزل كامل لكل حساب `account_id`).
@@ -441,6 +468,17 @@
   - **مايقريشن `072_add_user_panel_support_enabled.sql`**: إضافة عمود `user_panel_support_enabled` JSONB.
   - **مفاتيح التحكم بالأدمن**: إضافة مفاتيح تفعيل/تعطيل لكل من واتساب، تلغرام، والبريد الإلكتروني على حدة للوحة المستخدمين.
   - **الالتزام بالرؤية باللوحة**: إخفاء/إظهار قنوات الدعم تلقائياً في `support-panel.tsx` بناءً على إعدادات الأدمن.
+
+- ✅ **دليل ربط ووكومرس والسلات المتروكة والأتمتة في الإعدادات (`WooCommerce & Cart Abandonment Integration Guide`)**:
+  - **إصلاح تشفير الملف (`UTF-8`)**: حل مشكلة الـ UTF-8 Stream Decoding Error في `integrations-panel.tsx` وإصلاح البناء مع Next.js SWC Loader.
+  - **دليل ربط ووكومرس التفاعلي**: خطوات استخراج مفاتيح REST API بصلاحيات Read/Write وإعداد الـ Webhooks لحدث `Order created`.
+  - **تعليمات أتمتة تأكيد الطلبات**: شرح كامل لخطوات إنشاء ووركفلو `E-Commerce: Order Created` مع المتغيرات التلقائية (`{{ customer.name }}`, `{{ order.number }}`, `{{ order.total }}`).
+  - **نظام السلات المتروكة (`Cart Abandonment Recovery`)**: إضافة خطوات تثبيت وضبط إضافة ووكومرس مع ربط الـ Webhook المباشر، وتوثيق طريقة إنشاء أتمتة `E-Commerce: Cart Abandoned` بالمنصة مع رابط الاسترجاع الذكي `{{ recovery_url }}` لاستعادة الزبائن الذين ملأوا بياناتهم ولم يكملوا الشراء.
+
+- ✅ **قسم وميزات ربط ووكومرس وشوبيفاي في اللاندينج بيج (`E-Commerce Landing Showcase`)**:
+  - **مكون `LandingEcommerceSection`**: إنشاء قسم جمالي متكامل يعرض شعارات ووكومرس وشوبيفاي مع شارات الربط الفوري بدون كود (`1-Click No-Code Connect`).
+  - **محاكاة حية لرسائل الواتساب**: معاينة تفاعلية لرسائل تأكيد الطلبات (`Order Confirmation`) واسترجاع السلات المتروكة مع كود الخصم ورابط الاستعادة الذكي.
+  - **التكامل بالصفحات**: تضمين القسم في الصفحة الرئيسية (`src/app/page.tsx`) وصفحة المميزات (`src/app/features/page.tsx`) مع دعم كامل للغتين العربية والإنجليزية والوضعين الفاتح والداكن.
 
 ---
 

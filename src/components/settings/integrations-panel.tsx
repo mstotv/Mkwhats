@@ -219,22 +219,14 @@ export function IntegrationsPanel() {
     toast.success('Webhook URL copied to clipboard');
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <SettingsPanelHead
-        title="E-Commerce Integrations"
-        description="Connect your WooCommerce or Shopify online stores to trigger WhatsApp automations on orders and customer actions."
+        title="E-Commerce & Integrations"
+        description="Connect your online stores to automatically trigger WhatsApp messages on order creation, cart abandonment, and status updates."
       />
 
-      <div className="grid gap-6">
+      <div className="space-y-6">
         {/* WooCommerce Card */}
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -267,7 +259,7 @@ export function IntegrationsPanel() {
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Connect your WordPress / WooCommerce store via REST API keys.
+                  Connect your WordPress WooCommerce store via REST API keys and Webhooks.
                 </p>
               </div>
             </div>
@@ -522,12 +514,12 @@ export function IntegrationsPanel() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-2">
                   <label className="text-xs font-medium text-foreground">
-                    Store URL (e.g. yourstore.myshopify.com) <span className="text-destructive">*</span>
+                    Shopify Store URL <span className="text-destructive">*</span>
                   </label>
                   <div className="relative">
                     <Globe className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="mystore.myshopify.com"
+                      placeholder="https://mystore.myshopify.com"
                       value={shopifyUrl}
                       onChange={(e) => setShopifyUrl(e.target.value)}
                       className="pl-9"
@@ -543,7 +535,7 @@ export function IntegrationsPanel() {
                   <div className="relative">
                     <KeyRound className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                      placeholder="shpat_xxxxxxxxxxxxxxxxxxxx"
                       value={shopifyToken}
                       onChange={(e) => setShopifyToken(e.target.value)}
                       className="pl-9"
@@ -551,17 +543,14 @@ export function IntegrationsPanel() {
                       required
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Generated under Shopify Admin → Settings → Apps and sales channels → Develop apps.
-                  </p>
                 </div>
 
                 <div className="space-y-1.5 sm:col-span-2">
                   <label className="text-xs font-medium text-foreground">
-                    Webhook Secret / API Secret Key <span className="text-muted-foreground">(Optional, for signature verification)</span>
+                    Webhook Secret <span className="text-muted-foreground">(Optional, for HMAC signature verification)</span>
                   </label>
                   <Input
-                    placeholder="Enter Shopify Webhook Signature Secret"
+                    placeholder="Enter secret configured in Shopify Webhooks"
                     value={shopifyWebhookSecret}
                     onChange={(e) => setShopifyWebhookSecret(e.target.value)}
                     type="password"
@@ -580,74 +569,128 @@ export function IntegrationsPanel() {
         </div>
       </div>
 
-      {/* Guide Dialog */}
+      {/* Integration Guide Modal */}
       <Dialog open={guideProvider !== null} onOpenChange={(open) => !open && setGuideProvider(null)}>
-        <DialogContent className="max-h-[88vh] overflow-y-auto max-w-2xl text-foreground">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto" dir="rtl">
+          <DialogHeader className="text-right">
+            <DialogTitle className="flex items-center gap-2 text-base font-bold">
               <BookOpen className="h-5 w-5 text-primary" />
               {guideProvider === 'woocommerce'
                 ? 'دليل ربط ووكومرس (WooCommerce Integration Guide)'
                 : 'دليل ربط شوبيفاي (Shopify Integration Guide)'}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs text-muted-foreground">
               {guideProvider === 'woocommerce'
-                ? 'خطوات استخراج المفاتيح وإعداد الـ Webhooks في متجرك الإلكتروني على ووردبريس.'
-                : 'خطوات إنشاء Custom App في شوبيفاي واستخراج Access Token وإعداد الـ Webhooks.'}
+                ? 'خطوات استخراج المفاتيح، إعداد الـ Webhooks، وإنشاء أوتوميشن تأكيد الطلبات واسترجاع السلات المتروكة.'
+                : 'خطوات إنشاء التطبيق المخصص واستخراج مفاتيح الربط في متجر شوبيفاي.'}
             </DialogDescription>
           </DialogHeader>
 
           {guideProvider === 'woocommerce' ? (
-            <div className="space-y-6 pt-2 text-sm">
+            <div className="space-y-5 pt-2 text-sm">
               {/* Step 1 */}
               <div className="rounded-lg border border-border/80 bg-muted/40 p-4 space-y-2">
                 <div className="flex items-center gap-2 font-semibold text-purple-600 dark:text-purple-400">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/20 text-xs">1</span>
-                  استخراج مفاتيح REST API
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/20 text-xs font-bold">1</span>
+                  استخراج مفاتيح REST API من متجرك
                 </div>
                 <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground text-xs leading-relaxed">
                   <li>افتح لوحة تحكم <strong>WordPress</strong> في متجرك.</li>
                   <li>اذهب إلى القائمة الجانبية: <strong>WooCommerce</strong> ← <strong>الإعدادات (Settings)</strong>.</li>
                   <li>انتقل إلى تبويب <strong>متقدم (Advanced)</strong> ثم اضغط على <strong>REST API</strong>.</li>
                   <li>اضغط على زر <strong>إضافة مفتاح (Add key)</strong>.</li>
-                  <li>اكتب في الوصف: <code className="bg-background px-1 py-0.5 rounded text-foreground font-mono">WhatsApp Automation</code>.</li>
-                  <li>في خانة <strong>الصلاحيات (Permissions)</strong> اختر: <strong>قراءة/كتابة (Read/Write)</strong>.</li>
+                  <li>اكتب في الوصف: <code className="bg-background px-1 py-0.5 rounded text-foreground font-mono">MK Whats Automation</code>.</li>
+                  <li>في خانة <strong>الصلاحيات (Permissions)</strong> اختر: <strong>قراءة/كتابة (Read/Write)</strong> *(ضروري جداً)*.</li>
                   <li>اضغط <strong>توليد مفتاح API (Generate API key)</strong>.</li>
-                  <li>انسخ كلاً من <strong>Consumer Key</strong> (يبدأ بـ ck_...) و <strong>Consumer Secret</strong> (يبدأ بـ cs_...) والصقهما في المنصة هنا.</li>
+                  <li>انسخ كلاً من <strong>Consumer Key</strong> (يبدأ بـ ck_...) و <strong>Consumer Secret</strong> (يبدأ بـ cs_...) والصقهما في بطاقة ووكومرس هنا ثم اضغط Connect.</li>
                 </ol>
               </div>
 
               {/* Step 2 */}
               <div className="rounded-lg border border-border/80 bg-muted/40 p-4 space-y-2">
                 <div className="flex items-center gap-2 font-semibold text-purple-600 dark:text-purple-400">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/20 text-xs">2</span>
-                  إعداد الـ Webhooks لتلقي الطلبات فوراً
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/20 text-xs font-bold">2</span>
+                  إعداد الـ Webhooks لتلقي الطلبات الحية فوراً
                 </div>
                 <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground text-xs leading-relaxed">
-                  <li>بعد ربط المتجر، انسخ رابط <strong>Webhook Delivery URL</strong> الظاهر في بطاقة ووكومرس.</li>
+                  <li>بعد ربط المتجر، انسخ رابط <strong>Webhook Delivery URL</strong> الظاهر في بطاقة ووكومرس أعلاه.</li>
                   <li>في متجرك: اذهب إلى <strong>WooCommerce</strong> ← <strong>الإعدادات</strong> ← <strong>متقدم</strong> ← <strong>Webhooks</strong>.</li>
                   <li>اضغط <strong>إضافة Webhook (Add webhook)</strong>:
                     <ul className="list-disc list-inside pl-4 mt-1 space-y-1 text-foreground">
                       <li><strong>الاسم (Name):</strong> WhatsApp Order Created</li>
                       <li><strong>الحالة (Status):</strong> مفعّل (Active)</li>
                       <li><strong>الموضوع (Topic):</strong> Order created (تم إنشاء الطلب)</li>
-                      <li><strong>عنوان URL للتسليم (Delivery URL):</strong> الصق رابط المنصة</li>
+                      <li><strong>عنوان URL للتسليم (Delivery URL):</strong> الصق الرابط المنسوخ من منصتك</li>
                     </ul>
                   </li>
                   <li>اضغط <strong>حفظ Webhook (Save Webhook)</strong>.</li>
-                  <li>(اختياري): يمكنك إضافة Webhook آخر لـ <strong>Order updated</strong> لمتابعة تغيرات حالة الطلب.</li>
+                  <li>(اختياري): يمكنك إضافة Webhook آخر لـ <strong>Order updated</strong> لمتابعة تحديثات حالة الشحن والدفع.</li>
                 </ol>
               </div>
 
-              {/* Step 3 */}
-              <div className="rounded-lg border border-border/80 bg-muted/40 p-4 space-y-2">
+              {/* Step 3: Order Confirmation Workflow */}
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
                 <div className="flex items-center gap-2 font-semibold text-emerald-600 dark:text-emerald-400">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs">3</span>
-                  إنشاء أتمتة رسائل الواتساب
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-bold">3</span>
+                  إعداد أتمتة تأكيد الطلبات للعملاء (Order Confirmation Automation)
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  اذهب إلى قسم <strong>Automations</strong> في المنصة، وأنشئ أتمتة بمشغل <strong>Order Created</strong> واكتب رسالة تأكيد الطلب مع المتغيرات مثل: <code className="bg-background px-1 py-0.5 rounded text-foreground font-mono">{'{{ customer.name }}'}</code> و <code className="bg-background px-1 py-0.5 rounded text-foreground font-mono">{'{{ order.number }}'}</code> و <code className="bg-background px-1 py-0.5 rounded text-foreground font-mono">{'{{ order.total }}'}</code>.
-                </p>
+                <div className="space-y-2.5 text-xs text-muted-foreground leading-relaxed">
+                  <p>لإرسال رسالة واتساب تلقائية فور إتمام الزبون لطلبه من المتجر:</p>
+                  <ol className="list-decimal list-inside space-y-1 pl-1">
+                    <li>اذهب إلى صفحة <strong>Automations (الأتمتة)</strong> من القائمة الجانبية واضغط <strong>New Automation</strong>.</li>
+                    <li>في بطاقة المشغل (Trigger): اختر <strong>متجر إلكتروني: طلب جديد (E-Commerce: Order Created)</strong>.</li>
+                    <li>في خيار Store Platform: اختر <strong>WooCommerce Only</strong> (أو All).</li>
+                    <li>أضف إجراء <strong>Send Message (إرسال رسالة)</strong> واكتب نص الرسالة مع المتغيرات الحية:</li>
+                  </ol>
+                  <div className="rounded-md border border-border bg-background p-3 font-mono text-[11px] text-foreground leading-relaxed">
+                    أهلاً {'{{ customer.name }}'} 👋<br />
+                    شكراً لطلبك من متجرنا! تم استلام طلبك رقم #{'{{ order.number }}'} بنجاح. 🎉<br /><br />
+                    المبلغ الإجمالي: {'{{ order.total }}'} {'{{ order.currency }}'}<br />
+                    سنقوم بتجهيز شحنتك وإرسالها في أقرب وقت. 🚚
+                  </div>
+                  <p>فعّل زر <strong>Active</strong> في الأعلى ثم اضغط <strong>Save</strong>.</p>
+                </div>
+              </div>
+
+              {/* Step 4: Abandoned Cart Recovery */}
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+                <div className="flex items-center gap-2 font-semibold text-amber-600 dark:text-amber-400">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold">4</span>
+                  نظام استرجاع السلات المتروكة (Abandoned Cart Recovery)
+                </div>
+                <div className="space-y-2.5 text-xs text-muted-foreground leading-relaxed">
+                  <p className="font-medium text-foreground">
+                    لاسترجاع الزبائن الذين دخلوا صفحة الـ Checkout وكتبوا بياناتهم ثم خرجوا دون إتمام الشراء:
+                  </p>
+                  
+                  <div className="rounded-md border border-border bg-background/60 p-3 space-y-1.5">
+                    <span className="font-semibold text-foreground">أ) الإعداد في متجرك (WordPress):</span>
+                    <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                      <li>ثبّت إضافة <strong className="text-foreground">Cart Abandonment Recovery for WooCommerce</strong> (إضافة مجانية شهيرة من CartFlows).</li>
+                      <li>اذهب إلى: <strong>WooCommerce</strong> ← <strong>Cart Abandonment</strong> ← تبويب <strong>Settings</strong>.</li>
+                      <li>انزل لقسم <strong>Webhook</strong>: فعّل خيار <strong>Enable Webhook</strong> والصق نفس رابط <strong>Webhook Delivery URL</strong> المنسوخ من منصتك أعلاه.</li>
+                      <li>في تبويب <strong>Follow Up Templates</strong>: فعّل القالب الأول واضبط وقت الانتظار (مثلاً بعد 15 دقيقة من ترك السلة).</li>
+                    </ol>
+                  </div>
+
+                  <div className="rounded-md border border-border bg-background/60 p-3 space-y-1.5">
+                    <span className="font-semibold text-foreground">ب) إعداد ووركفلو الأتمتة في المنصة (MK Whats):</span>
+                    <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                      <li>اذهب إلى <strong>Automations (الأتمتة)</strong> واضغط <strong>New Automation</strong>.</li>
+                      <li>في المشغل (Trigger): اختر <strong>متجر إلكتروني: سلة متروكة (E-Commerce: Cart Abandoned)</strong>.</li>
+                      <li>اختر Store Platform: <strong>WooCommerce Only</strong>.</li>
+                      <li>أضف إجراء <strong>Send Message</strong> والصق رسالة الاسترجاع مع رابط السلة الذكي:</li>
+                    </ol>
+                    <div className="rounded-md border border-border bg-background p-3 font-mono text-[11px] text-foreground leading-relaxed mt-2">
+                      أهلاً {'{{ customer.name }}'} 🛍️<br /><br />
+                      لاحظنا أنك تركت بعض المنتجات في سلتك ولم تكمل الشراء بعد!<br /><br />
+                      🎁 نهديك كود خصم خاص 10%: (SAVE10)<br /><br />
+                      اضغط على الرابط التالي لإكمال طلبك الآن واستلام خصمك:<br />
+                      {'{'}{'{ recovery_url }'}{'}'}
+                    </div>
+                  </div>
+                  <p>فعّل الأتمتة (Active) واضغط <strong>Save</strong> لتبدأ باستعادة المبيعات الضائعة آلياً على مدار الساعة! 💰</p>
+                </div>
               </div>
             </div>
           ) : (
@@ -669,6 +712,7 @@ export function IntegrationsPanel() {
                       <li>read_orders / write_orders</li>
                       <li>read_customers</li>
                       <li>read_products</li>
+                      <li>read_checkouts / write_checkouts</li>
                     </ul>
                   </li>
                   <li>اضغط <strong>Save</strong> ثم اضغط <strong>Install app</strong> في الأعلى.</li>
@@ -687,7 +731,7 @@ export function IntegrationsPanel() {
                   <li>في شوبيفاي: اذهب إلى <strong>Settings</strong> ← <strong>Notifications</strong>.</li>
                   <li>انزل إلى أسفل الصفحة حتى قسم <strong>Webhooks</strong> واضغط <strong>Create webhook</strong>:
                     <ul className="list-disc list-inside pl-4 mt-1 space-y-1 text-foreground">
-                      <li><strong>Event:</strong> Order creation (أو Order payment)</li>
+                      <li><strong>Event:</strong> Order creation (أو Order payment / Checkout creation)</li>
                       <li><strong>Format:</strong> JSON</li>
                       <li><strong>URL:</strong> الصق الرابط المنسوخ من منصتك</li>
                       <li><strong>Webhook API version:</strong> Latest</li>

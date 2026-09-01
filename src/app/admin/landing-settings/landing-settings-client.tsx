@@ -40,6 +40,8 @@ import {
   ArrowDown,
   Tag,
   Boxes,
+  ShoppingBag,
+  Store,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -49,6 +51,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useLocale } from 'next-intl'
+import {
+  EcommerceSectionContent,
+  DEFAULT_ECOMMERCE_CONTENT,
+} from '@/components/landing/landing-ecommerce-section'
+import { EcommerceTab } from './ecommerce-tab'
 
 interface SocialLink {
   platform: string
@@ -146,6 +153,7 @@ interface LandingSettings {
   logo_url: string | null
   hero_content: HeroContent
   features_content: FeaturesSectionContent
+  ecommerce_content: EcommerceSectionContent
   faqs: FAQ[]
   social_links: SocialLink[]
   partners: Partner[]
@@ -368,6 +376,73 @@ function normalizeFeatures(raw: any): FeaturesSectionContent {
   }
 }
 
+function normalizeEcommerceContent(raw: any): EcommerceSectionContent {
+  if (!raw) return DEFAULT_ECOMMERCE_CONTENT
+
+  return {
+    badge_text_ar: raw.badge_text_ar ?? DEFAULT_ECOMMERCE_CONTENT.badge_text_ar,
+    badge_text_en: raw.badge_text_en ?? DEFAULT_ECOMMERCE_CONTENT.badge_text_en,
+    headline_ar: raw.headline_ar ?? DEFAULT_ECOMMERCE_CONTENT.headline_ar,
+    headline_highlight_ar: raw.headline_highlight_ar ?? DEFAULT_ECOMMERCE_CONTENT.headline_highlight_ar,
+    headline_en: raw.headline_en ?? DEFAULT_ECOMMERCE_CONTENT.headline_en,
+    headline_highlight_en: raw.headline_highlight_en ?? DEFAULT_ECOMMERCE_CONTENT.headline_highlight_en,
+    subtitle_ar: raw.subtitle_ar ?? DEFAULT_ECOMMERCE_CONTENT.subtitle_ar,
+    subtitle_en: raw.subtitle_en ?? DEFAULT_ECOMMERCE_CONTENT.subtitle_en,
+    cta_text_ar: raw.cta_text_ar ?? DEFAULT_ECOMMERCE_CONTENT.cta_text_ar,
+    cta_text_en: raw.cta_text_en ?? DEFAULT_ECOMMERCE_CONTENT.cta_text_en,
+    cta_url: raw.cta_url ?? DEFAULT_ECOMMERCE_CONTENT.cta_url,
+    cta_visible: raw.cta_visible !== false,
+    store_cards: Array.isArray(raw.store_cards) && raw.store_cards.length > 0
+      ? raw.store_cards.map((c: any, idx: number) => ({
+          id: c.id || `store-${idx + 1}`,
+          visible: c.visible !== false,
+          order: c.order ?? idx + 1,
+          store_name: c.store_name || '',
+          api_badge: c.api_badge || '',
+          accent_color: c.accent_color || 'purple',
+          subtitle_ar: c.subtitle_ar || '',
+          subtitle_en: c.subtitle_en || '',
+          status_badge_ar: c.status_badge_ar || 'ربط فوري متاح',
+          status_badge_en: c.status_badge_en || '1-Click Connect',
+          features: Array.isArray(c.features)
+            ? c.features.map((f: any, fIdx: number) => ({
+                id: f.id || `feat-${fIdx + 1}`,
+                text_ar: f.text_ar || '',
+                text_en: f.text_en || '',
+              }))
+            : [],
+        }))
+      : DEFAULT_ECOMMERCE_CONTENT.store_cards,
+    notification_cards: Array.isArray(raw.notification_cards) && raw.notification_cards.length > 0
+      ? raw.notification_cards.map((n: any, idx: number) => ({
+          id: n.id || `notif-${idx + 1}`,
+          position: n.position || (idx === 0 ? 'top' : idx === 1 ? 'hero' : 'bottom'),
+          customer_name_ar: n.customer_name_ar || '',
+          customer_name_en: n.customer_name_en || '',
+          title_ar: n.title_ar || '',
+          title_en: n.title_en || '',
+          body_ar: n.body_ar || '',
+          body_en: n.body_en || '',
+          timestamp_ar: n.timestamp_ar || '',
+          timestamp_en: n.timestamp_en || '',
+          product_image_url: n.product_image_url || '',
+        }))
+      : DEFAULT_ECOMMERCE_CONTENT.notification_cards,
+    metrics: Array.isArray(raw.metrics) && raw.metrics.length > 0
+      ? raw.metrics.map((m: any, idx: number) => ({
+          id: m.id || `metric-${idx + 1}`,
+          visible: m.visible !== false,
+          value: m.value || '',
+          title_ar: m.title_ar || '',
+          title_en: m.title_en || '',
+          description_ar: m.description_ar || '',
+          description_en: m.description_en || '',
+          color: m.color || 'primary',
+        }))
+      : DEFAULT_ECOMMERCE_CONTENT.metrics,
+  }
+}
+
 export function LandingSettingsClient({ initialSettings }: { initialSettings: any }) {
   const locale = useLocale()
   const isAr = locale === 'ar'
@@ -378,6 +453,7 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
     logo_url: initialSettings?.logo_url || '',
     hero_content: normalizeHero(initialSettings?.hero_content || {}),
     features_content: normalizeFeatures(initialSettings?.features_content),
+    ecommerce_content: normalizeEcommerceContent(initialSettings?.ecommerce_content),
     faqs: (initialSettings?.faqs || [
       {
         id: '1',
@@ -606,7 +682,7 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
   const handleAddPartner = () => {
     setSettings((prev) => ({
       ...prev,
-      partners: [...prev.partners, { name: 'Partner Name', logo_url: 'https://cdn.worldvectorlogo.com/logos/google-2015.svg' }],
+      partners: [...prev.partners, { name: 'Partner Name', logo_url: 'https://cdn.simpleicons.org/google/4285F4' }],
     }))
   }
 
@@ -615,6 +691,21 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
       ...prev,
       partners: prev.partners.filter((_, i) => i !== index),
     }))
+  }
+
+  const handleMovePartner = (index: number, direction: 'up' | 'down') => {
+    if (
+      (direction === 'up' && index === 0) ||
+      (direction === 'down' && index === settings.partners.length - 1)
+    ) {
+      return
+    }
+    const updated = [...settings.partners]
+    const targetIdx = direction === 'up' ? index - 1 : index + 1
+    const temp = updated[index]
+    updated[index] = updated[targetIdx]
+    updated[targetIdx] = temp
+    setSettings((prev) => ({ ...prev, partners: updated }))
   }
 
   // Header & Footer link handlers
@@ -711,11 +802,16 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
         </span>
       </div>
 
-      <Tabs defaultValue="features" className="w-full space-y-6">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-muted p-1 rounded-xl gap-1">
+      <Tabs defaultValue="ecommerce" className="w-full space-y-6">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 bg-muted p-1 rounded-xl gap-1">
           <TabsTrigger value="hero" className="text-xs font-bold gap-1.5">
             <Sparkles className="h-3.5 w-3.5" />
             {isAr ? 'الهيرو' : 'Hero'}
+          </TabsTrigger>
+
+          <TabsTrigger value="ecommerce" className="text-xs font-bold gap-1.5 text-purple-600 dark:text-purple-400">
+            <ShoppingBag className="h-3.5 w-3.5" />
+            {isAr ? 'المتاجر 🛒' : 'E-Commerce'}
           </TabsTrigger>
 
           <TabsTrigger value="features" className="text-xs font-bold gap-1.5 text-emerald-600 dark:text-emerald-400">
@@ -753,6 +849,20 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
             {isAr ? 'أزرار الدعم' : 'Support'}
           </TabsTrigger>
         </TabsList>
+
+        {/* 0. E-Commerce Integration Section Tab — BILINGUAL FULL CMS */}
+        <TabsContent value="ecommerce" className="space-y-6">
+          <EcommerceTab
+            isAr={isAr}
+            content={settings.ecommerce_content}
+            onChange={(updated) =>
+              setSettings((prev) => ({
+                ...prev,
+                ecommerce_content: updated,
+              }))
+            }
+          />
+        </TabsContent>
 
         {/* 1. Hero & General Content Tab — BILINGUAL */}
         <TabsContent value="hero" className="space-y-6">
@@ -1514,9 +1624,32 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
                 {isAr ? 'إضافة شريك جديد' : 'Add Partner'}
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               {settings.partners.map((partner, idx) => (
-                <div key={idx} className="flex flex-col sm:flex-row items-center gap-3 p-3 rounded-xl border border-border bg-muted/20">
+                <div
+                  key={idx}
+                  className="flex flex-col sm:flex-row items-center gap-3 p-3 rounded-xl border border-border bg-card/60 hover:border-emerald-500/40 transition-colors"
+                >
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <span className="h-6 w-6 rounded-full bg-muted text-muted-foreground font-mono text-[11px] font-bold flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    {partner.logo_url ? (
+                      <div className="h-8 w-8 rounded-lg bg-muted/60 border border-border p-1 flex items-center justify-center shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={partner.logo_url}
+                          alt={partner.name}
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-8 w-8 rounded-lg bg-muted border border-dashed border-border flex items-center justify-center shrink-0 text-muted-foreground">
+                        <Globe className="h-4 w-4" />
+                      </div>
+                    )}
+                  </div>
+
                   <Input
                     value={partner.name}
                     onChange={(e) => {
@@ -1527,6 +1660,7 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
                     placeholder={isAr ? 'اسم الشريك (مثال: Shopify)' : 'Partner Name'}
                     className="w-full sm:w-1/3 bg-background text-xs font-bold"
                   />
+
                   <Input
                     value={partner.logo_url}
                     onChange={(e) => {
@@ -1537,18 +1671,41 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
                     placeholder="https://... (رابط شعار الشريك SVG أو PNG)"
                     className="w-full sm:flex-1 bg-background text-xs font-mono"
                   />
-                  {partner.logo_url && (
-                    <img src={partner.logo_url} alt={partner.name} className="h-6 w-6 object-contain shrink-0" />
-                  )}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemovePartner(idx)}
-                    className="text-rose-500 hover:bg-rose-500/10 h-10 w-10 p-0 shrink-0"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleMovePartner(idx, 'up')}
+                      disabled={idx === 0}
+                      className="h-8 w-8 p-0"
+                      title={isAr ? 'تحريك لأعلى' : 'Move Up'}
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleMovePartner(idx, 'down')}
+                      disabled={idx === settings.partners.length - 1}
+                      className="h-8 w-8 p-0"
+                      title={isAr ? 'تحريك لأسفل' : 'Move Down'}
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemovePartner(idx)}
+                      className="text-rose-500 hover:bg-rose-500/10 h-8 w-8 p-0"
+                      title={isAr ? 'حذف الشريك' : 'Delete Partner'}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </CardContent>
