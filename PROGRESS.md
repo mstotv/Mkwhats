@@ -1,4 +1,4 @@
-# حالة المشروع - آخر تحديث: [1/9/2026]
+# حالة المشروع - آخر تحديث: [2/9/2026]
 
 > ⚠️ **قاعدة معمارية ثابتة ودائمة (Plan Features Global Sync Rule):**
 > أي ميزة برمجية جديدة تضاف أو تُعدل في منظومة الباقات بالـ Admin Panel (`plans.features`) يجب **إلزامياً** أن تنعكس وتُعرض متزامنة في كافة واجهات المنصة التالية في آن واحد:
@@ -6,6 +6,24 @@
 > 2. **لوحة تحكم المستخدم وإدارة الخطة (User Panel Settings):** عبر [`plan-usage-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/plan-usage-panel.tsx).
 > 3. **نافذة ترقية وتغيير الباقة للمستخدم (Upgrade Plan Modal):** عبر [`upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/upgrade-plan-modal.tsx).
 > 4. **لوحة تحكم الأدمن لإنشاء وتعديل الباقات (Admin Pricing Manager):** عبر [`plans/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/plans/page.tsx) و [`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/edit-plan-modal.tsx).
+
+- ✅ **إضافة ميزة استهداف الجمهور حسب الفترة الزمنية وتاريخ المراسلة في حملات البرودكاست (Broadcast Date Range Audience Targeting)**:
+  - **خيار تصفية الجمهور حسب تاريخ المراسلة ([`step2-select-audience.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/broadcasts/step2-select-audience.tsx))**:
+    - إضافة بطاقة استهداف جديدة في معالج البرودكاست (الخطوة 2): `📅 حسب الفترة الزمنية (By Date Range)` بأيقونة `CalendarDays`.
+    - تزويد الواجهة بمنتقي تواريخ أنيق (حقل `من تاريخ / From Date` وحقل `إلى تاريخ / To Date`) مع أزرار اختصارات سريعة ومترجمة بالكامل لكلا اللغتين (`اليوم / Today`, `آخر 7 أيام / Last 7 Days`, `آخر 30 يوم / Last 30 Days`, `هذا الشهر / This Month`).
+    - عداد حي لحظي (Real-time Count Preview) يبحث في قاعدة البيانات ويظهر فوراً عدد جهات الاتصال التي قامت بمراسلة الحساب في الفترة الزمنية المحددة قبل الإرسال.
+    - فحص وتحقق منطقي يمنع أن يكون تاريخ البداية بعد تاريخ النهاية مع تنبيهات توضيحية.
+  - **محرك جلب واستخراج الجمهور الزمني ([`use-broadcast-sending.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/hooks/use-broadcast-sending.ts))**:
+    - بناء دالة استعلام متسلسلة ودقيقة تبحث عن رسائل العملاء الواردة (`sender_type = 'customer'`) ضمن النطاق الزمني (`[from 00:00:00 → to 23:59:59]`).
+    - ربطها بالمحادثات النشطة وعزلها على مستوى الحساب ومطابقتها مع جهات الاتصال (`contacts`).
+    - دعم تجزئة الاستعلامات الكبيرة بحزم آمنة (`Chunk: 500`) لتفادي أي بطء في الأداء.
+    - حفظ الفلتر الزمني ضمن كائن `audience_filter.dateRange` في جدول `broadcasts` عند الإطلاق أو الحفظ كمسودة.
+  - **تحديث خطوة المراجعة والإرسال والترجمة الشاملة ([`step4-schedule-send.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/broadcasts/step4-schedule-send.tsx) & [`broadcasts/new/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/(dashboard)/broadcasts/new/page.tsx))**:
+    - مزامنة خطوة المراجعة والإرسال الأخيرة (الخطوة 3 أو 4) لحساب وعرض عدد المستلمين الدقيق `estimatedReach` عند اختيار الفلتر الزمني بدلاً من ظهور `0`.
+    - إظهار التسمية الصحيحة للجمهور `Filtered by date range` / `مفلترة حسب الفترة الزمنية` بدلاً من النص القديم `Filtered by custom field`.
+    - دعم حفظ واسترجاع النطاق الزمني في المسودات (`Drafts`).
+    - ترجمة كاملة لكافة نصوص بطاقة الملخص، ونوافذ التأكيد، والشارات للغتين العربية والإنجليزية ([`messages/ar.json`](file:///c:/Users/Mustafa/Desktop/mk%20whats/messages/ar.json) & [`messages/en.json`](file:///c:/Users/Mustafa/Desktop/mk%20whats/messages/en.json)).
+
 
 - ✅ **إصلاح وتطوير صفحة المميزات وربطها الكامل مع لوحة تحكم الأدمن (Dynamic Features CMS & Full 12 Capabilities)**:
   - **عرض وإبراز كافة ميزات المنصة الـ 12 في صفحة المميزات العامة مع دعم التعديل الكامل من لوحة تحكم الأدمن ([`features/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/features/page.tsx) & [`landing-settings/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/landing-settings/page.tsx))**:

@@ -17,10 +17,12 @@ import {
   Search,
   CheckSquare,
   Square,
+  CalendarDays,
+  Calendar,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-type AudienceType = 'all' | 'tags' | 'custom_field' | 'csv' | 'manual';
+type AudienceType = 'all' | 'tags' | 'custom_field' | 'csv' | 'manual' | 'date_range';
 type CustomFieldOperator = 'is' | 'is_not' | 'contains';
 
 interface CustomFieldFilter {
@@ -37,6 +39,11 @@ interface AudienceConfig {
   excludeTagIds?: string[];
   /** IDs of manually selected contacts (for type === 'manual') */
   manualContactIds?: string[];
+  /** Date range filter for contacts who sent incoming messages */
+  dateRange?: {
+    from: string;
+    to: string;
+  };
 }
 
 interface Step2Props {
@@ -79,6 +86,12 @@ export function Step2SelectAudience({
       icon: Tags,
     },
     {
+      type: 'date_range',
+      label: t('selectAudience.method.dateRange'),
+      description: t('selectAudience.dateRangeDesc'),
+      icon: CalendarDays,
+    },
+    {
       type: 'custom_field',
       label: t('selectAudience.method.customField'),
       description: t('selectAudience.customFieldDesc'),
@@ -92,8 +105,8 @@ export function Step2SelectAudience({
     },
     {
       type: 'manual',
-      label: 'اختيار يدوي',
-      description: 'اختر جهات الاتصال يدوياً بوضع إشارة ✓ بجانب كل شخص.',
+      label: t('selectAudience.method.manual'),
+      description: t('selectAudience.manualDesc'),
       icon: ListChecks,
     },
   ], [t]);
@@ -207,6 +220,42 @@ export function Step2SelectAudience({
       ) {
         setEstimatedCount(audience.csvContacts.length);
         return;
+      } else if (
+        audience.type === 'date_range' &&
+        audience.dateRange?.from &&
+        audience.dateRange?.to
+      ) {
+        const fromDate = audience.dateRange.from.trim();
+        const toDate = audience.dateRange.to.trim();
+        if (fromDate && toDate && fromDate <= toDate) {
+          const startIso = new Date(`${fromDate}T00:00:00.000`).toISOString();
+          const endIso = new Date(`${toDate}T23:59:59.999`).toISOString();
+
+          const { data: messages } = await supabase
+            .from('messages')
+            .select('conversation_id')
+            .eq('sender_type', 'customer')
+            .gte('created_at', startIso)
+            .lte('created_at', endIso);
+
+          if (messages && messages.length > 0) {
+            const conversationIds = [
+              ...new Set(messages.map((m) => m.conversation_id).filter(Boolean)),
+            ];
+
+            const { data: convos } = await supabase
+              .from('conversations')
+              .select('contact_id')
+              .in('id', conversationIds);
+
+            baseIds = new Set((convos ?? []).map((c) => c.contact_id).filter(Boolean));
+          } else {
+            baseIds = new Set();
+          }
+        } else {
+          setEstimatedCount(0);
+          return;
+        }
       } else {
         setEstimatedCount(null);
         return;
@@ -243,6 +292,7 @@ export function Step2SelectAudience({
     audience.csvContacts,
     audience.excludeTagIds,
     audience.manualContactIds,
+    audience.dateRange,
   ]);
 
   useEffect(() => {
@@ -296,6 +346,27 @@ export function Step2SelectAudience({
     onUpdate({ ...audience, manualContactIds: updated });
   }
 
+  function setDatePreset(daysAgo: number) {
+    const to = new Date().toISOString().split('T')[0];
+    const fromDate = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+    const from = fromDate.toISOString().split('T')[0];
+    onUpdate({
+      ...audience,
+      dateRange: { from, to },
+    });
+  }
+
+  function setThisMonthPreset() {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const from = firstDay.toISOString().split('T')[0];
+    const to = now.toISOString().split('T')[0];
+    onUpdate({
+      ...audience,
+      dateRange: { from, to },
+    });
+  }
+
   const filteredContacts = useMemo(() => {
     const q = contactSearch.trim().toLowerCase();
     if (!q) return allContacts;
@@ -316,6 +387,12 @@ export function Step2SelectAudience({
     filteredContacts.length > 0 &&
     filteredContacts.every((c) => selectedIds.has(c.id));
 
+  const isDateRangeValid =
+    audience.type === 'date_range' &&
+    !!audience.dateRange?.from &&
+    !!audience.dateRange?.to &&
+    audience.dateRange.from <= audience.dateRange.to;
+
   const isValid =
     audience.type === 'all' ||
     (audience.type === 'tags' && audience.tagIds && audience.tagIds.length > 0) ||
@@ -327,7 +404,8 @@ export function Step2SelectAudience({
       audience.csvContacts.length > 0) ||
     (audience.type === 'manual' &&
       audience.manualContactIds &&
-      audience.manualContactIds.length > 0);
+      audience.manualContactIds.length > 0) ||
+    isDateRangeValid;
 
   return (
     <div className="space-y-6">
@@ -345,7 +423,9 @@ export function Step2SelectAudience({
           return (
             <button
               key={option.type}
-              onClick={() =>
+              onClick={() => {
+                const defaultFrom = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                const defaultTo = new Date().toISOString().split('T')[0];
                 onUpdate({
                   ...audience,
                   type: option.type,
@@ -358,8 +438,12 @@ export function Step2SelectAudience({
                     option.type === 'csv' ? audience.csvContacts : undefined,
                   manualContactIds:
                     option.type === 'manual' ? audience.manualContactIds : undefined,
-                })
-              }
+                  dateRange:
+                    option.type === 'date_range'
+                      ? audience.dateRange ?? { from: defaultFrom, to: defaultTo }
+                      : undefined,
+                });
+              }}
               className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
                 isSelected
                   ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
@@ -419,6 +503,133 @@ export function Step2SelectAudience({
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Date range picker ────────────────────────────────────── */}
+      {audience.type === 'date_range' && (
+        <div className="space-y-4 rounded-xl border border-border bg-card/50 p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Calendar className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {t('selectAudience.dateRangeTitle')}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t('selectAudience.dateRangeSubtitle')}
+                </p>
+              </div>
+            </div>
+            {/* Quick presets pills */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setDatePreset(0)}
+                className="rounded-lg border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted hover:border-primary/40 transition-colors"
+              >
+                {t('selectAudience.presetToday')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDatePreset(7)}
+                className="rounded-lg border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted hover:border-primary/40 transition-colors"
+              >
+                {t('selectAudience.presetLast7Days')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDatePreset(30)}
+                className="rounded-lg border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted hover:border-primary/40 transition-colors"
+              >
+                {t('selectAudience.presetLast30Days')}
+              </button>
+              <button
+                type="button"
+                onClick={setThisMonthPreset}
+                className="rounded-lg border border-border bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted hover:border-primary/40 transition-colors"
+              >
+                {t('selectAudience.presetThisMonth')}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <span>{t('selectAudience.dateFrom')}</span>
+              </label>
+              <input
+                type="date"
+                value={audience.dateRange?.from ?? ''}
+                onChange={(e) =>
+                  onUpdate({
+                    ...audience,
+                    dateRange: {
+                      from: e.target.value,
+                      to: audience.dateRange?.to ?? new Date().toISOString().split('T')[0],
+                    },
+                  })
+                }
+                className="h-10 w-full rounded-lg border border-border bg-muted px-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <span>{t('selectAudience.dateTo')}</span>
+              </label>
+              <input
+                type="date"
+                value={audience.dateRange?.to ?? ''}
+                onChange={(e) =>
+                  onUpdate({
+                    ...audience,
+                    dateRange: {
+                      from: audience.dateRange?.from ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                      to: e.target.value,
+                    },
+                  })
+                }
+                className="h-10 w-full rounded-lg border border-border bg-muted px-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Validation warning if from > to */}
+          {audience.dateRange?.from &&
+            audience.dateRange?.to &&
+            audience.dateRange.from > audience.dateRange.to && (
+              <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-400">
+                {t('selectAudience.dateRangeErrorOrder')}
+              </p>
+            )}
+
+          {/* Real-time status feedback */}
+          {audience.dateRange?.from &&
+            audience.dateRange?.to &&
+            audience.dateRange.from <= audience.dateRange.to && (
+              <div className="flex items-center gap-2 rounded-lg bg-primary/5 border border-primary/20 px-3 py-2 text-xs text-foreground">
+                {loadingCount ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                    <span className="text-muted-foreground">{t('selectAudience.dateRangeCalculating')}</span>
+                  </>
+                ) : estimatedCount && estimatedCount > 0 ? (
+                  <>
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    <span className="font-semibold text-primary">{t('selectAudience.dateRangeFoundCount', { count: estimatedCount })}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="h-2 w-2 rounded-full bg-amber-500" />
+                    <span className="text-muted-foreground">{t('selectAudience.dateRangeNoneFound')}</span>
+                  </>
+                )}
+              </div>
+            )}
         </div>
       )}
 

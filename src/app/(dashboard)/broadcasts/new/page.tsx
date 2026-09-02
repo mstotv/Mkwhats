@@ -27,7 +27,7 @@ export default function NewBroadcastPage() {
   const [template, setTemplate] = useState<MessageTemplate | null>(null);
   const [freeText, setFreeText] = useState('');
   const [audience, setAudience] = useState<{
-    type: 'all' | 'tags' | 'custom_field' | 'csv' | 'manual';
+    type: 'all' | 'tags' | 'custom_field' | 'csv' | 'manual' | 'date_range';
     tagIds?: string[];
     customField?: {
       fieldId: string;
@@ -37,6 +37,7 @@ export default function NewBroadcastPage() {
     csvContacts?: { phone: string; name?: string }[];
     excludeTagIds?: string[];
     manualContactIds?: string[];
+    dateRange?: { from: string; to: string };
   }>({ type: 'all' });
   const [variables, setVariables] = useState<
     Record<string, { type: 'static' | 'field' | 'custom_field'; value: string }>
@@ -100,6 +101,7 @@ export default function NewBroadcastPage() {
           csvContacts: audience.csvContacts,
           excludeTagIds: audience.excludeTagIds,
           manualContactIds: audience.manualContactIds,
+          dateRange: audience.dateRange,
         },
         variables,
         headerMediaUrl,
@@ -146,6 +148,9 @@ export default function NewBroadcastPage() {
       audience_filter: {
         type: audience.type,
         tagIds: audience.tagIds,
+        customField: audience.customField,
+        excludeTagIds: audience.excludeTagIds,
+        dateRange: audience.dateRange,
       },
       status: 'draft',
       total_recipients: 0,

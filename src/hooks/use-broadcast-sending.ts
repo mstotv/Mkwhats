@@ -14,7 +14,7 @@ export interface CustomFieldFilter {
 }
 
 export interface AudienceConfig {
-  type: 'all' | 'tags' | 'custom_field' | 'csv' | 'manual';
+  type: 'all' | 'tags' | 'custom_field' | 'csv' | 'manual' | 'date_range';
   tagIds?: string[];
   customField?: CustomFieldFilter;
   csvContacts?: { phone: string; name?: string }[];
@@ -22,6 +22,11 @@ export interface AudienceConfig {
   excludeTagIds?: string[];
   /** Manually selected contact IDs (for type === 'manual') */
   manualContactIds?: string[];
+  /** Date range filter for contacts who sent incoming messages */
+  dateRange?: {
+    from: string;
+    to: string;
+  };
 }
 
 /**
@@ -185,6 +190,69 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
         .in('id', audience.manualContactIds);
       if (error) throw new Error(`Failed to fetch manual contacts: ${error.message}`);
       contacts = data ?? [];
+    } else if (
+      audience.type === 'date_range' &&
+      audience.dateRange?.from &&
+      audience.dateRange?.to
+    ) {
+      const fromDate = audience.dateRange.from.trim();
+      const toDate = audience.dateRange.to.trim();
+      const startIso = new Date(`${fromDate}T00:00:00.000`).toISOString();
+      const endIso = new Date(`${toDate}T23:59:59.999`).toISOString();
+
+      // Find all customer inbound messages within date range
+      const { data: messages, error: msgError } = await supabase
+        .from('messages')
+        .select('conversation_id')
+        .eq('sender_type', 'customer')
+        .gte('created_at', startIso)
+        .lte('created_at', endIso);
+
+      if (msgError) {
+        throw new Error(`Failed to fetch messages for date range: ${msgError.message}`);
+      }
+
+      if (messages && messages.length > 0) {
+        const conversationIds = [
+          ...new Set(messages.map((m) => m.conversation_id).filter(Boolean)),
+        ];
+
+        const CHUNK = 500;
+        const allContactIds: string[] = [];
+
+        for (let i = 0; i < conversationIds.length; i += CHUNK) {
+          const slice = conversationIds.slice(i, i + CHUNK);
+          const { data: convos, error: convError } = await supabase
+            .from('conversations')
+            .select('contact_id')
+            .in('id', slice);
+
+          if (convError) {
+            throw new Error(`Failed to fetch conversations: ${convError.message}`);
+          }
+
+          for (const c of convos ?? []) {
+            if (c.contact_id) allContactIds.push(c.contact_id);
+          }
+        }
+
+        const uniqueContactIds = [...new Set(allContactIds)];
+
+        if (uniqueContactIds.length > 0) {
+          for (let i = 0; i < uniqueContactIds.length; i += CHUNK) {
+            const slice = uniqueContactIds.slice(i, i + CHUNK);
+            const { data, error } = await supabase
+              .from('contacts')
+              .select('*')
+              .in('id', slice);
+
+            if (error) {
+              throw new Error(`Failed to fetch contacts: ${error.message}`);
+            }
+            contacts = contacts.concat(data ?? []);
+          }
+        }
+      }
     }
 
     if (audience.excludeTagIds && audience.excludeTagIds.length > 0) {
@@ -348,6 +416,7 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
             tagIds: payload.audience.tagIds,
             customField: payload.audience.customField,
             excludeTagIds: payload.audience.excludeTagIds,
+            dateRange: payload.audience.dateRange,
           },
           status: 'sending',
           total_recipients: totalRecipients,

@@ -27,6 +27,10 @@ interface AudienceConfig {
   };
   csvContacts?: { phone: string; name?: string }[];
   manualContactIds?: string[];
+  dateRange?: {
+    from: string;
+    to: string;
+  };
 }
 
 interface Step4Props {
@@ -42,15 +46,6 @@ interface Step4Props {
   isProcessing: boolean;
   progress: number;
   estimatedSecondsRemaining?: number;
-}
-
-function formatRemainingTime(totalSeconds: number): string {
-  if (totalSeconds <= 0) return 'أقل من دقيقة';
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  if (minutes === 0) return `${seconds} ثانية`;
-  if (seconds === 0) return `${minutes} دقيقة`;
-  return `${minutes} دقيقة و ${seconds} ثانية`;
 }
 
 export function Step4ScheduleSend({
@@ -71,6 +66,15 @@ export function Step4ScheduleSend({
   const [showConfirm, setShowConfirm] = useState(false);
   const [estimatedReach, setEstimatedReach] = useState<number>(0);
   const [loadingReach, setLoadingReach] = useState(true);
+
+  function formatRemainingTime(totalSeconds: number): string {
+    if (totalSeconds <= 0) return t('scheduleSend.timeLessThanMinute');
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (minutes === 0) return t('scheduleSend.timeSeconds', { seconds });
+    if (seconds === 0) return t('scheduleSend.timeMinutes', { minutes });
+    return t('scheduleSend.timeMinutesAndSeconds', { minutes, seconds });
+  }
 
   useEffect(() => {
     async function calculateReach() {
@@ -95,19 +99,60 @@ export function Step4ScheduleSend({
           setEstimatedReach(audience.csvContacts.length);
         } else if (audience.type === 'manual' && audience.manualContactIds) {
           setEstimatedReach(audience.manualContactIds.length);
-        } else if (audience.type === 'custom_field' && audience.customField) {
-          let query = supabase.from('contacts').select('id', { count: 'exact', head: true });
-          if (audience.customField.fieldId) {
-            if (audience.customField.operator === 'is') {
-              query = query.eq(`custom_fields->>${audience.customField.fieldId}`, audience.customField.value);
-            } else if (audience.customField.operator === 'is_not') {
-              query = query.neq(`custom_fields->>${audience.customField.fieldId}`, audience.customField.value);
-            } else if (audience.customField.operator === 'contains') {
-              query = query.ilike(`custom_fields->>${audience.customField.fieldId}`, `%${audience.customField.value}%`);
+        } else if (
+          audience.type === 'date_range' &&
+          audience.dateRange?.from &&
+          audience.dateRange?.to
+        ) {
+          const fromDate = audience.dateRange.from.trim();
+          const toDate = audience.dateRange.to.trim();
+          if (fromDate && toDate && fromDate <= toDate) {
+            const startIso = new Date(`${fromDate}T00:00:00.000`).toISOString();
+            const endIso = new Date(`${toDate}T23:59:59.999`).toISOString();
+
+            const { data: messages } = await supabase
+              .from('messages')
+              .select('conversation_id')
+              .eq('sender_type', 'customer')
+              .gte('created_at', startIso)
+              .lte('created_at', endIso);
+
+            if (messages && messages.length > 0) {
+              const conversationIds = [
+                ...new Set(messages.map((m) => m.conversation_id).filter(Boolean)),
+              ];
+
+              const { data: convos } = await supabase
+                .from('conversations')
+                .select('contact_id')
+                .in('id', conversationIds);
+
+              const uniqueContactIds = new Set(
+                (convos ?? []).map((c) => c.contact_id).filter(Boolean),
+              );
+              setEstimatedReach(uniqueContactIds.size);
+            } else {
+              setEstimatedReach(0);
             }
+          } else {
+            setEstimatedReach(0);
           }
-          const { count } = await query;
-          setEstimatedReach(count ?? 0);
+        } else if (audience.type === 'custom_field' && audience.customField) {
+          const { fieldId, operator, value } = audience.customField;
+          if (fieldId && value) {
+            let q = supabase
+              .from('contact_custom_values')
+              .select('contact_id')
+              .eq('custom_field_id', fieldId);
+            if (operator === 'is') q = q.eq('value', value);
+            else if (operator === 'is_not') q = q.neq('value', value);
+            else q = q.ilike('value', `%${value}%`);
+            const { data } = await q;
+            const uniqueContactIds = new Set((data ?? []).map((r) => r.contact_id));
+            setEstimatedReach(uniqueContactIds.size);
+          } else {
+            setEstimatedReach(0);
+          }
         } else {
           setEstimatedReach(0);
         }
@@ -124,11 +169,13 @@ export function Step4ScheduleSend({
       ? t('scheduleSend.audienceAll')
       : audience.type === 'tags'
         ? t('scheduleSend.audienceTags')
-        : audience.type === 'csv'
-          ? t('scheduleSend.audienceCsv')
-          : audience.type === 'manual'
-            ? t('scheduleSend.audienceManual')
-            : t('scheduleSend.audienceField');
+        : audience.type === 'date_range'
+          ? t('scheduleSend.audienceDateRange')
+          : audience.type === 'csv'
+            ? t('scheduleSend.audienceCsv')
+            : audience.type === 'manual'
+              ? t('scheduleSend.audienceManual')
+              : t('scheduleSend.audienceField');
 
   return (
     <div className="space-y-6">
@@ -155,17 +202,17 @@ export function Step4ScheduleSend({
         <p className="text-sm font-medium text-foreground">{t('scheduleSend.summary')}</p>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <p className="text-xs text-muted-foreground">{connectionType === 'evolution' ? 'نوع الاتصال والمحتوى' : t('scheduleSend.template')}</p>
+            <p className="text-xs text-muted-foreground">{connectionType === 'evolution' ? t('scheduleSend.connectionAndContent') : t('scheduleSend.template')}</p>
             <p className="text-foreground font-medium">
-              {connectionType === 'evolution' ? 'Evolution API (رسالة نصية)' : template?.name}
+              {connectionType === 'evolution' ? t('scheduleSend.evolutionTextMsg') : template?.name}
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">{t('scheduleSend.audience')}</p>
-            <p className="text-foreground">{audienceLabel}</p>
+            <p className="text-foreground font-medium">{audienceLabel}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">عدد المستلمين التقديري</p>
+            <p className="text-xs text-muted-foreground">{t('scheduleSend.estimatedRecipients')}</p>
             <div className="flex items-center gap-1.5">
               {loadingReach ? (
                 <Loader2 className="h-3 w-3 animate-spin text-primary" />
@@ -178,16 +225,16 @@ export function Step4ScheduleSend({
             </div>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">نمط الإرسال</p>
+            <p className="text-xs text-muted-foreground">{t('scheduleSend.sendMode')}</p>
             <p className="text-foreground">
-              {connectionType === 'evolution' ? 'إرسال آمن متدرج (تأخير لحماية الرقم)' : 'Meta Cloud API (مباشر)'}
+              {connectionType === 'evolution' ? t('scheduleSend.safeGradualSend') : t('scheduleSend.directSend')}
             </p>
           </div>
         </div>
 
         {connectionType === 'evolution' && freeText && (
           <div className="border-t border-border pt-3">
-            <p className="text-xs text-muted-foreground mb-1">معاينة النص:</p>
+            <p className="text-xs text-muted-foreground mb-1">{t('scheduleSend.textPreview')}</p>
             <p className="line-clamp-2 text-xs bg-muted p-2 rounded text-foreground font-mono">{freeText}</p>
           </div>
         )}
@@ -215,7 +262,7 @@ export function Step4ScheduleSend({
             <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
               <span className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5 text-primary animate-pulse" />
-                الوقت المتبقي التقديري:
+                {t('scheduleSend.estimatedTimeRemaining')}
               </span>
               <span className="font-medium text-foreground dir-ltr">
                 ~ {formatRemainingTime(estimatedSecondsRemaining)}
@@ -263,19 +310,17 @@ export function Step4ScheduleSend({
             </DialogTrigger>
             <DialogContent className="border-border bg-popover sm:max-w-md">
               <DialogHeader>
-                <DialogTitle className="text-popover-foreground">تأكيد إرسال البرودكاست</DialogTitle>
+                <DialogTitle className="text-popover-foreground">{t('scheduleSend.confirmTitle')}</DialogTitle>
                 <DialogDescription className="text-muted-foreground space-y-2">
                   <span>
-                    أنت على وشك إرسال هذه الحملة إلى{' '}
-                    <span className="font-semibold text-popover-foreground">{estimatedReach.toLocaleString()}</span>{' '}
-                    مستلم عبر قناة{' '}
-                    <span className="font-semibold text-popover-foreground">
-                      {connectionType === 'evolution' ? 'Evolution API' : template?.name}
-                    </span>.
+                    {t('scheduleSend.confirmAboutToSend', {
+                      count: estimatedReach.toLocaleString(),
+                      channel: connectionType === 'evolution' ? 'Evolution API' : (template?.name || ''),
+                    })}
                   </span>
                   {connectionType === 'evolution' && estimatedReach > 10 && (
                     <span className="block text-xs bg-amber-500/10 text-amber-300 p-2 rounded border border-amber-500/20 mt-2">
-                      ملاحظة: حمايةً لرقم الواتساب الخاص بك، يتم الإرسال عبر Evolution بآلية متدرجة وآمنة لمنع الحظر.
+                      {t('scheduleSend.evolutionAntiBanNotice')}
                     </span>
                   )}
                 </DialogDescription>
