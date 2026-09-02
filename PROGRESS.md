@@ -8,6 +8,12 @@
 > 4. **لوحة تحكم الأدمن لإنشاء وتعديل الباقات (Admin Pricing Manager):** عبر [`plans/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/plans/page.tsx) و [`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/edit-plan-modal.tsx).
 
 - ✅ **إصلاح مشكلة تعذر تشغيل الصوت (Audio unavailable) وتفريغ رسائل الواتساب الصوتية عبر Gemini**:
+  - **تضمين الرسائل الصوتية في سياق محادثات الذكاء الاصطناعي ([`context.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/context.ts))**:
+    - إزالة حصر استعلام سياق المحادثة على `content_type = 'text'` وتضمين كافة الرسائل ذات المحتوى النصي (`content_text`) بما فيها الرسائل الصوتية المفرغة، مما يضمن وصول الرسالة الصوتية كـ `user` في سياق المحادثة للـ AI فوراً دون تجاهلها.
+  - **تحصين ترتيب أدوار المحادثة في Google Gemini ([`gemini.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/providers/gemini.ts))**:
+    - ضبط مصفوفة `contents` لتتناوب الأدوار وتبدأ وتنتهي دائماً بـ `role: 'user'`، مما يمنع حدوث أخطاء `400 Bad Request` عند وجود ردود متتالية أو عدم وصول رد جديد.
+  - **ترجمة مفاتيح مشغل الصوت في الصندوق الوارد ([`messages/en.json`](file:///c:/Users/Mustafa/Desktop/mk%20whats/messages/en.json) & [`messages/ar.json`](file:///c:/Users/Mustafa/Desktop/mk%20whats/messages/ar.json))**:
+    - إضافة مساحة التسمية `Inbox.bubble` بالكامل بما فيها `voiceNote` لمنع ظهور النصوص المفتاحية الخام.
   - **تنظيف نوع الوسائط قبل الرفع لـ Supabase Storage ([`evolution/webhook/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/whatsapp/evolution/webhook/route.ts))**:
     - تنظيف الـ `mimetype` المرفق مع رسائل الصوت المشفرة (`audio/ogg; codecs=opus`) ليصبح `audio/ogg` متوافقاً مع أنواع الوسائط المسموح بها في حاوية `chat-media`، مما يحل خطأ الرفع `415 Unsupported Media Type` ويضمن تخزين الرابط الدائم `media_url`.
   - **تحديث موديل Gemini STT ودعم الـ Fallbacks الآمنة ([`stt.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/voice/stt.ts))**:

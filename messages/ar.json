@@ -75,6 +75,21 @@
     "profile": "الملف الشخصي",
     "adminPanel": "لوحة الإدارة"
   },
+  "Inbox": {
+    "bubble": {
+      "unavailable": "{label} غير متوفر",
+      "photo": "صورة",
+      "video": "فيديو",
+      "audio": "صوت",
+      "document": "مستند",
+      "template": "قالب",
+      "locationShared": "تمت مشاركة الموقع",
+      "buttonReply": "رد على زر",
+      "interactiveReply": "استجابة تفاعلية",
+      "unsupported": "نوع رسالة غير مدعوم",
+      "voiceNote": "تفريغ صوتي"
+    }
+  },
   "ModeToggle": {
     "switchMode": "Switch to {mode} mode"
   },

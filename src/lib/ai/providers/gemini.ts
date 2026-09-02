@@ -52,10 +52,23 @@ interface GeminiResponse {
 export async function generateGemini(args: ProviderArgs): Promise<ProviderResult> {
   const { apiKey, model, systemPrompt, messages, timeoutMs } = args
 
-  const contents: GeminiContent[] = mergeConsecutive(messages).map((m) => ({
+  const merged = mergeConsecutive(messages)
+  const contents: GeminiContent[] = merged.map((m) => ({
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: m.content }],
   }))
+
+  // Gemini requires contents to be non-empty, start with 'user', and end with 'user'
+  if (contents.length === 0) {
+    contents.push({ role: 'user', parts: [{ text: 'مرحبا' }] })
+  } else {
+    if (contents[0].role === 'model') {
+      contents.unshift({ role: 'user', parts: [{ text: 'مرحبا' }] })
+    }
+    if (contents[contents.length - 1].role === 'model') {
+      contents.push({ role: 'user', parts: [{ text: '...' }] })
+    }
+  }
 
   const url = `${GEMINI_BASE_URL}/${encodeURIComponent(model)}:generateContent?key=${apiKey}`
 

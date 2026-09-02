@@ -67,6 +67,21 @@
     "menuSupport": "Contact Support",
     "menuSignOut": "Sign out"
   },
+  "Inbox": {
+    "bubble": {
+      "unavailable": "{label} unavailable",
+      "photo": "Photo",
+      "video": "Video",
+      "audio": "Audio",
+      "document": "Document",
+      "template": "Template",
+      "locationShared": "Location Shared",
+      "buttonReply": "Button Reply",
+      "interactiveReply": "Interactive Response",
+      "unsupported": "Unsupported message type",
+      "voiceNote": "Voice Note"
+    }
+  },
   "ModeToggle": {
     "switchMode": "Switch to {mode} mode"
   },
