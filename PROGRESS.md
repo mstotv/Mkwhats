@@ -7,6 +7,16 @@
 > 3. **نافذة ترقية وتغيير الباقة للمستخدم (Upgrade Plan Modal):** عبر [`upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/upgrade-plan-modal.tsx).
 > 4. **لوحة تحكم الأدمن لإنشاء وتعديل الباقات (Admin Pricing Manager):** عبر [`plans/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/plans/page.tsx) و [`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/edit-plan-modal.tsx).
 
+- ✅ **إصلاح مشكلة تعذر تشغيل الصوت (Audio unavailable) وتفريغ رسائل الواتساب الصوتية عبر Gemini**:
+  - **تنظيف نوع الوسائط قبل الرفع لـ Supabase Storage ([`evolution/webhook/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/whatsapp/evolution/webhook/route.ts))**:
+    - تنظيف الـ `mimetype` المرفق مع رسائل الصوت المشفرة (`audio/ogg; codecs=opus`) ليصبح `audio/ogg` متوافقاً مع أنواع الوسائط المسموح بها في حاوية `chat-media`، مما يحل خطأ الرفع `415 Unsupported Media Type` ويضمن تخزين الرابط الدائم `media_url`.
+  - **تحديث موديل Gemini STT ودعم الـ Fallbacks الآمنة ([`stt.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/voice/stt.ts))**:
+    - معالجة خطأ `404` عبر التبديل للموديل القياسي السريع `gemini-2.0-flash` مع دعم الموديل المختار في إعدادات الحساب وتضمين قائمة مرنة من الموديلات البديلة (`gemini-2.5-flash`, `gemini-1.5-flash-latest`).
+  - **إلزامية تضمين `base64: true` عند تسجيل الـ Webhook ([`evolution-api.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/whatsapp/evolution-api.ts))**:
+    - إضافة `base64: true` في دالة `setEvolutionWebhook` لضمان وصول ملفات الصوت والوسائط مباشرة مع أحداث الـ Webhook من خادم Evolution دون الحاجة لطلبات جلب منفصلة.
+  - **مشغل الصوت الآمن في المحادثات ([`message-bubble.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/inbox/message-bubble.tsx))**:
+    - بناء مكون `MediaAudio` لدعم جلب وتشغيل ملفات الصوت عبر Blob URLs مع تفادي قيود الـ CORS وتوفير تجربة تشغيل سلسة عبر جميع المتصفحات.
+
 - ✅ **إصلاح وتحديث واجهة ربط الواتساب وتأمين استقبال رسائل Evolution API (WhatsApp Connection UI & Evolution Webhook Reliability)**:
   - **إعادة تصميم وتحديث ألوان واجهة الربط ([`whatsapp-config.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/whatsapp-config.tsx))**:
     - استبدال التنسيقات والخلفيات الباهتة بتصميم زجاجي عصري شديد النقاء بتباين لوني عالي في الوضعين الفاتح والداكن (Light & Dark Themes).

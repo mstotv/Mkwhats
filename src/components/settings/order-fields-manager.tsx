@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   GripVertical,
@@ -64,12 +65,6 @@ const EMPTY_DRAFT: NewFieldDraft = {
   is_required: true,
 };
 
-const TYPE_LABELS: Record<FieldType, string> = {
-  text: 'نص',
-  number: 'رقم',
-  choice: 'اختيار',
-};
-
 // Auto-generate a snake_case field_key from the Arabic/English label.
 function autoKey(label: string): string {
   return label
@@ -100,6 +95,7 @@ export function OrderFieldsManager({
   onToggleOrderCollection,
   savingToggle,
 }: OrderFieldsManagerProps) {
+  const t = useTranslations('Settings.orderFields');
   const [fields, setFields] = useState<OrderField[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingNew, setAddingNew] = useState(false);
@@ -279,15 +275,24 @@ export function OrderFieldsManager({
 
   const disabled = !canEdit || saving;
 
+  const getTypeLabel = (type: FieldType) => {
+    switch (type) {
+      case 'text': return t('typeText');
+      case 'number': return t('typeNumber');
+      case 'choice': return t('typeChoice');
+      default: return type;
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <ShoppingCart className="h-4 w-4 text-primary" />
-          تجميع الطلبات بالذكاء الاصطناعي
+          {t('title')}
         </CardTitle>
         <CardDescription>
-          عند التفعيل، يسأل المساعد العميل عن هذه الحقول تلقائياً ويجمع الطلب خطوة بخطوة.
+          {t('description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -295,9 +300,9 @@ export function OrderFieldsManager({
         {/* Toggle */}
         <div className="flex items-center justify-between gap-4 rounded-md border border-border p-3">
           <div>
-            <p className="text-sm font-medium text-foreground">تفعيل تجميع الطلبات</p>
+            <p className="text-sm font-medium text-foreground">{t('enableTitle')}</p>
             <p className="text-xs text-muted-foreground">
-              المساعد يستخرج معلومات الطلب ويؤكدها مع العميل قبل الحفظ
+              {t('enableDesc')}
             </p>
           </div>
           {savingToggle ? (
@@ -316,7 +321,7 @@ export function OrderFieldsManager({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-foreground">
-              حقول الطلب
+              {t('fieldsTitle')}
               {fields.length > 0 && (
                 <span className="ml-2 text-xs text-muted-foreground">({fields.length})</span>
               )}
@@ -329,7 +334,7 @@ export function OrderFieldsManager({
                 className="gap-1.5"
               >
                 <Plus className="h-3.5 w-3.5" />
-                إضافة حقل
+                {t('addField')}
               </Button>
             )}
           </div>
@@ -342,7 +347,7 @@ export function OrderFieldsManager({
           ) : fields.length === 0 && !addingNew ? (
             <div className="rounded-md border border-dashed border-border py-8 text-center">
               <p className="text-sm text-muted-foreground">
-                لا توجد حقول بعد. أضف أول حقل لتبدأ بتجميع الطلبات.
+                {t('empty')}
               </p>
             </div>
           ) : (
@@ -354,19 +359,19 @@ export function OrderFieldsManager({
                     <div className="space-y-3">
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="space-y-1">
-                          <Label className="text-xs">اسم الحقل</Label>
+                          <Label className="text-xs">{t('fieldLabel')}</Label>
                           <Input
                             value={editDraft.field_label ?? field.field_label}
                             onChange={(e) =>
                               setEditDraft((d) => ({ ...d, field_label: e.target.value }))
                             }
-                            placeholder="مثال: اسم العميل"
+                            placeholder={t('labelPlaceholder')}
                             className="h-8 text-sm"
                             disabled={saving}
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs">النوع</Label>
+                          <Label className="text-xs">{t('type')}</Label>
                           <Select
                             value={editDraft.field_type ?? field.field_type}
                             onValueChange={(v) =>
@@ -382,8 +387,8 @@ export function OrderFieldsManager({
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              {Object.entries(TYPE_LABELS).map(([k, v]) => (
-                                <SelectItem key={k} value={k}>{v}</SelectItem>
+                              {(['text', 'number', 'choice'] as FieldType[]).map((k) => (
+                                <SelectItem key={k} value={k}>{getTypeLabel(k)}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -391,13 +396,13 @@ export function OrderFieldsManager({
                       </div>
                       {(editDraft.field_type ?? field.field_type) === 'choice' && (
                         <div className="space-y-1">
-                          <Label className="text-xs">الخيارات (مفصولة بفاصلة)</Label>
+                          <Label className="text-xs">{t('choicesLabel')}</Label>
                           <Input
                             value={editDraft.choices_raw ?? (field.choices?.join(', ') ?? '')}
                             onChange={(e) =>
                               setEditDraft((d) => ({ ...d, choices_raw: e.target.value }))
                             }
-                            placeholder="مثال: أحمر, أزرق, أخضر"
+                            placeholder={t('choicesPlaceholder')}
                             className="h-8 text-sm"
                             disabled={saving}
                           />
@@ -414,7 +419,7 @@ export function OrderFieldsManager({
                             disabled={saving}
                           />
                           <Label htmlFor={`req-edit-${field.id}`} className="text-xs">
-                            إلزامي
+                            {t('required')}
                           </Label>
                         </div>
                         <div className="flex gap-2">
@@ -436,7 +441,7 @@ export function OrderFieldsManager({
                             ) : (
                               <Check className="h-3.5 w-3.5" />
                             )}
-                            حفظ
+                            {t('save')}
                           </Button>
                         </div>
                       </div>
@@ -452,7 +457,7 @@ export function OrderFieldsManager({
                           onClick={() => moveField(index, 'up')}
                           disabled={index === 0 || !!movingId || !canEdit}
                           className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
-                          aria-label="تحريك لأعلى"
+                          aria-label={t('moveUp')}
                         >
                           <ChevronUp className="h-3 w-3" />
                         </button>
@@ -460,7 +465,7 @@ export function OrderFieldsManager({
                           onClick={() => moveField(index, 'down')}
                           disabled={index === fields.length - 1 || !!movingId || !canEdit}
                           className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
-                          aria-label="تحريك لأسفل"
+                          aria-label={t('moveDown')}
                         >
                           <ChevronDown className="h-3 w-3" />
                         </button>
@@ -476,11 +481,11 @@ export function OrderFieldsManager({
                             {field.field_key}
                           </code>
                           <Badge variant="secondary" className="text-xs">
-                            {TYPE_LABELS[field.field_type]}
+                            {getTypeLabel(field.field_type)}
                           </Badge>
                           {field.is_required && (
                             <Badge variant="outline" className="text-xs text-destructive border-destructive/40">
-                              إلزامي
+                              {t('required')}
                             </Badge>
                           )}
                         </div>
@@ -528,10 +533,10 @@ export function OrderFieldsManager({
           {/* Add new field form */}
           {addingNew && (
             <div className="rounded-md border border-primary/30 bg-muted/30 p-4 space-y-3">
-              <p className="text-sm font-medium">حقل جديد</p>
+              <p className="text-sm font-medium">{t('newField')}</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
-                  <Label className="text-xs">اسم الحقل (يُعرض للعميل)</Label>
+                  <Label className="text-xs">{t('fieldLabel')}</Label>
                   <Input
                     value={draft.field_label}
                     onChange={(e) => {
@@ -542,14 +547,14 @@ export function OrderFieldsManager({
                         field_key: d.field_key || autoKey(label),
                       }));
                     }}
-                    placeholder="مثال: اسم العميل"
+                    placeholder={t('labelPlaceholder')}
                     className="h-8 text-sm"
                     disabled={saving}
                     autoFocus
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">المفتاح (للنظام، لا يتغير)</Label>
+                  <Label className="text-xs">{t('fieldKey')}</Label>
                   <Input
                     value={draft.field_key}
                     onChange={(e) =>
@@ -558,7 +563,7 @@ export function OrderFieldsManager({
                         field_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''),
                       }))
                     }
-                    placeholder="مثال: customer_name"
+                    placeholder={t('keyPlaceholder')}
                     className="h-8 font-mono text-sm"
                     disabled={saving}
                   />
@@ -566,7 +571,7 @@ export function OrderFieldsManager({
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
-                  <Label className="text-xs">النوع</Label>
+                  <Label className="text-xs">{t('type')}</Label>
                   <Select
                     value={draft.field_type}
                     onValueChange={(v) =>
@@ -578,19 +583,19 @@ export function OrderFieldsManager({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(TYPE_LABELS).map(([k, v]) => (
-                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      {(['text', 'number', 'choice'] as FieldType[]).map((k) => (
+                        <SelectItem key={k} value={k}>{getTypeLabel(k)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 {draft.field_type === 'choice' && (
                   <div className="space-y-1">
-                    <Label className="text-xs">الخيارات (مفصولة بفاصلة)</Label>
+                    <Label className="text-xs">{t('choicesLabel')}</Label>
                     <Input
                       value={draft.choices_raw}
                       onChange={(e) => setDraft((d) => ({ ...d, choices_raw: e.target.value }))}
-                      placeholder="أحمر, أزرق, أخضر"
+                      placeholder={t('choicesPlaceholder')}
                       className="h-8 text-sm"
                       disabled={saving}
                     />
@@ -605,7 +610,7 @@ export function OrderFieldsManager({
                     onCheckedChange={(v) => setDraft((d) => ({ ...d, is_required: v }))}
                     disabled={saving}
                   />
-                  <Label htmlFor="new-field-required" className="text-xs">إلزامي</Label>
+                  <Label htmlFor="new-field-required" className="text-xs">{t('required')}</Label>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -615,7 +620,7 @@ export function OrderFieldsManager({
                     disabled={saving}
                   >
                     <X className="mr-1 h-3.5 w-3.5" />
-                    إلغاء
+                    {t('cancel')}
                   </Button>
                   <Button size="sm" onClick={handleAdd} disabled={disabled}>
                     {saving ? (
@@ -623,7 +628,7 @@ export function OrderFieldsManager({
                     ) : (
                       <Plus className="mr-1 h-3.5 w-3.5" />
                     )}
-                    حفظ الحقل
+                    {t('save')}
                   </Button>
                 </div>
               </div>
@@ -633,7 +638,7 @@ export function OrderFieldsManager({
 
         {!orderCollectionEnabled && fields.length > 0 && (
           <p className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            💡 الحقول محفوظة لكن تجميع الطلبات معطّل. فعّل المفتاح أعلاه لبدء الاستخدام.
+            {t('inactiveHint')}
           </p>
         )}
       </CardContent>

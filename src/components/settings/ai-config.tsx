@@ -496,10 +496,10 @@ export function AiConfig() {
             <div className="flex items-center justify-between gap-4 rounded-md border border-border p-3">
               <div>
                 <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                  <span>🎙️</span> فهم الرسائل الصوتية وتفريغها (Voice STT)
+                  <span>🎙️</span> {t('voiceTranscription')}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  عند التفعيل، سيقوم الذكاء الاصطناعي بالاستماع للرسائل الصوتية الواردة وتفريغها وفهم طلبات ومواعيد العملاء والرد عليها مباشرة.
+                  {t('voiceTranscriptionDesc')}
                 </p>
               </div>
               <Switch
@@ -516,9 +516,7 @@ export function AiConfig() {
                   {t('maxAutoRepliesDesc')}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  اكتب{' '}
-                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">-1</code>
-                  {' '}لإزالة الحد تماماً (بلا حدود)
+                  {t('unlimitedHint')}
                 </p>
               </div>
               <Input

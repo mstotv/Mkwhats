@@ -119,6 +119,44 @@ function MediaImage({ url, alt }: { url: string; alt: string }) {
   );
 }
 
+function MediaAudio({ url, t }: { url: string; t: ReturnType<typeof useTranslations> }) {
+  const [src, setSrc] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  const loadAudio = useCallback(async () => {
+    if (!url) return;
+
+    if (url.startsWith("/api/whatsapp/media/")) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to load audio");
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        setSrc(blobUrl);
+      } catch {
+        setError(true);
+      }
+    } else {
+      setSrc(url);
+    }
+  }, [url]);
+
+  useEffect(() => {
+    loadAudio();
+    return () => {
+      if (src?.startsWith("blob:")) {
+        URL.revokeObjectURL(src);
+      }
+    };
+  }, [loadAudio]);
+
+  if (error || !src) {
+    return <MediaUnavailable label={t("audio")} t={t} />;
+  }
+
+  return <audio src={src} controls className="max-w-60" onError={() => setError(true)} />;
+}
+
 function MessageContent({ message, t }: { message: Message, t: ReturnType<typeof useTranslations> }) {
   switch (message.content_type) {
     case "text":
@@ -168,14 +206,14 @@ function MessageContent({ message, t }: { message: Message, t: ReturnType<typeof
       return (
         <div className="space-y-1.5">
           {message.media_url ? (
-            <audio src={message.media_url} controls className="max-w-60" />
+            <MediaAudio url={message.media_url} t={t} />
           ) : (
             <MediaUnavailable label={t("audio")} t={t} />
           )}
           {message.content_text && (
             <div className="rounded-md bg-background/50 border border-border/40 p-2 text-xs text-foreground/90 space-y-0.5 max-w-60">
               <span className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
-                <span>📝</span> تفريغ صوتي
+                <span>🎙️</span> {t("voiceNote") || "Audio Transcription"}
               </span>
               <p className="whitespace-pre-wrap break-words italic">
                 "{message.content_text}"

@@ -513,10 +513,10 @@ export function WhatsAppConfig() {
         <Card className="mb-6 border-border bg-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold text-foreground">
-              اختر طريقة ربط الواتساب (WhatsApp Connection Method)
+              {t('chooseMethodTitle')}
             </CardTitle>
             <CardDescription className="text-muted-foreground text-xs">
-              اختر إحدى الطريقتين لربط حساب الواتساب الخاص بك بالتطبيق.
+              {t('chooseMethodDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -535,7 +535,7 @@ export function WhatsAppConfig() {
                     <div className="flex items-center gap-2">
                       <Building2 className="size-5 text-primary" />
                       <span className="font-semibold text-foreground text-sm">
-                        Meta Business API
+                        {t('metaTitle')}
                       </span>
                     </div>
                     {selectedMethod === 'meta' && (
@@ -543,7 +543,7 @@ export function WhatsAppConfig() {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    الربط السحابي الرسمي من Meta. يحتاج حساب Meta Business وحساب WABA وتوكن الوصول.
+                    {t('metaDesc')}
                   </p>
                 </div>
               </div>
@@ -562,7 +562,7 @@ export function WhatsAppConfig() {
                     <div className="flex items-center gap-2">
                       <QrCode className="size-5 text-emerald-500" />
                       <span className="font-semibold text-foreground text-sm">
-                        Evolution API (QR Code)
+                        {t('evolutionQrTitle')}
                       </span>
                     </div>
                     {selectedMethod === 'evolution' && (
@@ -570,7 +570,7 @@ export function WhatsAppConfig() {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    ربط مباشر وسريع عبر مسح رمز QR من هاتفك المحمول دون الحاجة لاشتراك Meta Business.
+                    {t('evolutionDesc')}
                   </p>
                 </div>
               </div>
@@ -605,7 +605,7 @@ export function WhatsAppConfig() {
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            {connectionStatus === 'connected' ? (isRegistered || config.connection_type === 'evolution' ? 'متصل وجاهز ✓' : 'متصل') : 'تم التكوين'}
+            {connectionStatus === 'connected' ? (isRegistered || config.connection_type === 'evolution' ? t('statusConnectedReady') : t('connectedStatus')) : t('statusConfigured')}
           </span>
         </div>
       )}

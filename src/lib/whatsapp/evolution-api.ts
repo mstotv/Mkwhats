@@ -221,6 +221,7 @@ export async function setEvolutionWebhook(args: {
       enabled: true,
       url: args.webhookUrl,
       byEvents: false,
+      base64: true,
       events: [
         'QRCODE_UPDATED',
         'CONNECTION_UPDATE',

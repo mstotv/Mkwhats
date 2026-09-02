@@ -80,7 +80,7 @@ describe('transcribeAudioMessage', () => {
 
     expect(result).toBe('طلب جديد قطعتين عطر')
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('gemini-1.5-flash:generateContent?key=AIzaSyFakeKey123'),
+      expect.stringContaining('gemini-2.0-flash:generateContent?key=AIzaSyFakeKey123'),
       expect.objectContaining({
         method: 'POST',
       })

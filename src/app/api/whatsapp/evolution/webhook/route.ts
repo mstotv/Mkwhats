@@ -602,16 +602,17 @@ async function extractAndProcessMedia(
       }
 
       const buffer = Buffer.from(cleanBase64, 'base64')
-      const ext = mimetype ? mimetype.split('/')[1]?.replace('jpeg', 'jpg').replace(/;.*$/, '') || 'bin' : 'bin'
+      const cleanMimetype = (mimetype || 'application/octet-stream').split(';')[0].trim()
+      const ext = cleanMimetype ? cleanMimetype.split('/')[1]?.replace('jpeg', 'jpg').replace(/;.*$/, '') || 'bin' : 'bin'
       const filePath = `account-${accountId}/evo-${Date.now()}-${msg.key?.id || 'media'}.${ext}`
 
-      console.log('[DIAG][evolution/webhook] Uploading media to Supabase Storage chat-media bucket | path:', filePath)
+      console.log('[DIAG][evolution/webhook] Uploading media to Supabase Storage chat-media bucket | path:', filePath, '| cleanMimetype:', cleanMimetype)
 
       const { error: uploadErr } = await supabaseAdmin()
         .storage
         .from('chat-media')
         .upload(filePath, buffer, {
-          contentType: mimetype || 'application/octet-stream',
+          contentType: cleanMimetype,
           cacheControl: '3600',
           upsert: true,
         })
@@ -638,13 +639,14 @@ async function extractAndProcessMedia(
           console.log('[evolution/webhook] Plan allows voice_transcription:', planAllowsVoice)
           if (planAllowsVoice) {
             const aiConf = await loadAiConfig(supabaseAdmin(), accountId)
-            console.log('[evolution/webhook] AI Config loaded | isActive:', aiConf?.isActive, '| voiceTranscriptionEnabled:', aiConf?.voiceTranscriptionEnabled)
+            console.log('[evolution/webhook] AI Config loaded | isActive:', aiConf?.isActive, '| voiceTranscriptionEnabled:', aiConf?.voiceTranscriptionEnabled, '| model:', aiConf?.model)
             if (aiConf?.isActive && aiConf?.voiceTranscriptionEnabled) {
               const transcription = await transcribeAudioMessage({
                 buffer,
-                mimeType: mimetype || 'audio/ogg',
+                mimeType: cleanMimetype,
                 provider: aiConf.provider,
                 apiKey: aiConf.apiKey,
+                model: aiConf.model,
               })
               if (transcription) {
                 console.log('[evolution/webhook] Voice message transcribed successfully | text:', transcription)
