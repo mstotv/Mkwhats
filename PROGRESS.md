@@ -34,7 +34,7 @@
     - قيود الـ 24 ساعة وقوالب Meta تطبق حصرياً على الـ Cloud API الرسمي؛ تم تمكين الإرسال والرد المباشر بدون أي حظر عند استخدام ربط Evolution (QR Code).
   - **طبقة المحول الصوتي المستقلة بالكامل (Isolated Input Adapter Layer - [`src/lib/ai/voice/stt.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/voice/stt.ts))**:
     - بناء موديول معزول تماماً لا يمس منطق الـ AI Core ولا يعيد هيكلته.
-    - دعم التفريغ الصوتي التلقائي عبر **OpenAI Whisper API (`whisper-1`)** لمستخدمي OpenAI وعبر **Google Gemini Multimodal Audio (`gemini-1.5-flash`)** لمستخدمي Gemini باستخدام مفتاح الحساب المشفر نفسه بأمان تام.
+    - دعم التفريغ الصوتي التلقائي عبر **OpenAI Whisper API (`whisper-1`)** لمستخدمي OpenAI وعبر **Google Gemini Multimodal Audio (`gemini-2.0-flash`)** لمستخدمي Gemini باستخدام مفتاح الحساب المشفر نفسه بأمان تام.
     - حماية صارمة وسرية تامة للسجلات (Safe Logging): حجب وإخفاء أي مفاتيح API أو Bearer tokens أو نصوص حساسة في الـ Logs عند حدوث أي خطأ، مع تفادي إرسال أي ردود عشوائية أو خاطئة للعميل عند تعذر التفريغ.
   - **التكامل مع الـ Webhooks وقنوات الواتساب ([`webhook/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/whatsapp/webhook/route.ts) & [`evolution/webhook/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/whatsapp/evolution/webhook/route.ts))**:
     - تحميل ملف الصوت وتفريغه في الخلفية غير المتزامنة داخل `after()` دون تأخير استجابة `200 OK` السريعة لميتا أو Evolution API.
