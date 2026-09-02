@@ -42,6 +42,8 @@ import {
   Boxes,
   ShoppingBag,
   Store,
+  Mic,
+  CalendarCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -186,98 +188,177 @@ const DEFAULT_FEATURES_SECTION: FeaturesSectionContent = {
   section_subtitle_en: 'A sophisticated suite of tools designed to automate, analyze, and scale your conversational commerce effortlessly.',
   features: [
     {
-      id: 'ai-automation',
-      title_ar: 'أتمتة الذكاء الاصطناعي (Gemini AI)',
-      title_en: 'Gemini AI Automation',
-      description_ar: 'نشر وكلاء محادثة يفهمون السياق والنية بدقة لتقديم ردود طبيعية شبيهة بالبشر على مدار الساعة.',
-      description_en: 'Deploy conversational agents that understand context, nuance, and user intent, providing human-like responses 24/7.',
-      icon: 'Bot',
-      col_span: 'col-span-2',
-      badges: [
-        { text_ar: 'Gemini 2.5 & 3.6 Flash نشط', text_en: 'Gemini 2.5 & 3.6 Flash Active', variant: 'pulse' },
-        { text_ar: 'نية الشراء: عالية جداً', text_en: 'Intent: Purchase High', variant: 'neutral' },
-      ],
+      id: 'order-intake',
+      title_ar: 'أخذ وتوثيق الطلبات وإشعار تيليجرام الفوري',
+      title_en: 'Automated Order Intake & Telegram Alerts',
+      description_ar: 'يقوم الذكاء الاصطناعي بجمع مواصفات الطلب خطوة بخطوة (المنتج، المقاس، اللون، الكمية، العنوان، رقم الهاتف)، مع إرسال إشعار لحظي فوري بتفاصيل الطلب إلى قناة أو مجموعة Telegram لفريق التجهيز والتوصيل.',
+      description_en: 'AI collects complete order specifications step-by-step (item, size, color, delivery address, phone) and instantly fires a real-time Telegram notification to your fulfillment team.',
+      icon: 'ShoppingBag',
+      col_span: 'col-span-1',
+      badges: [],
       integrations: [],
     },
     {
-      id: 'deep-analytics',
-      title_ar: 'تحليلات عميقة',
-      title_en: 'Deep Analytics',
-      description_ar: 'متابعة معدلات التفاعل والتحويل واستهلاك الرسائل الشهرية لحظة بلحظة.',
-      description_en: 'Track engagement, conversion rates, and agent performance in real-time.',
-      icon: 'BarChart3',
+      id: 'appointment-booking',
+      title_ar: 'حجز المواعيد وإشعارات تيليجرام الفورية',
+      title_en: 'Smart Booking & Team Telegram Alerts',
+      description_ar: 'تنسيق وحجز المواعيد آلياً حسب أوقات العمل المتاحة، وجمع اسم العميل والخدمة المطلوبة، مع إرسال إشعار فوري لحظي بتفاصيل الحجز للأطباء أو الموظفين عبر Telegram وإرسال تذكيرات آلية للعملاء.',
+      description_en: 'Automate client appointments based on live working hours, verify chosen slots, and dispatch instant Telegram alerts to doctors/agents while scheduling automated reminder pings.',
+      icon: 'CalendarCheck',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'voice-stt',
+      title_ar: 'فهم وتفريغ الرسائل الصوتية (Voice STT)',
+      title_en: 'AI Voice Notes Transcription',
+      description_ar: 'استماع المساعد الذكي للرسائل الصوتية الواردة من العملاء بمختلف اللهجات العربية، وتفريغها صوتياً بدقة عالية، وفهم تفاصيل الطلبات والمواعيد والرد عليها فورياً بالكتابة أو الصوت.',
+      description_en: 'AI listens to customer voice notes across diverse Arabic and English dialects, transcribes audio in real-time, extracts order/booking intents, and responds autonomously.',
+      icon: 'Mic',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'ecommerce-sync',
+      title_ar: 'ربط المتاجر واسترجاع السلات المتروكة',
+      title_en: 'E-Commerce Sync & Cart Recovery',
+      description_ar: 'مزامنة مباشرة مع متاجر WooCommerce وشوبيفاي، وتحديث حالات الطلبات، وإرسال رسائل استرجاع ذكية للسلات المتروكة برابط دفع سريع لزيادة مبيعات المتجر بنسبة +30%.',
+      description_en: 'Bi-directional sync with WooCommerce & Shopify, automated order status updates, and high-converting WhatsApp abandoned cart recovery with 1-click checkout links.',
+      icon: 'Store',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'google-sheets-sync',
+      title_ar: 'المزامنة التلقائية مع جداول Google Sheets',
+      title_en: 'Live Google Sheets & Excel Auto-Sync',
+      description_ar: 'توثيق وترحيل بيانات كل طلب أو موعد أو عميل جديد تلقائياً إلى جداول Google Sheets وملفات Excel المربوطة لحظياً دون الحاجة لأي إدخال يدوي.',
+      description_en: 'Automatically capture and stream every incoming customer order, booking, and contact lead straight into your Google Sheets and Excel spreadsheets with zero manual data entry.',
+      icon: 'FileSpreadsheet',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'ai-automation',
+      title_ar: 'أتمتة المحادثات والرد الذكي 24/7',
+      title_en: 'Smart Conversational AI Assistant',
+      description_ar: 'ردود تفاعلية فائقة السرعة مدعومة بأحدث نماذج الذكاء الاصطناعي مع تدريب المساعد بملفات ومستندات وقواعد المعرفة الخاصة بنشاطك التجاري لتقديم إجابات دقيقة وموثوقة.',
+      description_en: 'Ultra-fast interactive auto-replies powered by advanced LLMs, grounded in your business knowledge base documents to provide accurate, reliable answers around the clock.',
+      icon: 'Bot',
       col_span: 'col-span-1',
       badges: [],
       integrations: [],
     },
     {
       id: 'targeted-broadcasts',
-      title_ar: 'حملات برودكاست موجهة',
-      title_en: 'Targeted Broadcasts',
-      description_ar: 'إرسال رسائل تسويقية جماعية للجمهور المستهدف بمعدلات آمنة وموثوقة.',
-      description_en: 'Send personalized bulk messages to segmented audiences securely.',
+      title_ar: 'حملات البرودكاست الموجهة والآمنة',
+      title_en: 'Targeted WhatsApp Broadcasts',
+      description_ar: 'إطلاق حملات تسويقية جماعية لآلاف العملاء بنقرة زر مع فواصل زمنية متغيرة ذكية لحماية الأرقام وتتبع دقيق للمقاييس ومعدلات التسليم والقراءة.',
+      description_en: 'Execute high-scale segmented WhatsApp marketing broadcasts with intelligent intervals, anti-ban protections, and real-time open/read analytics.',
       icon: 'Radio',
       col_span: 'col-span-1',
       badges: [],
       integrations: [],
     },
     {
-      id: 'approved-templates',
-      title_ar: 'قوالب معتمدة',
-      title_en: 'Approved Templates',
-      description_ar: 'إنشاء واستخدام قوالب رسائل تفاعلية لتسريع ردود فريق المبيعات.',
-      description_en: 'Manage and deploy WhatsApp-approved message templates effortlessly.',
-      icon: 'FileText',
+      id: 'flow-builder',
+      title_ar: 'منشئ التدفقات البصري والقوالب التفاعلية',
+      title_en: 'Visual Flow Builder & Interactive Menus',
+      description_ar: 'إنشاء قوالب رد سريع مخصصة، قوائم أزرار تفاعلية، وتدفقات ترحيبية آلية لتسريع رحلة العميل وتسهيل العمل بسحب وإفلات العناصر.',
+      description_en: 'Build multi-branch conversational flows, interactive buttons, quick-reply menus, and automated routing rules with an intuitive drag-and-drop visual canvas.',
+      icon: 'Workflow',
       col_span: 'col-span-1',
       badges: [],
       integrations: [],
     },
     {
-      id: 'sheets-telegram-sync',
-      title_ar: 'مزامنة Google Sheets و Telegram',
-      title_en: 'Google Sheets & Telegram Sync',
-      description_ar: 'تسجيل العملاء والطلبات تلقائياً في Google Sheets مع تنبيهات فورية على Telegram لفريقك عند تأكيد الطلب.',
-      description_en: 'Automatically log leads into Google Sheets and trigger instant Telegram alerts for your sales team when high-intent actions occur.',
-      icon: 'FileSpreadsheet',
-      col_span: 'col-span-2',
+      id: 'team-crm',
+      title_ar: 'صندوق الوارد الموحد وإدارة المبيعات (CRM)',
+      title_en: 'Multi-Agent Team Inbox & CRM Pipelines',
+      description_ar: 'واجهة موحدة لفريق العمل، تصنيف المحادثات بالوسوم الملونة، تتبع الصفقات عبر مراحل المبيعات، وإسناد كل محادثة للموظف المختص بسهولة.',
+      description_en: 'Unified collaboration inbox for support and sales agents, colored tag labeling, visual deal stage pipelines, and seamless team conversation assignment.',
+      icon: 'Users',
+      col_span: 'col-span-1',
       badges: [],
-      integrations: [
-        { title_ar: 'Google Sheets', title_en: 'Google Sheets', status_ar: '● مزامنة فورية', status_en: '● Auto-Synced' },
-        { title_ar: 'Telegram Bot', title_en: 'Telegram Bot', status_ar: '● تنبيه فوري', status_en: '● Instant Alert' },
-      ],
+      integrations: [],
+    },
+    {
+      id: 'dual-whatsapp-gateway',
+      title_ar: 'بوابة الربط المزدوج بالواتساب',
+      title_en: 'Dual WhatsApp Gateway',
+      description_ar: 'حرية الاختيار الكاملة بين الربط السحابي الرسمي لشركة Meta أو الربط الفوري المباشر عبر مسح QR Code بدون قيود نافذة الـ 24 ساعة وبدون تكاليف قوالب إضافية.',
+      description_en: 'Full freedom to connect via Official Meta Cloud API or instant Web QR Client with zero 24-hour window restrictions and zero extra template fees.',
+      icon: 'Smartphone',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'smart-handoff',
+      title_ar: 'التحويل الذكي للموظف وتنبيهات التدخل',
+      title_en: 'AI-to-Human Handoff & Instant Dispatch',
+      description_ar: 'تحويل المحادثة بسلاسة من الذكاء الاصطناعي إلى الموظف البشري فور طلب العميل، مع إرسال إشعار فوري وتنبيه للموظف عبر تيليجرام للتدخل السريع وإنهاء الصفقة.',
+      description_en: 'Seamlessly transfer active conversations from AI to human agents when requested, with instant Telegram dispatch alerts for fast human intervention.',
+      icon: 'Bell',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
+    },
+    {
+      id: 'contacts-export',
+      title_ar: 'إدارة وتصدير جهات الاتصال الذكية',
+      title_en: 'Advanced Contacts CRM & Excel Export',
+      description_ar: 'استيراد وتصدير آلاف جهات الاتصال بملفات Excel و CSV، مع تصنيف العملاء وتقسيمهم حسب السلوك ومراحل الشراء لاستهدافهم بدقة في الحملات التسويقية.',
+      description_en: 'Import and export bulk contacts via Excel and CSV, segment customer audiences by tags and behavior, and target them precisely in marketing campaigns.',
+      icon: 'FileSpreadsheet',
+      col_span: 'col-span-1',
+      badges: [],
+      integrations: [],
     },
   ],
 }
 
 const AVAILABLE_ICONS = [
   { value: 'Bot', label_ar: 'روبوت الذكاء الاصطناعي (Bot)', label_en: 'AI Bot' },
+  { value: 'ShoppingBag', label_ar: 'تجميع وتوثيق الطلبات (Order Intake)', label_en: 'Order Intake' },
+  { value: 'CalendarCheck', label_ar: 'حجز المواعيد والتقويم (Booking)', label_en: 'Appointment Booking' },
+  { value: 'Mic', label_ar: 'تفريغ وفهم الصوت (Voice STT)', label_en: 'Voice STT Audio AI' },
+  { value: 'Store', label_ar: 'المتاجر والسلات (E-Commerce)', label_en: 'E-Commerce Store' },
+  { value: 'FileSpreadsheet', label_ar: 'شيتس وإكسل (Spreadsheet)', label_en: 'Spreadsheet' },
   { value: 'BarChart3', label_ar: 'إحصائيات وتحليلات (Analytics)', label_en: 'Analytics' },
   { value: 'Radio', label_ar: 'بث وحملات برودكاست (Broadcast)', label_en: 'Broadcast' },
+  { value: 'Workflow', label_ar: 'مسارات وتدفقات (Workflow)', label_en: 'Workflow' },
+  { value: 'Users', label_ar: 'فريق ومستخدمين (Team CRM)', label_en: 'Team CRM' },
+  { value: 'Smartphone', label_ar: 'جوال وربط QR (Mobile / QR)', label_en: 'Mobile / QR' },
+  { value: 'Bell', label_ar: 'تنبيهات وتيليجرام (Notifications)', label_en: 'Notifications' },
   { value: 'FileText', label_ar: 'قوالب ونصوص (Templates)', label_en: 'Templates' },
-  { value: 'FileSpreadsheet', label_ar: 'شيتس وإكسل (Spreadsheet)', label_en: 'Spreadsheet' },
   { value: 'Zap', label_ar: 'أتمتة وسرعة (Lightning)', label_en: 'Automation' },
   { value: 'Shield', label_ar: 'أمان وحماية (Security)', label_en: 'Security' },
   { value: 'Sparkles', label_ar: 'ذكاء اصطناعي وبريق (Sparkles)', label_en: 'AI Sparkles' },
   { value: 'MessageSquare', label_ar: 'محادثات ورسائل (Chat)', label_en: 'Chat' },
-  { value: 'Workflow', label_ar: 'مسارات وتدفقات (Workflow)', label_en: 'Workflow' },
   { value: 'TrendingUp', label_ar: 'نمو ومبيعات (Growth)', label_en: 'Growth' },
   { value: 'Clock', label_ar: 'ساعة وعمل 24/7 (24/7)', label_en: '24/7 Availability' },
-  { value: 'Users', label_ar: 'فريق ومستخدمين (Team)', label_en: 'Team' },
-  { value: 'Smartphone', label_ar: 'جوال وهواتف (Mobile)', label_en: 'Mobile' },
   { value: 'Globe', label_ar: 'عالمي وربط دولي (Global)', label_en: 'Global' },
   { value: 'Layers', label_ar: 'طبقات متعددة (Layers)', label_en: 'Layers' },
   { value: 'Lock', label_ar: 'تشفير وخصوصية (Privacy)', label_en: 'Privacy' },
-  { value: 'Bell', label_ar: 'تنبيهات وإشعارات (Notifications)', label_en: 'Notifications' },
 ]
 
 function renderIconPreview(iconName: string) {
   const iconProps = { className: 'h-4 w-4' }
   switch (iconName) {
     case 'Bot': return <Bot {...iconProps} />
+    case 'ShoppingBag': return <ShoppingBag {...iconProps} />
+    case 'CalendarCheck': return <CalendarCheck {...iconProps} />
+    case 'Mic': return <Mic {...iconProps} />
+    case 'Store': return <Store {...iconProps} />
+    case 'FileSpreadsheet': return <FileSpreadsheet {...iconProps} />
     case 'BarChart3': return <BarChart3 {...iconProps} />
     case 'Radio': return <Radio {...iconProps} />
     case 'FileText': return <FileText {...iconProps} />
-    case 'FileSpreadsheet': return <FileSpreadsheet {...iconProps} />
     case 'Zap': return <Zap {...iconProps} />
     case 'Shield': return <Shield {...iconProps} />
     case 'Sparkles': return <Sparkles {...iconProps} />
@@ -335,6 +416,7 @@ function normalizeFeatures(raw: any): FeaturesSectionContent {
 
   // If it's an old array format
   if (Array.isArray(raw)) {
+    if (raw.length < 10) return DEFAULT_FEATURES_SECTION
     return {
       section_title_ar: DEFAULT_FEATURES_SECTION.section_title_ar,
       section_title_en: DEFAULT_FEATURES_SECTION.section_title_en,
@@ -355,24 +437,27 @@ function normalizeFeatures(raw: any): FeaturesSectionContent {
   }
 
   // If it's the new object format
+  const rawFeatures = raw.features
+  const featuresList = (Array.isArray(rawFeatures) && rawFeatures.length >= 10)
+    ? rawFeatures
+    : DEFAULT_FEATURES_SECTION.features
+
   return {
     section_title_ar: raw.section_title_ar || DEFAULT_FEATURES_SECTION.section_title_ar,
     section_title_en: raw.section_title_en || DEFAULT_FEATURES_SECTION.section_title_en,
     section_subtitle_ar: raw.section_subtitle_ar || DEFAULT_FEATURES_SECTION.section_subtitle_ar,
     section_subtitle_en: raw.section_subtitle_en || DEFAULT_FEATURES_SECTION.section_subtitle_en,
-    features: Array.isArray(raw.features) && raw.features.length > 0
-      ? raw.features.map((item: any, idx: number) => ({
-          id: item.id || `feature-${idx + 1}`,
-          title_ar: item.title_ar || item.title || '',
-          title_en: item.title_en || '',
-          description_ar: item.description_ar || item.description || '',
-          description_en: item.description_en || '',
-          icon: item.icon || 'Sparkles',
-          col_span: item.col_span === 'col-span-2' ? 'col-span-2' : 'col-span-1',
-          badges: Array.isArray(item.badges) ? item.badges : [],
-          integrations: Array.isArray(item.integrations) ? item.integrations : [],
-        }))
-      : DEFAULT_FEATURES_SECTION.features,
+    features: featuresList.map((item: any, idx: number) => ({
+      id: item.id || `feature-${idx + 1}`,
+      title_ar: item.title_ar || item.title || '',
+      title_en: item.title_en || '',
+      description_ar: item.description_ar || item.description || '',
+      description_en: item.description_en || '',
+      icon: item.icon || 'Sparkles',
+      col_span: item.col_span === 'col-span-2' ? 'col-span-2' : 'col-span-1',
+      badges: Array.isArray(item.badges) ? item.badges : [],
+      integrations: Array.isArray(item.integrations) ? item.integrations : [],
+    })),
   }
 }
 
@@ -564,6 +649,13 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
         ...prev.features_content,
         features: prev.features_content.features.filter((_, i) => i !== index),
       },
+    }))
+  }
+
+  const handleResetDefaultFeatures = () => {
+    setSettings((prev) => ({
+      ...prev,
+      features_content: DEFAULT_FEATURES_SECTION,
     }))
   }
 
@@ -1016,15 +1108,27 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
                     : 'Manage section header, cards, icons, badges, integrations, and add new feature cards dynamically.'}
                 </CardDescription>
               </div>
-              <Button
-                type="button"
-                onClick={handleAddFeature}
-                size="sm"
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs gap-1.5 shrink-0"
-              >
-                <Plus className="h-4 w-4" />
-                {isAr ? 'إضافة كارت ميزة جديد' : 'Add Feature Card'}
-              </Button>
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleResetDefaultFeatures}
+                  size="sm"
+                  className="border-emerald-600/30 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs gap-1.5"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  {isAr ? 'استعادة المميزات الـ 12 الافتراضية' : 'Reset to 12 Default Features'}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleAddFeature}
+                  size="sm"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs gap-1.5"
+                >
+                  <Plus className="h-4 w-4" />
+                  {isAr ? 'إضافة كارت ميزة جديد' : 'Add Feature Card'}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
 

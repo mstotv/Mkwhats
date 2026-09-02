@@ -14,6 +14,11 @@ import {
   CalendarCheck,
   Store,
   Calendar,
+  Mic,
+  Users,
+  Sparkles,
+  Smartphone,
+  FileSpreadsheet,
 } from 'lucide-react'
 import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { LandingFooter } from '@/components/landing/landing-footer'
@@ -21,6 +26,149 @@ import { LandingEcommerceSection } from '@/components/landing/landing-ecommerce-
 import { FloatingSupport } from '@/components/landing/floating-support'
 
 export const dynamic = 'force-dynamic'
+
+function getFeatureIcon(iconName: string) {
+  const iconProps = { className: 'h-5 w-5' }
+  switch (iconName) {
+    case 'Bot': return <Bot {...iconProps} />
+    case 'ShoppingBag': return <ShoppingBag {...iconProps} />
+    case 'CalendarCheck': return <CalendarCheck {...iconProps} />
+    case 'Mic': return <Mic {...iconProps} />
+    case 'Store': return <Store {...iconProps} />
+    case 'FileSpreadsheet': return <FileSpreadsheet {...iconProps} />
+    case 'BarChart3': return <BarChart3 {...iconProps} />
+    case 'Radio': return <Radio {...iconProps} />
+    case 'Workflow': return <Workflow {...iconProps} />
+    case 'Users': return <Users {...iconProps} />
+    case 'Smartphone': return <Smartphone {...iconProps} />
+    case 'Bell': return <Bell {...iconProps} />
+    case 'Table': return <Table {...iconProps} />
+    default: return <Sparkles {...iconProps} />
+  }
+}
+
+const DEFAULT_FEATURES = [
+  {
+    id: 'order-intake',
+    title_ar: 'أخذ وتوثيق الطلبات وإشعار تيليجرام الفوري',
+    title_en: 'Automated Order Intake & Telegram Alerts',
+    tag_ar: 'تجميع الطلبات + تنبيهات تيليجرام',
+    tag_en: 'AI Order Intake + Telegram Alerts',
+    description_ar: 'يقوم الذكاء الاصطناعي بجمع مواصفات الطلب خطوة بخطوة (المنتج، المقاس، اللون، الكمية، العنوان، رقم الهاتف)، مع إرسال إشعار لحظي فوري بتفاصيل الطلب إلى قناة أو مجموعة Telegram لفريق التجهيز والتوصيل.',
+    description_en: 'AI collects complete order specifications step-by-step (item, size, color, delivery address, phone) and instantly fires a real-time Telegram notification to your fulfillment team.',
+    icon: 'ShoppingBag',
+  },
+  {
+    id: 'appointment-booking',
+    title_ar: 'حجز المواعيد وإشعارات تيليجرام الفورية',
+    title_en: 'Smart Booking & Team Telegram Alerts',
+    tag_ar: 'حجز المواعيد + تنبيهات الأطباء',
+    tag_en: 'Calendar Booking + Instant Alerts',
+    description_ar: 'تنسيق وحجز المواعيد آلياً حسب أوقات العمل المتاحة، وجمع اسم العميل والخدمة المطلوبة، مع إرسال إشعار فوري لحظي بتفاصيل الحجز للأطباء أو الموظفين عبر Telegram وإرسال تذكيرات آلية للعملاء.',
+    description_en: 'Automate client appointments based on live working hours, verify chosen slots, and dispatch instant Telegram alerts to doctors/agents while scheduling automated reminder pings.',
+    icon: 'CalendarCheck',
+  },
+  {
+    id: 'voice-stt',
+    title_ar: 'فهم وتفريغ الرسائل الصوتية (Voice STT)',
+    title_en: 'AI Voice Notes Transcription',
+    tag_ar: 'تفريغ وفهم الصوت الفوري',
+    tag_en: 'Whisper + Gemini Voice AI',
+    description_ar: 'استماع المساعد الذكي للرسائل الصوتية الواردة من العملاء بمختلف اللهجات العربية، وتفريغها صوتياً بدقة عالية، وفهم تفاصيل الطلبات والمواعيد والرد عليها فورياً بالكتابة أو الصوت.',
+    description_en: 'AI listens to customer voice notes across diverse Arabic and English dialects, transcribes audio in real-time, extracts order/booking intents, and responds autonomously.',
+    icon: 'Mic',
+  },
+  {
+    id: 'ecommerce-sync',
+    title_ar: 'ربط المتاجر واسترجاع السلات المتروكة',
+    title_en: 'E-Commerce Sync & Cart Recovery',
+    tag_ar: 'مزامنة ووكومرس وشوبيفاي',
+    tag_en: 'WooCommerce & Shopify 2-Way Sync',
+    description_ar: 'مزامنة مباشرة مع متاجر WooCommerce وشوبيفاي، وتحديث حالات الطلبات، وإرسال رسائل استرجاع ذكية للسلات المتروكة برابط دفع سريع لزيادة مبيعات المتجر بنسبة +30%.',
+    description_en: 'Bi-directional sync with WooCommerce & Shopify, automated order status updates, and high-converting WhatsApp abandoned cart recovery with 1-click checkout links.',
+    icon: 'Store',
+  },
+  {
+    id: 'google-sheets-sync',
+    title_ar: 'المزامنة التلقائية مع جداول Google Sheets',
+    title_en: 'Live Google Sheets & Excel Auto-Sync',
+    tag_ar: 'ترحيل البيانات السحابية الحية',
+    tag_en: 'Live Cloud Data Pipeline',
+    description_ar: 'توثيق وترحيل بيانات كل طلب أو موعد أو عميل جديد تلقائياً إلى جداول Google Sheets وملفات Excel المربوطة لحظياً دون الحاجة لأي إدخال يدوي.',
+    description_en: 'Automatically capture and stream every incoming customer order, booking, and contact lead straight into your Google Sheets and Excel spreadsheets with zero manual data entry.',
+    icon: 'FileSpreadsheet',
+  },
+  {
+    id: 'ai-automation',
+    title_ar: 'أتمتة المحادثات والرد الذكي 24/7',
+    title_en: 'Smart Conversational AI Assistant',
+    tag_ar: 'دعم Gemini 2.0 و GPT-4o',
+    tag_en: 'Gemini 2.0 + GPT-4o Support',
+    description_ar: 'ردود تفاعلية فائقة السرعة مدعومة بأحدث نماذج الذكاء الاصطناعي مع تدريب المساعد بملفات ومستندات وقواعد المعرفة الخاصة بنشاطك التجاري لتقديم إجابات دقيقة وموثوقة.',
+    description_en: 'Ultra-fast interactive auto-replies powered by advanced LLMs, grounded in your business knowledge base documents to provide accurate, reliable answers around the clock.',
+    icon: 'Bot',
+  },
+  {
+    id: 'targeted-broadcasts',
+    title_ar: 'حملات البرودكاست الموجهة والآمنة',
+    title_en: 'Targeted WhatsApp Broadcasts',
+    tag_ar: 'Meta Cloud API و QR ضد الحظر',
+    tag_en: 'Official Meta API & Anti-Ban QR',
+    description_ar: 'إطلاق حملات تسويقية جماعية لآلاف العملاء بنقرة زر مع فواصل زمنية متغيرة ذكية لحماية الأرقام وتتبع دقيق للمقاييس ومعدلات التسليم والقراءة.',
+    description_en: 'Execute high-scale segmented WhatsApp marketing broadcasts with intelligent intervals, anti-ban protections, and real-time open/read analytics.',
+    icon: 'Radio',
+  },
+  {
+    id: 'flow-builder',
+    title_ar: 'منشئ التدفقات البصري والقوالب التفاعلية',
+    title_en: 'Visual Flow Builder & Interactive Menus',
+    tag_ar: 'منشئ التدفقات بدون كود',
+    tag_en: 'Visual No-Code Flow Builder',
+    description_ar: 'إنشاء قوالب رد سريع مخصصة، قوائم أزرار تفاعلية، وتدفقات ترحيبية آلية لتسريع رحلة العميل وتسهيل العمل بسحب وإفلات العناصر.',
+    description_en: 'Build multi-branch conversational flows, interactive buttons, quick-reply menus, and automated routing rules with an intuitive drag-and-drop visual canvas.',
+    icon: 'Workflow',
+  },
+  {
+    id: 'team-crm',
+    title_ar: 'صندوق الوارد الموحد وإدارة المبيعات (CRM)',
+    title_en: 'Multi-Agent Team Inbox & CRM Pipelines',
+    tag_ar: 'صندوق الفريق ومراحل الصفقات',
+    tag_en: 'Multi-Agent CRM & Deal Pipelines',
+    description_ar: 'واجهة موحدة لفريق العمل، تصنيف المحادثات بالوسوم الملونة، تتبع الصفقات عبر مراحل المبيعات، وإسناد كل محادثة للموظف المختص بسهولة.',
+    description_en: 'Unified collaboration inbox for support and sales agents, colored tag labeling, visual deal stage pipelines, and seamless team conversation assignment.',
+    icon: 'Users',
+  },
+  {
+    id: 'dual-whatsapp-gateway',
+    title_ar: 'بوابة الربط المزدوج بالواتساب',
+    title_en: 'Dual WhatsApp Gateway',
+    tag_ar: 'ربط سحابي رسمي + ويب QR',
+    tag_en: 'Official Meta API & Web QR',
+    description_ar: 'حرية الاختيار الكاملة بين الربط السحابي الرسمي لشركة Meta أو الربط الفوري المباشر عبر مسح QR Code بدون قيود نافذة الـ 24 ساعة وبدون تكاليف قوالب إضافية.',
+    description_en: 'Full freedom to connect via Official Meta Cloud API or instant Web QR Client with zero 24-hour window restrictions and zero extra template fees.',
+    icon: 'Smartphone',
+  },
+  {
+    id: 'smart-handoff',
+    title_ar: 'التحويل الذكي للموظف وتنبيهات التدخل',
+    title_en: 'AI-to-Human Handoff & Instant Dispatch',
+    tag_ar: 'التحويل السلس وتنبيه الموظف',
+    tag_en: 'Smart Handoff & Dispatch Alerts',
+    description_ar: 'تحويل المحادثة بسلاسة من الذكاء الاصطناعي إلى الموظف البشري فور طلب العميل، مع إرسال إشعار فوري وتنبيه للموظف عبر تيليجرام للتدخل السريع وإنهاء الصفقة.',
+    description_en: 'Seamlessly transfer active conversations from AI to human agents when requested, with instant Telegram dispatch alerts for fast human intervention.',
+    icon: 'Bell',
+  },
+  {
+    id: 'contacts-export',
+    title_ar: 'إدارة وتصدير جهات الاتصال الذكية',
+    title_en: 'Advanced Contacts CRM & Excel Export',
+    tag_ar: 'استيراد وتقسيم العملاء',
+    tag_en: 'Bulk Contacts & Segmentation',
+    description_ar: 'استيراد وتصدير آلاف جهات الاتصال بملفات Excel و CSV، مع تصنيف العملاء وتقسيمهم حسب السلوك ومراحل الشراء لاستهدافهم بدقة في الحملات التسويقية.',
+    description_en: 'Import and export bulk contacts via Excel and CSV, segment customer audiences by tags and behavior, and target them precisely in marketing campaigns.',
+    icon: 'FileSpreadsheet',
+  },
+]
 
 export default async function FeaturesPage() {
   const cookieStore = await cookies()
@@ -66,6 +214,11 @@ export default async function FeaturesPage() {
   const logoHeight = settings?.logo_height || 32
   const socialLinks = (settings?.social_links as any[]) || []
 
+  const rawFeatures = settings?.features_content?.features
+  const featuresList = Array.isArray(rawFeatures) && rawFeatures.length > 0
+    ? rawFeatures
+    : DEFAULT_FEATURES
+
   return (
     <div
       dir={isAr ? 'rtl' : 'ltr'}
@@ -99,7 +252,7 @@ export default async function FeaturesPage() {
 
         {/* Feature Tags Row */}
         <div className="flex flex-wrap justify-center gap-2.5 pt-2 max-w-3xl mx-auto">
-          {['Meta Cloud API', 'QR Code Web Client', 'Google Gemini Pro', 'OpenAI GPT-4o', 'Telegram Webhook Bot', 'Google Sheets Live Sync'].map((tag, idx) => (
+          {['Meta Cloud API', 'QR Code Web Client', 'Google Gemini Pro', 'OpenAI GPT-4o', isAr ? 'تفريغ الصوت (Voice STT)' : 'Voice STT Audio AI', 'Telegram Webhook Bot', 'Google Sheets Live Sync'].map((tag, idx) => (
             <span key={idx} className="rounded-[4px] border border-[#EFEDED] dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1] shadow-sm">
               {tag}
             </span>
@@ -107,104 +260,44 @@ export default async function FeaturesPage() {
         </div>
       </section>
 
-      {/* ── 3. 6 White Cards Grid ──────────────────────────────── */}
+      {/* ── 3. Comprehensive Features Grid (Dynamic CMS) ────────── */}
       <section className="py-12 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1 */}
-          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 space-y-4">
-            <div className="h-10 w-10 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
-              <Bot className="h-5 w-5" />
-            </div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1]">Gemini 1.5 + GPT-4o Support</div>
-            <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
-              {isAr ? 'أتمتة المحادثات الذكية' : 'Smart AI Automation'}
-            </h3>
-            <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
-              {isAr
-                ? 'محادثات تفاعلية آلية مدعومة بنماذج LLM المتقدمة للتعامل مع الاستفسارات المعقدة وترشيح المنتجات وإتمام المبيعات.'
-                : '24/7 automated interactive conversations powered by advanced LLMs to handle complex queries, recommend catalog items, and close sales autonomously around the clock.'}
-            </p>
-          </div>
+          {featuresList.map((card: any, idx: number) => {
+            const cardTitle = isAr
+              ? (card.title_ar || card.title || '')
+              : (card.title_en || card.title || '')
+            const cardDesc = isAr
+              ? (card.description_ar || card.description || '')
+              : (card.description_en || card.description || '')
+            const cardTag = isAr
+              ? (card.tag_ar || card.tag || '')
+              : (card.tag_en || card.tag || '')
 
-          {/* Card 2 */}
-          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 space-y-4">
-            <div className="h-10 w-10 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
-              <Radio className="h-5 w-5" />
-            </div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1]">Official Meta API & Anti-Ban QR</div>
-            <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
-              {isAr ? 'حملات البرودكاست الموجهة' : 'Targeted Broadcasts'}
-            </h3>
-            <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
-              {isAr
-                ? 'إطلاق حملات تسويقية جماعية لآلاف العملاء بنقرة زر مع فواصل زمنية ذكية لحماية الأرقام وتتبع دقيق للمقاييس.'
-                : 'Launch bulk WhatsApp marketing campaigns to thousands of segmented customers with 1-click execution, smart sending intervals, and real-time delivery metrics.'}
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 space-y-4">
-            <div className="h-10 w-10 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
-              <Workflow className="h-5 w-5" />
-            </div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1]">Visual Flow Builder</div>
-            <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
-              {isAr ? 'قوالب وتدفقات معتمدة' : 'Pre-Approved Templates'}
-            </h3>
-            <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
-              {isAr
-                ? 'إنشاء قوالب رد سريع مخصصة، قوائم أزرار تفاعلية، وتدفقات ترحيبية آلية لتسريع رحلة العميل وتسهيل العمل.'
-                : 'Create custom quick-reply templates, interactive button menus, and automated welcome sequences to speed up team responses and streamline client journeys.'}
-            </p>
-          </div>
-
-          {/* Card 4 */}
-          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 space-y-4">
-            <div className="h-10 w-10 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
-              <BarChart3 className="h-5 w-5" />
-            </div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1]">Real-Time Tracking</div>
-            <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
-              {isAr ? 'لوحة تحليلات وإحصائيات مباشرة' : 'Live Analytics Dashboard'}
-            </h3>
-            <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
-              {isAr
-                ? 'مراقبة استهلاك الرسائل المباشر، معدلات تحويل الحملات، اتجاهات نية العميل، وأداء الموظفين برسوم بيانية تفاعلية.'
-                : 'Monitor live message consumption, campaign conversion rates, customer intent trends, and agent performance via interactive visual charts.'}
-            </p>
-          </div>
-
-          {/* Card 5 */}
-          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 space-y-4">
-            <div className="h-10 w-10 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
-              <Table className="h-5 w-5" />
-            </div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1]">Instant Data Pipeline</div>
-            <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
-              {isAr ? 'مزامنة وتوثيق الطلبات تلقائياً' : 'Automated Order Sync'}
-            </h3>
-            <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
-              {isAr
-                ? 'استخراج وحفظ طلبات العملاء الواردة والمقاسات والألوان والعناوين تلقائياً في جداول Google Sheets وملفات Excel.'
-                : 'Automatically parse and capture incoming customer orders and instantly sync details like Size, Color, and Address to Google Sheets & Excel.'}
-            </p>
-          </div>
-
-          {/* Card 6 */}
-          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 space-y-4">
-            <div className="h-10 w-10 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
-              <Bell className="h-5 w-5" />
-            </div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1]">Zero Latency Webhooks</div>
-            <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
-              {isAr ? 'إشعارات تيليجرام الفورية' : 'Instant Telegram Alerts'}
-            </h3>
-            <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
-              {isAr
-                ? 'تلقي إشعارات فورية على هاتفك عبر قناة أو مجموعة Telegram المخصصة فور تسجيل عميل أو تأكيد طلب أو حجز موعد.'
-                : 'Receive instant mobile notifications on your dedicated Telegram channel or group whenever a new lead is captured, an order is placed, or an appointment is confirmed.'}
-            </p>
-          </div>
+            return (
+              <div
+                key={card.id || idx}
+                className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 space-y-4 flex flex-col justify-between"
+              >
+                <div className="space-y-4">
+                  <div className="h-10 w-10 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
+                    {getFeatureIcon(card.icon)}
+                  </div>
+                  {cardTag && (
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1]">
+                      {cardTag}
+                    </div>
+                  )}
+                  <h3 className="font-serif text-xl font-bold text-[#1B1C1C] dark:text-white">
+                    {cardTitle}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">
+                    {cardDesc}
+                  </p>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </section>
 
@@ -267,6 +360,10 @@ export default async function FeaturesPage() {
                 <li className="flex items-center gap-3">
                   <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
                   <span>{isAr ? 'حجز المواعيد واختيار الأوقات آلياً' : 'Automated date & time booking'}</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                  <span>{isAr ? 'فهم الرسائل الصوتية وتنسيق المواعيد صوتياً' : 'Voice note intake & spoken booking assistance'}</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />

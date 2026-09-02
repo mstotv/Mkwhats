@@ -7,7 +7,24 @@
 > 3. **نافذة ترقية وتغيير الباقة للمستخدم (Upgrade Plan Modal):** عبر [`upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/upgrade-plan-modal.tsx).
 > 4. **لوحة تحكم الأدمن لإنشاء وتعديل الباقات (Admin Pricing Manager):** عبر [`plans/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/plans/page.tsx) و [`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/_components/edit-plan-modal.tsx).
 
-- ✅ **إصلاح مشكلة تعذر تشغيل الصوت (Audio unavailable) وتفريغ رسائل الواتساب الصوتية عبر Gemini**:
+- ✅ **إصلاح وتطوير صفحة المميزات وربطها الكامل مع لوحة تحكم الأدمن (Dynamic Features CMS & Full 12 Capabilities)**:
+  - **عرض وإبراز كافة ميزات المنصة الـ 12 في صفحة المميزات العامة مع دعم التعديل الكامل من لوحة تحكم الأدمن ([`features/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/features/page.tsx) & [`landing-settings/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/landing-settings/page.tsx))**:
+    - **الربط الديناميكي مع الـ CMS**: ربط صفحة المميزات العامة ديناميكياً مع إعدادات لوحة تحكم الأدمن (`site_settings.features_content`) لتمكين الأدمن من إضافة، تعديل، حذف، تغيير أيقونات، وإعادة ترتيب كروت المميزات ونصوصها باللغتين العربية والإنجليزية وحفظ التغييرات لحظياً.
+    - **دعم الأيقونات الجديدة**: توسيع قائمة الأيقونات المتاحة في لوحة الأدمن وفي دالة المعاينة والصفحة لتشمل: (`Mic`, `ShoppingBag`, `CalendarCheck`, `Store`, `FileSpreadsheet`, `Smartphone`, `Bell`, `Users`, `Bot`, `Radio`, `Workflow`, `Table`).
+    - **زر استعادة المميزات الـ 12 الافتراضية**: إضافة زر مخصص `handleResetDefaultFeatures` في رأس تبويب المميزات داخل لوحة الأدمن لتعبئة واستعادة كافة المميزات الـ 12 الافتراضية بنقرة واحدة.
+    - **شبكة البطاقات الـ 12 المتكاملة (3 أعمدة × 4 صفوف)**:
+      1. `أخذ وتوثيق الطلبات وإشعار تيليجرام الفوري` (جمع المقاس واللون والعنوان وتنبيه Telegram الفوري).
+      2. `حجز المواعيد وإشعارات تيليجرام الفورية` (تنسيق المواعيد آلياً وتنبيه الأطباء وفريق العمل).
+      3. `فهم وتفريغ الرسائل الصوتية (Voice STT)` (تفريغ الملاحظات الصوتية واستخراج الطلبات والمواعيد).
+      4. `ربط المتاجر واسترجاع السلات المتروكة` (تكامل WooCommerce & Shopify).
+      5. `المزامنة التلقائية مع جداول Google Sheets & Excel` (توثيق سحابي مباشر).
+      6. `أتمتة المحادثات والرد الذكي 24/7` (نماذج Gemini 2.0 و GPT-4o).
+      7. `حملات البرودكاست الموجهة والآمنة` (فواصل ذكية ضد الحظر).
+      8. `منشئ التدفقات البصري والقوالب التفاعلية` (Visual Flow Builder).
+      9. `صندوق الوارد الموحد وإدارة المبيعات (CRM)` (تصنيف الوسوم وإسناد الموظفين).
+      10. `بوابة الربط المزدوج بالواتساب` (رسمي Meta Cloud API + ويب QR Code مباشر).
+      11. `التحويل الذكي للموظف وتنبيهات التدخل` (تحويل AI-to-Human فوري مع تنبيه تيليجرام).
+      12. `إدارة وتصدير جهات الاتصال الذكية` (استيراد وتصدير Excel/CSV وتقسيم الجمهور).
   - **تضمين الرسائل الصوتية في سياق محادثات الذكاء الاصطناعي ([`context.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/context.ts))**:
     - إزالة حصر استعلام سياق المحادثة على `content_type = 'text'` وتضمين كافة الرسائل ذات المحتوى النصي (`content_text`) بما فيها الرسائل الصوتية المفرغة، مما يضمن وصول الرسالة الصوتية كـ `user` في سياق المحادثة للـ AI فوراً دون تجاهلها.
   - **تحصين ترتيب أدوار المحادثة في Google Gemini ([`gemini.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/providers/gemini.ts))**:
