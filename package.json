@@ -1,17 +1,17 @@
 {
-  "name": "wacrm",
-  "version": "0.8.0",
+  "name": "mkwhats",
+  "version": "1.0.0",
   "private": true,
-  "description": "Self-hostable CRM template for WhatsApp built on Next.js and Supabase — shared inbox, contacts, sales pipelines, broadcasts, and no-code automations.",
+  "description": "Mkwhats — Enterprise Multi-Tenant WhatsApp CRM, AI Auto-Reply, Broadcast Campaigns & Marketing Automation Platform.",
   "license": "MIT",
-  "author": "Arnas Donauskas",
-  "homepage": "https://github.com/ArnasDon/wacrm",
+  "author": "Mkwhats",
+  "homepage": "https://github.com/mstotv/Mkwhats",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ArnasDon/wacrm.git"
+    "url": "git+https://github.com/mstotv/Mkwhats.git"
   },
   "bugs": {
-    "url": "https://github.com/ArnasDon/wacrm/issues"
+    "url": "https://github.com/mstotv/Mkwhats/issues"
   },
   "keywords": [
     "crm",
