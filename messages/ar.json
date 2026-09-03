@@ -366,7 +366,29 @@
       "toastFailedDelete": "تعذر حذف جهة الاتصال",
       "toastDeleted": "تم حذف جهة الاتصال بنجاح",
       "toastBulkFailedDelete": "تعذر حذف جهات الاتصال",
-      "toastBulkDeleted": "تم حذف {count} جهة اتصال بنجاح"
+      "toastBulkDeleted": "تم حذف {count} جهة اتصال بنجاح",
+      "exportBtn": "تصدير",
+      "exportExcel": "تصدير كملف Excel (.xlsx)",
+      "exportCsv": "تصدير كملف CSV (.csv)",
+      "exportSelected": "تصدير المحدد ({count})",
+      "mergeSelected": "دمج جهتي الاتصال",
+      "toastExportSuccess": "تم تصدير جهات الاتصال بنجاح",
+      "toastExportFailed": "فشل تصدير جهات الاتصال"
+    },
+    "mergeModal": {
+      "title": "دمج جهتي الاتصال",
+      "description": "دمج جهتي الاتصال في جهة واحدة ونقل كافة المحادثات والوسوم والطلبات والمواعيد تلقائياً.",
+      "warningTitle": "إجراء دائم ولا يمكن التراجع عنه",
+      "warningText": "سيتم الاحتفاظ بجهة الاتصال الأساسية، ونقل كافة البيانات من جهة الاتصال الثانوية إليها، ثم حذف الثانوية نهائياً.",
+      "choosePrimary": "حدد جهة الاتصال الأساسية (التي ترغب بالاحتفاظ بها):",
+      "primaryBadge": "الأساسية",
+      "unnamed": "بدون اسم",
+      "mergingFrom": "الجهة المحذوفة (المصدر)",
+      "mergingInto": "الجهة المحفوظة (الوجهة)",
+      "cancel": "إلغاء",
+      "confirmMerge": "تأكيد الدمج النهائي",
+      "successMerge": "تم دمج جهتي الاتصال بنجاح",
+      "errorMerge": "فشل دمج جهتي الاتصال"
     },
     "form": {
       "addTitle": "إضافة جهة اتصال جديدة",

@@ -49,10 +49,15 @@ import {
   SlidersHorizontal,
   Filter,
   X,
+  Download,
+  Merge,
+  FileSpreadsheet,
+  ChevronDown,
 } from 'lucide-react';
 import { ContactForm } from '@/components/contacts/contact-form';
 import { ContactDetailView } from '@/components/contacts/contact-detail-view';
 import { ImportModal } from '@/components/contacts/import-modal';
+import { MergeContactsModal } from '@/components/contacts/merge-modal';
 import { CustomFieldsManager } from '@/components/contacts/custom-fields-manager';
 import { useCan } from '@/hooks/use-can';
 import { GatedButton } from '@/components/ui/gated-button';
@@ -93,6 +98,44 @@ export default function ContactsPage() {
   // Bulk selection (page-scoped — only the loaded rows are selectable)
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [mergeModalOpen, setMergeModalOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async (format: 'xlsx' | 'csv' = 'xlsx', onlySelected = false) => {
+    setExporting(true);
+    try {
+      const res = await fetch('/api/contacts/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          format,
+          contactIds: onlySelected ? Array.from(selected) : undefined,
+          tagIds: !onlySelected && selectedTagIds.length > 0 ? selectedTagIds : undefined,
+          search: !onlySelected && search.trim() ? search.trim() : undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || t('toastExportFailed'));
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `contacts_${new Date().toISOString().slice(0, 10)}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success(t('toastExportSuccess'));
+    } catch (err: any) {
+      toast.error(err.message || t('toastExportFailed'));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // All tags for display
   const [tagsMap, setTagsMap] = useState<Record<string, Tag>>({});
@@ -360,6 +403,31 @@ export default function ContactsPage() {
               {t('customFieldsBtn')}
             </Button>
           )}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="outline"
+                  disabled={exporting || totalCount === 0}
+                  className="border-border text-muted-foreground hover:bg-muted gap-1.5"
+                >
+                  {exporting ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+                  {t('exportBtn')}
+                  <ChevronDown className="size-3.5 opacity-60" />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end" className="w-52 bg-card border-border text-card-foreground">
+              <DropdownMenuItem onClick={() => handleExport('xlsx', false)} className="gap-2 cursor-pointer">
+                <FileSpreadsheet className="size-4 text-emerald-500" />
+                {t('exportExcel')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('csv', false)} className="gap-2 cursor-pointer">
+                <Download className="size-4 text-blue-500" />
+                {t('exportCsv')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <GatedButton
             variant="outline"
             canAct={canEdit}
@@ -505,11 +573,32 @@ export default function ContactsPage() {
             {t('selectedCount', { count: selected.size })}
           </p>
           <div className="flex items-center gap-2">
+            {selected.size === 2 && canEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMergeModalOpen(true)}
+                className="border-primary/40 text-primary hover:bg-primary/10 gap-1.5 h-8 text-xs font-semibold"
+              >
+                <Merge className="size-3.5" />
+                {t('mergeSelected')}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('xlsx', true)}
+              disabled={exporting}
+              className="border-border text-muted-foreground hover:bg-muted gap-1.5 h-8 text-xs"
+            >
+              {exporting ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+              {t('exportSelected', { count: selected.size })}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelected(new Set())}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground h-8 text-xs"
             >
               {t('clearSelection')}
             </Button>
@@ -519,8 +608,9 @@ export default function ContactsPage() {
               canAct={canEdit}
               gateReason="delete contacts"
               onClick={() => setBulkDeleteOpen(true)}
+              className="h-8 text-xs"
             >
-              <Trash2 className="size-4" />
+              <Trash2 className="size-3.5" />
               {t('deleteSelected')}
             </GatedButton>
           </div>
@@ -827,6 +917,26 @@ export default function ContactsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Merge Contacts Modal */}
+      {mergeModalOpen && selected.size === 2 && (() => {
+        const ids = Array.from(selected);
+        const c1 = contacts.find((c) => c.id === ids[0]);
+        const c2 = contacts.find((c) => c.id === ids[1]);
+        if (!c1 || !c2) return null;
+        return (
+          <MergeContactsModal
+            open={mergeModalOpen}
+            onOpenChange={setMergeModalOpen}
+            contact1={c1}
+            contact2={c2}
+            onMerged={() => {
+              setSelected(new Set());
+              fetchContacts();
+            }}
+          />
+        );
+      })()}
     </div>
   );
 }

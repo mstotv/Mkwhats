@@ -358,7 +358,29 @@
       "toastFailedDelete": "Failed to delete contact",
       "toastDeleted": "Contact deleted",
       "toastBulkFailedDelete": "Failed to delete contacts",
-      "toastBulkDeleted": "{count} contacts deleted"
+      "toastBulkDeleted": "{count} contacts deleted",
+      "exportBtn": "Export",
+      "exportExcel": "Export to Excel (.xlsx)",
+      "exportCsv": "Export to CSV (.csv)",
+      "exportSelected": "Export selected ({count})",
+      "mergeSelected": "Merge 2 Contacts",
+      "toastExportSuccess": "Contacts exported successfully",
+      "toastExportFailed": "Failed to export contacts"
+    },
+    "mergeModal": {
+      "title": "Merge 2 Contacts",
+      "description": "Combine two contacts into one, automatically moving all conversations, tags, orders, and appointments.",
+      "warningTitle": "Permanent action — cannot be undone",
+      "warningText": "The primary contact will be kept with all consolidated data. The secondary contact will be permanently deleted.",
+      "choosePrimary": "Choose the primary contact to keep:",
+      "primaryBadge": "Primary",
+      "unnamed": "Unnamed",
+      "mergingFrom": "Deleted contact (source)",
+      "mergingInto": "Kept contact (destination)",
+      "cancel": "Cancel",
+      "confirmMerge": "Confirm Merge",
+      "successMerge": "Contacts merged successfully",
+      "errorMerge": "Failed to merge contacts"
     },
     "form": {
       "addTitle": "Add Contact",

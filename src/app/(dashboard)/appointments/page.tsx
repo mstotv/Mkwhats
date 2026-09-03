@@ -21,6 +21,8 @@ import {
   CalendarCheck,
   CalendarX,
   UserX,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,8 +36,34 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [settings, setSettings] = useState<AppointmentSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleExportAppointments = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/appointments/export");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || (isAr ? "فشل تصدير المواعيد" : "Export failed"));
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `appointments_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success(isAr ? "تم تصدير المواعيد بنجاح" : "Appointments exported successfully");
+    } catch (err: any) {
+      toast.error(err.message || (isAr ? "فشل التصدير" : "Export failed"));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Modal for new appointment
   const [showAddModal, setShowAddModal] = useState(false);
@@ -239,6 +267,21 @@ export default function AppointmentsPage() {
               {isAr ? "أوقات العمل" : "Business Hours"}
             </Button>
           </Link>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportAppointments}
+            disabled={exporting || appointments.length === 0}
+            className="h-9 gap-1.5 border-border"
+          >
+            {exporting ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Download className="size-3.5" />
+            )}
+            {isAr ? "تصدير Excel" : "Export Excel"}
+          </Button>
 
           <Button
             onClick={() => setShowAddModal(true)}
