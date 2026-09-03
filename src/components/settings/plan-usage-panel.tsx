@@ -423,18 +423,14 @@ export function PlanUsagePanel() {
       icon: Bot,
       enabled: Boolean(plan.features?.ai_assistant),
     },
-    ...(plan.features?.voice_transcription
-      ? [
-          {
-            key: 'voice_transcription',
-            label: isAr
-              ? 'فهم الرسائل الصوتية (Voice STT)'
-              : 'Voice Message Transcription (STT)',
-            icon: Mic,
-            enabled: true,
-          },
-        ]
-      : []),
+    {
+      key: 'voice_transcription',
+      label: isAr
+        ? 'فهم الرسائل الصوتية (Voice STT)'
+        : 'Voice Message Transcription (STT)',
+      icon: Mic,
+      enabled: Boolean(plan.features?.voice_transcription),
+    },
     {
       key: 'automations',
       label: isAr ? 'الأتمتة والردود الآلية' : 'Automations & Auto-Replies',
@@ -984,14 +980,16 @@ export function PlanUsagePanel() {
                     </div>
 
                     {/* Voice Transcription STT */}
-                    {Boolean(p.features?.voice_transcription) && (
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      {p.features?.voice_transcription ? (
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                        <span className="font-medium text-foreground">
-                          {isAr ? 'فهم الرسائل الصوتية (Voice STT)' : 'Voice Message Transcription (STT)'}
-                        </span>
-                      </div>
-                    )}
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
+                      )}
+                      <span className={p.features?.voice_transcription ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
+                        {isAr ? 'فهم الرسائل الصوتية (Voice STT)' : 'Voice Message Transcription (STT)'}
+                      </span>
+                    </div>
 
                     {/* Automations */}
                     <div className="flex items-center gap-2">

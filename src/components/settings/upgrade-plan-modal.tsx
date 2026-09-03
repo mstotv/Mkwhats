@@ -452,14 +452,16 @@ export function UpgradePlanModal({
                           {isAr ? 'مساعد الردود الذكي (AI Assistant)' : 'AI Assistant'}
                         </span>
                       </div>
-                      {Boolean(plan.features?.voice_transcription) && (
-                        <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5">
+                        {plan.features?.voice_transcription ? (
                           <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                          <span className="text-foreground font-semibold">
-                            {isAr ? 'فهم وتفريغ الرسائل الصوتية (Voice STT)' : 'Voice Message Transcription (STT)'}
-                          </span>
-                        </div>
-                      )}
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
+                        )}
+                        <span className={plan.features?.voice_transcription ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
+                          {isAr ? 'فهم وتفريغ الرسائل الصوتية (Voice STT)' : 'Voice Message Transcription (STT)'}
+                        </span>
+                      </div>
                       <div className="flex items-center gap-2.5">
                         {plan.features?.excel_export ? (
                           <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />

@@ -146,6 +146,12 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
                 }
                 alt={displayName}
                 className="h-16 w-16 rounded-full object-cover"
+                onError={(e) => {
+                  const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random&color=fff&bold=true`;
+                  if (e.currentTarget.src !== fallback) {
+                    e.currentTarget.src = fallback;
+                  }
+                }}
               />
             </div>
             <h3 className="mt-3 text-sm font-semibold text-foreground">

@@ -910,6 +910,12 @@ export function MessageThread({
               }
               alt={displayName}
               className="h-9 w-9 rounded-full object-cover"
+              onError={(e) => {
+                const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random&color=fff&bold=true`;
+                if (e.currentTarget.src !== fallback) {
+                  e.currentTarget.src = fallback;
+                }
+              }}
             />
           </div>
           <div className="min-w-0">
