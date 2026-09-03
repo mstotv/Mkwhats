@@ -66,6 +66,10 @@ export interface AiConfig {
   appointmentsEnabled: boolean
   /** When true the auto-reply bot transcribes inbound voice notes (STT) into text. */
   voiceTranscriptionEnabled?: boolean
+  /** When true and voice STT is unavailable/disabled, an automated text reply is sent to inform the customer. */
+  voiceFallbackEnabled?: boolean
+  /** The custom fallback message text sent to customer when voice notes cannot be transcribed. */
+  voiceFallbackReply?: string
 }
 
 /**

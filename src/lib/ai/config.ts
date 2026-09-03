@@ -15,10 +15,12 @@ interface AiConfigRow {
   order_collection_enabled: boolean
   appointments_enabled?: boolean
   voice_transcription_enabled?: boolean
+  voice_fallback_enabled?: boolean
+  voice_fallback_reply?: string
 }
 
 const CONFIG_COLUMNS =
-  'provider, model, api_key, system_prompt, is_active, auto_reply_enabled, auto_reply_max_per_conversation, handoff_agent_id, embeddings_api_key, order_collection_enabled, appointments_enabled, voice_transcription_enabled'
+  'provider, model, api_key, system_prompt, is_active, auto_reply_enabled, auto_reply_max_per_conversation, handoff_agent_id, embeddings_api_key, order_collection_enabled, appointments_enabled, voice_transcription_enabled, voice_fallback_enabled, voice_fallback_reply'
 
 /**
  * Load and decrypt the account's AI config for *use* (draft or
@@ -85,6 +87,10 @@ export async function loadAiConfig(
     orderCollectionEnabled: row.order_collection_enabled ?? false,
     appointmentsEnabled: row.appointments_enabled ?? false,
     voiceTranscriptionEnabled: row.voice_transcription_enabled ?? false,
+    voiceFallbackEnabled: row.voice_fallback_enabled ?? true,
+    voiceFallbackReply:
+      row.voice_fallback_reply ||
+      'عزيزي العميل، تم استلام رسالتك الصوتية 🎙️. نرجو التكرم بكتابة استفسارك نصياً حتى يتمكن المساعد الآلي من خدمتك فوراً، أو انتظر لحظات وسيقوم أحد ممثلي الخدمة بالاستماع إليها والرد عليك.',
   }
 }
 

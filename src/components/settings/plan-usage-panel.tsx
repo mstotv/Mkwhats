@@ -42,6 +42,7 @@ import {
   ChevronRight,
   Building2,
   Mic,
+  ShieldAlert,
 } from 'lucide-react'
 import { UpgradePlanModal, type PlanItem } from './upgrade-plan-modal'
 import { useTranslations, useLocale } from 'next-intl'
@@ -123,6 +124,7 @@ export function PlanUsagePanel() {
   // Gateways settings
   const [stripeEnabled, setStripeEnabled] = useState(false)
   const [plisioEnabled, setPlisioEnabled] = useState(false)
+  const [supportWhatsapp, setSupportWhatsapp] = useState('')
 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
 
@@ -212,6 +214,7 @@ export function PlanUsagePanel() {
       const st = settingsRes.settings || {}
       setStripeEnabled(Boolean(st.stripe_enabled))
       setPlisioEnabled(Boolean(st.plisio_enabled))
+      setSupportWhatsapp(st.support_whatsapp || '')
     } catch (err: any) {
       setError(err.message || t('unexpectedError'))
     } finally {
@@ -420,12 +423,18 @@ export function PlanUsagePanel() {
       icon: Bot,
       enabled: Boolean(plan.features?.ai_assistant),
     },
-    {
-      key: 'voice_transcription',
-      label: isAr ? 'فهم الرسائل الصوتية (Voice STT)' : 'Voice Message Transcription (STT)',
-      icon: Mic,
-      enabled: Boolean(plan.features?.voice_transcription),
-    },
+    ...(plan.features?.voice_transcription
+      ? [
+          {
+            key: 'voice_transcription',
+            label: isAr
+              ? 'فهم الرسائل الصوتية (Voice STT)'
+              : 'Voice Message Transcription (STT)',
+            icon: Mic,
+            enabled: true,
+          },
+        ]
+      : []),
     {
       key: 'automations',
       label: isAr ? 'الأتمتة والردود الآلية' : 'Automations & Auto-Replies',
@@ -975,16 +984,14 @@ export function PlanUsagePanel() {
                     </div>
 
                     {/* Voice Transcription STT */}
-                    <div className="flex items-center gap-2">
-                      {p.features?.voice_transcription ? (
+                    {Boolean(p.features?.voice_transcription) && (
+                      <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                      ) : (
-                        <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
-                      )}
-                      <span className={p.features?.voice_transcription ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
-                        {isAr ? 'فهم الرسائل الصوتية (Voice STT)' : 'Voice Message Transcription (STT)'}
-                      </span>
-                    </div>
+                        <span className="font-medium text-foreground">
+                          {isAr ? 'فهم الرسائل الصوتية (Voice STT)' : 'Voice Message Transcription (STT)'}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Automations */}
                     <div className="flex items-center gap-2">
@@ -1130,103 +1137,139 @@ export function PlanUsagePanel() {
             </DialogHeader>
 
             <div className="space-y-3 py-3">
-              {/* OPTION 1: OFFLINE LOCAL PAYMENT */}
-              <button
-                type="button"
-                onClick={() => {
-                  const targetPlan = selectedPlanForCheckout
-                  setSelectedPlanForCheckout(null)
-                  setSelectedPlanForOffline(targetPlan)
-                  if (offlineMethods.length > 0) setSelectedOfflineMethodId(offlineMethods[0].id)
-                  setOfflineTransactionRef('')
-                  setOfflineProofImageUrl('')
-                  setOfflineUserNotes('')
-                  setOfflineError(null)
-                }}
-                className="w-full p-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500 transition-all text-start flex items-start gap-3.5 group cursor-pointer"
-              >
-                <div className="p-3 bg-emerald-500/15 text-emerald-500 rounded-xl group-hover:scale-110 transition-transform shrink-0">
-                  <Landmark className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-sm text-foreground flex items-center gap-2">
-                      {isAr ? '🏦 الدفع المحلي والأوفلاين' : '🏦 Local & Offline Payment'}
-                    </span>
-                    <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-extrabold border-0">
-                      {isAr ? 'تحويل بنكي / محفظة ⚡' : 'Bank & Wallets ⚡'}
-                    </Badge>
+              {/* Fallback if no payment gateways configured or active */}
+              {offlineMethods.length === 0 && !stripeEnabled && !plisioEnabled && (
+                <div className="p-6 rounded-2xl border border-dashed border-border bg-muted/30 text-center space-y-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 mx-auto border border-amber-500/20">
+                    <ShieldAlert className="h-6 w-6" />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    {isAr
-                      ? 'الدفع عبر التحويل البنكي المحلي أو محافي الكاش (زين كاش / STC Pay / فودافون كاش) وإرسال الوصل'
-                      : 'Pay via local bank transfer, ZainCash, STC Pay, or Mobile Wallets with proof submission'}
-                  </p>
+                  <div>
+                    <h4 className="font-black text-sm text-foreground">
+                      {isAr ? 'بوابات الدفع قيد الصيانة والتحديث حالياً' : 'Payment Gateways Temporarily Unavailable'}
+                    </h4>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-sm mx-auto">
+                      {isAr
+                        ? 'لم يتم تفعيل أي وسيلة دفع إلكترونية أو حساب بنكي حالياً. يرجى التواصل مع فريق الدعم الفني لمساعدتك في ترقية وتفعيل اشتراكك.'
+                        : 'No active payment gateways are currently configured. Please contact support to assist you with upgrading your subscription.'}
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    <a
+                      href={supportWhatsapp ? `https://wa.me/${supportWhatsapp.replace(/[^0-9]/g, '')}` : '/settings?tab=tickets'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 shadow-xs transition-colors"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span>{isAr ? 'تواصل مع الدعم الفني للترقية 💬' : 'Contact Support to Upgrade 💬'}</span>
+                    </a>
+                  </div>
                 </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground me-1 my-auto group-hover:translate-x-1 transition-transform" />
-              </button>
+              )}
 
-              {/* OPTION 2: CARD PAYMENT (STRIPE) */}
-              <button
-                type="button"
-                onClick={() => {
-                  const targetPlan = selectedPlanForCheckout
-                  setSelectedPlanForCheckout(null)
-                  handleStripeCheckout(targetPlan)
-                }}
-                className="w-full p-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 hover:border-indigo-500 transition-all text-start flex items-start gap-3.5 group cursor-pointer"
-              >
-                <div className="p-3 bg-indigo-500/15 text-indigo-500 rounded-xl group-hover:scale-110 transition-transform shrink-0">
-                  <CreditCard className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-sm text-foreground">
-                      {isAr ? '💳 بطاقة بنكية (Visa / MasterCard)' : '💳 Card Payment (Visa / MasterCard)'}
-                    </span>
-                    <Badge className="bg-indigo-500/20 text-indigo-400 text-[10px] font-bold border-0">
-                      {isAr ? 'دفع إلكتروني آمن ⚡' : 'Instant Online ⚡'}
-                    </Badge>
+              {/* OPTION 1: OFFLINE LOCAL PAYMENT (Only if offline methods exist) */}
+              {offlineMethods.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetPlan = selectedPlanForCheckout
+                    setSelectedPlanForCheckout(null)
+                    setSelectedPlanForOffline(targetPlan)
+                    if (offlineMethods.length > 0) setSelectedOfflineMethodId(offlineMethods[0].id)
+                    setOfflineTransactionRef('')
+                    setOfflineProofImageUrl('')
+                    setOfflineUserNotes('')
+                    setOfflineError(null)
+                  }}
+                  className="w-full p-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500 transition-all text-start flex items-start gap-3.5 group cursor-pointer"
+                >
+                  <div className="p-3 bg-emerald-500/15 text-emerald-500 rounded-xl group-hover:scale-110 transition-transform shrink-0">
+                    <Landmark className="h-5 w-5" />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    {isAr
-                      ? 'الدفع الإلكتروني المباشر بالسداد الفوري عبر الفيزا أو الماستركارد (Stripe Checkout)'
-                      : 'Instant automated checkout via credit or debit card'}
-                  </p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground me-1 my-auto group-hover:translate-x-1 transition-transform" />
-              </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-sm text-foreground flex items-center gap-2">
+                        {isAr ? '🏦 الدفع المحلي والأوفلاين' : '🏦 Local & Offline Payment'}
+                      </span>
+                      <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-extrabold border-0">
+                        {isAr ? 'تحويل بنكي / محفظة ⚡' : 'Bank & Wallets ⚡'}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      {isAr
+                        ? 'الدفع عبر التحويل البنكي المحلي أو محافظ الكاش (زين كاش / STC Pay / فودافون كاش) وإرسال الوصل'
+                        : 'Pay via local bank transfer, ZainCash, STC Pay, or Mobile Wallets with proof submission'}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground me-1 my-auto group-hover:translate-x-1 transition-transform" />
+                </button>
+              )}
 
-              {/* OPTION 3: CRYPTO (PLISIO) */}
-              <button
-                type="button"
-                onClick={() => {
-                  const targetPlan = selectedPlanForCheckout
-                  setSelectedPlanForCheckout(null)
-                  handlePlisioUpgrade(targetPlan)
-                }}
-                className="w-full p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500 transition-all text-start flex items-start gap-3.5 group cursor-pointer"
-              >
-                <div className="p-3 bg-amber-500/15 text-amber-500 rounded-xl group-hover:scale-110 transition-transform shrink-0">
-                  <Coins className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-sm text-foreground">
-                      {isAr ? '🪙 عملات رقمية / كريبتو (USDT / Bitcoin)' : '🪙 Crypto Payment (USDT / Bitcoin)'}
-                    </span>
-                    <Badge className="bg-amber-500/20 text-amber-400 text-[10px] font-bold border-0">
-                      {isAr ? 'USDT & Crypto 🪙' : 'USDT & Crypto 🪙'}
-                    </Badge>
+              {/* OPTION 2: CARD PAYMENT (STRIPE) (Only if Stripe is enabled) */}
+              {stripeEnabled && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetPlan = selectedPlanForCheckout
+                    setSelectedPlanForCheckout(null)
+                    handleStripeCheckout(targetPlan)
+                  }}
+                  className="w-full p-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 hover:border-indigo-500 transition-all text-start flex items-start gap-3.5 group cursor-pointer"
+                >
+                  <div className="p-3 bg-indigo-500/15 text-indigo-500 rounded-xl group-hover:scale-110 transition-transform shrink-0">
+                    <CreditCard className="h-5 w-5" />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    {isAr
-                      ? 'دفع مشفر دولي وآمن عبر العملات الرقمية USDT (TRC20/ERC20) والبيتكوين (Plisio Invoice)'
-                      : 'Pay with USDT, Bitcoin, or Ethereum via Plisio Crypto Gateway'}
-                  </p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground me-1 my-auto group-hover:translate-x-1 transition-transform" />
-              </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-sm text-foreground">
+                        {isAr ? '💳 بطاقة بنكية (Visa / MasterCard)' : '💳 Card Payment (Visa / MasterCard)'}
+                      </span>
+                      <Badge className="bg-indigo-500/20 text-indigo-400 text-[10px] font-bold border-0">
+                        {isAr ? 'دفع إلكتروني آمن ⚡' : 'Instant Online ⚡'}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      {isAr
+                        ? 'الدفع الإلكتروني المباشر بالسداد الفوري عبر الفيزا أو الماستركارد (Stripe Checkout)'
+                        : 'Instant automated checkout via credit or debit card'}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground me-1 my-auto group-hover:translate-x-1 transition-transform" />
+                </button>
+              )}
+
+              {/* OPTION 3: CRYPTO (PLISIO) (Only if Plisio Crypto is enabled) */}
+              {plisioEnabled && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetPlan = selectedPlanForCheckout
+                    setSelectedPlanForCheckout(null)
+                    handlePlisioUpgrade(targetPlan)
+                  }}
+                  className="w-full p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500 transition-all text-start flex items-start gap-3.5 group cursor-pointer"
+                >
+                  <div className="p-3 bg-amber-500/15 text-amber-500 rounded-xl group-hover:scale-110 transition-transform shrink-0">
+                    <Coins className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-sm text-foreground">
+                        {isAr ? '🪙 عملات رقمية / كريبتو (USDT / Bitcoin)' : '🪙 Crypto Payment (USDT / Bitcoin)'}
+                      </span>
+                      <Badge className="bg-amber-500/20 text-amber-400 text-[10px] font-bold border-0">
+                        {isAr ? 'USDT & Crypto 🪙' : 'USDT & Crypto 🪙'}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      {isAr
+                        ? 'دفع مشفر دولي وآمن عبر العملات الرقمية USDT (TRC20/ERC20) والبيتكوين (Plisio Invoice)'
+                        : 'Pay with USDT, Bitcoin, or Ethereum via Plisio Crypto Gateway'}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground me-1 my-auto group-hover:translate-x-1 transition-transform" />
+                </button>
+              )}
             </div>
 
             <DialogFooter className="pt-2">

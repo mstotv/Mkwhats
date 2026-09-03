@@ -1,13 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2, Sparkles, CheckCircle2, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Sparkles, CheckCircle2, Trash2, Eye, EyeOff, Lock } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { canEditSettings } from '@/lib/auth/roles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -31,7 +33,7 @@ import { AI_PROVIDER_DEFAULT_MODEL } from '@/lib/ai/defaults';
 import type { AiProvider } from '@/lib/ai/types';
 import type { AccountMember } from '@/types';
 import { fetchAccountMembers, memberLabel } from '@/lib/account/members';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 const MASKED_KEY = '••••••••••••••••';
 
@@ -55,6 +57,9 @@ export function AiConfig() {
   const { accountId, accountRole, profileLoading } = useAuth();
   const canEdit = accountRole ? canEditSettings(accountRole) : false;
   const t = useTranslations('Settings.aiConfig');
+  const locale = useLocale();
+  const isAr = locale === 'ar';
+  const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -81,6 +86,14 @@ export function AiConfig() {
   const [orderCollectionEnabled, setOrderCollectionEnabled] = useState(false);
   const [savingOrderToggle, setSavingOrderToggle] = useState(false);
   const [voiceTranscriptionEnabled, setVoiceTranscriptionEnabled] = useState(false);
+  const [planAllowsVoice, setPlanAllowsVoice] = useState(true);
+
+  const DEFAULT_VOICE_FALLBACK = isAr
+    ? 'عزيزي العميل، تم استلام رسالتك الصوتية 🎙️. نرجو التكرم بكتابة استفسارك نصياً حتى يتمكن المساعد الآلي من خدمتك فوراً، أو انتظر لحظات وسيقوم أحد ممثلي الخدمة بالاستماع إليها والرد عليك.'
+    : 'Dear customer, we received your voice note 🎙️. Please write your request in text so our assistant can help immediately, or a team member will listen shortly.';
+
+  const [voiceFallbackEnabled, setVoiceFallbackEnabled] = useState(true);
+  const [voiceFallbackReply, setVoiceFallbackReply] = useState(DEFAULT_VOICE_FALLBACK);
 
   // Guard keyed on the account (not a bare boolean) so an in-place
   // account switch — ownership transfer, multi-account membership —
@@ -114,6 +127,15 @@ export function AiConfig() {
         setEmbeddingsKeyEdited(false);
         setOrderCollectionEnabled(Boolean(data.order_collection_enabled));
         setVoiceTranscriptionEnabled(Boolean(data.voice_transcription_enabled));
+      }
+      if (typeof data.voice_fallback_enabled === 'boolean') {
+        setVoiceFallbackEnabled(data.voice_fallback_enabled);
+      }
+      if (typeof data.voice_fallback_reply === 'string' && data.voice_fallback_reply.trim()) {
+        setVoiceFallbackReply(data.voice_fallback_reply);
+      }
+      if (typeof data.plan_allows_voice === 'boolean') {
+        setPlanAllowsVoice(data.plan_allows_voice);
       }
     } catch {
       toast.error(t('loadFailed'));
@@ -161,15 +183,23 @@ export function AiConfig() {
     handoff_agent_id: handoffAgentId || null,
     order_collection_enabled: orderCollectionEnabled,
     voice_transcription_enabled: voiceTranscriptionEnabled,
+    voice_fallback_enabled: voiceFallbackEnabled,
+    voice_fallback_reply: voiceFallbackReply.trim() || null,
   });
 
   const handleQuickToggle = async (
-    field: 'is_active' | 'auto_reply_enabled' | 'voice_transcription_enabled',
+    field: 'is_active' | 'auto_reply_enabled' | 'voice_transcription_enabled' | 'voice_fallback_enabled',
     value: boolean
   ) => {
+    if (field === 'voice_transcription_enabled' && !planAllowsVoice && value) {
+      toast.error(isAr ? 'ميزة تفريغ الرسائل الصوتية غير متوفرة في باقتك الحالية. يرجى الترقية.' : 'Voice transcription is not included in your current plan.');
+      return;
+    }
+
     if (field === 'is_active') setIsActive(value);
     if (field === 'auto_reply_enabled') setAutoReplyEnabled(value);
     if (field === 'voice_transcription_enabled') setVoiceTranscriptionEnabled(value);
+    if (field === 'voice_fallback_enabled') setVoiceFallbackEnabled(value);
 
     if (configured) {
       try {
@@ -187,6 +217,7 @@ export function AiConfig() {
             is_active: 'مساعد الذكاء الاصطناعي',
             auto_reply_enabled: 'الرد التلقائي على الرسائل',
             voice_transcription_enabled: 'فهم وتفريغ الرسائل الصوتية',
+            voice_fallback_enabled: 'الرد التلقائي على الرسائل الصوتية',
           };
           toast.success(value ? `تم تفعيل ${fieldNames[field]} بنجاح ✅` : `تم إيقاف ${fieldNames[field]} بنجاح ⏸️`);
         } else {
@@ -195,12 +226,14 @@ export function AiConfig() {
           if (field === 'is_active') setIsActive(!value);
           if (field === 'auto_reply_enabled') setAutoReplyEnabled(!value);
           if (field === 'voice_transcription_enabled') setVoiceTranscriptionEnabled(!value);
+          if (field === 'voice_fallback_enabled') setVoiceFallbackEnabled(!value);
         }
       } catch {
         toast.error(t('saveFailed'));
         if (field === 'is_active') setIsActive(!value);
         if (field === 'auto_reply_enabled') setAutoReplyEnabled(!value);
         if (field === 'voice_transcription_enabled') setVoiceTranscriptionEnabled(!value);
+        if (field === 'voice_fallback_enabled') setVoiceFallbackEnabled(!value);
       }
     }
   };
@@ -493,20 +526,86 @@ export function AiConfig() {
               />
             </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-md border border-border p-3">
+            <div className={`flex items-center justify-between gap-4 rounded-md border p-3 transition-colors ${
+              planAllowsVoice ? 'border-border' : 'border-amber-500/30 bg-amber-500/5'
+            }`}>
               <div>
-                <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                <p className="text-sm font-medium text-foreground flex items-center gap-1.5 flex-wrap">
                   <span>🎙️</span> {t('voiceTranscription')}
+                  {!planAllowsVoice && (
+                    <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/30 gap-1 py-0 px-1.5 font-semibold">
+                      <Lock className="h-2.5 w-2.5" />
+                      {isAr ? 'تتطلب ترقية الباقة' : 'Upgrade Required'}
+                    </Badge>
+                  )}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {t('voiceTranscriptionDesc')}
                 </p>
+                {!planAllowsVoice && (
+                  <button
+                    type="button"
+                    onClick={() => router.push('/settings?tab=plan')}
+                    className="text-xs text-amber-600 dark:text-amber-400 font-semibold underline mt-1.5 block hover:opacity-80 transition-opacity"
+                  >
+                    {isAr ? 'اضغط هنا لترقية باقتك وتفعيل تفريغ الصوت 🚀' : 'Upgrade your plan to unlock Voice STT 🚀'}
+                  </button>
+                )}
               </div>
               <Switch
-                checked={voiceTranscriptionEnabled}
-                onCheckedChange={(checked) => handleQuickToggle('voice_transcription_enabled', checked)}
-                disabled={disabled}
+                checked={planAllowsVoice && voiceTranscriptionEnabled}
+                onCheckedChange={(checked) => {
+                  if (!planAllowsVoice) {
+                    toast.error(isAr ? 'هذه الميزة غير متوفرة في باقتك الحالية. يرجى ترقية الباقة.' : 'Feature not included in your current plan.');
+                    return;
+                  }
+                  handleQuickToggle('voice_transcription_enabled', checked)
+                }}
+                disabled={disabled || !planAllowsVoice}
               />
+            </div>
+
+            {/* Voice Fallback Reply Box */}
+            <div className="rounded-md border border-border p-3.5 space-y-3 bg-card/60">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                    <span>💬</span> {t('voiceFallbackReplyTitle')}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t('voiceFallbackReplyDesc')}
+                  </p>
+                </div>
+                <Switch
+                  checked={voiceFallbackEnabled}
+                  onCheckedChange={(checked) => handleQuickToggle('voice_fallback_enabled', checked)}
+                  disabled={disabled}
+                />
+              </div>
+
+              {voiceFallbackEnabled && (
+                <div className="space-y-2 pt-1 border-t border-border/50">
+                  <Textarea
+                    rows={3}
+                    value={voiceFallbackReply}
+                    onChange={(e) => setVoiceFallbackReply(e.target.value)}
+                    placeholder={t('voiceFallbackPlaceholder')}
+                    disabled={disabled}
+                    className="text-xs leading-relaxed"
+                  />
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <button
+                      type="button"
+                      onClick={() => setVoiceFallbackReply(DEFAULT_VOICE_FALLBACK)}
+                      className="text-primary hover:underline font-medium"
+                      disabled={disabled}
+                    >
+                      ↺ {t('resetDefault')}
+                    </button>
+                    <span>{voiceFallbackReply.length} / 500</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-start justify-between gap-4">

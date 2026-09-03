@@ -482,65 +482,75 @@ export function AdminTicketsClient() {
   const closedCount = customerTicketsOnly.filter((t) => t.status === 'closed').length
 
   return (
-    <div className="p-6 space-y-6 animate-in fade-in duration-200">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
-              <Headphones className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black tracking-tight text-foreground">
-                {isAr ? 'إدارة التذاكر والإشعارات الشاملة' : 'Support & Broadcasts Manager'}
+    <div className="space-y-8 pb-16 font-sans">
+      {/* ============================================================ */}
+      {/* 1. Header Box Section (Matching Image) */}
+      {/* ============================================================ */}
+      <div className="rounded-3xl border border-border/80 bg-card p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div className="flex items-start sm:items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-xs">
+            <Headphones className="h-7 w-7" strokeWidth={2.2} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+                {isAr ? 'مركز تذاكر الدعم والبرودكاست' : 'Support & Broadcasts Manager'}
               </h1>
-              <p className="text-xs text-muted-foreground">
-                {isAr ? 'متابعة تذاكر العملاء، إرسال إشعارات وعروض لجميع المستخدمين، وتتبع نسب القراءة والفتح' : 'Manage customer tickets, send platform broadcast offers, and track read metrics'}
-              </p>
             </div>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm font-medium max-w-2xl">
+              {isAr
+                ? 'إدارة تذاكر المشتركين، إرسال عروض وحملات البرودكاست لجميع الحسابات، وتتبع مقاييس التسليم.'
+                : 'Manage customer tickets, dispatch platform broadcast offers, and track delivery metrics.'}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
+          {/* Refresh Data Button */}
           <Button
-            onClick={() => setIsBroadcastOpen(true)}
-            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs gap-1.5 shadow-md"
-          >
-            <Megaphone className="h-4 w-4" />
-            {isAr ? 'إرسال إشعار / عرض لجميع الحسابات 📢' : 'Broadcast to All Accounts 📢'}
-          </Button>
-
-          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               fetchTickets()
               fetchBroadcasts()
             }}
             disabled={loading || campaignsLoading}
-            variant="outline"
-            className="text-xs gap-2 font-bold shadow-xs"
+            className="h-10 border-border bg-card px-3.5 text-xs font-semibold hover:bg-muted/80 shadow-xs"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${(loading || campaignsLoading) ? 'animate-spin' : ''}`} />
-            {isAr ? 'تحديث البيانات' : 'Refresh Data'}
+            <RefreshCw className={`h-3.5 w-3.5 me-2 ${(loading || campaignsLoading) ? 'animate-spin text-emerald-500' : 'text-muted-foreground'}`} />
+            <span>{isAr ? 'تحديث البيانات' : 'Refresh Data'}</span>
+          </Button>
+
+          {/* Broadcast to All Accounts (Emerald Button in Image) */}
+          <Button
+            size="sm"
+            onClick={() => setIsBroadcastOpen(true)}
+            className="h-10 bg-[#059669] hover:bg-[#047857] font-bold text-white px-5 text-xs shadow-md shadow-emerald-500/20 gap-2 transition-all"
+          >
+            <Megaphone className="h-4 w-4" />
+            <span>{isAr ? 'إرسال برودكاست لجميع الحسابات' : 'Broadcast to All Accounts'}</span>
           </Button>
         </div>
       </div>
 
-      {/* Top Navigation Tabs: Customer Tickets vs Broadcast Analytics Dashboard */}
-      <div className="flex items-center gap-2 border-b border-border pb-3">
+      {/* ============================================================ */}
+      {/* 2. Top Navigation Tabs: Customer Tickets vs Broadcasts */}
+      {/* ============================================================ */}
+      <div className="flex items-center gap-2.5 flex-wrap">
         <button
           type="button"
           onClick={() => setActiveTab('tickets')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
             activeTab === 'tickets'
-              ? 'bg-emerald-500 text-slate-950 shadow-md'
-              : 'bg-muted/40 text-muted-foreground hover:text-foreground'
+              ? 'bg-[#059669] text-white shadow-md shadow-emerald-500/20'
+              : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground'
           }`}
         >
           <Headphones className="h-4 w-4" />
-          {isAr ? 'تذاكر دعم العملاء' : 'Customer Tickets'}
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-background/30 text-current font-mono">
+          <span>{isAr ? 'تذاكر دعم العملاء' : 'Customer Tickets'}</span>
+          <span className="rounded-full bg-black/20 dark:bg-white/20 px-2 py-0.2 text-[11px] font-mono">
             {customerTicketsOnly.length}
-          </Badge>
+          </span>
         </button>
 
         <button
@@ -551,15 +561,15 @@ export function AdminTicketsClient() {
           }}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
             activeTab === 'broadcasts'
-              ? 'bg-emerald-500 text-slate-950 shadow-md'
-              : 'bg-muted/40 text-muted-foreground hover:text-foreground'
+              ? 'bg-[#059669] text-white shadow-md shadow-emerald-500/20'
+              : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground'
           }`}
         >
           <BarChart3 className="h-4 w-4" />
-          {isAr ? 'داشبورد إشعارات وعروض المنصة 📊' : 'Broadcasts Dashboard 📊'}
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-background/30 text-current font-mono">
+          <span>{isAr ? 'لوحة البرودكاست والإشعارات 📊' : 'Broadcasts Dashboard 📊'}</span>
+          <span className="rounded-full bg-black/20 dark:bg-white/20 px-2 py-0.2 text-[11px] font-mono">
             {campaigns.length}
-          </Badge>
+          </span>
         </button>
       </div>
 
@@ -567,70 +577,66 @@ export function AdminTicketsClient() {
         /* Broadcast Analytics Dashboard Tab */
         <div className="space-y-6">
           {/* Broadcast Stat Cards */}
-          {/* Broadcast Stat Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card className="p-5 border-border bg-card">
+            <Card className="p-5 border-border bg-card shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold text-muted-foreground">{isAr ? 'حملات الإشعارات المرسلة' : 'Sent Campaigns'}</span>
-                <Megaphone className="h-5 w-5 text-emerald-400" />
+                <Megaphone className="h-5 w-5 text-emerald-500" />
               </div>
-              <p className="text-3xl font-black text-foreground mt-2">{campaigns.length}</p>
+              <p className="text-3xl font-black text-foreground mt-2 font-mono">{campaigns.length}</p>
             </Card>
 
-            <Card className="p-5 border-indigo-500/30 bg-indigo-500/5">
+            <Card className="p-5 border-indigo-500/30 bg-indigo-500/5 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-indigo-400">{isAr ? 'إجمالي الحسابات المستلمة' : 'Total Delivered'}</span>
-                <Users className="h-5 w-5 text-indigo-400" />
+                <span className="text-xs font-extrabold text-indigo-500">{isAr ? 'إجمالي الحسابات المستلمة' : 'Total Delivered'}</span>
+                <Users className="h-5 w-5 text-indigo-500" />
               </div>
-              <p className="text-3xl font-black text-indigo-400 mt-2">
+              <p className="text-3xl font-black text-indigo-500 mt-2 font-mono">
                 {campaigns.reduce((acc, c) => acc + (c.total_delivered || 0), 0)}
               </p>
             </Card>
           </div>
 
           {/* Campaigns List */}
-          <Card className="border border-border bg-card p-6 space-y-4">
+          <Card className="border border-border bg-card p-6 space-y-4 shadow-xs">
             <div className="flex items-center justify-between">
               <h3 className="font-extrabold text-base text-foreground flex items-center gap-2">
-                <Megaphone className="h-5 w-5 text-emerald-400" />
+                <Megaphone className="h-5 w-5 text-emerald-500" />
                 {isAr ? 'قائمة إشعارات وعروض المنصة المرسلة' : 'Platform Broadcast Campaigns'}
               </h3>
               <Button
                 size="sm"
                 onClick={() => setIsBroadcastOpen(true)}
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs gap-1"
+                className="bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs"
               >
-                <Plus className="h-4 w-4" />
-                {isAr ? 'إشعار جديد' : 'New Broadcast'}
+                <Plus className="h-4 w-4 me-1" />
+                {isAr ? 'إنشاء برودكاست جديد' : 'New Broadcast'}
               </Button>
             </div>
 
             {campaignsLoading ? (
-              <div className="flex h-48 items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <div className="flex h-32 items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
               </div>
             ) : campaigns.length === 0 ? (
-              <div className="text-center py-12 space-y-2 border border-dashed border-border rounded-2xl bg-muted/20">
-                <Megaphone className="h-10 w-10 text-muted-foreground mx-auto opacity-40" />
-                <p className="text-xs text-muted-foreground font-bold">
-                  {isAr ? 'لم تقم بإرسال أي إشعار أو عرض شامل حتى الآن' : 'No broadcast campaigns sent yet'}
-                </p>
+              <div className="text-center py-10 text-muted-foreground text-xs font-semibold">
+                {isAr ? 'لا توجد حملات برودكاست مرسلة بعد' : 'No broadcasts dispatched yet'}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
                 {campaigns.map((c) => (
                   <div
                     key={c.id}
-                    className="p-4 rounded-2xl border border-border bg-background hover:border-emerald-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    className="p-4 rounded-2xl border border-border/80 bg-card hover:border-emerald-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                   >
                     <div className="space-y-1.5 min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-black text-sm text-foreground">{c.title}</span>
-                        <Badge variant="outline" className="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                        <Badge variant="outline" className="text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border-emerald-500/30">
                           {c.category === 'offer' ? (isAr ? 'عرض خاص 🎁' : 'Offer 🎁') : c.category === 'update' ? (isAr ? 'تحديث 🚀' : 'Update 🚀') : (isAr ? 'إعلان 📢' : 'Announcement 📢')}
                         </Badge>
                         {Array.isArray(c.attachments) && c.attachments.length > 0 && (
-                          <Badge className="text-[9px] bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold">
+                          <Badge className="text-[9px] bg-purple-500/20 text-purple-400 border border-purple-500/40 font-bold">
                             {isAr ? 'يتضمن مرفق/صورة 🖼️' : 'Includes Attachment 🖼️'}
                           </Badge>
                         )}
@@ -643,7 +649,7 @@ export function AdminTicketsClient() {
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
-                      <Badge variant="secondary" className="px-3 py-1 bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 text-xs font-extrabold">
+                      <Badge variant="secondary" className="px-3 py-1 bg-indigo-500/15 text-indigo-500 border border-indigo-500/30 text-xs font-extrabold">
                         {isAr ? `تم التسليم إلى ${c.total_delivered || 0} حساب` : `Delivered to ${c.total_delivered || 0} accounts`}
                       </Badge>
                     </div>
@@ -656,156 +662,253 @@ export function AdminTicketsClient() {
       ) : (
         /* Customer Support Tickets Tab */
         <>
-
-      {/* Overview Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="p-4 border-border bg-card">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-muted-foreground">{isAr ? 'إجمالي التذاكر' : 'Total Tickets'}</span>
-            <MessageSquare className="h-4 w-4 text-indigo-400" />
-          </div>
-          <p className="text-2xl font-black text-foreground mt-2">{totalCount}</p>
-        </Card>
-
-        <Card className="p-4 border-amber-500/30 bg-amber-500/5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-500">{isAr ? 'مفتوحة وقيد الانتظار' : 'Open / Pending'}</span>
-            <Clock className="h-4 w-4 text-amber-500" />
-          </div>
-          <p className="text-2xl font-black text-amber-400 mt-2">{openCount}</p>
-        </Card>
-
-        <Card className="p-4 border-emerald-500/30 bg-emerald-500/5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-500">{isAr ? 'تم حلها بنجاح' : 'Resolved'}</span>
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-          </div>
-          <p className="text-2xl font-black text-emerald-400 mt-2">{resolvedCount}</p>
-        </Card>
-
-        <Card className="p-4 border-rose-500/30 bg-rose-500/5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-rose-500">{isAr ? 'مغلقة' : 'Closed'}</span>
-            <X className="h-4 w-4 text-rose-500" />
-          </div>
-          <p className="text-2xl font-black text-rose-400 mt-2">{closedCount}</p>
-        </Card>
-      </div>
-
-      {/* Main Content Table & Filters */}
-      <Card className="border border-border bg-card p-6 space-y-6">
-        {/* Search & Tabs */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:w-80">
-            <Search className="h-3.5 w-3.5 absolute start-3 top-2.5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder={isAr ? 'بحث باسم الحساب، العميل، أو الموضوع...' : 'Search by account, client, or subject...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="ps-9 bg-background text-xs h-9"
-            />
-          </div>
-
-          <div className="flex items-center gap-1 bg-muted p-1 rounded-xl w-full sm:w-auto">
-            {(['all', 'open', 'resolved', 'closed'] as const).map((st) => (
-              <button
-                key={st}
-                type="button"
-                onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all text-xs flex-1 sm:flex-none ${
-                  statusFilter === st
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {st === 'all'
-                  ? (isAr ? 'جميع التذاكر' : 'All')
-                  : st === 'open'
-                  ? (isAr ? 'مفتوحة 🟡' : 'Open 🟡')
-                  : st === 'resolved'
-                  ? (isAr ? 'تم حلها 🟢' : 'Resolved 🟢')
-                  : (isAr ? 'مغلقة 🔴' : 'Closed 🔴')}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Tickets List */}
-        {loading ? (
-          <div className="flex h-48 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : filteredTickets.length === 0 ? (
-          <div className="text-center py-12 space-y-2 border border-dashed border-border rounded-2xl bg-muted/20">
-            <HelpCircle className="h-10 w-10 text-muted-foreground mx-auto opacity-40" />
-            <p className="text-xs text-muted-foreground font-bold">
-              {isAr ? 'لا توجد تذاكر دعم فني في هذا الفلتر حالياً' : 'No tickets match the selected filter'}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredTickets.map((t) => (
-              <div
-                key={t.id}
-                onClick={() => handleOpenTicket(t)}
-                className="p-4 rounded-2xl border border-border bg-background hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-black text-sm text-foreground group-hover:text-emerald-400 transition-colors">
-                      {t.subject}
-                    </span>
-
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] font-bold ${
-                        t.status === 'open'
-                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                          : t.status === 'resolved'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                          : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                      }`}
-                    >
-                      {t.status === 'open'
-                        ? (isAr ? 'قيد المتابعة 🟡' : 'Open 🟡')
-                        : t.status === 'resolved'
-                        ? (isAr ? 'تم حل المشكلة 🟢' : 'Resolved 🟢')
-                        : (isAr ? 'مغلقة 🔴' : 'Closed 🔴')}
-                    </Badge>
-
-                    <Badge variant="secondary" className="text-[10px] uppercase font-mono">
-                      {t.priority} priority
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-                    <span className="flex items-center gap-1 font-semibold text-foreground">
-                      <User className="h-3.5 w-3.5 text-indigo-400" />
-                      {t.user_name} ({t.user_email})
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Building className="h-3.5 w-3.5 text-muted-foreground" />
-                      {t.account_name}
-                    </span>
-                    <span>•</span>
-                    <span>{isAr ? `تاريخ الإنشاء: ${new Date(t.created_at).toLocaleDateString()}` : `Created: ${new Date(t.created_at).toLocaleDateString()}`}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                  <Button variant="ghost" size="sm" className="text-xs font-bold gap-1 text-emerald-400">
-                    {isAr ? 'فتح وتواصل' : 'Open & Reply'}
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+          {/* ============================================================ */}
+          {/* 3. Top 4 KPI Cards (Matching Image 100%) */}
+          {/* ============================================================ */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Card 1: TOTAL TICKETS */}
+            <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition-all hover:border-blue-500/40 hover:shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">
+                  {isAr ? 'إجمالي التذاكر' : 'TOTAL TICKETS'}
+                </span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
+                  <MessageSquare className="h-4 w-4" strokeWidth={2.5} />
                 </div>
               </div>
-            ))}
+              <div className="mt-3 flex items-baseline gap-2.5">
+                <span className="text-2xl sm:text-3xl font-black tracking-tight text-foreground font-mono">
+                  {totalCount}
+                </span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {isAr ? 'مسجلة بالكامل' : 'All recorded'}
+                </span>
+              </div>
+            </div>
+
+            {/* Card 2: OPEN / PENDING */}
+            <div className="relative overflow-hidden rounded-2xl border border-amber-500/40 bg-card p-5 shadow-xs transition-all hover:border-amber-500 hover:shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">
+                  {isAr ? 'مفتوحة / قيد الانتظار' : 'OPEN / PENDING'}
+                </span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+                  <Clock className="h-4 w-4" strokeWidth={2.5} />
+                </div>
+              </div>
+              <div className="mt-3 flex items-baseline gap-2.5">
+                <span className="text-2xl sm:text-3xl font-black tracking-tight text-amber-500 font-mono">
+                  {openCount}
+                </span>
+                <span className="inline-flex items-center rounded-md bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-500 border border-amber-500/20">
+                  {isAr ? 'تتطلب المتابعة' : 'Requires attention'}
+                </span>
+              </div>
+            </div>
+
+            {/* Card 3: RESOLVED */}
+            <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition-all hover:border-emerald-500/40 hover:shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">
+                  {isAr ? 'تم حلها بنجاح' : 'RESOLVED'}
+                </span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+                  <CheckCircle2 className="h-4 w-4" strokeWidth={2.5} />
+                </div>
+              </div>
+              <div className="mt-3 flex items-baseline gap-2.5">
+                <span className="text-2xl sm:text-3xl font-black tracking-tight text-emerald-500 font-mono">
+                  {resolvedCount}
+                </span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {isAr ? 'استفسارات مكتملة' : 'Satisfied inquiries'}
+                </span>
+              </div>
+            </div>
+
+            {/* Card 4: CLOSED */}
+            <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition-all hover:border-rose-500/40 hover:shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">
+                  {isAr ? 'مغلقة' : 'CLOSED'}
+                </span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                  <X className="h-4 w-4" strokeWidth={2.5} />
+                </div>
+              </div>
+              <div className="mt-3 flex items-baseline gap-2.5">
+                <span className="text-2xl sm:text-3xl font-black tracking-tight text-rose-500 font-mono">
+                  {closedCount}
+                </span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {isAr ? 'محادثات مؤرشفة' : 'Archived thread'}
+                </span>
+              </div>
+            </div>
           </div>
-        )}
-      </Card>
-      </>
+
+          {/* ============================================================ */}
+          {/* 4. Search & Filter Bar (Matching Image 100%) */}
+          {/* ============================================================ */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="relative w-full sm:w-96">
+              <Search className="h-4 w-4 absolute start-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={isAr ? 'بحث بالحساب، العميل، أو الموضوع...' : 'Search by account, client, or subject...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="ps-10 pe-10 bg-card border-border/80 text-xs h-10 rounded-xl"
+              />
+              <kbd className="absolute end-3 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                ⌘K
+              </kbd>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1.5 bg-card border border-border/80 p-1.5 rounded-xl w-full sm:w-auto overflow-x-auto text-xs font-bold">
+              {(['all', 'open', 'resolved', 'closed'] as const).map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setStatusFilter(st)}
+                  className={`px-3.5 py-1.5 rounded-lg font-bold transition-all text-xs flex items-center gap-1.5 ${
+                    statusFilter === st
+                      ? 'bg-muted text-foreground shadow-xs'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <span>
+                    {st === 'all'
+                      ? (isAr ? 'الكل' : 'All')
+                      : st === 'open'
+                      ? (isAr ? 'مفتوحة' : 'Open')
+                      : st === 'resolved'
+                      ? (isAr ? 'تم الحل' : 'Resolved')
+                      : (isAr ? 'مغلقة' : 'Closed')}
+                  </span>
+                  {st === 'open' && <span className="h-2 w-2 rounded-full bg-amber-500 inline-block" />}
+                  {st === 'resolved' && <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />}
+                  {st === 'closed' && <span className="h-2 w-2 rounded-full bg-rose-500 inline-block" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ============================================================ */}
+          {/* 5. Luxury Ticket Cards Stack (Matching Image 100%) */}
+          {/* ============================================================ */}
+          {loading ? (
+            <div className="flex h-48 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+            </div>
+          ) : filteredTickets.length === 0 ? (
+            <div className="text-center py-16 space-y-3 rounded-2xl border border-dashed border-border/80 bg-card">
+              <HelpCircle className="h-10 w-10 text-muted-foreground mx-auto opacity-40" />
+              <p className="text-xs text-muted-foreground font-bold">
+                {isAr ? 'لا توجد تذاكر دعم فني مطابقة لخيارات التصفية' : 'No tickets match the selected filter'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {filteredTickets.map((t) => {
+                const isOpen = t.status === 'open'
+                const isResolved = t.status === 'resolved'
+                const isUrgent = t.priority === 'urgent' || t.priority === 'high'
+
+                return (
+                  <div
+                    key={t.id}
+                    onClick={() => handleOpenTicket(t)}
+                    className="p-5 rounded-2xl border border-border/80 bg-card hover:border-emerald-500/40 hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+                  >
+                    <div className="flex items-start sm:items-center gap-4 min-w-0">
+                      {/* Left Icon Square */}
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-xs font-bold shadow-xs ${
+                          isOpen
+                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                            : isResolved
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                            : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                        }`}
+                      >
+                        <MessageSquare className="h-5 w-5" />
+                      </div>
+
+                      {/* Content Area */}
+                      <div className="space-y-1.5 min-w-0">
+                        {/* Top Line: Tags & Status & Priority */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-xs text-foreground">
+                            {t.category || t.account_name || 'Support'}
+                          </span>
+
+                          {/* Status Pill */}
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold border ${
+                              isOpen
+                                ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                : isResolved
+                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                            }`}
+                          >
+                            <span>
+                              {isOpen ? 'Open' : isResolved ? 'Resolved' : 'Closed'}
+                            </span>
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                isOpen ? 'bg-amber-500' : isResolved ? 'bg-emerald-500' : 'bg-rose-500'
+                              }`}
+                            />
+                          </span>
+
+                          {/* Priority Pill */}
+                          <span
+                            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wider border ${
+                              isUrgent
+                                ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                                : 'bg-muted text-muted-foreground border-border'
+                            }`}
+                          >
+                            {isUrgent ? 'HIGH PRIORITY' : 'NORMAL'}
+                          </span>
+                        </div>
+
+                        {/* Subject Title */}
+                        <h4 className="font-bold text-sm text-foreground group-hover:text-emerald-500 transition-colors">
+                          {t.subject}
+                        </h4>
+
+                        {/* Meta Line */}
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap font-medium">
+                          <span className="flex items-center gap-1.5">
+                            <User className="h-3.5 w-3.5 text-muted-foreground/80" />
+                            <span>{t.user_name || 'Client'} ({t.user_email})</span>
+                          </span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1.5">
+                            <Building className="h-3.5 w-3.5 text-muted-foreground/80" />
+                            <span>{t.account_name}</span>
+                          </span>
+                          <span>•</span>
+                          <span>Created: {new Date(t.created_at).toLocaleDateString('en-US')}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Link / Action */}
+                    <div className="flex items-center gap-1 text-xs font-bold text-[#059669] dark:text-emerald-400 group-hover:underline self-end sm:self-auto shrink-0">
+                      <span>{isAr ? 'فتح والتواصل' : 'Open & Reply'}</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {/* Admin Chat Drawer Modal */}

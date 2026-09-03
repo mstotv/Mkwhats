@@ -61,12 +61,16 @@ export async function PATCH(
       description,
       description_en,
       price_monthly,
+      price_monthly_discounted,
       price_yearly,
+      price_yearly_discounted,
       max_users,
       max_whatsapp_instances,
       max_contacts,
       max_messages_monthly,
       max_broadcasts_monthly,
+      max_orders_monthly,
+      is_popular,
       features,
       is_active,
     } = body || {}
@@ -80,7 +84,11 @@ export async function PATCH(
     if (description !== undefined) updateData.description = String(description)
     if (description_en !== undefined) updateData.description_en = description_en ? String(description_en) : null
     if (price_monthly !== undefined) updateData.price_monthly = Number(price_monthly)
+    if (price_monthly_discounted !== undefined)
+      updateData.price_monthly_discounted = Number(price_monthly_discounted)
     if (price_yearly !== undefined) updateData.price_yearly = Number(price_yearly)
+    if (price_yearly_discounted !== undefined)
+      updateData.price_yearly_discounted = Number(price_yearly_discounted)
     if (max_users !== undefined) updateData.max_users = Number(max_users)
     if (max_whatsapp_instances !== undefined)
       updateData.max_whatsapp_instances = Number(max_whatsapp_instances)
@@ -89,6 +97,9 @@ export async function PATCH(
       updateData.max_messages_monthly = Number(max_messages_monthly)
     if (max_broadcasts_monthly !== undefined)
       updateData.max_broadcasts_monthly = Number(max_broadcasts_monthly)
+    if (max_orders_monthly !== undefined)
+      updateData.max_orders_monthly = Number(max_orders_monthly)
+    if (is_popular !== undefined) updateData.is_popular = Boolean(is_popular)
     if (features !== undefined) updateData.features = features
     if (is_active !== undefined) updateData.is_active = Boolean(is_active)
 

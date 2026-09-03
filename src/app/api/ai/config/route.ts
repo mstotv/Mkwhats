@@ -9,6 +9,7 @@ import { encrypt, decrypt } from '@/lib/whatsapp/encryption'
 import { validateAiCredentials } from '@/lib/ai/validate'
 import { embedTexts } from '@/lib/ai/embeddings'
 import { AiError, type AiProvider } from '@/lib/ai/types'
+import { checkAccountFeature } from '@/lib/plans/check-usage-limit'
 
 function bad(message: string) {
   return NextResponse.json({ error: message }, { status: 400 })
@@ -25,12 +26,17 @@ export async function GET() {
   try {
     const { supabase, accountId } = await getCurrentAccount()
 
+    const { allowed: planAllowsVoice } = await checkAccountFeature(
+      accountId,
+      'voice_transcription'
+    )
+
     const { data, error } = await supabase
       .from('ai_configs')
       // `api_key` is selected only to derive `has_key` — it is stripped
       // out below and never returned to the client.
       .select(
-        'provider, model, system_prompt, is_active, auto_reply_enabled, auto_reply_max_per_conversation, handoff_agent_id, api_key, embeddings_api_key, order_collection_enabled, appointments_enabled, voice_transcription_enabled',
+        'provider, model, system_prompt, is_active, auto_reply_enabled, auto_reply_max_per_conversation, handoff_agent_id, api_key, embeddings_api_key, order_collection_enabled, appointments_enabled, voice_transcription_enabled, voice_fallback_enabled, voice_fallback_reply',
       )
       .eq('account_id', accountId)
       .maybeSingle()
@@ -43,7 +49,7 @@ export async function GET() {
       )
     }
 
-    if (!data) return NextResponse.json({ configured: false })
+    if (!data) return NextResponse.json({ configured: false, plan_allows_voice: planAllowsVoice })
     // The keys are selected only to derive the has_* flags; neither is
     // returned to the client.
     const { api_key, embeddings_api_key, ...safe } = data
@@ -51,6 +57,7 @@ export async function GET() {
       configured: true,
       has_key: !!api_key,
       has_embeddings_key: !!embeddings_api_key,
+      plan_allows_voice: planAllowsVoice,
       ...safe,
     })
   } catch (err) {
@@ -91,7 +98,29 @@ export async function POST(request: Request) {
     const isActive = body.is_active === true
     const autoReplyEnabled = body.auto_reply_enabled === true
     const orderCollectionEnabled = body.order_collection_enabled === true
-    const voiceTranscriptionEnabled = body.voice_transcription_enabled === true
+    const voiceTranscriptionRequested = body.voice_transcription_enabled === true
+    let voiceTranscriptionEnabled = false
+
+    if (voiceTranscriptionRequested) {
+      const { allowed: planAllowsVoice } = await checkAccountFeature(
+        accountId,
+        'voice_transcription'
+      )
+      if (!planAllowsVoice) {
+        return bad(
+          'ميزة تفريغ الرسائل الصوتية (Voice STT) غير متوفرة في باقتك الحالية. يرجى ترقية الباقة.'
+        )
+      }
+      voiceTranscriptionEnabled = true
+    }
+
+    const voiceFallbackEnabled = body.voice_fallback_enabled !== false
+    const voiceFallbackReply =
+      typeof body.voice_fallback_reply === 'string'
+        ? body.voice_fallback_reply.trim()
+        : body.voice_fallback_reply === null
+        ? null
+        : undefined
 
     let maxPer = Number(body.auto_reply_max_per_conversation)
     if (!Number.isFinite(maxPer)) maxPer = 3
@@ -209,6 +238,10 @@ export async function POST(request: Request) {
       auto_reply_max_per_conversation: maxPer,
       order_collection_enabled: orderCollectionEnabled,
       voice_transcription_enabled: voiceTranscriptionEnabled,
+      voice_fallback_enabled: voiceFallbackEnabled,
+    }
+    if (voiceFallbackReply !== undefined) {
+      shared.voice_fallback_reply = voiceFallbackReply
     }
     // Only touch the handoff target when the form actually sent the field,
     // so a partial save (e.g. flipping a toggle) doesn't wipe it.

@@ -17,6 +17,7 @@ import {
 import { transcribeAudioMessage } from '@/lib/ai/voice/stt'
 import { loadAiConfig } from '@/lib/ai/config'
 import { checkAccountFeature } from '@/lib/plans/check-usage-limit'
+import { engineSendText } from '@/lib/flows/meta-send'
 
 // Same max-duration approach as the Meta webhook — Evolution events
 // can fan out to automations/AI, so give the after() callback headroom.
@@ -471,6 +472,14 @@ async function processInboundMessage(
     }
   } else {
     console.log('[DIAG][evolution/webhook] ⚠ AI auto-reply SKIPPED | reason:', flowConsumed ? 'flow consumed' : 'no text content')
+    if (!flowConsumed && contentType === 'audio' && !transcribedText) {
+      await handleVoiceFallbackReply({
+        accountId,
+        conversationId: conversation.id,
+        contactId: contactRecord.id,
+        configOwnerUserId,
+      })
+    }
   }
 }
 
@@ -786,5 +795,58 @@ async function findOrCreateEvolutionConversation(
   } catch (err) {
     console.error('[evolution/webhook] findOrCreateEvolutionConversation error:', err)
     return null
+  }
+}
+
+/**
+ * Handle automated fallback reply when an inbound audio message cannot be transcribed
+ * (plan doesn't support Voice STT or feature is disabled in AI settings).
+ */
+async function handleVoiceFallbackReply({
+  accountId,
+  conversationId,
+  contactId,
+  configOwnerUserId,
+}: {
+  accountId: string
+  conversationId: string
+  contactId: string
+  configOwnerUserId: string
+}) {
+  try {
+    const aiConf = await loadAiConfig(supabaseAdmin(), accountId)
+    if (!aiConf || !aiConf.isActive || !aiConf.autoReplyEnabled) return
+    if (aiConf.voiceFallbackEnabled === false) return
+
+    const fallbackText =
+      aiConf.voiceFallbackReply?.trim() ||
+      'عزيزي العميل، تم استلام رسالتك الصوتية 🎙️. نرجو التكرم بكتابة استفسارك نصياً حتى يتمكن المساعد الآلي من خدمتك فوراً، أو انتظر لحظات وسيقوم أحد ممثلي الخدمة بالاستماع إليها والرد عليك.'
+
+    // Anti-spam guard: Check if the last bot message in this conversation was already this fallback reply
+    const { data: lastBotMsg } = await supabaseAdmin()
+      .from('messages')
+      .select('content_text')
+      .eq('conversation_id', conversationId)
+      .eq('sender_type', 'bot')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (lastBotMsg && lastBotMsg.content_text === fallbackText) {
+      console.log('[evolution/webhook] Voice fallback reply skipped (anti-spam: already sent)')
+      return
+    }
+
+    await engineSendText({
+      accountId,
+      userId: configOwnerUserId,
+      conversationId,
+      contactId,
+      text: fallbackText,
+      aiGenerated: true,
+    })
+    console.log('[evolution/webhook] Voice fallback reply sent successfully')
+  } catch (err) {
+    console.error('[evolution/webhook] handleVoiceFallbackReply failed:', err)
   }
 }
