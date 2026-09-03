@@ -39,10 +39,16 @@ interface SiteSettings {
   platform_name_ar?: string
   platform_name_en?: string
   logo_url: string | null
+  favicon_url?: string | null
   support_whatsapp?: string
   support_telegram?: string
   support_email?: string
   user_panel_support_enabled?: {
+    whatsapp: boolean
+    telegram: boolean
+    email: boolean
+  }
+  support_floating_enabled?: {
     whatsapp: boolean
     telegram: boolean
     email: boolean
@@ -87,13 +93,19 @@ export function SiteSettingsClient({
       platform_name_ar: initialSettings?.platform_name_ar || (initialSettings?.platform_name?.match(/[\u0600-\u06FF]/) ? initialSettings.platform_name : '') || '',
       platform_name_en: initialSettings?.platform_name_en || (!initialSettings?.platform_name?.match(/[\u0600-\u06FF]/) ? initialSettings?.platform_name : '') || '',
       logo_url: initialSettings?.logo_url || '',
+      favicon_url: initialSettings?.favicon_url || '',
       support_whatsapp: initialSettings?.support_whatsapp || '',
       support_telegram: initialSettings?.support_telegram || '',
       support_email: initialSettings?.support_email || '',
       user_panel_support_enabled: initialSettings?.user_panel_support_enabled || {
-        whatsapp: true,
-        telegram: true,
-        email: true,
+        whatsapp: false,
+        telegram: false,
+        email: false,
+      },
+      support_floating_enabled: initialSettings?.support_floating_enabled || {
+        whatsapp: false,
+        telegram: false,
+        email: false,
       },
     }
   })
@@ -101,8 +113,36 @@ export function SiteSettingsClient({
   const [pages, setPages] = useState<ContentPage[]>(initialPages)
   const [loading, setLoading] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [uploadingFavicon, setUploadingFavicon] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const handleFaviconUpload = async (file: File) => {
+    try {
+      setUploadingFavicon(true)
+      setErrorMsg(null)
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/admin/upload-logo', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setErrorMsg(data.error || (isAr ? 'فشل رفع أيقونة المتصفح' : 'Failed to upload favicon'))
+        return
+      }
+
+      setSettings((prev) => ({ ...prev, favicon_url: data.url }))
+      setSuccessMsg(isAr ? 'تم رفع أيقونة المتصفح بنجاح! تذكّر حفظ التغييرات 💾' : 'Favicon uploaded successfully! Remember to save changes 💾')
+    } catch (err: any) {
+      setErrorMsg(err.message || (isAr ? 'حدث خطأ أثناء رفع الأيقونة' : 'Error uploading favicon'))
+    } finally {
+      setUploadingFavicon(false)
+    }
+  }
 
   const handleFileUpload = async (file: File) => {
     try {
@@ -374,6 +414,133 @@ export function SiteSettingsClient({
                         </div>
                       </div>
                     </div>
+
+                    {/* Favicon Section (Browser Tab Icon & Preview) */}
+                    <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-foreground flex items-center gap-2">
+                          <Globe className="h-4 w-4 text-indigo-500" />
+                          {isAr ? 'أيقونة تبويب المتصفح (Favicon / Browser Tab Icon)' : 'Browser Tab Favicon'}
+                        </Label>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          {isAr ? 'تظهر في أعلى المتصفح والمفضلة' : 'Appears in browser tab & bookmarks'}
+                        </span>
+                      </div>
+
+                      {/* Mini Browser Tab Simulation Preview */}
+                      <div className="p-3 rounded-xl border border-border/80 bg-background/60 shadow-sm space-y-2">
+                        <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                          {isAr ? '🔍 معاينة حية لشكل التبويب في المتصفح:' : '🔍 Live Browser Tab Preview:'}
+                        </span>
+                        <div className="flex items-center">
+                          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-t-lg bg-card border border-b-0 border-border text-xs font-medium text-foreground shadow-sm max-w-[260px]">
+                            {/* Favicon or fallback */}
+                            {settings.favicon_url ? (
+                              <img
+                                src={settings.favicon_url}
+                                alt="Favicon"
+                                className="h-4 w-4 object-contain rounded shrink-0"
+                              />
+                            ) : (
+                              <div className="h-4 w-4 rounded bg-purple-600 flex items-center justify-center shrink-0">
+                                <svg
+                                  className="h-2.5 w-2.5 text-white"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
+                              </div>
+                            )}
+                            <span className="truncate text-xs font-semibold">
+                              {settings.platform_name_ar || settings.platform_name_en || settings.platform_name || 'mkwacrm'}
+                            </span>
+                            <span className="text-muted-foreground/60 text-[10px] ml-auto shrink-0 hover:text-foreground cursor-default">✕</span>
+                          </div>
+                          <div className="flex-1 border-b border-border h-[29px]" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                        {/* Favicon Preview Box */}
+                        <div className="sm:col-span-3 flex items-center justify-center p-2 rounded-xl border border-border bg-background h-24 relative overflow-hidden group shadow-inner">
+                          {settings.favicon_url ? (
+                            <div className="relative w-full h-full flex items-center justify-center">
+                              <img
+                                src={settings.favicon_url}
+                                alt="Favicon Preview"
+                                className="max-h-12 max-w-12 object-contain p-1 rounded-md"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setSettings({ ...settings, favicon_url: '' })}
+                                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-rose-500/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-rose-600 shadow-md"
+                                title={isAr ? 'حذف الأيقونة والعودة للافتراضي' : 'Reset to default icon'}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="text-center text-muted-foreground space-y-1">
+                              <div className="h-8 w-8 rounded-lg bg-purple-600/20 border border-purple-500/30 mx-auto flex items-center justify-center text-purple-400 font-bold text-xs">
+                                💬
+                              </div>
+                              <p className="text-[10px] font-bold">{isAr ? 'الأيقونة الافتراضية' : 'Default Icon'}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* URL Input & File Upload Button */}
+                        <div className="sm:col-span-9 space-y-2">
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                            <Input
+                              value={settings.favicon_url || ''}
+                              onChange={(e) => setSettings({ ...settings, favicon_url: e.target.value })}
+                              placeholder="https://example.com/favicon.ico or png"
+                              className="bg-background text-xs font-mono flex-1 h-9"
+                            />
+                            <div className="relative">
+                              <input
+                                id="favicon-file-input"
+                                type="file"
+                                accept="image/x-icon,image/png,image/svg+xml,image/jpeg,image/webp,.ico"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) handleFaviconUpload(file)
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={uploadingFavicon}
+                                onClick={() => {
+                                  document.getElementById('favicon-file-input')?.click()
+                                }}
+                                className="w-full sm:w-auto border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 text-xs font-bold gap-1.5 h-9 shrink-0"
+                              >
+                                {uploadingFavicon ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Upload className="h-4 w-4" />
+                                )}
+                                {isAr ? 'رفع الأيقونة 📁' : 'Upload Favicon 📁'}
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            {isAr
+                              ? 'صورة مربعة صغيرة (32x32 أو 64x64 بكسل بصيغة ICO أو PNG أو SVG). تظهر في تبويب المتصفح وشريط العناوين.'
+                              : 'Square icon (32x32 or 64x64 px in ICO, PNG, or SVG format) that appears in browser tabs.'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -533,43 +700,70 @@ export function SiteSettingsClient({
                 </CardContent>
               </Card>
 
-              {/* User Panel Support Channels Control Card */}
+              {/* Support Channels Control Card (Landing Page Floating & User Panel) */}
               <Card className="bg-card border-emerald-500/30 text-card-foreground shadow-md">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-bold flex items-center gap-2 text-emerald-500 dark:text-emerald-400">
                     <Headphones className="h-5 w-5" />
                     {isAr
-                      ? 'إعدادات قنوات الدعم المباشر لوحة المستخدم (User Panel Support Channels)'
-                      : 'User Panel Support Channels Settings'}
+                      ? 'إعدادات قنوات الدعم المباشر (صفحة الهبوط ولوحة المستخدم)'
+                      : 'Live Support Channels Settings (Landing Page & User Panel)'}
                   </CardTitle>
                   <CardDescription className="text-xs text-muted-foreground">
                     {isAr
-                      ? 'التحكم بإظهار أو إخفاء قنوات الدعم الخارجي (الواتساب، التلغرام، البريد) للمستخدمين داخل مركز الدعم لوحة التحكم. يمكنك إيقاف أي قناة لإخفائها تماماً وترك تذاكر الدعم فقط.'
-                      : 'Control which external support channels (WhatsApp, Telegram, Email) are visible in the user Support Panel.'}
+                      ? 'التحكم بإظهار أو إخفاء قنوات الدعم الخارجي (الواتساب، التلغرام، البريد) في الزر العائم لصفحة الهبوط (Live Support) وأيضاً داخل مركز الدعم للوحة المستخدمين.'
+                      : 'Control which external support channels (WhatsApp, Telegram, Email) are visible in the Landing Page floating widget and in the User Support Panel.'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-0">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* WhatsApp */}
                     <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between pb-1 border-b border-emerald-500/20">
                         <span className="text-xs font-black flex items-center gap-1.5 text-emerald-500">
                           <MessageCircle className="h-4 w-4" />
                           {isAr ? 'دعم الواتساب' : 'WhatsApp'}
                         </span>
-                        <Switch
-                          checked={settings.user_panel_support_enabled?.whatsapp !== false}
-                          onCheckedChange={(checked) =>
-                            setSettings({
-                              ...settings,
-                              user_panel_support_enabled: {
-                                ...(settings.user_panel_support_enabled || { whatsapp: true, telegram: true, email: true }),
-                                whatsapp: checked,
-                              },
-                            })
-                          }
-                        />
                       </div>
+
+                      {/* Toggles */}
+                      <div className="space-y-2 bg-background/50 p-2.5 rounded-lg border border-emerald-500/20">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-foreground flex items-center gap-1">
+                            🌐 {isAr ? 'الزر العائم بصفحة الهبوط' : 'Landing Floating Button'}
+                          </span>
+                          <Switch
+                            checked={Boolean(settings.support_floating_enabled?.whatsapp)}
+                            onCheckedChange={(checked) =>
+                              setSettings({
+                                ...settings,
+                                support_floating_enabled: {
+                                  ...(settings.support_floating_enabled || { whatsapp: false, telegram: false, email: false }),
+                                  whatsapp: checked,
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-foreground flex items-center gap-1">
+                            👤 {isAr ? 'لوحة تحكم المستخدم' : 'User Panel Support'}
+                          </span>
+                          <Switch
+                            checked={Boolean(settings.user_panel_support_enabled?.whatsapp)}
+                            onCheckedChange={(checked) =>
+                              setSettings({
+                                ...settings,
+                                user_panel_support_enabled: {
+                                  ...(settings.user_panel_support_enabled || { whatsapp: false, telegram: false, email: false }),
+                                  whatsapp: checked,
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+
                       <div className="space-y-1">
                         <Label className="text-[11px] font-bold text-muted-foreground">
                           {isAr ? 'رقم الواتساب' : 'WhatsApp Phone Number'}
@@ -585,24 +779,51 @@ export function SiteSettingsClient({
 
                     {/* Telegram */}
                     <div className="p-3.5 rounded-xl border border-sky-500/30 bg-sky-500/5 space-y-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between pb-1 border-b border-sky-500/20">
                         <span className="text-xs font-black flex items-center gap-1.5 text-sky-500">
                           <Send className="h-4 w-4" />
                           {isAr ? 'دعم التلغرام' : 'Telegram'}
                         </span>
-                        <Switch
-                          checked={settings.user_panel_support_enabled?.telegram !== false}
-                          onCheckedChange={(checked) =>
-                            setSettings({
-                              ...settings,
-                              user_panel_support_enabled: {
-                                ...(settings.user_panel_support_enabled || { whatsapp: true, telegram: true, email: true }),
-                                telegram: checked,
-                              },
-                            })
-                          }
-                        />
                       </div>
+
+                      {/* Toggles */}
+                      <div className="space-y-2 bg-background/50 p-2.5 rounded-lg border border-sky-500/20">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-foreground flex items-center gap-1">
+                            🌐 {isAr ? 'الزر العائم بصفحة الهبوط' : 'Landing Floating Button'}
+                          </span>
+                          <Switch
+                            checked={Boolean(settings.support_floating_enabled?.telegram)}
+                            onCheckedChange={(checked) =>
+                              setSettings({
+                                ...settings,
+                                support_floating_enabled: {
+                                  ...(settings.support_floating_enabled || { whatsapp: false, telegram: false, email: false }),
+                                  telegram: checked,
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-foreground flex items-center gap-1">
+                            👤 {isAr ? 'لوحة تحكم المستخدم' : 'User Panel Support'}
+                          </span>
+                          <Switch
+                            checked={Boolean(settings.user_panel_support_enabled?.telegram)}
+                            onCheckedChange={(checked) =>
+                              setSettings({
+                                ...settings,
+                                user_panel_support_enabled: {
+                                  ...(settings.user_panel_support_enabled || { whatsapp: false, telegram: false, email: false }),
+                                  telegram: checked,
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+
                       <div className="space-y-1">
                         <Label className="text-[11px] font-bold text-muted-foreground">
                           {isAr ? 'معرف التلغرام' : 'Telegram Username/Link'}
@@ -618,24 +839,51 @@ export function SiteSettingsClient({
 
                     {/* Email */}
                     <div className="p-3.5 rounded-xl border border-purple-500/30 bg-purple-500/5 space-y-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between pb-1 border-b border-purple-500/20">
                         <span className="text-xs font-black flex items-center gap-1.5 text-purple-500">
                           <Mail className="h-4 w-4" />
                           {isAr ? 'دعم البريد' : 'Email'}
                         </span>
-                        <Switch
-                          checked={settings.user_panel_support_enabled?.email !== false}
-                          onCheckedChange={(checked) =>
-                            setSettings({
-                              ...settings,
-                              user_panel_support_enabled: {
-                                ...(settings.user_panel_support_enabled || { whatsapp: true, telegram: true, email: true }),
-                                email: checked,
-                              },
-                            })
-                          }
-                        />
                       </div>
+
+                      {/* Toggles */}
+                      <div className="space-y-2 bg-background/50 p-2.5 rounded-lg border border-purple-500/20">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-foreground flex items-center gap-1">
+                            🌐 {isAr ? 'الزر العائم بصفحة الهبوط' : 'Landing Floating Button'}
+                          </span>
+                          <Switch
+                            checked={Boolean(settings.support_floating_enabled?.email)}
+                            onCheckedChange={(checked) =>
+                              setSettings({
+                                ...settings,
+                                support_floating_enabled: {
+                                  ...(settings.support_floating_enabled || { whatsapp: false, telegram: false, email: false }),
+                                  email: checked,
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-foreground flex items-center gap-1">
+                            👤 {isAr ? 'لوحة تحكم المستخدم' : 'User Panel Support'}
+                          </span>
+                          <Switch
+                            checked={Boolean(settings.user_panel_support_enabled?.email)}
+                            onCheckedChange={(checked) =>
+                              setSettings({
+                                ...settings,
+                                user_panel_support_enabled: {
+                                  ...(settings.user_panel_support_enabled || { whatsapp: false, telegram: false, email: false }),
+                                  email: checked,
+                                },
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+
                       <div className="space-y-1">
                         <Label className="text-[11px] font-bold text-muted-foreground">
                           {isAr ? 'البريد الإلكتروني' : 'Support Email Address'}

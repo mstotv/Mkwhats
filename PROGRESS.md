@@ -10,6 +10,32 @@
 > 
 > 🛡️ **الجودة والاستقرار**: اجتياز كامل لفحص الأنواع البرمجية (`tsc --noEmit` خلو تام من أي أخطاء)، واجتياز **100% من منظومة الاختبارات الآلية (686 من أصل 686 اختباراً)**.
 
+- ✅ **تخصيص أيقونة وعنوان تبويب المتصفح وتغيير اسم المنصة إلى mkwacrm (Browser Tab Favicon, Tab Title & Branding Complete Ecosystem)**:
+  - **تغيير الاسم التجاري والافتراضي من `wacrm` إلى `mkwacrm`**:
+    - استبدال كافة المراجع والمسميات الافتراضية الموجهة للمستخدم من `wacrm` إلى `mkwacrm` في:
+      1. ملفات الترجمة والمحاذاة اللغوية ([`messages/en.json`](file:///c:/Users/Mustafa/Desktop/mk%20whats/messages/en.json) و [`messages/ar.json`](file:///c:/Users/Mustafa/Desktop/mk%20whats/messages/ar.json)).
+      2. نصوص ورسائل دعوة الأعضاء عبر الواتساب ([`src/components/settings/invite-member-dialog.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/invite-member-dialog.tsx)).
+      3. القيمة الافتراضية لاسم المنصة في جدول إعدادات الموقع.
+  - **إضافة عمود `favicon_url` في قاعدة البيانات (Migration 086)**:
+    - إنشاء الميجريشن [`supabase/migrations/086_add_favicon_url_to_site_settings.sql`](file:///c:/Users/Mustafa/Desktop/mk%20whats/supabase/migrations/086_add_favicon_url_to_site_settings.sql) لإضافة عمود `favicon_url TEXT` إلى جدول `public.site_settings` وتحديث الاسم الافتراضي إلى `mkwacrm`.
+  - **تطوير قسم إدارة أيقونة تبويب المتصفح (Favicon) في لوحة الأدمن**:
+    - في صفحة إعدادات الموقع ([`src/app/admin/site-settings/site-settings-client.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/site-settings/site-settings-client.tsx)):
+      1. **محاكي تبويب المتصفح المباشر (Live Browser Tab Preview)**: بطاقة عرض حي تحاكي تبويب المتصفح (Chrome/Edge) لعرض الأيقونة المرفوعة بجانب عنوان الموقع وزر الإغلاق في الوقت الفعلي قبل الحفظ.
+      2. **رفع الأيقونة من الجهاز (File Upload)**: زر رفع مباشر يدعم كافة صيغ الأيقونات والصور (`.ico`, `.png`, `.svg`, `.jpeg`, `.webp`) عبر المسار `/api/admin/upload-logo`.
+      3. **حقل الرابط المباشر (Direct URL)**: إمكانية إدخال رابط خارجي للأيقونة مع زر حذف فوري واستعادة الأيقونة الافتراضية.
+  - **ربط البيانات ديناميكياً في محرك Next.js (`generateMetadata`)**:
+    - تحويل كائن `metadata` في [`src/app/layout.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/layout.tsx) إلى دالة ديناميكية غير متزامنة `generateMetadata()` تقرأ من قاعدة البيانات مباشرة:
+      - عنوان التبويب: يستمد من `platform_name_en` أو `platform_name` في `site_settings` (الافتراضي: `mkwacrm`).
+      - أيقونة التبويب (Favicon): تُقرأ مباشرة من `favicon_url` المخصص، مع الرجوع التلقائي إلى `/icon` في حال عدم تحديد أيقونة مخصصة.
+  - **إصلاح ومزامنة أزرار الدعم العائم في صفحة الهبوط (Floating Live Support Widget Fix & Sync)**:
+    - **تشخيص المشكلة**: في إعدادات الموقع (`Site Settings`)، كانت المفاتيح تتحكم فقط في قنوات لوحة المستخدم (`user_panel_support_enabled`) دون مفاتيح الدعم العائم لصفحة الهبوط (`support_floating_enabled`) التي بقيت مفعلة للواتساب في قاعدة البيانات.
+    - **الحل الجذري المطبق**:
+      1. تحديث `site-settings-client.tsx` لإتاحة مفتاحين منفصلين لكل قناة (واتساب، تلغرام، إيميل): الأول للزر العائم في صفحة الهبوط (`support_floating_enabled`) والثاني لمركز دعم لوحة المستخدم (`user_panel_support_enabled`).
+      2. مزامنة وتعطيل القنوات في قاعدة البيانات بحيث تختفي فوراً من صفحة الهبوط عند إيقافها، وإتاحة التحكم الكامل للأدمن من مكان واحد.
+  - **الفحص الشامل والاختبارات**:
+    - اجتياز كامل لفحص الأنواع البرمجية (`npx tsc --noEmit` - Code 0 بدون أي أخطاء).
+    - اجتياز كامل لجميع ملفات الاختبارات الآلية (686 من أصل 686 اختباراً في 71 ملف اختبار بنسبة 100%).
+
 - ✅ **إصلاح وترتيب وتطوير صندوق الوارد ومزامنة المحادثات وتطابق الخطط (Inbox, History Sync, Avatars & Plans Alignment Complete Ecosystem)**:
   - **إصلاح ترتيب الرسائل والمحادثات في صندوق الوارد (Inbox Conversation Sorting Fix)**:
     - **تشخيص الخطأ**: في قواعد بيانات PostgreSQL، الترتيب التنازلي `ORDER BY last_message_at DESC` يعامل القيم الفارغة (`NULL`) كأكبر قيمة افتراضياً (`NULLS FIRST`). ونتيجة لذلك، كانت المحادثات المستعادة التي لا تحتوي على رسائل سابقة بعد تطفو في أعلى القائمة، بينما هبطت المحادثة النشطة صاحبة الرسالة الأحدث إلى قاع القائمة تحتها جميعاً.

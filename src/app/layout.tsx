@@ -35,25 +35,57 @@ const playfair = Playfair_Display({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "wacrm",
-    template: "%s — wacrm",
-  },
-  description: "Self-hostable CRM template for WhatsApp.",
-  robots: {
-    index: false,
-    follow: false,
-  },
-  icons: {
-    icon: [{ url: "/icon" }],
-  },
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-};
+import { createServiceClient } from "@/lib/supabase/service";
+
+export async function generateMetadata(): Promise<Metadata> {
+  let title = "mkwacrm";
+  let favicon = "/icon";
+
+  try {
+    const supabase = createServiceClient();
+    const { data: settings } = await supabase
+      .from("site_settings")
+      .select("platform_name, platform_name_en, platform_name_ar, favicon_url")
+      .limit(1)
+      .maybeSingle();
+
+    if (settings) {
+      title =
+        settings.platform_name_en?.trim() ||
+        settings.platform_name?.trim() ||
+        settings.platform_name_ar?.trim() ||
+        "mkwacrm";
+
+      if (settings.favicon_url?.trim()) {
+        favicon = settings.favicon_url.trim();
+      }
+    }
+  } catch {
+    // Keep safe defaults if database is unreachable at build time
+  }
+
+  return {
+    title: {
+      default: title,
+      template: `%s — ${title}`,
+    },
+    description: "Enterprise WhatsApp CRM, Marketing & AI Automation Platform.",
+    robots: {
+      index: false,
+      follow: false,
+    },
+    icons: {
+      icon: [{ url: favicon }],
+      shortcut: [{ url: favicon }],
+      apple: [{ url: favicon }],
+    },
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#ffffff",

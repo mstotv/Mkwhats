@@ -22,6 +22,7 @@ export async function GET() {
         platform_name_ar: '',
         platform_name_en: '',
         logo_url: '',
+        favicon_url: '',
         support_email: '',
         support_whatsapp: '',
         support_telegram: '',
@@ -82,6 +83,7 @@ export async function POST(req: Request) {
     }
 
     if (payload.logo_url !== undefined) updateObj.logo_url = payload.logo_url;
+    if (payload.favicon_url !== undefined) updateObj.favicon_url = payload.favicon_url;
     if (payload.support_email !== undefined) updateObj.support_email = payload.support_email;
     if (payload.support_whatsapp !== undefined) updateObj.support_whatsapp = payload.support_whatsapp;
     if (payload.support_telegram !== undefined) updateObj.support_telegram = payload.support_telegram;
