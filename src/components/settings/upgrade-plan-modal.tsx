@@ -38,7 +38,9 @@ export interface PlanItem {
   name: string
   slug: string
   price_monthly: number
+  price_monthly_discounted?: number
   price_yearly: number
+  price_yearly_discounted?: number
   max_users: number
   max_whatsapp_instances: number
   max_contacts: number
@@ -352,7 +354,12 @@ export function UpgradePlanModal({
           {availablePlans.map((plan) => {
             const isCurrent = currentPlanId === plan.id
             const isSubmitting = submittingPlanId === plan.id
-            const price = billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly
+            const isYearly = billingCycle === 'yearly'
+            const price = isYearly
+              ? (plan.price_yearly_discounted && plan.price_yearly_discounted > 0 ? plan.price_yearly_discounted : plan.price_yearly)
+              : (plan.price_monthly_discounted && plan.price_monthly_discounted > 0 ? plan.price_monthly_discounted : plan.price_monthly)
+            const priceOriginal = isYearly ? plan.price_yearly : plan.price_monthly
+            const hasDiscount = price < priceOriginal
             const isPopular = plan.slug === 'pro' || plan.slug === 'professional'
 
             return (
@@ -398,6 +405,11 @@ export function UpgradePlanModal({
                   <div className="py-3 border-y border-border/80">
                     <div className="flex items-baseline gap-1.5 dir-ltr">
                       <span className="text-3xl sm:text-4xl font-black text-foreground">${price}</span>
+                      {hasDiscount && (
+                        <span className="text-sm font-semibold text-muted-foreground/60 line-through">
+                          ${priceOriginal}
+                        </span>
+                      )}
                       <span className="text-xs font-semibold text-muted-foreground">
                         /{billingCycle === 'yearly' ? (isAr ? 'سنة' : 'year') : (isAr ? 'شهر' : 'month')}
                       </span>
@@ -552,7 +564,7 @@ export function UpgradePlanModal({
       {/* Offline Payment Dialog Modal */}
       {selectedPlanForOffline && (
         <Dialog open={Boolean(selectedPlanForOffline)} onOpenChange={() => setSelectedPlanForOffline(null)}>
-          <DialogContent className="sm:max-w-xl w-full rounded-3xl bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 p-6 shadow-2xl">
+          <DialogContent className="sm:max-w-xl w-[95vw] sm:w-full max-h-[92vh] overflow-y-auto rounded-3xl bg-white dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 p-4 sm:p-6 shadow-2xl">
             <DialogHeader className="text-start space-y-1 pb-3 border-b border-slate-100 dark:border-zinc-800">
               <DialogTitle className="text-lg font-black flex items-center gap-2 text-slate-900 dark:text-zinc-100">
                 <Landmark className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />

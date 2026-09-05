@@ -110,4 +110,19 @@ describe("middleware — refreshed auth cookies survive redirects", () => {
     expect(res.headers.get("location")).toBeNull();
     expect(res.cookies.get(ROTATED.name)?.value).toBe(ROTATED.value);
   });
+
+  it("rewrites requests from storefront subdomains to /store/[subdomain]", async () => {
+    process.env.NEXT_PUBLIC_ROOT_DOMAIN = "example.com";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://app.example.com";
+
+    const req = new NextRequest("https://ahmed-shop.example.com/", {
+      headers: { host: "ahmed-shop.example.com" },
+    });
+
+    const res = await middleware(req);
+    // Rewrite sets the x-middleware-rewrite header
+    const rewriteHeader = res.headers.get("x-middleware-rewrite");
+    expect(rewriteHeader).toContain("/store/ahmed-shop");
+  });
 });
+

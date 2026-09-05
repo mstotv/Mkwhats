@@ -231,11 +231,11 @@ export async function dispatchInboundToAiReply(
         : {}),
     })
 
-    let text: string
-    let handoff: boolean
-    let usage: Awaited<ReturnType<typeof generateReply>>['usage']
-    let extracted: Awaited<ReturnType<typeof generateReply>>['extracted']
-    let appointmentData: Awaited<ReturnType<typeof generateReply>>['appointmentData']
+    let text = ''
+    let handoff = false
+    let usage: Awaited<ReturnType<typeof generateReply>>['usage'] = null
+    let extracted: Awaited<ReturnType<typeof generateReply>>['extracted'] = null
+    let appointmentData: Awaited<ReturnType<typeof generateReply>>['appointmentData'] = null
 
     try {
       ;({ text, handoff, usage, extracted, appointmentData } = await generateReply({
@@ -246,31 +246,68 @@ export async function dispatchInboundToAiReply(
         orderMode: config.orderCollectionEnabled && !!orderContext,
         appointmentMode: config.appointmentsEnabled && !!appointmentContext,
       }))
-    } catch (aiErr) {
-      // The LLM call failed (rate limit, network error, bad API key, etc.).
-      // Don't leave the customer hanging in silence — send a polite fallback
-      // and hand the thread to a human immediately.
-      console.error('[ai auto-reply] generateReply failed — sending fallback and triggering handoff:', aiErr)
-      try {
-        await engineSendText({
-          accountId,
-          userId: configOwnerUserId,
-          conversationId,
-          contactId,
-          text: 'عذراً، صار خلل تقني بسيط. سيتواصل معك فريقنا قريباً. 🙏',
-          aiGenerated: true,
-        })
-      } catch (sendErr) {
-        console.error('[ai auto-reply] fallback send failed:', sendErr)
+    } catch (primaryAiErr) {
+      console.warn(
+        '[ai auto-reply] primary generateReply failed — attempting graceful fallback retry:',
+        primaryAiErr instanceof Error ? primaryAiErr.message : primaryAiErr,
+      )
+
+      // Graceful Retry 1: If structured order/appointment mode crashed, retry with standard prompt
+      const wasStructured = (config.orderCollectionEnabled && !!orderContext) || (config.appointmentsEnabled && !!appointmentContext)
+      let recovered = false
+
+      if (wasStructured) {
+        try {
+          const fallbackSystemPrompt = buildSystemPrompt({
+            userPrompt: config.systemPrompt,
+            mode: 'auto_reply',
+            knowledge,
+          })
+          const retryResult = await generateReply({
+            config,
+            systemPrompt: fallbackSystemPrompt,
+            messages,
+            orderMode: false,
+            appointmentMode: false,
+          })
+          text = retryResult.text
+          handoff = retryResult.handoff
+          usage = retryResult.usage
+          extracted = null
+          appointmentData = null
+          recovered = true
+          console.log('[ai auto-reply] Graceful fallback retry succeeded — AI replied normally')
+        } catch (retryErr) {
+          console.error('[ai auto-reply] graceful retry also failed:', retryErr)
+        }
       }
-      // Disable auto-reply on this thread so the next inbound goes straight
-      // to a human — the owner can re-enable it once the issue is resolved.
-      const fallbackUpdate: Record<string, unknown> = { ai_autoreply_disabled: true }
-      if (config.handoffAgentId && !conv.assigned_agent_id) {
-        fallbackUpdate.assigned_agent_id = config.handoffAgentId
+
+      if (!recovered) {
+        // The LLM call failed completely (rate limit, network error, bad API key, etc.).
+        // Don't leave the customer hanging in silence — send a polite fallback
+        // and hand the thread to a human immediately.
+        console.error('[ai auto-reply] all generateReply attempts failed — sending fallback and triggering handoff:', primaryAiErr)
+        try {
+          await engineSendText({
+            accountId,
+            userId: configOwnerUserId,
+            conversationId,
+            contactId,
+            text: 'عذراً، صار خلل تقني بسيط. سيتواصل معك فريقنا قريباً. 🙏',
+            aiGenerated: true,
+          })
+        } catch (sendErr) {
+          console.error('[ai auto-reply] fallback send failed:', sendErr)
+        }
+        // Disable auto-reply on this thread so the next inbound goes straight
+        // to a human — the owner can re-enable it once the issue is resolved.
+        const fallbackUpdate: Record<string, unknown> = { ai_autoreply_disabled: true }
+        if (config.handoffAgentId && !conv.assigned_agent_id) {
+          fallbackUpdate.assigned_agent_id = config.handoffAgentId
+        }
+        await db.from('conversations').update(fallbackUpdate).eq('id', conversationId)
+        return
       }
-      await db.from('conversations').update(fallbackUpdate).eq('id', conversationId)
-      return
     }
 
     // Record token spend on the account's BYO key. Fire-and-forget so it

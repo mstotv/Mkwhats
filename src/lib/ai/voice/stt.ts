@@ -175,8 +175,8 @@ async function transcribeWithGemini(
         } catch {}
 
         console.warn(`[voice-stt][gemini] Model ${modelName} returned status ${res.status}${errDetail ? ` (${errDetail})` : ''}`)
-        if (res.status === 404) {
-          // Model not found in this region/key — continue to next candidate model
+        if (res.status === 404 || res.status === 400 || res.status === 503) {
+          // Model not found or multimodal audio not supported on this specific model/key — continue to next candidate model
           continue
         }
         return null

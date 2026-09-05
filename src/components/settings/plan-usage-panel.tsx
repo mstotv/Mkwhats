@@ -537,9 +537,14 @@ export function PlanUsagePanel() {
           </div>
 
           <div className="flex items-center gap-4 self-end sm:self-auto">
-            <div className="text-left rtl:text-right">
+            <div className="text-left rtl:text-right" dir="ltr">
               <span className="text-2xl font-black text-foreground">
-                ${subscription?.billing_cycle === 'yearly' ? plan.price_yearly : plan.price_monthly}
+                ${(() => {
+                  const isYearly = subscription?.billing_cycle === 'yearly'
+                  return isYearly
+                    ? (plan.price_yearly_discounted && plan.price_yearly_discounted > 0 ? plan.price_yearly_discounted : plan.price_yearly)
+                    : (plan.price_monthly_discounted && plan.price_monthly_discounted > 0 ? plan.price_monthly_discounted : plan.price_monthly)
+                })()}
               </span>
               <span className="text-xs text-muted-foreground ml-1 rtl:ml-0 rtl:mr-1">
                 /{subscription?.billing_cycle === 'yearly' ? t('perYear') : t('perMonth')}
@@ -1109,9 +1114,9 @@ export function PlanUsagePanel() {
       {/* 1. CHECKOUT PAYMENT METHOD SELECTION MODAL */}
       {selectedPlanForCheckout && (
         <Dialog open={Boolean(selectedPlanForCheckout)} onOpenChange={() => setSelectedPlanForCheckout(null)}>
-          <DialogContent className="sm:max-w-xl w-full rounded-3xl bg-card border-border p-6 shadow-2xl">
-            <DialogHeader className="text-start space-y-1.5 pb-4 border-b border-border">
-              <DialogTitle className="text-xl font-black flex items-center gap-2 text-foreground">
+          <DialogContent className="sm:max-w-xl w-[95vw] sm:w-full max-h-[92vh] overflow-y-auto rounded-3xl bg-card border-border p-4 sm:p-6 shadow-2xl">
+            <DialogHeader className="text-start space-y-1.5 pb-3 border-b border-border">
+              <DialogTitle className="text-lg sm:text-xl font-black flex items-center gap-2 text-foreground">
                 <Sparkles className="h-5 w-5 text-emerald-500 shrink-0" />
                 {isAr ? 'بماذا تريد أن تدفع؟ (اختر وسيلة الدفع المناسبة)' : 'Select Payment Method'}
               </DialogTitle>
@@ -1122,10 +1127,10 @@ export function PlanUsagePanel() {
               </DialogDescription>
 
               {/* Price Banner */}
-              <div className="pt-2">
-                <div className="flex items-center justify-between p-3 bg-muted/60 rounded-2xl border border-border">
+              <div className="pt-1.5">
+                <div className="flex items-center justify-between gap-2 p-2.5 sm:p-3 bg-muted/60 rounded-2xl border border-border">
                   <span className="text-xs font-bold text-muted-foreground">{isAr ? 'قيمة الاشتراك المطلوب:' : 'Selected Plan Cost:'}</span>
-                  <span className="text-sm font-mono font-black text-emerald-500">
+                  <span className="text-xs sm:text-sm font-mono font-black text-emerald-600 dark:text-emerald-400">
                     ${billingCycle === 'yearly'
                       ? (selectedPlanForCheckout.price_yearly_discounted && selectedPlanForCheckout.price_yearly_discounted > 0 ? selectedPlanForCheckout.price_yearly_discounted : selectedPlanForCheckout.price_yearly)
                       : (selectedPlanForCheckout.price_monthly_discounted && selectedPlanForCheckout.price_monthly_discounted > 0 ? selectedPlanForCheckout.price_monthly_discounted : selectedPlanForCheckout.price_monthly)} USD ({billingCycle === 'yearly' ? (isAr ? 'اشتراك سنوي' : 'Yearly') : (isAr ? 'اشتراك شهري' : 'Monthly')})
@@ -1134,7 +1139,7 @@ export function PlanUsagePanel() {
               </div>
             </DialogHeader>
 
-            <div className="space-y-3 py-3">
+            <div className="space-y-3 py-2">
               {/* Fallback if no payment gateways configured or active */}
               {offlineMethods.length === 0 && !stripeEnabled && !plisioEnabled && (
                 <div className="p-6 rounded-2xl border border-dashed border-border bg-muted/30 text-center space-y-3">
@@ -1179,19 +1184,21 @@ export function PlanUsagePanel() {
                     setOfflineUserNotes('')
                     setOfflineError(null)
                   }}
-                  className="w-full p-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500 transition-all text-start flex items-start gap-3.5 group cursor-pointer"
+                  className="w-full p-3.5 sm:p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500 transition-all text-start flex items-center gap-3 sm:gap-3.5 group cursor-pointer"
                 >
-                  <div className="p-3 bg-emerald-500/15 text-emerald-500 rounded-xl group-hover:scale-110 transition-transform shrink-0">
+                  <div className="p-2.5 sm:p-3 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-xl group-hover:scale-110 transition-transform shrink-0">
                     <Landmark className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-sm text-foreground flex items-center gap-2">
-                        {isAr ? '🏦 الدفع المحلي والأوفلاين' : '🏦 Local & Offline Payment'}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
+                      <span className="font-bold text-sm text-foreground">
+                        {isAr ? 'الدفع والتحويل المحلي' : 'Local & Offline Payment'}
                       </span>
-                      <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-extrabold border-0">
-                        {isAr ? 'تحويل بنكي / محفظة ⚡' : 'Bank & Wallets ⚡'}
-                      </Badge>
+                      <div className="flex items-center">
+                        <Badge className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-extrabold border-0 py-0.5 px-2 shrink-0">
+                          {isAr ? 'تحويل بنكي / محفظة ⚡' : 'Bank & Wallets ⚡'}
+                        </Badge>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                       {isAr
@@ -1199,7 +1206,7 @@ export function PlanUsagePanel() {
                         : 'Pay via local bank transfer, ZainCash, STC Pay, or Mobile Wallets with proof submission'}
                     </p>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground me-1 my-auto group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
                 </button>
               )}
 
@@ -1212,19 +1219,21 @@ export function PlanUsagePanel() {
                     setSelectedPlanForCheckout(null)
                     handleStripeCheckout(targetPlan)
                   }}
-                  className="w-full p-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 hover:border-indigo-500 transition-all text-start flex items-start gap-3.5 group cursor-pointer"
+                  className="w-full p-3.5 sm:p-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 hover:border-indigo-500 transition-all text-start flex items-center gap-3 sm:gap-3.5 group cursor-pointer"
                 >
-                  <div className="p-3 bg-indigo-500/15 text-indigo-500 rounded-xl group-hover:scale-110 transition-transform shrink-0">
+                  <div className="p-2.5 sm:p-3 bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 rounded-xl group-hover:scale-110 transition-transform shrink-0">
                     <CreditCard className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
                       <span className="font-bold text-sm text-foreground">
-                        {isAr ? '💳 بطاقة بنكية (Visa / MasterCard)' : '💳 Card Payment (Visa / MasterCard)'}
+                        {isAr ? 'بطاقة بنكية (Visa / MasterCard)' : 'Card Payment (Visa / MasterCard)'}
                       </span>
-                      <Badge className="bg-indigo-500/20 text-indigo-400 text-[10px] font-bold border-0">
-                        {isAr ? 'دفع إلكتروني آمن ⚡' : 'Instant Online ⚡'}
-                      </Badge>
+                      <div className="flex items-center">
+                        <Badge className="bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold border-0 py-0.5 px-2 shrink-0">
+                          {isAr ? 'دفع إلكتروني آمن ⚡' : 'Instant Online ⚡'}
+                        </Badge>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                       {isAr
@@ -1232,7 +1241,7 @@ export function PlanUsagePanel() {
                         : 'Instant automated checkout via credit or debit card'}
                     </p>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground me-1 my-auto group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
                 </button>
               )}
 
@@ -1245,19 +1254,21 @@ export function PlanUsagePanel() {
                     setSelectedPlanForCheckout(null)
                     handlePlisioUpgrade(targetPlan)
                   }}
-                  className="w-full p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500 transition-all text-start flex items-start gap-3.5 group cursor-pointer"
+                  className="w-full p-3.5 sm:p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500 transition-all text-start flex items-center gap-3 sm:gap-3.5 group cursor-pointer"
                 >
-                  <div className="p-3 bg-amber-500/15 text-amber-500 rounded-xl group-hover:scale-110 transition-transform shrink-0">
+                  <div className="p-2.5 sm:p-3 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-xl group-hover:scale-110 transition-transform shrink-0">
                     <Coins className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
                       <span className="font-bold text-sm text-foreground">
-                        {isAr ? '🪙 عملات رقمية / كريبتو (USDT / Bitcoin)' : '🪙 Crypto Payment (USDT / Bitcoin)'}
+                        {isAr ? 'عملات رقمية مشفرة (USDT / Bitcoin)' : 'Crypto Payment (USDT / Bitcoin)'}
                       </span>
-                      <Badge className="bg-amber-500/20 text-amber-400 text-[10px] font-bold border-0">
-                        {isAr ? 'USDT & Crypto 🪙' : 'USDT & Crypto 🪙'}
-                      </Badge>
+                      <div className="flex items-center">
+                        <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[10px] font-bold border-0 py-0.5 px-2 shrink-0">
+                          {isAr ? 'USDT & Crypto 🪙' : 'USDT & Crypto 🪙'}
+                        </Badge>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                       {isAr
@@ -1265,13 +1276,13 @@ export function PlanUsagePanel() {
                         : 'Pay with USDT, Bitcoin, or Ethereum via Plisio Crypto Gateway'}
                     </p>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground me-1 my-auto group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
                 </button>
               )}
             </div>
 
             <DialogFooter className="pt-2">
-              <Button variant="outline" onClick={() => setSelectedPlanForCheckout(null)} className="w-full rounded-2xl font-bold">
+              <Button variant="outline" onClick={() => setSelectedPlanForCheckout(null)} className="w-full h-11 rounded-2xl font-bold">
                 {isAr ? 'إلغاء النافذة' : 'Close Window'}
               </Button>
             </DialogFooter>
@@ -1282,7 +1293,7 @@ export function PlanUsagePanel() {
       {/* 2. OFFLINE PAYMENT PROOF SUBMISSION DIALOG */}
       {selectedPlanForOffline && (
         <Dialog open={Boolean(selectedPlanForOffline)} onOpenChange={() => setSelectedPlanForOffline(null)}>
-          <DialogContent className="sm:max-w-xl w-full rounded-3xl bg-card border-border p-6 shadow-2xl">
+          <DialogContent className="sm:max-w-xl w-[95vw] sm:w-full max-h-[92vh] overflow-y-auto rounded-3xl bg-card border-border p-4 sm:p-6 shadow-2xl">
             <DialogHeader className="text-start space-y-1 pb-3 border-b border-border">
               <DialogTitle className="text-lg font-black flex items-center gap-2 text-foreground">
                 <Landmark className="h-5 w-5 text-emerald-500 shrink-0" />

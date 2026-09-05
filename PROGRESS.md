@@ -1,14 +1,88 @@
-# حالة المشروع - آخر تحديث: [3/9/2026]
+# حالة المشروع - آخر تحديث: [5/9/2026]
 
-> 🎯 **ملخص الحالة الراهنة الشامل (Super Admin Suite Complete Overhaul Summary):**
-> تم بحمد الله وتوفيقه الانتهاء الكامل والشامل من **إعادة بناء وتطوير وتصميم لوحة تحكم الأدمن المركزية (Super Admin Control Suite)** بالكامل لتطابق أعلى المعايير العالمية والتصاميم المعتمدة بنسبة **100% (Pixel-Perfect)** مع ربطها المباشر والذري بقاعدة بيانات Supabase الحية:
-> 1. **لوحة المراقبة الشاملة (Super Admin Overview)**: تحليلات حية، حسابات الإيرادات والنمو، الرسوم البيانية، ومراقبة سيرفرات الواتساب وحالة المنصة.
-> 2. **دليل الشركات والمستأجرين (Tenants & Accounts Directory)**: شريط KPI علوي، بحث ذكي `⌘K`، تصدير CSV بترميز UTF-8، بطاقات الحصص، وقائمة إدارة بخمسة إجراءات تشغيلية.
-> 3. **إدارة أسعار وباقات المنصة (SaaS Pricing & Plans Manager)**: كروت KPI الذكية، بطاقات الباقات الثلاثية مع تمييز باقة Pro بشارة `Most Popular Plan`، الحصص التشغيلية (-1 لغير محدود)، ومفاتيح الميزات والنوافذ المنبثقة.
-> 4. **إدارة الحوالات البنكية وبوابات الدفع (Offline Payment Gateway & Hub)**: ترويسة مائية بأيقونة الصرح البنكي، 4 كروت KPI للحوالات، تبويب إيصالات الدفع ومعاينة الصور (`Lightbox`) وأزرار الاعتماد والتفعيل والرفض، وتبويب بوابات الدفع والمحافظ.
-> 5. **مركز تذاكر الدعم والبرودكاست (Support & Broadcasts Manager)**: كروت KPI للتذاكر، فلاتر الحالات بنقاط ملونة، بطاقات التذاكر الفاخرة العريضة مع شارات الأولوية، روابط `Open & Reply >` مع لوحة المحادثة الفورية، وتبويب لوحة إعلانات وعروض البرودكاست.
+> 🎯 **ملخص الحالة الراهنة الشامل (Bio Link Studio, AI Voice Assistant & Security Hardening):**
+> تم بحمد الله وتوفيقه الانتهاء الكامل من أحدث حزم التطوير والتحسينات الشاملة للمنصة:
+> 1. **استوديو البايو لينك ثنائي اللغة (Bio Link Studio - Bilingual Ecosystem)**: تحويل التسمية رسمياً إلى "بايو لينك / Bio Link"، دعم كامل وفوري للغتين العربية والإنجليزية ديناميكياً في كافة الشاشات والتبويبات ومحاكي الهاتف الحي ومكتبة الأيقونات، وإصلاح زر الحفظ وصلاحيات الإدارة.
+> 2. **الإصلاح الجذري لمعالجة وفهم الذكاء الاصطناعي للرسائل الصوتية (Voice STT & AI Resilience)**: حل مشكلة تحويل الرسائل الصوتية لموظف بشري واعتذار البوت، سحب النص المفرغ صوتياً ضمن سياق المحادثة، وإضافة آلية الرجوع الذكي (Graceful Fallback Retry) والتفريغ عبر نماذج بديلة.
+> 3. **الفحص الأمني والبرمجي الشامل (Security & Quality Audit)**: تحصين مسارات التتبع العامة بـ Rate Limiting لمنع هجمات حجب الخدمة، تدقيق سياسات الـ RLS والعزل متعدد المستأجرين، واجتياز تام لجميع الاختبارات البرمجية.
+> 4. **تحسينات واجهة المستخدم والاشتراكات**: تصحيح عرض أسعار التجديد والاشتراكات الفعلية بدقة في لوحة المستخدم، ومعالجة تباين النصوص وتأثيرات التحميل.
 > 
-> 🛡️ **الجودة والاستقرار**: اجتياز كامل لفحص الأنواع البرمجية (`tsc --noEmit` خلو تام من أي أخطاء)، واجتياز **100% من منظومة الاختبارات الآلية (686 من أصل 686 اختباراً)**.
+> 🛡️ **الجودة والاستقرار**: اجتياز كامل ومطلق لفحص الأنواع البرمجية (`tsc --noEmit` خلو تام 0 أخطاء)، واجتياز **100% من منظومة الاختبارات الآلية (698 من أصل 698 اختباراً في 72 ملف اختبار)**.
+
+- ✅ **تطوير وتحديث استوديو "بايو لينك" (Bio Link Studio) ثنائي اللغة وإصلاح حفظ الإعدادات**:
+  - **تغيير المسمى التجاري إلى "بايو لينك" (Bio Link)**:
+    - استبدال التسمية السابقة `Storefront` بـ **بايو لينك (Bio Link)** في لوحة التحكم والشريط الجانبي وصفحة الإعدادات والملاحة لتناسب الهوية التسويقية للخدمة.
+  - **منظومة ثنائية اللغة كاملة ومتزامنة (Full Arabic / English Bilingual Support)**:
+    - **تبويبات ولوحات الاستوديو**: دعم كامل للتبديل بين العربية والإنجليزية في تبويب "المظهر والروابط"، "الروابط والأزرار"، و"التحليلات والنقرات".
+    - **محاكي الهاتف الحي (Interactive Phone Preview)**: تعديل اتجاه العرض ومحاذاة النصوص ديناميكياً `dir={isAr ? 'rtl' : 'ltr'}` ليعكس المحتوى اللغوي بدقة كما يراه الزائر الفعلي.
+    - **مكتبة الأيقونات الضخمة ([`src/lib/storefront/link-icons.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/storefront/link-icons.tsx))**:
+      - تعريب وترجمة أسماء تصنيفات الأيقونات الـ 16 (تواصل، تجارة ودفع، وسائط وترفيه، إنتاجية، وغيرها) حسب لغة العرض النشطة.
+      - دعم البحث باللغتين العربية والإنجليزية لأسماء ومفاتيح الأيقونات.
+    - **أشكال زوايا الأزرار ونمط الأيقونات ([`src/lib/storefront/theme-tokens.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/storefront/theme-tokens.ts) & [`branding-editor.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/storefront/branding-editor.tsx))**:
+      - ترجمة خيارات زوايا الأزرار (دائري بالكامل، مستدير خفيف، حاد، وغيرها).
+      - ترجمة خيارات أنماط الأيقونات وألوان الواجهة في لوحة تحرير الهوية.
+    - **لوحة التحليلات والإحصائيات ([`analytics-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/storefront/analytics-panel.tsx))**:
+      - ترجمة بطاقات الإحصائيات (إجمالي الزيارات، إجمالي النقرات، معدل النقر CTR، ومتوسط النقرات لكل زيارة) والرسوم البيانية وتفاصيل الروابط الأكثر تفاعلاً.
+  - **إصلاح زر الحفظ في إعدادات البايو لينك ([`store-settings-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/store-settings-panel.tsx))**:
+    - **تشخيص الخلل**: كان زر الحفظ يظل معطلاً أحياناً بسبب شرط التحقق الصارم من حالة الصلاحية `authCanEdit` في حال تأخر تحميل استعلام الصلاحيات.
+    - **الحل الجذري**: تحديث المنطق البرمجي ليكون: `canEditSettings: authCanEdit ?? (accountRole === 'owner' || accountRole === 'admin')`، مما يضمن تمكين زر الحفظ فوراً لأصحاب الحساب والمديرين وحفظ كافة التعديلات بسلاسة دون عوائق.
+
+- ✅ **إصلاح وتطوير فهم الذكاء الاصطناعي للرسائل الصوتية (AI Voice Message Understanding & STT Resilience)**:
+  - **تشخيص مشكلة تحويل الرسائل الصوتية واعتذار المساعد**:
+    - عند إرسال العميل رسالة صوتية (Voice Note)، كان المساعد الآلي يرسل اعتذاراً: *"عذراً، صار خلل تقني بسيط. سيتواصل معك فريقنا قريباً. 🙏"* ويقوم فوراً بتحويل المحادثة لموظف بشري (Handoff) دون فهم فحوى الصوت أو الرد على استفسار العميل.
+  - **الأسباب الجذرية المكتشفة والمعالجة**:
+    1. **فقدان نص الصوت في سياق المحادثة ([`src/lib/ai/context.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/context.ts))**:
+       - كان استعلام سياق الرسائل السابقة يسحب فقط حقل `content`، بينما يتم تخزين التفريغ الصوتي في حقل `transcribed_text`.
+       - تم تحديث استعلام قاعدة البيانات ليشمل `transcribed_text`، وتم صياغة سياق الرسائل الصوتية بشكل صريح ومميز للذكاء الاصطناعي: `[رسالة صوتية مفرغة من العميل]: "..."` ليتمكن النموذج من قراءتها وفهمها كأي رسالة نصية واردة.
+    2. **آلية التراجع الذكي عند تعثر الاستخراج المنظم ([`src/lib/ai/auto-reply.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/auto-reply.ts))**:
+       - في حالات وضع حجز المواعيد أو إنشاء الطلبات (Structured Extraction Mode)، كان أي خطأ في استخراج بنية JSON يؤدي مباشرة لنقل المحادثة لموظف بشري.
+       - تمت إضافة آلية **Smart Fallback Retry**: عند تعثر الاستخراج، يقوم النظام بمحاولة ثانية فورية لتوليد رد ذكي وطبيعي بالذكاء الاصطناعي بدلاً من الاستسلام والاعتذار للعميل.
+    3. **المرونة وتعدد النماذج في تحويل الصوت إلى نص ([`src/lib/ai/voice/stt.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/ai/voice/stt.ts))**:
+       - إضافة قائمة نماذج بديلة مرنة (Candidate Models) لمعالجة أخطاء 404 أو 400 في نماذج Gemini في حال عدم توفر نموذج معين في نقطة النهاية.
+    4. **تمرير موديل الحساب في Webhook ميتا ([`src/app/api/whatsapp/webhook/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/whatsapp/webhook/route.ts))**:
+       - ضمان تمرير `model: aiConf.model` من إعدادات الذكاء الاصطناعي للحساب بدقة لدالة `transcribeAudioMessage`.
+
+- ✅ **الفحص الأمني والبرمجي الشامل وتحصين المنظومة (Comprehensive Security & Quality Audit & Public Rate Limiting)**:
+  - **تحصين مسارات التتبع العامة (Public Endpoints Rate Limiting)**:
+    - لحماية المنصة من هجمات الإغراق (DoS / Traffic Flooding) التي قد تستهدف مسارات تسجيل الزيارات والنقرات لصفحات البايو لينك:
+      - حماية مسار الزيارات [`src/app/api/storefront/track/visit/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/storefront/track/visit/route.ts) بمحدد معدل طلبات `checkRateLimit` (بحد أقصى 60 طلباً بالدقيقة لكل IP).
+      - حماية مسار النقرات [`src/app/api/storefront/track/click/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/storefront/track/click/route.ts) بمحدد معدل طلبات `checkRateLimit` (بحد أقصى 120 طلباً بالدقيقة لكل IP).
+  - **تدقيق العزل متعدد المستأجرين وأمان قاعدة البيانات (Multi-Tenant RLS Audit)**:
+    - فحص الميجريشنات 089 (`storefronts`)، 090 (`storefront_items`)، و 091 (`storefront_links` و `storefront_analytics`) والتأكد التام من التزامها بقواعد المشروع:
+      - وجود عمود `account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE`.
+      - استخدام الدالة المعتمدة `is_account_member(account_id)` حصراً لجميع سياسات RLS، دون أي تداخل بين حسابات المستخدمين.
+  - **الفحص البرمجي واختبارات الجودة**:
+    - اجتياز كامل ومطلق لفحص الأنواع البرمجية (`npx tsc --noEmit` بـ 0 أخطاء).
+    - اجتياز **100% من الاختبارات الآلية (698 من أصل 698 اختباراً في 72 ملف اختبار)**.
+
+- ✅ **تصحيح عرض تفاصيل الخطط والاشتراكات والتباين اللوني في لوحة المستخدم**:
+  - **تصحيح السعر المعروض للمشترك**:
+    - معالجة المشكلة حيث كان المستخدم المشترك بسعر مخفض أو عرض ترويجي (مثل 19$) يرى السعر الافتراضي العام (29$) في بطاقة اشتراكه، مما قد يسبب لبساً حول تكلفة التجديد.
+    - تصحيح منطق قراءة وحساب تفاصيل الاشتراك في لوحة المستخدم ليعكس المبلغ الفعلي لاشتراك الحساب.
+  - **معالجة مشاكل التباين اللوني عند تحديث الصفحة (Refresh Flicker / Contrast)**:
+    - تحسين تنسيقات البطاقات والقوائم في لوحة المستخدم لمنع ظهور خلفيات أو نصوص داكنة غير مقروءة عند إعادة تحميل الصفحة وضمان ثبات تباين الألوان في كافة الحالات.
+
+- ✅ **تأسيس البنية التقنية لنظام المتاجر الإلكترونية بساب دومين مخصص (Storefront Foundation & Multi-Tenant Subdomain Routing Ecosystem)**:
+  - **هجرة قاعدة البيانات (Migration 089)**:
+    - ملف [`supabase/migrations/089_storefronts.sql`](file:///c:/Users/Mustafa/Desktop/mk%20whats/supabase/migrations/089_storefronts.sql) لإنشاء جدول `public.storefronts` المتصل بجدول `accounts(id)` مع الحذف التلقائي `ON DELETE CASCADE`.
+    - قيود الحماية: فرادة الساب دومين والحساب، نمط التسمية `^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$`، وتطويق أكثر من 20 كلمة محجوزة للنظام.
+    - سياسات RLS: تتيح القراءة العامة للمتاجر المفعلة، والقراءة الخاصة لأعضاء الحساب، وحصر الإضافة والتعديل والحذف بمديري الحسابات (`is_account_member(account_id, 'admin')`).
+  - **محرك توجيه النطاقات الفرعية (Subdomain Routing Engine)**:
+    - تطوير محرك الاستخلاص الذكي [`src/lib/storefront/subdomain.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/storefront/subdomain.ts) مع استثناء نطاق المنصة الرئيسي، الدومين الجذر، الـ www، والـ localhost.
+    - دمج التوجيه السحابي في أعلى دالة [`src/proxy.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/proxy.ts) عبر `NextResponse.rewrite` إلى `/store/[subdomain]` وتمرير الترويسة `x-storefront-subdomain` مع استثناء مسارات `_next` و `api` والملفات الثابتة.
+  - **المسارات البرمجية للواجهة الخلفية (APIs)**:
+    - مسار الفحص اللحظي [`src/app/api/storefront/check-subdomain/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/storefront/check-subdomain/route.ts) للتحقق من الصلاحية والتوفر والكلمات المحجوزة وحساب المالك الحالي.
+    - مسار إدارة المتجر [`src/app/api/storefront/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/api/storefront/route.ts) بعمليات (GET, POST, PATCH, DELETE) وحماية الصلاحيات.
+  - **صفحة المتجر المؤقتة (Placeholder Storefront)**:
+    - تصميم [`src/app/store/[subdomain]/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/store/[subdomain]/page.tsx) بتدرجات لونية وتأثيرات بصرية عالية الفخامة تعرض "متجر [اسم المتجر] — قريباً"، مع معالجة المتاجر المعطلة والنطاقات غير المسجلة.
+  - **لوحة إعدادات المتجر (Settings → Store)**:
+    - إضافة تبويب المتجر في [`src/components/settings/settings-sections.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/settings-sections.ts) وربطه بمكون [`src/components/settings/store-settings-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/store-settings-panel.tsx).
+    - إضافة مسار التحويل السريع [`src/app/(dashboard)/settings/store/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/(dashboard)/settings/store/page.tsx).
+    - إضافة مفاتيح الترجمة في [`messages/ar.json`](file:///c:/Users/Mustafa/Desktop/mk%20whats/messages/ar.json) و [`messages/en.json`](file:///c:/Users/Mustafa/Desktop/mk%20whats/messages/en.json).
+  - **الفحص الشامل والاختبارات**:
+    - كتابة اختبارات مخصصة في [`src/lib/storefront/storefront.test.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/lib/storefront/storefront.test.ts) وتوسيع [`src/middleware.test.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/middleware.test.ts).
+    - اجتياز كامل لفحص الأنواع البرمجية (`npx tsc --noEmit` - Code 0 بدون أي أخطاء).
+    - اجتياز **100% من منظومة الاختبارات الآلية (697 من أصل 697 اختباراً في 72 ملف اختبار)**.
 
 - ✅ **تخصيص أيقونة وعنوان تبويب المتصفح وتغيير اسم المنصة إلى mkwacrm (Browser Tab Favicon, Tab Title & Branding Complete Ecosystem)**:
   - **تغيير الاسم التجاري والافتراضي من `wacrm` إلى `mkwacrm`**:
@@ -16,8 +90,8 @@
       1. ملفات الترجمة والمحاذاة اللغوية ([`messages/en.json`](file:///c:/Users/Mustafa/Desktop/mk%20whats/messages/en.json) و [`messages/ar.json`](file:///c:/Users/Mustafa/Desktop/mk%20whats/messages/ar.json)).
       2. نصوص ورسائل دعوة الأعضاء عبر الواتساب ([`src/components/settings/invite-member-dialog.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/components/settings/invite-member-dialog.tsx)).
       3. القيمة الافتراضية لاسم المنصة في جدول إعدادات الموقع.
-  - **إضافة عمود `favicon_url` في قاعدة البيانات (Migration 086)**:
-    - إنشاء الميجريشن [`supabase/migrations/086_add_favicon_url_to_site_settings.sql`](file:///c:/Users/Mustafa/Desktop/mk%20whats/supabase/migrations/086_add_favicon_url_to_site_settings.sql) لإضافة عمود `favicon_url TEXT` إلى جدول `public.site_settings` وتحديث الاسم الافتراضي إلى `mkwacrm`.
+  - **إضافة عمود `favicon_url` في قاعدة البيانات (Migration 088)**:
+    - إنشاء الميجريشن [`supabase/migrations/088_add_favicon_url_to_site_settings.sql`](file:///c:/Users/Mustafa/Desktop/mk%20whats/supabase/migrations/088_add_favicon_url_to_site_settings.sql) لإضافة عمود `favicon_url TEXT` إلى جدول `public.site_settings` وتحديث الاسم الافتراضي إلى `mkwacrm`.
   - **تطوير قسم إدارة أيقونة تبويب المتصفح (Favicon) في لوحة الأدمن**:
     - في صفحة إعدادات الموقع ([`src/app/admin/site-settings/site-settings-client.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats/src/app/admin/site-settings/site-settings-client.tsx)):
       1. **محاكي تبويب المتصفح المباشر (Live Browser Tab Preview)**: بطاقة عرض حي تحاكي تبويب المتصفح (Chrome/Edge) لعرض الأيقونة المرفوعة بجانب عنوان الموقع وزر الإغلاق في الوقت الفعلي قبل الحفظ.

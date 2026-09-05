@@ -5,11 +5,44 @@ import {
   verifyImpersonationToken,
   IMPERSONATION_COOKIE_NAME,
 } from '@/lib/admin-impersonation'
+import { extractStoreSubdomain } from '@/lib/storefront/subdomain'
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const pathname = request.nextUrl.pathname
+
+  // ─────────────────────────────────────────────────────────────
+  // 0. STOREFRONT SUBDOMAIN ROUTING (Multi-tenant Storefront)
+  // Rewrites requests from [subdomain].domain.com directly to
+  // /store/[subdomain] before reaching platform admin or app routes.
+  // ─────────────────────────────────────────────────────────────
+  const hostHeader = request.headers.get('x-forwarded-host') || request.headers.get('host')
+  const storeSubdomain = extractStoreSubdomain(hostHeader)
+
+  if (storeSubdomain) {
+    // Pass through Next.js internal assets, static files, and API requests without rewriting
+    if (
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/api') ||
+      pathname.includes('.')
+    ) {
+      return supabaseResponse
+    }
+
+    // Rewrite internal URL to /store/[subdomain]
+    const storeUrl = request.nextUrl.clone()
+    storeUrl.pathname = `/store/${storeSubdomain}`
+
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-storefront-subdomain', storeSubdomain)
+
+    return NextResponse.rewrite(storeUrl, {
+      request: {
+        headers: requestHeaders,
+      },
+    })
+  }
 
   // Helper to attach rotated cookies to any redirect / JSON response
   const withRefreshedCookies = <T extends NextResponse>(

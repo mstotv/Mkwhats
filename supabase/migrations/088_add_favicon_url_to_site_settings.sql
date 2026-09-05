@@ -1,5 +1,5 @@
 -- ============================================================
--- Migration 086: Add favicon_url column to site_settings
+-- Migration 088: Add favicon_url column to site_settings
 -- ============================================================
 
 ALTER TABLE public.site_settings

@@ -637,6 +637,7 @@ async function processMessage(
               mimeType: message.audio.mime_type || 'audio/ogg',
               provider: aiConf.provider,
               apiKey: aiConf.apiKey,
+              model: aiConf.model,
             })
             if (transcription) {
               effectiveContentText = transcription
