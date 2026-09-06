@@ -39,8 +39,7 @@
     - **صفحة وتكاملات المتاجر (`/settings?tab=integrations`)**: استبدال الأيقونات الرمزية العامة بلوغو WooCommerce الحقيقي في بطاقة ووكومرس، ولوغو Shopify الحقيقي في بطاقة شوبيفاي، وكذلك في عنوان نافذة دليل الربط المتقدم (Guide Modal).
     - **قسم المتاجر الإلكترونية في الصفحة الرئيسية وصفحة المميزات ([`landing-ecommerce-section.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-ecommerce-section.tsx))**: تحديث بطاقات المتاجر لتعرض اللوغوهات الحقيقية الرسمية.
     - **شريط الشركاء والتكاملات بالصفحة الرئيسية ([`src/app/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/page.tsx))**: ربط WooCommerce و Shopify باللوغوهات الرسمية الحقيقية محلياً.
-    - **لوحة استهلاك الخطة ونافذة الترقية ([`plan-usage-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/plan-usage-panel.tsx) و [`upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/upgrade-plan-modal.tsx) و [`landing-pricing.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-pricing.tsx))**: إظهار اللوغوهات الحقيقية بجانب بنود ربط ووكومرس وشوبيفاي.
-    - **لوحة تحكم المشرف (Admin Plan Editor)**: تحديث مفاتيح ميزات الباقات في [`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/admin/_components/edit-plan-modal.tsx).
+    - **قوائم ميزات الباقات**: إبقاء بنود ميزات الباقات في جداول الأسعار وصفحات الترقية نظيفة بدون صور أو لوغوهات للحفاظ على تناسق التصميم وسهولة القراءة.
 
 - ✅ **إنجاز ميزة البايو لينك في الخطط والتحكم بسقف السابدومين (Bio Link Plan Features & Subdomain Limits)**:
   - **ميجريشن قاعدة البيانات (Migration 092)**:

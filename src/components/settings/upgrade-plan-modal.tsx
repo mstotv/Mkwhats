@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { WooCommerceLogo, ShopifyLogo } from '@/components/icons/platform-logos'
 import {
   Sparkles,
   CheckCircle2,
@@ -513,9 +512,8 @@ export function UpgradePlanModal({
                         ) : (
                           <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
                         )}
-                        <span className={`inline-flex items-center gap-1.5 ${plan.features?.woocommerce_integration ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}`}>
-                          <WooCommerceLogo className="h-3.5 w-auto object-contain shrink-0" />
-                          <span>{isAr ? 'ربط متجر ووكومرس (WooCommerce)' : 'WooCommerce Store Integration'}</span>
+                        <span className={plan.features?.woocommerce_integration ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
+                          {isAr ? 'ربط متجر ووكومرس (WooCommerce)' : 'WooCommerce Store Integration'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2.5">
@@ -524,9 +522,8 @@ export function UpgradePlanModal({
                         ) : (
                           <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
                         )}
-                        <span className={`inline-flex items-center gap-1.5 ${plan.features?.shopify_integration ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}`}>
-                          <ShopifyLogo className="h-3.5 w-3.5 object-contain shrink-0" />
-                          <span>{isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Store Integration'}</span>
+                        <span className={plan.features?.shopify_integration ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
+                          {isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Store Integration'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2.5">

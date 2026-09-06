@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Loader2, Save, Bot, FileSpreadsheet, Send, ShoppingBag, Zap, Workflow, Mic, Globe } from 'lucide-react'
-import { WooCommerceLogo, ShopifyLogo } from '@/components/icons/platform-logos'
 
 export interface Plan {
   id: string
@@ -443,9 +442,7 @@ export function EditPlanModal({
               {/* WooCommerce Integration */}
               <div className="flex items-center justify-between rounded-lg bg-slate-950/60 border border-slate-800/80 p-2.5">
                 <div className="flex items-center gap-2">
-                  <div className="h-5 w-7 flex items-center justify-center">
-                    <WooCommerceLogo className="h-4 w-auto object-contain" />
-                  </div>
+                  <ShoppingBag className="h-4 w-4 text-purple-400" />
                   <div className="space-y-0.5">
                     <Label className="text-xs font-medium text-slate-200">ربط ووكومرس (WooCommerce)</Label>
                   </div>
@@ -464,9 +461,7 @@ export function EditPlanModal({
               {/* Shopify Integration */}
               <div className="flex items-center justify-between rounded-lg bg-slate-950/60 border border-slate-800/80 p-2.5">
                 <div className="flex items-center gap-2">
-                  <div className="h-5 w-7 flex items-center justify-center">
-                    <ShopifyLogo className="h-4 w-4 object-contain" />
-                  </div>
+                  <ShoppingBag className="h-4 w-4 text-emerald-400" />
                   <div className="space-y-0.5">
                     <Label className="text-xs font-medium text-slate-200">ربط شوبيفاي (Shopify)</Label>
                   </div>
