@@ -228,8 +228,8 @@ export const DEFAULT_HOME_CONTENT: HomeContent = {
   pillars: {
     badge_ar: 'محركات القيمة والنمو',
     badge_en: '4 CORE VALUE PILLARS',
-    title_ar: 'أربعة محركات ذكية تُحدث نقلة نوعية في',
-    title_en: 'Four Intelligent Engines Transforming Your',
+    title_ar: 'أربعة محركات ذكية تُحدث نقلة نوعية في واتساب',
+    title_en: 'Four Intelligent Engines Transforming Your WhatsApp',
     subtitle_ar: 'صُممت المنصة لتعالج الفجوات التي تستنزف وقتك وتُفقدك العملاء، وتحولها إلى نقاط قوة تنافسية.',
     subtitle_en: 'Engineered specifically to solve high-leakage bottlenecks in modern conversational commerce.',
     items: [

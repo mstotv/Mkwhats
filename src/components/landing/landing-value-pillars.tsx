@@ -46,6 +46,38 @@ function resolveIcon(iconName: string) {
   }
 }
 
+function renderPillarsTitle(rawTitle: string, isAr: boolean) {
+  const targetWord = isAr ? 'واتساب' : 'WhatsApp'
+  const title = (rawTitle || '').trim()
+
+  const regex = new RegExp(`(${targetWord})`, 'i')
+  if (regex.test(title)) {
+    const parts = title.split(regex)
+    return (
+      <>
+        {parts.map((part, i) =>
+          part.toLowerCase() === targetWord.toLowerCase() ? (
+            <span key={i} className="italic text-[#00685F] dark:text-[#6BD8CB]">
+              {part}
+            </span>
+          ) : (
+            part
+          )
+        )}
+      </>
+    )
+  }
+
+  return (
+    <>
+      {title}{' '}
+      <span className="italic text-[#00685F] dark:text-[#6BD8CB]">
+        {targetWord}
+      </span>
+    </>
+  )
+}
+
 export function LandingValuePillars({ isAr, content: rawContent }: LandingValuePillarsProps) {
   const ArrowIcon = isAr ? ArrowLeft : ArrowRight
   const data = rawContent || DEFAULT_HOME_CONTENT.pillars
@@ -95,8 +127,7 @@ export function LandingValuePillars({ isAr, content: rawContent }: LandingValueP
         </div>
 
         <h2 className="font-serif text-3xl sm:text-5xl font-bold text-[#1B1C1C] dark:text-white leading-tight">
-          {isAr ? data.title_ar : data.title_en}{' '}
-          <span className="italic text-[#00685F] dark:text-[#6BD8CB]">واتساب</span>
+          {renderPillarsTitle(isAr ? data.title_ar : data.title_en, isAr)}
         </h2>
 
         <p className="text-sm sm:text-base text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed">

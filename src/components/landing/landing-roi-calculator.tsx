@@ -55,7 +55,7 @@ export function LandingRoiCalculator({ isAr, content: rawContent }: LandingRoiCa
 
           <h2 className="font-serif text-3xl sm:text-5xl font-bold text-white leading-tight">
             {isAr ? data.title_ar : data.title_en}{' '}
-            <span className="text-[#6BD8CB]">MK Whats</span>؟
+            <span className="text-[#6BD8CB]">MK Whats</span>{isAr ? '؟' : '?'}
           </h2>
 
           <p className="text-sm sm:text-base text-zinc-400">
