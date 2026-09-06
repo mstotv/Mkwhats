@@ -75,6 +75,11 @@ describe('Storefront Hostname Extraction', () => {
     expect(extractStoreSubdomain('evil.otherdomain.com')).toBeNull()
     expect(extractStoreSubdomain('nested.sub.mstoviral.online')).toBeNull()
   })
+
+  it('infers root domain from NEXT_PUBLIC_SITE_URL if ROOT_DOMAIN is omitted', () => {
+    delete process.env.NEXT_PUBLIC_ROOT_DOMAIN
+    expect(extractStoreSubdomain('mustafa.mstoviral.online')).toBe('mustafa')
+  })
 })
 
 describe('Storefront Builder Defaults', () => {

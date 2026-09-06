@@ -49,7 +49,9 @@ export default async function StorefrontPage({ params }: StorePageProps) {
     .eq('subdomain', cleanSubdomain)
     .maybeSingle()
 
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'domain.com'
+  const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN && process.env.NEXT_PUBLIC_ROOT_DOMAIN !== 'domain.com')
+    ? process.env.NEXT_PUBLIC_ROOT_DOMAIN
+    : 'mstoviral.online'
   const mainSiteUrl = process.env.NEXT_PUBLIC_SITE_URL || '/'
 
   // 1. Case: Storefront not registered

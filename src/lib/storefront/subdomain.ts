@@ -10,13 +10,21 @@ export function extractStoreSubdomain(hostHeader: string | null): string | null 
   if (!host || host === 'localhost' || host === '127.0.0.1') return null
 
   // Determine root domain (e.g. mstoviral.online)
-  const rootDomain = (
-    process.env.NEXT_PUBLIC_ROOT_DOMAIN ||
-    (process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL).hostname : '') ||
-    ''
-  )
-    .toLowerCase()
-    .trim()
+  let rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || '').toLowerCase().trim()
+  if (!rootDomain && process.env.NEXT_PUBLIC_SITE_URL) {
+    try {
+      const siteHostname = new URL(process.env.NEXT_PUBLIC_SITE_URL).hostname.toLowerCase().trim()
+      const parts = siteHostname.split('.')
+      if (parts.length >= 2 && !siteHostname.includes('localhost') && siteHostname !== '127.0.0.1') {
+        rootDomain = parts.slice(-2).join('.')
+      } else {
+        rootDomain = siteHostname
+      }
+    } catch {}
+  }
+  if (!rootDomain) {
+    rootDomain = 'mstoviral.online'
+  }
 
   // Determine main app hostname (e.g. mkwacrm.mstoviral.online)
   let mainAppHost = ''
@@ -24,6 +32,9 @@ export function extractStoreSubdomain(hostHeader: string | null): string | null 
     try {
       mainAppHost = new URL(process.env.NEXT_PUBLIC_SITE_URL).hostname.toLowerCase().trim()
     } catch {}
+  }
+  if (!mainAppHost) {
+    mainAppHost = `mkwacrm.${rootDomain}`
   }
 
   // Explicit main app hosts -> not a storefront

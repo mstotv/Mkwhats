@@ -101,7 +101,18 @@ export function StoreSettingsPanel() {
   const [checkStatus, setCheckStatus] = useState<'idle' | 'checking' | 'available' | 'current' | 'unavailable'>('idle')
   const [checkMessage, setCheckMessage] = useState('')
 
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'domain.com'
+  const rootDomain = (() => {
+    if (process.env.NEXT_PUBLIC_ROOT_DOMAIN && process.env.NEXT_PUBLIC_ROOT_DOMAIN !== 'domain.com') {
+      return process.env.NEXT_PUBLIC_ROOT_DOMAIN
+    }
+    if (typeof window !== 'undefined' && window.location.hostname) {
+      const parts = window.location.hostname.split('.')
+      if (parts.length >= 2 && !window.location.hostname.includes('localhost') && window.location.hostname !== '127.0.0.1') {
+        return parts.slice(-2).join('.')
+      }
+    }
+    return 'mstoviral.online'
+  })()
 
   // 1. Fetch Storefront Configuration
   const fetchStorefront = useCallback(async () => {

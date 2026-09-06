@@ -96,7 +96,7 @@ export function ClinicStorefront({
 
               <div className="flex items-center justify-center sm:justify-start gap-2 text-xs text-emerald-400/80 mt-2 font-mono" dir="ltr">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{storefront.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'domain.com'}</span>
+                <span>{storefront.subdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'mstoviral.online'}</span>
               </div>
             </div>
           </div>
