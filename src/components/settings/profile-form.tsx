@@ -17,6 +17,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { useTranslations } from 'next-intl';
 import { SettingsPanelHead } from './settings-panel-head';
+import { maskStorageUrl } from '@/lib/storage/mask-storage-url';
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const ALLOWED_MIME = new Set([
@@ -60,7 +61,7 @@ export function ProfileForm() {
   }, [previewUrl]);
 
   const currentAvatar =
-    previewUrl ?? (!removeAvatar ? profile?.avatar_url ?? null : null);
+    previewUrl ?? (!removeAvatar ? (profile?.avatar_url ? maskStorageUrl(profile.avatar_url) : null) : null);
 
   const initial = (fullName || profile?.full_name || profile?.email || 'U')
     .charAt(0)
@@ -131,10 +132,7 @@ export function ProfileForm() {
         if (uploadError) {
           throw new Error(t('uploadFailed', { message: uploadError.message }));
         }
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from('avatars').getPublicUrl(path);
-        nextAvatarUrl = publicUrl;
+        nextAvatarUrl = `/api/storage/avatars/${path}`;
       } else if (removeAvatar) {
         nextAvatarUrl = null;
       }

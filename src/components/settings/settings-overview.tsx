@@ -164,6 +164,11 @@ export function SettingsOverview({
       subtitle: 'عرض تفاصيل الخطة والرصيد الشهري',
     },
     {
+      section: 'store',
+      loading: false,
+      subtitle: 'صفحة بايو لينك ورابط السابدومين',
+    },
+    {
       section: 'appointments',
       loading: false,
       subtitle: 'ساعات العمل والحجز بالذكاء الاصطناعي',

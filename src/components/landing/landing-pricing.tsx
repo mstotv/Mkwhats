@@ -23,6 +23,7 @@ export interface PlanFeatureFlags {
   flows_builder?: boolean
   woocommerce_integration?: boolean
   shopify_integration?: boolean
+  bio_link?: boolean
 }
 
 export interface Plan {
@@ -43,6 +44,7 @@ export interface Plan {
   max_contacts?: number
   max_orders_monthly?: number
   max_users: number
+  max_subdomain_changes?: number
   features?: PlanFeatureFlags
   is_popular?: boolean
 }
@@ -399,6 +401,31 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
                       )}
                       <span className={p.features?.shopify_integration ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
                         {isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Store Integration'}
+                      </span>
+                    </div>
+
+                    {/* Bio Link Studio */}
+                    <div className="flex items-center gap-2.5">
+                      {p.features?.bio_link ? (
+                        isPopular ? (
+                          <CheckCircle2 className="h-4 w-4 text-[#00685F] dark:text-[#6BD8CB] shrink-0" />
+                        ) : (
+                          <Check className="h-3.5 w-3.5 text-[#605E5B] dark:text-[#C9C6C1] shrink-0 stroke-[2.5]" />
+                        )
+                      ) : (
+                        <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
+                      )}
+                      <span className={p.features?.bio_link ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
+                        {isAr ? 'منشئ البايو لينك (Bio Link Studio)' : 'Bio Link Studio'}
+                        {p.features?.bio_link && (
+                          <span className="text-[11px] text-[#605E5B] dark:text-[#C9C6C1] mx-1">
+                            ({p.max_subdomain_changes === -1
+                              ? (isAr ? 'تغيير غير محدود' : 'Unlimited changes')
+                              : p.max_subdomain_changes === 0
+                              ? (isAr ? 'دون تغيير' : '0 changes')
+                              : (isAr ? `${p.max_subdomain_changes} تغييرات` : `${p.max_subdomain_changes} changes`)})
+                          </span>
+                        )}
                       </span>
                     </div>
                   </div>

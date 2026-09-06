@@ -30,8 +30,10 @@ import {
   Upload,
   Image as ImageIcon,
   Trash2,
+  Check,
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
+import { isInternalStorageUrl, maskStorageUrl } from '@/lib/storage/mask-storage-url'
 
 interface SiteSettings {
   id: number
@@ -346,7 +348,7 @@ export function SiteSettingsClient({
                           {settings.logo_url ? (
                             <div className="relative w-full h-full flex items-center justify-center">
                               <img
-                                src={settings.logo_url}
+                                src={maskStorageUrl(settings.logo_url)}
                                 alt="Logo Preview"
                                 className="max-h-full max-w-full object-contain p-1"
                               />
@@ -370,12 +372,31 @@ export function SiteSettingsClient({
                         {/* URL Input & File Upload Button */}
                         <div className="sm:col-span-9 space-y-2">
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            <Input
-                              value={settings.logo_url || ''}
-                              onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
-                              placeholder="https://example.com/logo.png"
-                              className="bg-background text-xs font-mono flex-1 h-9"
-                            />
+                            {isInternalStorageUrl(settings.logo_url) ? (
+                              <div className="flex-1 flex items-center justify-between px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold h-9">
+                                <div className="flex items-center gap-2 truncate">
+                                  <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                                  <span className="truncate">{isAr ? 'تم رفع الشعار من جهازك (محفوظ ومخفي بأمان)' : 'Logo uploaded from device (securely saved)'}</span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setSettings({ ...settings, logo_url: '' })}
+                                  className="h-6 px-2 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 text-[11px]"
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  {isAr ? 'إزالة' : 'Remove'}
+                                </Button>
+                              </div>
+                            ) : (
+                              <Input
+                                value={settings.logo_url || ''}
+                                onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
+                                placeholder="https://example.com/logo.png"
+                                className="bg-background text-xs font-mono flex-1 h-9"
+                              />
+                            )}
                             <div className="relative">
                               <input
                                 id="logo-file-input"
@@ -437,7 +458,7 @@ export function SiteSettingsClient({
                             {/* Favicon or fallback */}
                             {settings.favicon_url ? (
                               <img
-                                src={settings.favicon_url}
+                                src={maskStorageUrl(settings.favicon_url)}
                                 alt="Favicon"
                                 className="h-4 w-4 object-contain rounded shrink-0"
                               />
@@ -471,7 +492,7 @@ export function SiteSettingsClient({
                           {settings.favicon_url ? (
                             <div className="relative w-full h-full flex items-center justify-center">
                               <img
-                                src={settings.favicon_url}
+                                src={maskStorageUrl(settings.favicon_url)}
                                 alt="Favicon Preview"
                                 className="max-h-12 max-w-12 object-contain p-1 rounded-md"
                               />
@@ -497,12 +518,31 @@ export function SiteSettingsClient({
                         {/* URL Input & File Upload Button */}
                         <div className="sm:col-span-9 space-y-2">
                           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            <Input
-                              value={settings.favicon_url || ''}
-                              onChange={(e) => setSettings({ ...settings, favicon_url: e.target.value })}
-                              placeholder="https://example.com/favicon.ico or png"
-                              className="bg-background text-xs font-mono flex-1 h-9"
-                            />
+                            {isInternalStorageUrl(settings.favicon_url) ? (
+                              <div className="flex-1 flex items-center justify-between px-3 py-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-semibold h-9">
+                                <div className="flex items-center gap-2 truncate">
+                                  <Check className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                                  <span className="truncate">{isAr ? 'تم رفع أيقونة المتصفح من جهازك (محفوظة بأمان)' : 'Favicon uploaded from device (securely saved)'}</span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setSettings({ ...settings, favicon_url: '' })}
+                                  className="h-6 px-2 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 text-[11px]"
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  {isAr ? 'إزالة' : 'Remove'}
+                                </Button>
+                              </div>
+                            ) : (
+                              <Input
+                                value={settings.favicon_url || ''}
+                                onChange={(e) => setSettings({ ...settings, favicon_url: e.target.value })}
+                                placeholder="https://example.com/favicon.ico or png"
+                                className="bg-background text-xs font-mono flex-1 h-9"
+                              />
+                            )}
                             <div className="relative">
                               <input
                                 id="favicon-file-input"

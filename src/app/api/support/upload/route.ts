@@ -68,13 +68,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: uploadError.message }, { status: 500 })
     }
 
-    const { data: publicUrlData } = serviceClient.storage
-      .from('support-attachments')
-      .getPublicUrl(fileName)
-
     return NextResponse.json({
       success: true,
-      url: publicUrlData.publicUrl,
+      url: `/api/storage/support-attachments/${fileName}`,
       name: file.name,
       type: file.type.startsWith('image/') ? 'image' : 'file',
     })

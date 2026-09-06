@@ -56,13 +56,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'فشل رفع الصورة: ' + uploadError.message }, { status: 500 })
     }
 
-    const { data: publicUrlData } = service.storage
-      .from('storefront-media')
-      .getPublicUrl(fileName)
+    const proxiedUrl = `/api/storage/storefront-media/${fileName}`
 
     return NextResponse.json({
       success: true,
-      url: publicUrlData.publicUrl,
+      url: proxiedUrl,
     })
   } catch (err) {
     return toErrorResponse(err)

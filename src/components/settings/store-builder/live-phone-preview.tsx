@@ -13,6 +13,7 @@ import {
   Moon,
   Image as ImageIcon,
   MapPin,
+  ExternalLink,
 } from 'lucide-react'
 import type {
   BusinessType,
@@ -22,7 +23,14 @@ import type {
 } from '@/lib/storefront/types'
 import { useLocale } from 'next-intl'
 import { getLinkPreset } from '@/lib/storefront/link-icons'
-import { getButtonShapeClass, getIconContainerClasses, getThemePresetStyle } from '@/lib/storefront/theme-tokens'
+import {
+  getButtonShapeClass,
+  getIconContainerClasses,
+  getThemePresetStyle,
+  getImageCardRadiusClass,
+  getImageCardAspectClass,
+} from '@/lib/storefront/theme-tokens'
+import { maskStorageUrl } from '@/lib/storage/mask-storage-url'
 
 function TwitterXIcon({ className = 'w-3 h-3' }: { className?: string }) {
   return (
@@ -146,8 +154,10 @@ export function LivePhonePreview({
   const globalShape = themeConfig.button_shape || 'soft'
   const iconStyle = themeConfig.icon_style || 'soft_bg'
 
+  const safeLogoUrl = maskStorageUrl(logoUrl)
+  const safeBannerUrl = maskStorageUrl(bannerUrl)
   const isBannerMode = themeConfig.banner_mode === 'banner'
-  const isBgMode = Boolean(bannerUrl) && !isBannerMode
+  const isBgMode = Boolean(safeBannerUrl) && !isBannerMode
 
   const locale = useLocale()
   const isAr = locale === 'ar'
@@ -182,8 +192,7 @@ export function LivePhonePreview({
             previewDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
           }`}
           style={{
-            background: isBgMode ? undefined : themeStyle.bgGradient,
-            backgroundImage: isBgMode ? `url("${bannerUrl}")` : undefined,
+            backgroundImage: isBgMode ? `url("${safeBannerUrl}")` : themeStyle.bgGradient,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
@@ -198,15 +207,15 @@ export function LivePhonePreview({
           )}
 
           {/* Top Banner Mode (Header Cover) */}
-          {isBannerMode && bannerUrl && (
+          {isBannerMode && safeBannerUrl && (
             <div className="relative w-full h-28 shrink-0 overflow-hidden">
-              <img src={bannerUrl} alt="Cover" className="w-full h-full object-cover" />
+              <img src={safeBannerUrl} alt="Cover" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
             </div>
           )}
 
           {/* Top Bar inside phone */}
-          <div className={`flex items-center justify-between p-3 pt-6 z-20 ${isBannerMode && bannerUrl ? 'absolute top-0 left-0 right-0 pointer-events-auto' : ''}`}>
+          <div className={`flex items-center justify-between p-3 pt-6 z-20 ${isBannerMode && safeBannerUrl ? 'absolute top-0 left-0 right-0 pointer-events-auto' : ''}`}>
             <button
               type="button"
               onClick={toggleDarkMode}
@@ -225,13 +234,13 @@ export function LivePhonePreview({
             </div>
           </div>
 
-          <div className={`p-3 min-h-full flex flex-col justify-between flex-1 relative z-10 ${isBannerMode && bannerUrl ? '-mt-10 pt-0' : 'pt-1'}`}>
+          <div className={`p-3 min-h-full flex flex-col justify-between flex-1 relative z-10 ${isBannerMode && safeBannerUrl ? '-mt-10 pt-0' : 'pt-1'}`}>
             <div className="space-y-3">
               {/* Avatar & Verified Badge */}
               <div className="relative mx-auto w-16 h-16">
                 <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-b from-white to-slate-200 shadow-md overflow-hidden flex items-center justify-center">
-                  {logoUrl ? (
-                    <img src={logoUrl} alt="Logo" className="w-full h-full rounded-full object-cover" />
+                  {safeLogoUrl ? (
+                    <img src={safeLogoUrl} alt="Logo" className="w-full h-full rounded-full object-cover" />
                   ) : (
                     <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
                       <Sparkles className="w-6 h-6 text-amber-500" />
@@ -308,33 +317,76 @@ export function LivePhonePreview({
                     const itemShape = btn.btn_shape || globalShape
                     const shapeClass = getButtonShapeClass(itemShape)
 
-                    // 1. IMAGE CARD PREVIEW
+                    // 1. IMAGE CARD PREVIEW (Decoupled from button shapes)
                     if (btn.type === 'image_card') {
-                      const cardImg = btn.image_card?.src || btn.image_url
+                      const cardImg = maskStorageUrl(btn.image_card?.src || btn.image_url)
+                      const aspect = btn.image_card?.aspect_ratio || '16/9'
+                      const aspectClass = getImageCardAspectClass(aspect)
+                      const radius = btn.image_card?.corner_radius || '2xl'
+                      const radiusClass = getImageCardRadiusClass(radius)
+                      const displayStyle = btn.image_card?.display_style || 'card'
+                      const caption = btn.image_card?.caption || btn.title
+                      const description = btn.image_card?.description || btn.subtitle
+                      const targetUrl = btn.image_card?.link_url || (btn.url && btn.url !== 'https://' ? btn.url : undefined)
+
                       return (
                         <div
                           key={btn.id}
-                          className={`overflow-hidden border shadow-xs ${shapeClass} ${themeStyle.cardBg} ${themeStyle.cardBorder}`}
+                          className={`overflow-hidden border shadow-xs ${radiusClass} ${themeStyle.cardBg} ${themeStyle.cardBorder}`}
                         >
                           {cardImg ? (
-                            <div className="relative aspect-[16/9] w-full bg-slate-200 dark:bg-slate-800">
-                              <img src={cardImg} alt={btn.title} className="w-full h-full object-cover" />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                              <div className="absolute bottom-1.5 right-2 left-2 text-white text-right">
-                                <div className="text-[10px] font-bold leading-tight drop-shadow-sm truncate">
-                                  {btn.image_card?.caption || btn.title}
-                                </div>
-                                {(btn.image_card?.description || btn.subtitle) && (
-                                  <div className="text-[8px] text-white/80 line-clamp-1">
-                                    {btn.image_card?.description || btn.subtitle}
-                                  </div>
+                            <div className="flex flex-col w-full">
+                              <div className={`relative ${aspectClass} w-full bg-slate-200 dark:bg-slate-800 overflow-hidden`}>
+                                <img
+                                  src={cardImg}
+                                  alt={caption}
+                                  className={`w-full h-full ${aspect === 'auto' ? 'object-contain' : 'object-cover'}`}
+                                />
+                                {displayStyle === 'overlay' && (
+                                  <>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+                                    <div className="absolute bottom-2 right-2.5 left-2.5 text-white text-right space-y-0.5">
+                                      {caption && (
+                                        <div className="text-[11px] font-bold leading-tight drop-shadow-sm truncate">
+                                          {caption}
+                                        </div>
+                                      )}
+                                      {description && (
+                                        <div className="text-[9px] text-white/85 line-clamp-2 leading-tight">
+                                          {description}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </>
                                 )}
                               </div>
+
+                              {/* Card Mode: Text below image (100% visible and clear) */}
+                              {displayStyle === 'card' && (caption || description || targetUrl) && (
+                                <div className="p-2.5 text-right space-y-0.5 bg-card/60">
+                                  {caption && (
+                                    <div className="text-[11px] font-bold text-foreground leading-tight">
+                                      {caption}
+                                    </div>
+                                  )}
+                                  {description && (
+                                    <div className="text-[9px] text-muted-foreground leading-snug line-clamp-2">
+                                      {description}
+                                    </div>
+                                  )}
+                                  {targetUrl && (
+                                    <div className="text-[8px] text-primary flex items-center justify-end gap-0.5 pt-0.5 font-medium">
+                                      <span className="truncate max-w-[140px]">{targetUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+                                      <ExternalLink className="w-2 h-2 shrink-0" />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div className="p-3 text-center text-muted-foreground text-[10px]">
                               <ImageIcon className="w-4 h-4 mx-auto opacity-50 mb-1" />
-                              <span>{btn.title}</span>
+                              <span>{caption}</span>
                             </div>
                           )}
                         </div>
@@ -369,7 +421,7 @@ export function LivePhonePreview({
                         <div className="flex items-center gap-2 min-w-0">
                           {btn.image_url ? (
                             <img
-                              src={btn.image_url}
+                              src={maskStorageUrl(btn.image_url)}
                               alt={btn.title}
                               className="w-7 h-7 rounded-lg object-cover shrink-0 border border-slate-200/50 shadow-xs"
                             />
@@ -433,9 +485,19 @@ export function LivePhonePreview({
 
             {/* Footer Brand Tag */}
             <div className="text-center pt-4 pb-2">
-              <span className={`text-[9px] font-bold tracking-wider ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
-                mkwacrm
-              </span>
+              <a
+                href="https://mkwacrm.mstoviral.online/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-1 text-[9px] font-semibold tracking-wider transition-all ${
+                  isLight ? 'text-slate-400 hover:text-slate-600' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                <span>©</span>
+                <span className="font-bold tracking-wider hover:underline">
+                  mkwacrm
+                </span>
+              </a>
             </div>
           </div>
         </div>

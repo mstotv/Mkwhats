@@ -158,6 +158,19 @@ export default async function LandingPage() {
 
   const defaultFeaturesList = [
     {
+      id: 'bio-link',
+      title_ar: 'منشئ صفحات البايو لينك (Bio Link Studio)',
+      title_en: 'Bio Link Studio & Digital Identity',
+      description_ar: 'صفحة بايو لينك احترافية بنطاق فرعي مخصص تجمع روابطك وبطاقات الصور المستقلة وقنوات التواصل مع تحليلات زيارات ونقرات حية.',
+      description_en: 'Professional custom subdomain bio link profile pages showcasing your links, independent image cards, with live visitor analytics.',
+      icon: 'Globe',
+      col_span: 'col-span-1',
+      badges: [
+        { text_ar: 'سابدومين مخصص', text_en: 'Custom Subdomain', variant: 'pulse' },
+      ],
+      integrations: [],
+    },
+    {
       id: 'ai-automation',
       title_ar: 'أتمتة الذكاء الاصطناعي (Gemini AI)',
       title_en: 'Gemini AI Automation',

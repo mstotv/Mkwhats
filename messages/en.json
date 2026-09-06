@@ -33,6 +33,7 @@
     "aiAgents": "AI Agents",
     "orders": "Orders",
     "appointments": "Appointments",
+    "bioLink": "Bio Link",
     "settings": "Settings",
     "beta": "Beta",
     "unreadConversations": "{count} unread {count, plural, =1 {conversation} other {conversations}}",
@@ -2167,7 +2168,9 @@
       "contacts": "Contacts",
       "unlimited": "Unlimited",
       "devices": "{count} device(s)",
-      "contactsCount": "{count} contacts"
+      "contactsCount": "{count} contacts",
+      "bioLink": "Bio Link",
+      "subdomainChanges": "Subdomain Changes"
     },
     "siteSettings": {
       "title": "Site & Public Pages Settings",

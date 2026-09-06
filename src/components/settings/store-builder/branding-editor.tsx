@@ -46,6 +46,7 @@ import { BUTTON_SHAPES, ICON_STYLES } from '@/lib/storefront/theme-tokens'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { maskStorageUrl, isInternalStorageUrl } from '@/lib/storage/mask-storage-url'
 
 function SnapchatIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
   return (
@@ -159,6 +160,11 @@ function CustomLinkItemEditor({
   const [activeTab, setActiveTab] = useState<'flaticon' | 'custom_image'>(link.image_url ? 'custom_image' : 'flaticon')
   const [category, setCategory] = useState<string>('all')
   const [isUploading, setIsUploading] = useState<boolean>(false)
+  const currentCardImg = link.image_card?.src || link.image_url || ''
+  const isInternal = isInternalStorageUrl(currentCardImg)
+  const [imageSourceMode, setImageSourceMode] = useState<'upload' | 'url'>(
+    currentCardImg && !isInternal ? 'url' : 'upload'
+  )
 
   const iconsToShow =
     category === 'all'
@@ -292,107 +298,399 @@ function CustomLinkItemEditor({
 
       {/* 1. IF IMAGE CARD TYPE */}
       {isImageCard ? (
-        <div className="space-y-3 text-xs">
-          {/* Image Upload Area */}
-          <div className="p-3 rounded-xl border border-dashed border-border/80 bg-muted/20 space-y-2">
-            <Label className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
-              <ImageIcon className="w-3.5 h-3.5 text-purple-500" />
-              <span>{isAr ? 'صورة البطاقة (Image)' : 'Card Image'}</span>
-            </Label>
-            <div className="flex items-center gap-3">
-              {(link.image_card?.src || link.image_url) && (
-                <div className="w-20 h-14 rounded-lg overflow-hidden border border-border shrink-0">
-                  <img
-                    src={link.image_card?.src || link.image_url}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              <div className="flex-1 space-y-1">
-                <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-input bg-card hover:bg-muted text-xs font-semibold cursor-pointer transition-all shadow-xs">
-                  {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UploadCloud className="w-3.5 h-3.5" />}
-                  <span>{isUploading ? (isAr ? 'جاري الرفع...' : 'Uploading...') : (isAr ? 'رفع صورة البطاقة' : 'Upload Card Image')}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={isUploading}
-                    onChange={handleImageFileChange}
-                  />
-                </label>
-                <div className="text-[10px] text-muted-foreground">{isAr ? 'أو أدخل رابط مباشر للصورة بالأسفل' : 'Or enter direct image URL below'}</div>
+        <div className="space-y-4 text-xs">
+          {/* Image Upload / URL Area */}
+          <div className="p-3.5 rounded-xl border border-dashed border-border/80 bg-muted/20 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-purple-500" />
+                <span>{isAr ? 'صورة البطاقة' : 'Card Image'}</span>
+              </Label>
+              
+              {/* Dual Mode Selector */}
+              <div className="flex items-center p-0.5 bg-muted rounded-lg border border-border text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setImageSourceMode('upload')}
+                  className={`px-2 py-0.5 rounded-md font-medium transition-all flex items-center gap-1 cursor-pointer ${
+                    imageSourceMode === 'upload'
+                      ? 'bg-card text-foreground shadow-xs font-bold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <UploadCloud className="w-3 h-3" />
+                  <span>{isAr ? 'رفع من الجهاز' : 'Upload File'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageSourceMode('url')}
+                  className={`px-2 py-0.5 rounded-md font-medium transition-all flex items-center gap-1 cursor-pointer ${
+                    imageSourceMode === 'url'
+                      ? 'bg-card text-foreground shadow-xs font-bold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Link2 className="w-3 h-3" />
+                  <span>{isAr ? 'رابط خارجي' : 'External URL'}</span>
+                </button>
               </div>
             </div>
-            <Input
-              value={link.image_card?.src || link.image_url || ''}
-              onChange={(e) =>
-                onUpdate({
-                  image_url: e.target.value,
-                  image_card: {
-                    src: e.target.value,
-                    caption: link.image_card?.caption || link.title,
-                    description: link.image_card?.description || link.subtitle,
-                  },
-                })
-              }
-              placeholder="https://images.unsplash.com/..."
-              dir="ltr"
-              className="text-xs h-8 font-mono"
-            />
+
+            {/* Mode 1: Device Upload */}
+            {imageSourceMode === 'upload' ? (
+              <div className="space-y-2">
+                {currentCardImg ? (
+                  <div className="flex items-center gap-3 p-2.5 rounded-xl bg-card border border-border">
+                    <div className="w-20 h-14 rounded-lg overflow-hidden border border-border shrink-0 bg-slate-100 dark:bg-slate-800">
+                      <img
+                        src={maskStorageUrl(currentCardImg)}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                        <Check className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{isAr ? 'صورة مرفوعة من جهازك (محفوظة بأمان)' : 'Uploaded from device (Secured)'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <label className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-input bg-muted/60 hover:bg-muted text-[10px] font-semibold cursor-pointer transition-all shadow-xs">
+                          {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <UploadCloud className="w-3 h-3" />}
+                          <span>{isUploading ? (isAr ? 'جاري الرفع...' : 'Uploading...') : (isAr ? 'استبدال الصورة' : 'Change Image')}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={isUploading}
+                            onChange={handleImageFileChange}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onUpdate({
+                              image_url: undefined,
+                              image_card: {
+                                ...link.image_card,
+                                src: '',
+                                caption: link.image_card?.caption ?? link.title,
+                                description: link.image_card?.description ?? link.subtitle,
+                              },
+                            })
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-destructive hover:bg-destructive/10 text-[10px] font-medium transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>{isAr ? 'إزالة' : 'Remove'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="p-4 rounded-xl border border-dashed border-border/80 hover:border-purple-500 bg-card hover:bg-purple-500/5 text-center flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors">
+                    {isUploading ? <Loader2 className="w-5 h-5 text-purple-600 animate-spin" /> : <UploadCloud className="w-5 h-5 text-purple-600" />}
+                    <span className="text-xs font-semibold text-foreground">
+                      {isUploading ? (isAr ? 'جاري رفع الملف بأمان...' : 'Uploading securely...') : (isAr ? 'اضغط لاختيار صورة من جهازك' : 'Click to select image from device')}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">{isAr ? 'يتم حفظ الصورة بأمان دون كشف أي روابط' : 'Image is stored securely without exposing raw URLs'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploading}
+                      onChange={handleImageFileChange}
+                    />
+                  </label>
+                )}
+              </div>
+            ) : (
+              /* Mode 2: External Web URL */
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  {currentCardImg && !isInternal && (
+                    <div className="w-12 h-9 rounded overflow-hidden border border-border shrink-0 bg-slate-100 dark:bg-slate-800">
+                      <img src={currentCardImg} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-1">
+                    <Input
+                      value={isInternal ? '' : currentCardImg}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        onUpdate({
+                          image_url: val,
+                          image_card: {
+                            ...link.image_card,
+                            src: val,
+                            caption: link.image_card?.caption ?? link.title,
+                            description: link.image_card?.description ?? link.subtitle,
+                          },
+                        })
+                      }}
+                      placeholder="https://images.unsplash.com/..."
+                      dir="ltr"
+                      className="text-xs h-8 font-mono"
+                    />
+                  </div>
+                </div>
+                <div className="text-[10px] text-muted-foreground">
+                  {isAr
+                    ? 'يمكنك لصق رابط مباشر لأي صورة خارجية من الإنترنت (Unsplash أو غيرها).'
+                    : 'Paste direct image URL from Unsplash or external web source.'}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Caption / Title */}
-          <div className="space-y-1">
-            <Label className="text-[11px] font-medium text-foreground">{isAr ? 'عنوان الصورة (Caption)' : 'Image Caption / Title'}</Label>
+          {/* Titles & Descriptions */}
+          <div className="grid grid-cols-1 gap-2.5">
+            <div className="space-y-1">
+              <Label className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+                <span>{isAr ? 'عنوان الصورة (Title / Caption)' : 'Image Title / Caption'}</span>
+              </Label>
+              <Input
+                value={link.image_card?.caption ?? link.title}
+                onChange={(e) =>
+                  onUpdate({
+                    title: e.target.value,
+                    image_card: {
+                      ...link.image_card,
+                      src: link.image_card?.src || link.image_url || '',
+                      caption: e.target.value,
+                    },
+                  })
+                }
+                placeholder={isAr ? 'مثال: من أعمالنا في التصميم' : 'e.g. Featured Design Showcase'}
+                className="text-xs h-8"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+                <span>{isAr ? 'الوصف التوضيحي (Description)' : 'Image Description'}</span>
+              </Label>
+              <textarea
+                rows={2}
+                value={link.image_card?.description ?? link.subtitle ?? ''}
+                onChange={(e) =>
+                  onUpdate({
+                    subtitle: e.target.value,
+                    image_card: {
+                      ...link.image_card,
+                      src: link.image_card?.src || link.image_url || '',
+                      caption: link.image_card?.caption ?? link.title,
+                      description: e.target.value,
+                    },
+                  })
+                }
+                placeholder={isAr ? 'اكتب نبذة أو تفاصيل إضافية حول هذه الصورة...' : 'Write details or backstory about this image...'}
+                className="w-full rounded-xl border border-input bg-background px-3 py-1.5 text-xs shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring leading-relaxed"
+              />
+            </div>
+          </div>
+
+          {/* Text Display Mode Selector */}
+          <div className="space-y-1.5 p-3 rounded-xl border border-border/70 bg-card/50">
+            <Label className="text-[11px] font-semibold text-foreground flex items-center justify-between">
+              <span>{isAr ? 'طريقة عرض النص والعنوان' : 'Text Display Style'}</span>
+              <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+                {(!link.image_card?.display_style || link.image_card.display_style === 'card')
+                  ? (isAr ? 'بطاقة أسفل الصورة (أوضح)' : 'Card below image (Clear)')
+                  : (isAr ? 'تراكب فوق الصورة' : 'Overlay on image')}
+              </span>
+            </Label>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() =>
+                  onUpdate({
+                    image_card: {
+                      ...link.image_card,
+                      src: link.image_card?.src || link.image_url || '',
+                      caption: link.image_card?.caption ?? link.title,
+                      description: link.image_card?.description ?? link.subtitle,
+                      display_style: 'card',
+                    },
+                  })
+                }
+                className={`p-2.5 rounded-xl border text-right sm:text-center transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                  (!link.image_card?.display_style || link.image_card.display_style === 'card')
+                    ? 'border-purple-500 bg-purple-500/10 text-foreground font-bold shadow-xs'
+                    : 'border-border/60 hover:bg-muted/60 text-muted-foreground'
+                }`}
+              >
+                <div className="w-full h-7 rounded border border-dashed border-border flex flex-col overflow-hidden text-[8px]">
+                  <div className="h-4 bg-muted/80 flex items-center justify-center font-mono">IMG</div>
+                  <div className="h-3 bg-card flex items-center justify-center text-[7px] font-bold">Aa Text</div>
+                </div>
+                <span className="text-[11px] font-semibold mt-0.5">{isAr ? 'بطاقة أسفل الصورة (أوضح)' : 'Card Below Image'}</span>
+                <span className="text-[9px] text-muted-foreground hidden sm:block">{isAr ? 'نص بارز ومقروء 100%' : 'High-contrast text'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  onUpdate({
+                    image_card: {
+                      ...link.image_card,
+                      src: link.image_card?.src || link.image_url || '',
+                      caption: link.image_card?.caption ?? link.title,
+                      description: link.image_card?.description ?? link.subtitle,
+                      display_style: 'overlay',
+                    },
+                  })
+                }
+                className={`p-2.5 rounded-xl border text-right sm:text-center transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                  link.image_card?.display_style === 'overlay'
+                    ? 'border-purple-500 bg-purple-500/10 text-foreground font-bold shadow-xs'
+                    : 'border-border/60 hover:bg-muted/60 text-muted-foreground'
+                }`}
+              >
+                <div className="w-full h-7 rounded border border-dashed border-border relative overflow-hidden bg-slate-800 text-[8px] flex items-end justify-center pb-0.5 text-white">
+                  <span>Aa Overlay</span>
+                </div>
+                <span className="text-[11px] font-semibold mt-0.5">{isAr ? 'تراكب فوق الصورة' : 'Overlay on Image'}</span>
+                <span className="text-[9px] text-muted-foreground hidden sm:block">{isAr ? 'خلفية ظلية متدرجة' : 'Floating gradient text'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Aspect Ratio & Corner Radius Controls */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl border border-border/70 bg-card/50">
+            {/* Dimensions / Aspect Ratio */}
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                <span>{isAr ? 'مقاس الصورة (الأبعاد)' : 'Image Aspect Ratio'}</span>
+              </Label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { id: '16/9', labelAr: '16:9 بانر', labelEn: '16:9 Banner' },
+                  { id: '1/1', labelAr: '1:1 مربع', labelEn: '1:1 Square' },
+                  { id: '4/3', labelAr: '4:3 كلاسيك', labelEn: '4:3 Classic' },
+                  { id: 'auto', labelAr: 'تلقائي كامل', labelEn: 'Auto / Full' },
+                ].map((ratio) => {
+                  const currentRatio = link.image_card?.aspect_ratio || '16/9'
+                  const isSelected = currentRatio === ratio.id
+                  return (
+                    <button
+                      key={ratio.id}
+                      type="button"
+                      onClick={() =>
+                        onUpdate({
+                          image_card: {
+                            ...link.image_card,
+                            src: link.image_card?.src || link.image_url || '',
+                            caption: link.image_card?.caption ?? link.title,
+                            description: link.image_card?.description ?? link.subtitle,
+                            aspect_ratio: ratio.id as any,
+                          },
+                        })
+                      }
+                      className={`px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-all text-center cursor-pointer ${
+                        isSelected
+                          ? 'border-purple-500 bg-purple-500/10 text-foreground font-bold shadow-xs'
+                          : 'border-border/60 hover:bg-muted/60 text-muted-foreground'
+                      }`}
+                    >
+                      {isAr ? ratio.labelAr : ratio.labelEn}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Corner Radius (Independent from Buttons!) */}
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                <span>{isAr ? 'حواف الصورة (مستقلة)' : 'Image Corner Radius'}</span>
+              </Label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { id: '2xl', labelAr: 'منحنية 16px', labelEn: 'Modern (2xl)' },
+                  { id: 'xl', labelAr: 'ناعمة 12px', labelEn: 'Soft (xl)' },
+                  { id: 'lg', labelAr: 'خفيفة 8px', labelEn: 'Light (lg)' },
+                  { id: 'none', labelAr: 'حادة 0px', labelEn: 'Sharp (none)' },
+                ].map((rad) => {
+                  const currentRadius = link.image_card?.corner_radius || '2xl'
+                  const isSelected = currentRadius === rad.id
+                  return (
+                    <button
+                      key={rad.id}
+                      type="button"
+                      onClick={() =>
+                        onUpdate({
+                          image_card: {
+                            ...link.image_card,
+                            src: link.image_card?.src || link.image_url || '',
+                            caption: link.image_card?.caption ?? link.title,
+                            description: link.image_card?.description ?? link.subtitle,
+                            corner_radius: rad.id as any,
+                          },
+                        })
+                      }
+                      className={`px-2 py-1.5 rounded-lg border text-[10px] font-medium transition-all text-center cursor-pointer ${
+                        isSelected
+                          ? 'border-purple-500 bg-purple-500/10 text-foreground font-bold shadow-xs'
+                          : 'border-border/60 hover:bg-muted/60 text-muted-foreground'
+                      }`}
+                    >
+                      {isAr ? rad.labelAr : rad.labelEn}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Click Action & Destination URL */}
+          <div className="space-y-2 p-3 rounded-xl border border-border/70 bg-card/50">
+            <div className="flex items-center justify-between">
+              <Label className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+                <Link2 className="w-3.5 h-3.5 text-purple-500" />
+                <span>{isAr ? 'رابط التوجيه عند النقر (URL)' : 'Click Destination URL'}</span>
+              </Label>
+              <span className="text-[10px] text-muted-foreground">
+                {isAr ? 'اختياري (النقر يفتح تكبيراً إذا تُرِك فارغاً)' : 'Optional (opens lightbox if empty)'}
+              </span>
+            </div>
             <Input
-              value={link.image_card?.caption || link.title}
-              onChange={(e) =>
+              value={link.image_card?.link_url ?? link.url}
+              onChange={(e) => {
+                const val = e.target.value
                 onUpdate({
-                  title: e.target.value,
+                  url: val,
                   image_card: {
+                    ...link.image_card,
                     src: link.image_card?.src || link.image_url || '',
-                    caption: e.target.value,
-                    description: link.image_card?.description || link.subtitle,
+                    caption: link.image_card?.caption ?? link.title,
+                    description: link.image_card?.description ?? link.subtitle,
+                    link_url: val,
                   },
                 })
-              }
-              placeholder={isAr ? 'مثال: من أعمالنا في تصميم الهويات البصرية' : 'e.g. Featured visual identity showcase'}
-              className="text-xs h-8"
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-1">
-            <Label className="text-[11px] font-medium text-muted-foreground">{isAr ? 'وصف توضيحي أسفل الصورة (اختياري)' : 'Description below image (optional)'}</Label>
-            <textarea
-              rows={2}
-              value={link.image_card?.description || link.subtitle || ''}
-              onChange={(e) =>
-                onUpdate({
-                  subtitle: e.target.value,
-                  image_card: {
-                    src: link.image_card?.src || link.image_url || '',
-                    caption: link.image_card?.caption || link.title,
-                    description: e.target.value,
-                  },
-                })
-              }
-              placeholder={isAr ? 'اكتب نبذة أو تفاصيل إضافية حول هذه الصورة...' : 'Write details or backstory about this image...'}
-              className="w-full rounded-xl border border-input bg-background px-3 py-1.5 text-xs shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring leading-relaxed"
-            />
-          </div>
-
-          {/* Optional Destination URL */}
-          <div className="space-y-1">
-            <Label className="text-[11px] font-medium text-muted-foreground">{isAr ? 'رابط توجيه عند الضغط على الصورة (اختياري)' : 'Click destination URL (optional)'}</Label>
-            <Input
-              value={link.url}
-              onChange={(e) => onUpdate({ url: e.target.value })}
+              }}
               placeholder="https://..."
               dir="ltr"
               className="text-xs h-8 font-mono"
             />
+            <div className="flex items-center justify-between pt-1">
+              <Label className="text-[10px] text-muted-foreground cursor-pointer">
+                {isAr ? 'فتح الرابط في علامة تبويب جديدة' : 'Open destination in a new tab'}
+              </Label>
+              <Switch
+                checked={link.image_card?.open_in_new_tab ?? true}
+                onCheckedChange={(checked) =>
+                  onUpdate({
+                    image_card: {
+                      ...link.image_card,
+                      src: link.image_card?.src || link.image_url || '',
+                      caption: link.image_card?.caption ?? link.title,
+                      description: link.image_card?.description ?? link.subtitle,
+                      open_in_new_tab: checked,
+                    },
+                  })
+                }
+              />
+            </div>
           </div>
         </div>
       ) : (
@@ -618,35 +916,72 @@ function CustomLinkItemEditor({
             {/* CUSTOM IMAGE / LOGO */}
             {activeTab === 'custom_image' && (
               <div className="space-y-2 pt-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <label className="p-3 rounded-xl border border-dashed border-border/80 hover:border-purple-500 bg-muted/10 hover:bg-purple-500/5 text-center flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors">
-                    {isUploading ? <Loader2 className="w-5 h-5 text-purple-600 animate-spin" /> : <UploadCloud className="w-5 h-5 text-purple-600" />}
-                    <span className="text-xs font-semibold text-foreground">
-                      {isUploading ? (isAr ? 'جاري رفع الملف...' : 'Uploading...') : (isAr ? 'اضغط لاختيار صورة من جهازك' : 'Click to select image')}
-                    </span>
-                    <span className="text-[9px] text-muted-foreground">PNG, JPG, SVG, WebP</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      disabled={isUploading}
-                      onChange={handleImageFileChange}
-                    />
-                  </label>
-
-                  <div className="space-y-1.5 flex flex-col justify-center">
-                    <Label className="text-[10px] text-muted-foreground font-medium">
-                      {isAr ? 'أو الصق رابط صورة/أيقونة من Flaticon أو أي موقع:' : 'Or paste direct icon / image URL:'}
-                    </Label>
-                    <Input
-                      placeholder="https://cdn-icons-png.flaticon.com/..."
-                      value={link.image_url || ''}
-                      onChange={(e) => onUpdate({ image_url: e.target.value })}
-                      dir="ltr"
-                      className="text-[11px] h-8 font-mono"
-                    />
+                {link.image_url && isInternalStorageUrl(link.image_url) ? (
+                  <div className="p-3 rounded-xl bg-card border border-border flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-lg overflow-hidden border border-border shrink-0 bg-muted flex items-center justify-center">
+                        <img src={maskStorageUrl(link.image_url)} alt="Custom Icon" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-foreground flex items-center gap-1">
+                          <Check className="w-3 h-3 text-emerald-500" />
+                          <span>{isAr ? 'أيقونة مرفوعة من جهازك' : 'Uploaded from device'}</span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">{isAr ? 'محفوظة بأمان على المنصة' : 'Stored securely on platform'}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="px-2.5 py-1 rounded-lg border border-input hover:bg-muted text-[11px] font-semibold cursor-pointer transition-all shadow-xs">
+                        <span>{isAr ? 'استبدال' : 'Change'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={isUploading}
+                          onChange={handleImageFileChange}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => onUpdate({ image_url: undefined })}
+                        className="p-1.5 rounded-lg text-destructive hover:bg-destructive/10 text-xs transition-colors cursor-pointer"
+                        title={isAr ? 'إزالة' : 'Remove'}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label className="p-3 rounded-xl border border-dashed border-border/80 hover:border-purple-500 bg-muted/10 hover:bg-purple-500/5 text-center flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors">
+                      {isUploading ? <Loader2 className="w-5 h-5 text-purple-600 animate-spin" /> : <UploadCloud className="w-5 h-5 text-purple-600" />}
+                      <span className="text-xs font-semibold text-foreground">
+                        {isUploading ? (isAr ? 'جاري رفع الملف...' : 'Uploading...') : (isAr ? 'اضغط لاختيار صورة من جهازك' : 'Click to select image')}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground">PNG, JPG, SVG, WebP</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={isUploading}
+                        onChange={handleImageFileChange}
+                      />
+                    </label>
+
+                    <div className="space-y-1.5 flex flex-col justify-center">
+                      <Label className="text-[10px] text-muted-foreground font-medium">
+                        {isAr ? 'أو الصق رابط صورة/أيقونة من Flaticon أو أي موقع:' : 'Or paste direct icon / image URL:'}
+                      </Label>
+                      <Input
+                        placeholder="https://cdn-icons-png.flaticon.com/..."
+                        value={isInternalStorageUrl(link.image_url) ? '' : (link.image_url || '')}
+                        onChange={(e) => onUpdate({ image_url: e.target.value })}
+                        dir="ltr"
+                        className="text-[11px] h-8 font-mono"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -702,13 +1037,26 @@ export function BrandingEditor({
   const handleAddCustomLink = (type: 'link' | 'image_card' = 'link') => {
     const newLink: CustomLinkButton = {
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `link_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      title: type === 'image_card' ? (isAr ? 'بطاقة صورة جديدة' : 'New Image Card') : (isAr ? 'رابط جديد' : 'New Link'),
-      url: type === 'image_card' ? '' : 'https://',
+      title: type === 'image_card' ? (isAr ? 'صورة مميزة' : 'Featured Image') : (isAr ? 'رابط جديد' : 'New Link'),
+      url: '',
       subtitle: '',
-      icon: 'link',
+      icon: 'image',
       highlight: false,
       is_active: true,
       type,
+      image_card:
+        type === 'image_card'
+          ? {
+              src: '',
+              caption: isAr ? 'صورة مميزة' : 'Featured Image',
+              description: '',
+              aspect_ratio: '16/9',
+              corner_radius: '2xl',
+              display_style: 'card',
+              link_url: '',
+              open_in_new_tab: true,
+            }
+          : undefined,
     }
     setSettings((prev) => ({
       ...prev,
@@ -887,7 +1235,7 @@ export function BrandingEditor({
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-2xl border border-border bg-muted/40 overflow-hidden shrink-0 flex items-center justify-center shadow-xs">
               {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                <img src={maskStorageUrl(logoUrl)} alt="Logo" className="w-full h-full object-cover" />
               ) : (
                 <Store className="w-6 h-6 text-muted-foreground/40" />
               )}
@@ -930,7 +1278,7 @@ export function BrandingEditor({
           <div className="flex items-center gap-3">
             <div className="w-20 h-14 rounded-2xl border border-border bg-muted/40 overflow-hidden shrink-0 flex items-center justify-center shadow-xs">
               {bannerUrl ? (
-                <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+                <img src={maskStorageUrl(bannerUrl)} alt="Banner" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-[10px] text-muted-foreground/60">{isAr ? 'بدون صورة' : 'No Image'}</span>
               )}

@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { isInternalStorageUrl, maskStorageUrl } from '@/lib/storage/mask-storage-url';
 
 interface Partner {
   id: string;
@@ -277,6 +278,15 @@ export default function AdminSettingsPage() {
         'ربط إشعارات المبيعات والطلبات الجديدة ببوت التلغرام لتلقي تنبيه فوري ومباشر على جوالك فور تأكيد العميل للطلب.',
       description_en:
         'Receive instant notifications on your mobile via Telegram whenever a new lead or order is confirmed.',
+    },
+    {
+      id: '7',
+      title: '7. منشئ صفحات البايو لينك (Bio Link Studio)',
+      title_en: '7. Bio Link Studio & Subdomain',
+      description:
+        'إنشاء صفحات بايو لينك احترافية بسابدومين مخصص تجمع روابطك وبطاقات الصور وأزرار التواصل مع تتبع الزيارات والنقرات وتوافق تام مع الوضع الداكن.',
+      description_en:
+        'Build custom subdomain bio link profile pages showcasing links, image cards, and click-to-chat with live analytics and dark mode.',
     },
   ]);
 
@@ -941,17 +951,39 @@ export default function AdminSettingsPage() {
                     </label>
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                      {/* Option A: Direct URL Input */}
-                      <div className="relative flex-1">
-                        <ImageIcon className="absolute start-3 top-2.5 h-4 w-4 text-emerald-500" />
-                        <Input
-                          type="text"
-                          placeholder={isAr ? 'https://.../logo.png (أو اختر رفع ملف)' : 'https://.../logo.png (or upload file)'}
-                          value={logoUrl}
-                          onChange={(e) => setLogoUrl(e.target.value)}
-                          className="ps-9 bg-background border-border font-mono dir-ltr text-xs"
-                        />
-                      </div>
+                      {/* Option A: Direct URL Input or Uploaded Badge */}
+                      {isInternalStorageUrl(logoUrl) ? (
+                        <div className="flex-1 flex items-center justify-between px-3 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold h-10">
+                          <div className="flex items-center gap-2 truncate">
+                            <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                            <span className="truncate">{isAr ? 'تم رفع الشعار من جهازك (محفوظ ومخفي بأمان)' : 'Logo uploaded from device (securely saved)'}</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setLogoUrl('');
+                              toast.info(isAr ? 'تمت إزالة الشعار' : 'Logo removed');
+                            }}
+                            className="h-7 px-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-xs"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1" />
+                            {isAr ? 'إزالة' : 'Remove'}
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="relative flex-1">
+                          <ImageIcon className="absolute start-3 top-2.5 h-4 w-4 text-emerald-500" />
+                          <Input
+                            type="text"
+                            placeholder={isAr ? 'https://.../logo.png (أو اختر رفع ملف)' : 'https://.../logo.png (or upload file)'}
+                            value={logoUrl}
+                            onChange={(e) => setLogoUrl(e.target.value)}
+                            className="ps-9 bg-background border-border font-mono dir-ltr text-xs"
+                          />
+                        </div>
+                      )}
 
                       {/* Option B: Upload File From Device Button */}
                       <div className="relative shrink-0">
@@ -981,7 +1013,7 @@ export default function AdminSettingsPage() {
                       </div>
 
                       {/* Option C: Delete / Clear Logo Button */}
-                      {logoUrl ? (
+                      {logoUrl && !isInternalStorageUrl(logoUrl) ? (
                         <Button
                           type="button"
                           variant="outline"
@@ -1009,7 +1041,7 @@ export default function AdminSettingsPage() {
                       >
                         {logoUrl ? (
                           <img
-                            src={logoUrl}
+                            src={maskStorageUrl(logoUrl)}
                             alt="Logo Preview"
                             style={{ height: `${logoHeight}px` }}
                             className="w-auto object-contain transition-all"
@@ -1574,7 +1606,7 @@ export default function AdminSettingsPage() {
                     <div className="flex items-center gap-2">
                       <Zap className="h-5 w-5 text-emerald-500" />
                       <h2 className="text-base font-bold text-foreground">
-                        {isAr ? 'محرر نصوص بطاقات الميزات الـ 6 (Features Cards)' : 'Features Cards Editor (6 Cards)'}
+                        {isAr ? 'محرر نصوص بطاقات الميزات (Features Cards)' : 'Features Cards Editor'}
                       </h2>
                     </div>
 

@@ -63,16 +63,10 @@ export async function POST(req: Request) {
       });
 
     if (!uploadError) {
-      const { data: publicUrlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filename);
-
-      if (publicUrlData?.publicUrl) {
-        return NextResponse.json({
-          success: true,
-          url: publicUrlData.publicUrl,
-        });
-      }
+      return NextResponse.json({
+        success: true,
+        url: `/api/storage/avatars/${filename}`,
+      });
     }
 
     // Fallback: Base64 Data URL if storage bucket is unavailable

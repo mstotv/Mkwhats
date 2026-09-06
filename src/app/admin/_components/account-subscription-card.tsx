@@ -22,6 +22,7 @@ import {
   Users,
   Smartphone,
   Contact,
+  Globe,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -43,6 +44,10 @@ export interface AccountSubscriptionItem {
     max_users: number
     max_whatsapp_instances: number
     max_contacts: number
+    max_subdomain_changes?: number
+    features?: {
+      bio_link?: boolean
+    }
   } | null
 }
 
@@ -55,6 +60,10 @@ export interface AvailablePlan {
   max_users: number
   max_whatsapp_instances: number
   max_contacts: number
+  max_subdomain_changes?: number
+  features?: {
+    bio_link?: boolean
+  }
   is_active: boolean
 }
 
@@ -182,7 +191,7 @@ export function AccountSubscriptionCard({
       </div>
 
       {subscription && currentPlan ? (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div className="rounded-lg bg-slate-950/60 border border-slate-800/60 p-4 space-y-1">
             <span className="text-xs text-slate-400">الخطة الحالية</span>
             <div className="flex items-baseline gap-2">
@@ -229,6 +238,25 @@ export function AccountSubscriptionCard({
             </span>
             <p className="text-sm font-semibold text-slate-200">
               {currentPlan.max_whatsapp_instances} جهاز متصل
+            </p>
+          </div>
+
+          <div className="rounded-lg bg-slate-950/60 border border-slate-800/60 p-4 space-y-1">
+            <span className="text-xs text-slate-400 flex items-center gap-1">
+              <Globe className="h-3.5 w-3.5 text-slate-500" /> البايو لينك (Bio Link)
+            </span>
+            <p className="text-sm font-semibold">
+              {currentPlan.features?.bio_link ? (
+                <span className="text-emerald-400">
+                  مفعّل ({currentPlan.max_subdomain_changes === -1
+                    ? 'لا محدود'
+                    : currentPlan.max_subdomain_changes === 0
+                    ? 'أولي فقط'
+                    : `${currentPlan.max_subdomain_changes} تغييرات`})
+                </span>
+              ) : (
+                <span className="text-slate-500">غير متاح 🔒</span>
+              )}
             </p>
           </div>
         </div>

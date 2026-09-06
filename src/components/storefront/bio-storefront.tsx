@@ -31,7 +31,10 @@ import {
   getIconContainerClasses,
   getButtonShapeClass,
   getThemePresetStyle,
+  getImageCardRadiusClass,
+  getImageCardAspectClass,
 } from '@/lib/storefront/theme-tokens'
+import { maskStorageUrl } from '@/lib/storage/mask-storage-url'
 
 interface BioStorefrontProps {
   storefront: StorefrontFullConfig
@@ -297,8 +300,7 @@ export function BioStorefront({ storefront }: BioStorefrontProps) {
         isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
       } antialiased px-4 py-8 sm:py-12 selection:bg-lime-300 selection:text-slate-900 transition-colors duration-300 relative`}
       style={{
-        background: isBgMode ? undefined : themeStyle.bgGradient,
-        backgroundImage: isBgMode ? `url("${storefront.banner_url}")` : undefined,
+        backgroundImage: isBgMode ? `url("${maskStorageUrl(storefront.banner_url)}")` : themeStyle.bgGradient,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
@@ -350,7 +352,7 @@ export function BioStorefront({ storefront }: BioStorefrontProps) {
           {/* Cover Banner (Header Banner Mode) */}
           {isBannerMode && storefront.banner_url && (
             <div className="w-full h-32 sm:h-36 rounded-3xl overflow-hidden relative -mb-10 shadow-sm">
-              <img src={storefront.banner_url} alt="Cover" className="w-full h-full object-cover" />
+              <img src={maskStorageUrl(storefront.banner_url)} alt="Cover" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
             </div>
           )}
@@ -364,7 +366,7 @@ export function BioStorefront({ storefront }: BioStorefrontProps) {
                   <img
                     alt={displayName}
                     className="w-full h-full object-cover rounded-full"
-                    src={storefront.logo_url}
+                    src={maskStorageUrl(storefront.logo_url)}
                   />
                 ) : (
                   <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
@@ -432,66 +434,120 @@ export function BioStorefront({ storefront }: BioStorefrontProps) {
           {/* Link Buttons & Image Cards Stack */}
           <section className="w-full flex flex-col gap-3 mt-6">
             {customLinks.map((btn) => {
-              // 1. IMAGE CARD TYPE
+              // 1. IMAGE CARD TYPE (Completely decoupled from button shapes & customizable)
               if (btn.type === 'image_card') {
-                const cardImg = btn.image_card?.src || btn.image_url
-                const shape = btn.btn_shape || storefront.theme_config?.button_shape || 'soft'
-                const shapeClass = getButtonShapeClass(shape)
+                const cardImg = maskStorageUrl(btn.image_card?.src || btn.image_url)
+                const aspect = btn.image_card?.aspect_ratio || '16/9'
+                const aspectClass = getImageCardAspectClass(aspect)
+                const radius = btn.image_card?.corner_radius || '2xl'
+                const radiusClass = getImageCardRadiusClass(radius)
+                const displayStyle = btn.image_card?.display_style || 'card'
+                const targetUrl = btn.image_card?.link_url || (btn.url && btn.url !== 'https://' ? btn.url : undefined)
+                const openInNewTab = btn.image_card?.open_in_new_tab ?? true
+                const caption = btn.image_card?.caption || btn.title
+                const description = btn.image_card?.description || btn.subtitle
+
+                const handleCardClick = () => {
+                  trackClick(btn)
+                  if (targetUrl) {
+                    if (openInNewTab) {
+                      window.open(targetUrl, '_blank', 'noopener,noreferrer')
+                    } else {
+                      window.location.href = targetUrl
+                    }
+                  } else if (cardImg) {
+                    setLightboxImg({
+                      src: cardImg,
+                      caption,
+                      description,
+                    })
+                  }
+                }
 
                 return (
                   <div
                     key={btn.id}
-                    onClick={() => {
-                      trackClick(btn)
-                      if (cardImg) {
-                        setLightboxImg({
-                          src: cardImg,
-                          caption: btn.image_card?.caption || btn.title,
-                          description: btn.image_card?.description || btn.subtitle,
-                        })
-                      }
-                    }}
-                    className={`w-full overflow-hidden border shadow-sm transition-all hover:scale-[1.01] cursor-pointer relative group ${shapeClass} ${themeStyle.cardBg} ${themeStyle.cardBorder}`}
+                    onClick={handleCardClick}
+                    className={`w-full overflow-hidden border shadow-sm transition-all hover:scale-[1.01] cursor-pointer relative group ${radiusClass} ${themeStyle.cardBg} ${themeStyle.cardBorder}`}
                   >
                     {cardImg ? (
-                      <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                        <img
-                          src={cardImg}
-                          alt={btn.image_card?.caption || btn.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                        <div className="absolute bottom-3 right-3 left-3 text-white text-right">
-                          <h3 className="font-bold text-sm drop-shadow-sm">
-                            {btn.image_card?.caption || btn.title}
-                          </h3>
-                          {(btn.image_card?.description || btn.subtitle) && (
-                            <p className="text-[11px] text-white/85 line-clamp-2 mt-0.5">
-                              {btn.image_card?.description || btn.subtitle}
-                            </p>
+                      <div className="flex flex-col w-full">
+                        {/* Image Container */}
+                        <div className={`relative ${aspectClass} w-full overflow-hidden bg-slate-100 dark:bg-slate-800`}>
+                          <img
+                            src={cardImg}
+                            alt={caption}
+                            className={`w-full h-full ${aspect === 'auto' ? 'object-contain' : 'object-cover'} transition-transform duration-300 group-hover:scale-105`}
+                          />
+
+                          {/* Overlay Mode */}
+                          {displayStyle === 'overlay' && (
+                            <>
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+                              <div className="absolute bottom-3 right-3 left-3 text-white text-right space-y-1">
+                                {caption && (
+                                  <h3 className="font-bold text-sm sm:text-base leading-snug drop-shadow-md">
+                                    {caption}
+                                  </h3>
+                                )}
+                                {description && (
+                                  <p className="text-xs text-white/90 leading-relaxed drop-shadow-sm line-clamp-3">
+                                    {description}
+                                  </p>
+                                )}
+                                {targetUrl && (
+                                  <div className="flex items-center justify-end gap-1 text-[11px] text-white/80 pt-1 font-medium">
+                                    <span className="truncate max-w-[200px]">{targetUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+                                    <ExternalLink className="w-3 h-3 shrink-0" />
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
+
+                          {/* Quick Lightbox zoom icon if targetUrl exists */}
+                          {targetUrl && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setLightboxImg({ src: cardImg, caption, description })
+                              }}
+                              className="absolute top-2.5 left-2.5 p-1.5 rounded-full bg-black/60 text-white/90 hover:bg-black/80 hover:text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="تكبير الصورة"
+                            >
+                              <ImageIcon className="w-3.5 h-3.5" />
+                            </button>
                           )}
                         </div>
+
+                        {/* Card Mode: Title and Description below image (100% clear and legible) */}
+                        {displayStyle === 'card' && (caption || description || targetUrl) && (
+                          <div className="p-3.5 text-right space-y-1 bg-card/60">
+                            {caption && (
+                              <h3 className="font-bold text-sm sm:text-base text-foreground leading-snug">
+                                {caption}
+                              </h3>
+                            )}
+                            {description && (
+                              <p className="text-xs text-muted-foreground leading-relaxed">
+                                {description}
+                              </p>
+                            )}
+                            {targetUrl && (
+                              <div className="flex items-center justify-end gap-1.5 text-xs text-primary font-medium pt-1">
+                                <span className="truncate max-w-[200px]">{targetUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+                                <ExternalLink className="w-3 h-3 shrink-0" />
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="p-6 text-center space-y-2 text-muted-foreground">
                         <ImageIcon className="w-8 h-8 mx-auto opacity-50" />
-                        <div className="text-xs font-semibold">{btn.title}</div>
+                        <div className="text-xs font-semibold">{caption}</div>
                       </div>
-                    )}
-                    {btn.url && btn.url !== 'https://' && (
-                      <a
-                        href={btn.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          trackClick(btn)
-                        }}
-                        className="absolute top-3 left-3 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition-all"
-                        title="فتح الرابط"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
                     )}
                   </div>
                 )
@@ -522,7 +578,7 @@ export function BioStorefront({ storefront }: BioStorefrontProps) {
                   <div className="flex items-center gap-2.5 min-w-0">
                     {btn.image_url ? (
                       <img
-                        src={btn.image_url}
+                        src={maskStorageUrl(btn.image_url)}
                         alt={btn.title}
                         className="w-9 h-9 rounded-xl object-cover shrink-0 border border-slate-200/50 shadow-xs"
                       />
@@ -586,11 +642,23 @@ export function BioStorefront({ storefront }: BioStorefrontProps) {
           </section>
         </div>
 
-        {/* Branding Footer */}
-        <footer className="mt-10 mb-2 flex items-center justify-center text-center">
-          <span className={`text-xs font-bold tracking-wider ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
-            mkwacrm
-          </span>
+        {/* Branding Footer / Copyright */}
+        <footer className="mt-10 mb-4 flex items-center justify-center text-center">
+          <a
+            href="https://mkwacrm.mstoviral.online/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider transition-all duration-200 hover:opacity-100 group ${
+              isLight
+                ? 'text-slate-400 hover:text-slate-700'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <span>©</span>
+            <span className="font-bold tracking-wider group-hover:underline underline-offset-4">
+              mkwacrm
+            </span>
+          </a>
         </footer>
       </main>
 

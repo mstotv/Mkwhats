@@ -6,25 +6,30 @@ import {
 } from '@/lib/auth/account'
 import { createServiceClient } from '@/lib/supabase/service'
 import { validateSubdomain } from '@/lib/storefront/validation'
+import { getAccountBioLinkAccess } from '@/lib/plans/check-usage-limit'
 
 export async function GET() {
   try {
     const ctx = await getCurrentAccount()
 
-    const { data: storefront, error } = await ctx.supabase
-      .from('storefronts')
-      .select('*')
-      .eq('account_id', ctx.accountId)
-      .maybeSingle()
+    const [storefrontRes, bioAccess] = await Promise.all([
+      ctx.supabase
+        .from('storefronts')
+        .select('*')
+        .eq('account_id', ctx.accountId)
+        .maybeSingle(),
+      getAccountBioLinkAccess(ctx.accountId),
+    ])
 
-    if (error) {
-      console.error('[GET /api/storefront] Query error:', error)
+    if (storefrontRes.error) {
+      console.error('[GET /api/storefront] Query error:', storefrontRes.error)
       return NextResponse.json({ error: 'Failed to load storefront settings' }, { status: 500 })
     }
 
     return NextResponse.json({
-      storefront: storefront || null,
+      storefront: storefrontRes.data || null,
       accountName: ctx.account.name,
+      bioAccess,
     })
   } catch (err) {
     return toErrorResponse(err)
@@ -34,6 +39,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const ctx = await requireRole('admin')
+
+    const bioAccess = await getAccountBioLinkAccess(ctx.accountId)
+    if (!bioAccess.allowed) {
+      return NextResponse.json(
+        { error: bioAccess.reason || 'ميزة البايو لينك غير متوفرة في خطتك الحالية. يرجى الترقية للاستفادة منها.' },
+        { status: 403 }
+      )
+    }
 
     const body = (await request.json().catch(() => null)) as {
       subdomain?: unknown
@@ -55,13 +68,20 @@ export async function POST(request: Request) {
 
     const subdomain = validation.normalized
 
-    // Check availability across other accounts
+    // Check availability across other accounts and current storefront record
     const service = createServiceClient()
-    const { data: existingSubdomain } = await service
-      .from('storefronts')
-      .select('id, account_id')
-      .eq('subdomain', subdomain)
-      .maybeSingle()
+    const [{ data: existingSubdomain }, { data: currentStorefront }] = await Promise.all([
+      service
+        .from('storefronts')
+        .select('id, account_id')
+        .eq('subdomain', subdomain)
+        .maybeSingle(),
+      service
+        .from('storefronts')
+        .select('id, subdomain, subdomain_changes_count')
+        .eq('account_id', ctx.accountId)
+        .maybeSingle(),
+    ])
 
     if (existingSubdomain && existingSubdomain.account_id !== ctx.accountId) {
       return NextResponse.json(
@@ -70,11 +90,26 @@ export async function POST(request: Request) {
       )
     }
 
+    // Subdomain change quota check
+    let newChangesCount = currentStorefront?.subdomain_changes_count ?? 0
+    if (currentStorefront && currentStorefront.subdomain !== subdomain) {
+      if (!bioAccess.canChangeSubdomain) {
+        return NextResponse.json(
+          {
+            error: `لقد استنفدت الحد المسموح لتغيير النطاق الفرعي في خطتك الحالية (${bioAccess.subdomainChangesCount}/${bioAccess.maxSubdomainChanges}). يرجى ترقية الخطة للحصول على صلاحيات إضافية.`,
+          },
+          { status: 403 }
+        )
+      }
+      newChangesCount += 1
+    }
+
     const upsertData: Record<string, any> = {
       account_id: ctx.accountId,
       subdomain,
       store_name: storeName || ctx.account.name,
       is_active: isActive,
+      subdomain_changes_count: newChangesCount,
       updated_at: new Date().toISOString(),
     }
 
@@ -115,6 +150,14 @@ export async function PATCH(request: Request) {
   try {
     const ctx = await requireRole('admin')
 
+    const bioAccess = await getAccountBioLinkAccess(ctx.accountId)
+    if (!bioAccess.allowed) {
+      return NextResponse.json(
+        { error: bioAccess.reason || 'ميزة البايو لينك غير متوفرة في خطتك الحالية. يرجى الترقية للاستفادة منها.' },
+        { status: 403 }
+      )
+    }
+
     const body = (await request.json().catch(() => null)) as Record<string, any> | null
 
     const updates: Record<string, any> = {
@@ -143,19 +186,37 @@ export async function PATCH(request: Request) {
 
       const subdomain = validation.normalized
 
-      // Check if taken by another account
       const service = createServiceClient()
-      const { data: existingSubdomain } = await service
-        .from('storefronts')
-        .select('id, account_id')
-        .eq('subdomain', subdomain)
-        .maybeSingle()
+      const [{ data: existingSubdomain }, { data: currentStorefront }] = await Promise.all([
+        service
+          .from('storefronts')
+          .select('id, account_id')
+          .eq('subdomain', subdomain)
+          .maybeSingle(),
+        service
+          .from('storefronts')
+          .select('id, subdomain, subdomain_changes_count')
+          .eq('account_id', ctx.accountId)
+          .maybeSingle(),
+      ])
 
       if (existingSubdomain && existingSubdomain.account_id !== ctx.accountId) {
         return NextResponse.json(
           { error: 'اسم النطاق محجوز بالفعل لحساب آخر' },
           { status: 409 }
         )
+      }
+
+      if (currentStorefront && currentStorefront.subdomain !== subdomain) {
+        if (!bioAccess.canChangeSubdomain) {
+          return NextResponse.json(
+            {
+              error: `لقد استنفدت الحد المسموح لتغيير النطاق الفرعي في خطتك الحالية (${bioAccess.subdomainChangesCount}/${bioAccess.maxSubdomainChanges}). يرجى ترقية الخطة للحصول على صلاحيات إضافية.`,
+            },
+            { status: 403 }
+          )
+        }
+        updates.subdomain_changes_count = (currentStorefront.subdomain_changes_count || 0) + 1
       }
 
       updates.subdomain = subdomain

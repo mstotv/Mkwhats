@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   XCircle,
   RefreshCw,
+  Globe,
 } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 
@@ -163,6 +164,24 @@ export function PlansClient({ initialPlans }: PlansClientProps) {
                       {t('contactsCount', {
                         count: plan.max_contacts.toLocaleString(locale === 'ar' ? 'ar-SA' : 'en-US'),
                       })}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-slate-400">
+                      <Globe className="h-3.5 w-3.5 text-slate-500" /> {locale === 'ar' ? 'البايو لينك' : 'Bio Link'}
+                    </span>
+                    <span className="font-medium text-[11px]">
+                      {plan.features?.bio_link ? (
+                        <span className="text-emerald-400">
+                          {plan.max_subdomain_changes === -1
+                            ? (locale === 'ar' ? 'مفعّل (تغيير لا محدود)' : 'Enabled (Unlimited)')
+                            : plan.max_subdomain_changes === 0
+                            ? (locale === 'ar' ? 'مفعّل (دون تغيير)' : 'Enabled (0 changes)')
+                            : (locale === 'ar' ? `مفعّل (${plan.max_subdomain_changes} تغييرات)` : `Enabled (${plan.max_subdomain_changes} changes)`)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500">{locale === 'ar' ? 'غير متاح' : 'Disabled'}</span>
+                      )}
                     </span>
                   </div>
                 </div>

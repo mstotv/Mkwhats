@@ -46,6 +46,7 @@ export interface PlanItem {
   max_contacts: number
   max_messages_monthly: number
   max_broadcasts_monthly: number
+  max_subdomain_changes?: number
   features: {
     ai_assistant?: boolean
     voice_transcription?: boolean
@@ -55,6 +56,7 @@ export interface PlanItem {
     flows_builder?: boolean
     woocommerce_integration?: boolean
     shopify_integration?: boolean
+    bio_link?: boolean
   }
 }
 
@@ -522,6 +524,25 @@ export function UpgradePlanModal({
                         )}
                         <span className={plan.features?.shopify_integration ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
                           {isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Store Integration'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        {plan.features?.bio_link ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground shrink-0 opacity-60" />
+                        )}
+                        <span className={plan.features?.bio_link ? 'text-foreground font-semibold' : 'text-muted-foreground line-through opacity-70'}>
+                          {isAr ? 'منشئ البايو لينك (Bio Link Studio)' : 'Bio Link Studio'}
+                          {plan.features?.bio_link && (
+                            <span className="text-[10px] text-muted-foreground mx-1 font-normal">
+                              ({plan.max_subdomain_changes === -1
+                                ? (isAr ? 'تغيير غير محدود' : 'Unlimited')
+                                : plan.max_subdomain_changes === 0
+                                ? (isAr ? 'دون تغيير' : '0 changes')
+                                : (isAr ? `${plan.max_subdomain_changes} تغييرات` : `${plan.max_subdomain_changes} changes`)})
+                            </span>
+                          )}
                         </span>
                       </div>
                     </div>

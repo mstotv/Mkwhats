@@ -52,6 +52,11 @@ export interface ImageCardData {
   src: string
   caption?: string
   description?: string
+  aspect_ratio?: '16/9' | '1/1' | '4/3' | 'auto'
+  corner_radius?: 'none' | 'lg' | 'xl' | '2xl'
+  display_style?: 'card' | 'overlay'
+  link_url?: string
+  open_in_new_tab?: boolean
 }
 
 export interface CustomLinkButton {

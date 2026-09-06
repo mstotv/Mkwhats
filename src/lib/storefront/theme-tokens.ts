@@ -242,6 +242,34 @@ export function getButtonShapeClass(shape?: string): string {
   }
 }
 
+export function getImageCardRadiusClass(radius?: string): string {
+  switch (radius) {
+    case 'none':
+      return 'rounded-none'
+    case 'lg':
+      return 'rounded-lg'
+    case 'xl':
+      return 'rounded-xl'
+    case '2xl':
+    default:
+      return 'rounded-2xl'
+  }
+}
+
+export function getImageCardAspectClass(aspect?: string): string {
+  switch (aspect) {
+    case '1/1':
+      return 'aspect-square'
+    case '4/3':
+      return 'aspect-[4/3]'
+    case 'auto':
+      return 'aspect-auto'
+    case '16/9':
+    default:
+      return 'aspect-[16/9]'
+  }
+}
+
 export function getIconContainerClasses(
   style: string | undefined,
   preset: { bgClass: string; textClass: string; borderClass: string },

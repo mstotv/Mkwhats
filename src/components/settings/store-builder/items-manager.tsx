@@ -16,6 +16,7 @@ import {
   UploadCloud,
 } from 'lucide-react'
 import type { StorefrontItem } from '@/lib/storefront/types'
+import { maskStorageUrl } from '@/lib/storage/mask-storage-url'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -307,7 +308,7 @@ export function ItemsManager({
               {/* Image Thumbnail */}
               <div className="w-16 h-16 rounded-xl bg-muted/60 border border-border/60 overflow-hidden shrink-0 flex items-center justify-center">
                 {item.image_url ? (
-                  <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                  <img src={maskStorageUrl(item.image_url)} alt={item.title} className="w-full h-full object-cover" />
                 ) : (
                   <ImageIcon className="w-6 h-6 text-muted-foreground/40" />
                 )}
@@ -504,7 +505,7 @@ export function ItemsManager({
               <div className="flex items-center gap-3">
                 <div className="w-14 h-14 rounded-xl border border-border bg-muted/40 overflow-hidden shrink-0 flex items-center justify-center">
                   {imageUrl ? (
-                    <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <img src={maskStorageUrl(imageUrl)} alt="Preview" className="w-full h-full object-cover" />
                   ) : (
                     <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
                   )}

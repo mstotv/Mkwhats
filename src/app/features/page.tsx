@@ -19,6 +19,7 @@ import {
   Sparkles,
   Smartphone,
   FileSpreadsheet,
+  Globe,
 } from 'lucide-react'
 import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { LandingFooter } from '@/components/landing/landing-footer'
@@ -43,11 +44,22 @@ function getFeatureIcon(iconName: string) {
     case 'Smartphone': return <Smartphone {...iconProps} />
     case 'Bell': return <Bell {...iconProps} />
     case 'Table': return <Table {...iconProps} />
+    case 'Globe': return <Globe {...iconProps} />
     default: return <Sparkles {...iconProps} />
   }
 }
 
 const DEFAULT_FEATURES = [
+  {
+    id: 'bio-link',
+    title_ar: 'منشئ صفحات البايو لينك والهوية الرقمية (Bio Link Studio)',
+    title_en: 'Bio Link Studio & Digital Identity Pages',
+    tag_ar: 'سابدومين مخصص + بطاقات وروابط',
+    tag_en: 'Custom Subdomain + Link Cards',
+    description_ar: 'إنشاء صفحة بايو لينك احترافية بنطاق فرعي مخصص (yourname.domain) تجمع روابطك، وسائل التواصل، بطاقات الصور المستقلة، وأزرار الواتساب والاتصال مع تحليلات زيارات ونقرات حية وتوافق تام مع الوضع الداكن والفاتح.',
+    description_en: 'Build stunning bio link profile pages on your custom subdomain (yourname.domain). Showcase your links, social media, independent image cards, WhatsApp click-to-chat, with live visitor analytics and seamless dark/light modes.',
+    icon: 'Globe',
+  },
   {
     id: 'order-intake',
     title_ar: 'أخذ وتوثيق الطلبات وإشعار تيليجرام الفوري',
@@ -215,9 +227,16 @@ export default async function FeaturesPage() {
   const socialLinks = (settings?.social_links as any[]) || []
 
   const rawFeatures = settings?.features_content?.features
-  const featuresList = Array.isArray(rawFeatures) && rawFeatures.length > 0
+  let featuresList = Array.isArray(rawFeatures) && rawFeatures.length > 0
     ? rawFeatures
     : DEFAULT_FEATURES
+
+  if (Array.isArray(featuresList) && !featuresList.some((f: any) => f.id === 'bio-link')) {
+    const bioFeature = DEFAULT_FEATURES.find((f) => f.id === 'bio-link')
+    if (bioFeature) {
+      featuresList = [bioFeature, ...featuresList]
+    }
+  }
 
   return (
     <div

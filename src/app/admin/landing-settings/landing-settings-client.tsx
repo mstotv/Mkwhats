@@ -181,12 +181,26 @@ const DEFAULT_THEME_COLORS: ThemeColors = {
   partners_gap: 32,
 }
 
-const DEFAULT_FEATURES_SECTION: FeaturesSectionContent = {
-  section_title_ar: 'كل ما تحتاجه للتحكم الكامل بـ واتساب',
-  section_title_en: 'Everything You Need to Master WhatsApp',
-  section_subtitle_ar: 'مجموعة متطورة من الأدوات المصممة لأتمتة وتحليل وتوسيع تجارتك بسهولة تامة.',
-  section_subtitle_en: 'A sophisticated suite of tools designed to automate, analyze, and scale your conversational commerce effortlessly.',
+export const DEFAULT_FEATURES_SECTION: FeaturesSectionContent = {
+  section_title_ar: 'كل ما تحتاجه لأتمتة وتوسيع أعمالك عبر واتساب',
+  section_title_en: 'Everything You Need to Automate & Scale on WhatsApp',
+  section_subtitle_ar: 'مجموعة أدوات احترافية متكاملة مصممة لزيادة المبيعات، أتمتة الردود، وتنظيم فريق العمل بكفاءة وسرعة فائقة.',
+  section_subtitle_en: 'A comprehensive suite of tools designed to boost conversions, automate workflows, and empower your team effortlessly.',
   features: [
+    {
+      id: 'bio-link',
+      title_ar: 'منشئ صفحات البايو لينك والهوية الرقمية (Bio Link Studio)',
+      title_en: 'Bio Link Studio & Digital Identity Pages',
+      description_ar: 'إنشاء صفحة بايو لينك احترافية بنطاق فرعي مخصص (yourname.domain) تجمع روابطك، وسائل التواصل، بطاقات الصور المستقلة، وأزرار الواتساب والاتصال مع تحليلات زيارات ونقرات حية وتوافق تام مع الوضع الداكن والفاتح.',
+      description_en: 'Build stunning bio link profile pages on your custom subdomain (yourname.domain). Showcase your links, social media, independent image cards, WhatsApp click-to-chat, with live visitor analytics and seamless dark/light modes.',
+      icon: 'Globe',
+      col_span: 'col-span-1',
+      badges: [
+        { text_ar: 'سابدومين مخصص', text_en: 'Custom Subdomain', variant: 'pulse' },
+        { text_ar: 'تحليلات حية', text_en: 'Live Analytics', variant: 'accent' },
+      ],
+      integrations: [],
+    },
     {
       id: 'order-intake',
       title_ar: 'أخذ وتوثيق الطلبات وإشعار تيليجرام الفوري',
@@ -438,9 +452,16 @@ function normalizeFeatures(raw: any): FeaturesSectionContent {
 
   // If it's the new object format
   const rawFeatures = raw.features
-  const featuresList = (Array.isArray(rawFeatures) && rawFeatures.length >= 10)
+  let featuresList = (Array.isArray(rawFeatures) && rawFeatures.length >= 10)
     ? rawFeatures
     : DEFAULT_FEATURES_SECTION.features
+
+  if (Array.isArray(featuresList) && !featuresList.some((item: any) => item.id === 'bio-link')) {
+    const bioDefault = DEFAULT_FEATURES_SECTION.features.find((f) => f.id === 'bio-link')
+    if (bioDefault) {
+      featuresList = [bioDefault, ...featuresList]
+    }
+  }
 
   return {
     section_title_ar: raw.section_title_ar || DEFAULT_FEATURES_SECTION.section_title_ar,

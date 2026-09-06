@@ -33,6 +33,7 @@
     "aiAgents": "AI Agents",
     "orders": "الطلبات",
     "appointments": "المواعيد",
+    "bioLink": "صفحة بايو لينك",
     "settings": "الإعدادات",
     "beta": "Beta",
     "unreadConversations": "{count} unread {count, plural, =1 {conversation} other {conversations}}",
@@ -2166,7 +2167,9 @@
       "contacts": "جهات الاتصال",
       "unlimited": "غير محدود",
       "devices": "{count} جهاز",
-      "contactsCount": "{count} جهة"
+      "contactsCount": "{count} جهة",
+      "bioLink": "البايو لينك",
+      "subdomainChanges": "تغيير النطاق الفرعي"
     },
     "siteSettings": {
       "title": "إعدادات الموقع والصفحات العامة",

@@ -155,3 +155,102 @@ export async function incrementAccountUsageCounter(
     console.error('[incrementAccountUsageCounter] Atomic increment error:', error)
   }
 }
+
+export interface BioLinkAccessInfo {
+  allowed: boolean
+  reason?: string
+  maxSubdomainChanges: number
+  subdomainChangesCount: number
+  canChangeSubdomain: boolean
+  remainingSubdomainChanges: number | null
+}
+
+/**
+ * Check Bio Link feature access and subdomain changes quota for an account.
+ */
+export async function getAccountBioLinkAccess(accountId: string): Promise<BioLinkAccessInfo> {
+  const supabase = createServiceClient()
+
+  // 1. Fetch active subscription & plan
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('status, plans(is_active, features, max_subdomain_changes)')
+    .eq('account_id', accountId)
+    .in('status', ['active', 'trialing'])
+    .maybeSingle()
+
+  let plan: any = null
+  if (sub?.plans) {
+    plan = Array.isArray(sub.plans) ? sub.plans[0] : sub.plans
+  }
+
+  // Fallback: check account.plan_id directly if subscription is not active
+  if (!plan) {
+    const { data: acc } = await supabase
+      .from('accounts')
+      .select('plans(is_active, features, max_subdomain_changes)')
+      .eq('id', accountId)
+      .maybeSingle()
+    if (acc?.plans) {
+      plan = Array.isArray(acc.plans) ? acc.plans[0] : acc.plans
+    }
+  }
+
+  if (!plan || !plan.is_active) {
+    return {
+      allowed: false,
+      reason: 'لا يوجد اشتراك نشط أو الخطة الحالية غير مفعّلة',
+      maxSubdomainChanges: 0,
+      subdomainChangesCount: 0,
+      canChangeSubdomain: false,
+      remainingSubdomainChanges: 0,
+    }
+  }
+
+  const features = (plan.features || {}) as Record<string, any>
+  const bioLinkEnabled = Boolean(features.bio_link)
+
+  if (!bioLinkEnabled) {
+    return {
+      allowed: false,
+      reason: 'ميزة البايو لينك (Bio Link) غير متوفرة في خطتك الحالية. يرجى ترقية الخطة للاستفادة من الميزة.',
+      maxSubdomainChanges: 0,
+      subdomainChangesCount: 0,
+      canChangeSubdomain: false,
+      remainingSubdomainChanges: 0,
+    }
+  }
+
+  // 2. Fetch current storefront to get subdomain_changes_count
+  const { data: storefront } = await supabase
+    .from('storefronts')
+    .select('subdomain, subdomain_changes_count')
+    .eq('account_id', accountId)
+    .maybeSingle()
+
+  const maxSubdomainChanges = typeof plan.max_subdomain_changes === 'number' ? plan.max_subdomain_changes : 0
+  const subdomainChangesCount = storefront?.subdomain_changes_count ?? 0
+  const isInitialCreation = !storefront
+
+  if (maxSubdomainChanges === -1) {
+    return {
+      allowed: true,
+      maxSubdomainChanges: -1,
+      subdomainChangesCount,
+      canChangeSubdomain: true,
+      remainingSubdomainChanges: null,
+    }
+  }
+
+  const remaining = Math.max(0, maxSubdomainChanges - subdomainChangesCount)
+  const canChangeSubdomain = isInitialCreation || remaining > 0
+
+  return {
+    allowed: true,
+    maxSubdomainChanges,
+    subdomainChangesCount,
+    canChangeSubdomain,
+    remainingSubdomainChanges: remaining,
+  }
+}
+

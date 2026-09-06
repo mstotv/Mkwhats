@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Loader2, Save, Bot, FileSpreadsheet, Send, ShoppingBag, Zap, Workflow, Mic } from 'lucide-react'
+import { Loader2, Save, Bot, FileSpreadsheet, Send, ShoppingBag, Zap, Workflow, Mic, Globe } from 'lucide-react'
 
 export interface Plan {
   id: string
@@ -28,6 +28,7 @@ export interface Plan {
   max_contacts: number
   max_messages_monthly?: number
   max_broadcasts_monthly?: number
+  max_subdomain_changes?: number
   features?: {
     ai_assistant?: boolean
     voice_transcription?: boolean
@@ -37,6 +38,7 @@ export interface Plan {
     flows_builder?: boolean
     woocommerce_integration?: boolean
     shopify_integration?: boolean
+    bio_link?: boolean
   }
   is_active: boolean
   subscriber_count?: number
@@ -70,6 +72,7 @@ export function EditPlanModal({
     max_contacts: 1000,
     max_messages_monthly: 1000,
     max_broadcasts_monthly: 10,
+    max_subdomain_changes: 0,
     features: {
       ai_assistant: true,
       voice_transcription: false,
@@ -79,6 +82,7 @@ export function EditPlanModal({
       flows_builder: false,
       woocommerce_integration: false,
       shopify_integration: false,
+      bio_link: false,
     },
     is_active: true,
   })
@@ -97,6 +101,7 @@ export function EditPlanModal({
         max_contacts: plan.max_contacts ?? 1000,
         max_messages_monthly: plan.max_messages_monthly ?? 1000,
         max_broadcasts_monthly: plan.max_broadcasts_monthly ?? 10,
+        max_subdomain_changes: plan.max_subdomain_changes ?? 0,
         features: {
           ai_assistant: Boolean(plan.features?.ai_assistant),
           voice_transcription: Boolean(plan.features?.voice_transcription),
@@ -106,6 +111,7 @@ export function EditPlanModal({
           flows_builder: Boolean(plan.features?.flows_builder),
           woocommerce_integration: Boolean(plan.features?.woocommerce_integration),
           shopify_integration: Boolean(plan.features?.shopify_integration),
+          bio_link: Boolean(plan.features?.bio_link),
         },
         is_active: plan.is_active ?? true,
       })
@@ -293,6 +299,28 @@ export function EditPlanModal({
             </div>
           </div>
 
+          {/* Subdomain Changes Limit */}
+          <div className="space-y-1.5 pt-1">
+            <Label className="text-xs text-slate-300">
+              مرات تغيير النطاق الفرعي للبايو لينك (-1 لا محدود / 0 تعيين أولي فقط دون تغيير)
+            </Label>
+            <Input
+              type="number"
+              value={formData.max_subdomain_changes}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  max_subdomain_changes: parseInt(e.target.value) || 0,
+                })
+              }
+              className="bg-slate-950 border-slate-800 text-slate-100 text-sm"
+              required
+            />
+            <p className="text-[10px] text-slate-400">
+              0: تعيين السابدومين عند الإنشاء الأول فقط دون تعديل | 1+: عدد المرات المسموح بتغييره | -1: غير محدود
+            </p>
+          </div>
+
           {/* Feature Toggles Section */}
           <div className="space-y-2 pt-2 border-t border-slate-800">
             <Label className="text-xs font-semibold text-indigo-400">ميزات الخطة المفعّلة (Features)</Label>
@@ -444,6 +472,25 @@ export function EditPlanModal({
                     setFormData({
                       ...formData,
                       features: { ...formData.features, shopify_integration: checked },
+                    })
+                  }
+                />
+              </div>
+
+              {/* Bio Link Studio */}
+              <div className="flex items-center justify-between rounded-lg bg-slate-950/60 border border-slate-800/80 p-2.5">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-emerald-400" />
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-medium text-slate-200">صفحة البايو لينك (Bio Link Studio)</Label>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.features.bio_link}
+                  onCheckedChange={(checked) =>
+                    setFormData({
+                      ...formData,
+                      features: { ...formData.features, bio_link: checked },
                     })
                   }
                 />

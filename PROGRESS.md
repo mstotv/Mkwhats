@@ -1,13 +1,125 @@
 # حالة المشروع - آخر تحديث: [6/9/2026]
 
-> 🎯 **ملخص الحالة الراهنة الشامل (Wildcard Subdomain Routing, Traefik DNS SSL & Bio Link Studio):**
-> تم بحمد الله وتوفيقه إنجاز منظومة النطاقات الفرعية الشاملة (Wildcard Subdomains) وربط البايو لينك بالكامل:
-> 1. **الروابط الفرعية الديناميكية التلقائية (Wildcard Subdomains `*.mstoviral.online`)**: إعداد وتفعيل شهادة أمان مجانية دائمة من Let's Encrypt تغطي النطاق الرئيسي وجميع النطاقات الفرعية تلقائياً عبر DNS Challenge و Hostinger API.
-> 2. **تكامل Traefik المباشر مع Coolify (Custom Traefik Labels)**: ضبط وتثبيت توجيهات Traefik في إعدادات التطبيق داخل Coolify بحيث يتم ربط أي حاوية جديدة تُنشر مستقبلاً تلقائياً دون أي تدخل يدوي ودون التعرض لمشكلة Bad Gateway.
-> 3. **حماية واستقلالية المشاريع الأخرى على السيرفر (Multi-Project Isolation)**: عزل معالج الشهادات القديم للمشاريع السابقة (HTTP Challenge) وضمان استمرار عمل جميع المواقع الأخرى على Coolify بأمان تام، مع تخصيص معالج مستقل لمشروعنا (`letsencrypt-dns`).
-> 4. **معالجة واستخلاص النطاق في استوديو البايو لينك (Bio Link Studio & Next.js Proxy)**: تحديث دالة استخلاص النطاق الفرعي والواجهة لتكتشف تلقائياً دومين `mstoviral.online` وتوجه الزائر مباشرة إلى `/store/[subdomain]` مع عرض وتطبيق ثيم وروابط وحساب المستخدم بدقة.
+> 🎯 **ملخص الحالة الراهنة الشامل (Bio Link in Plans, Storage URL Masking, Image Card Studio & Features CMS):**
+> تم بحمد الله وتوفيقه إنجاز وتثبيت كافة ميزات المنظومة المتكاملة للبايو لينك وحماية البيانات ومحرر الميزات:
+> 1. **ميزة Bio Link في الخطط والاشتراكات (Plan Feature Flag)**: إضافة خيار `bio_link` في باقات المنصة، وتمكين المشرف (Admin) من تفعيلها أو حجبها عن أي باقة حسب الرغبة عبر لوحة تحكم الأدمن.
+> 2. **التحكم بسقف مرات تغيير السابدومين (Subdomain Changes Quota)**: تمكين الأدمن من تحديد سقف تعديل النطاق (`max_subdomain_changes`): 0 لتعيين النطاق عند الإنشاء الأول فقط دون تعديل، 1 أو 3 أو 5 لتحديد عدد التعديلات المسموح بها، أو -1 لتعديل لا محدود.
+> 3. **ظهور الميزة في لوحة الأدمن (Admin Panel - `/admin/plans`)**: عرض حالة البايو لينك وسقف السابدومين على بطاقات الباقات، وإتاحة التعديل الكامل عليها في نافذة تعديل الباقة (Edit Plan Modal) ونافذة إضافة باقة جديدة (Create Plan Modal).
+> 4. **ظهور الميزة في لوحة المستخدم (User Panel)**:
+>    - إضافة **"🌐 صفحة بايو لينك"** كعنصر رئيسي مستقل في الشريط الجانبي (Sidebar) لليوزر بانل مع مسار مباشر `/settings?tab=store` و `/biolink`.
+>    - إضافة **بطاقة مؤشر أداء رئيسية (7th KPI Card)** في لوحة الخطة والاستهلاك (`/settings?tab=plan`) توضح حالة التفعيل والرصيد المتبقي وزر إدارة/ترقية فوري.
+>    - إدراج ميزة البايو لينك وسقف السابدومين في شبكة الحدود التشغيلية وقائمة الميزات لجميع الباقات المتاحة للمستخدم (Free, Pro, Enterprise).
+>    - إضافة بطاقة وصول سريعة في صفحة نظرة عامة على الإعدادات (`/settings` Overview).
+> 5. **الحماية البرمجية الشاملة (Multi-Tenant Backend Enforcement)**: حماية مسارات الـ API (`/api/storefront` و `/api/storefront/check-subdomain`) لمنع غير المشتركين من إنشاء البايو لينك (403 Forbidden)، واحتساب عداد التغييرات `subdomain_changes_count` بدقة لمنع تجاوز السقف.
+> 6. **استوديو بطاقات الصور المستقلة (Independent Image Card Studio)**:
+>    - فصل حواف وأشكال الصور كلياً عن أزرار الروابط لمنع تشوه الصور أو قص أطرافها.
+>    - إتاحة التحكم المستقل في حواف الصورة (2xl, xl, lg, none)، ونسبة الأبعاد (16:9, 1:1, 4:3, Auto)، ونمط العرض (بطاقة تحت الصورة أو تراكب داكن)، والرابط التوجيهي وعارض الصور (Lightbox).
+> 7. **تذييل حقوق المنصة ورابط التوجيه (Brand Copyright Footer Link)**:
+>    - تحويل النص الثابت لـ **`mkwacrm`** في تذييل صفحة البايو لينك إلى رابط تفاعلي ذكي يفتح رابط المنصة المباشر `https://mkwacrm.mstoviral.online/` في نافذة جديدة.
+>    - تعميم الرابط التفاعلي على المعاينة الحية في الاستوديو (`live-phone-preview.tsx`).
+> 8. **حجب وتشفير روابط التخزين السحابي (Supabase Storage URL Masking & Proxy)**:
+>    - إخفاء روابط Supabase كلياً عبر بروكسي محلي مشفر `/api/storage/...` لمنع كشف روابط أو هوية السيرفر للزوار والعملاء.
+>    - توفير تجربة رفع ثنائية: **رفع من الجهاز** (تختفي حقول الإدخال النصية وتظهر شارة نظيفة `✅ صورة مرفوعة من جهازك محفوظة بأمان`) أو **رابط خارجي** للصور المباشرة.
+>    - تعميم الحماية على لوحة المستخدم واستوديو البايو لينك وإعدادات موقع الأدمن (`site-settings-client.tsx` و `settings/page.tsx`).
+> 9. **معالجة تعارض الـ CSS في الـ Console (React Style Conflict Fix)**:
+>    - توحيد خلفيات التدرجات والصور تحت خاصية `backgroundImage` والقضاء التام على تحذيرات الـ Console الخاصة بتعارض `background`.
+> 10. **إدراج الميزة في صفحة المميزات ونظام إدارة محتوى الهبوط (Features Page & Admin CMS)**:
+>    - إضافة بطاقة **Bio Link Studio** بتفاصيلها وأيقونتها في صفحة المميزات العامة (`/features`) وصفحة الهبوط الرئيسية (`/`).
+>    - إتاحة التحكم والتعديل الكامل عليها للأدمن في `/admin/landing-settings` وتبويب المميزات في `/admin/settings`.
 > 
-> 🛡️ **الجودة والاستقرار**: اجتياز كامل ومطلق لفحص الأنواع واختبارات المنظومة بنجاح تام، وتأكيد عمل الرابط المباشر `https://mustafa.mstoviral.online` برمز استجابة 200 OK وقفل أمان SSL فعال.
+> 🛡️ **الجودة والاستقرار**: اجتياز كامل ومطلق لفحص الأنواع البرمجية (`npx tsc --noEmit` بـ 0 أخطاء) واجتياز 100% من الاختبارات الآلية (704 اختباراً في 73 ملف اختبار).
+
+- ✅ **إنجاز ميزة البايو لينك في الخطط والتحكم بسقف السابدومين (Bio Link Plan Features & Subdomain Limits)**:
+  - **ميجريشن قاعدة البيانات (Migration 092)**:
+    - ملف [`supabase/migrations/092_plan_biolink_feature_and_subdomain_limits.sql`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/supabase/migrations/092_plan_biolink_feature_and_subdomain_limits.sql) لإضافة `max_subdomain_changes` لجدول `plans` و `subdomain_changes_count` لجدول `storefronts`.
+    - تحديث الخطط الافتراضية الأولية (تعطيل في المجانية `free`، وتفعيل مع سقف 1 في `pro`، وتفعيل مع سقف 5 في `enterprise`).
+  - **طبقة الواجهة الخلفية ومنطق الصلاحيات ([`src/lib/plans/check-usage-limit.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/lib/plans/check-usage-limit.ts))**:
+    - تطوير دالة `getAccountBioLinkAccess` الشاملة لفحص اشتراك الحساب وباقته النشطة ومطابقتها مع عدد مرات التغيير المتبقية.
+    - تحصين مسار [`/api/storefront`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/storefront/route.ts) ومسار فحص النطاق [`/api/storefront/check-subdomain`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/storefront/check-subdomain/route.ts).
+    - تحديث مسار حفظ الباقات [`/api/admin/plans/[id]`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/admin/plans/%5Bid%5D/route.ts) ومسار بيانات الاشتراك [`/api/account/subscription`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/account/subscription/route.ts).
+  - **لوحة المشرف والإدارة (Admin Management UI)**:
+    - تحديث صفحة إدارة الباقات الرئيسية [`src/app/admin/plans/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/admin/plans/page.tsx):
+      - إدراج سقف وسطور **Bio Link Studio** وسابدومين في بطاقات الباقات وقائمة الحصص وقائمة ميزات النظام (Checklist).
+      - تحديث نافذة التعديل (Edit Plan Modal) بحقل رقمي لسقف تغيير السابدومين وخيار تفعيل/تعطيل الميزة وحفظها في قاعدة البيانات عبر `PATCH`.
+      - تحديث نافذة إنشاء باقة جديدة (Create Plan Modal) لإمكانية ضبط الميزة وسقف السابدومين عند إنشاء باقة.
+    - تحديث نافذة التعديل المشتركة [`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/admin/_components/edit-plan-modal.tsx) بمفتاح التبديل وحقل السقف.
+    - تحديث بطاقة اشتراك الحساب في لوحة الأدمن [`account-subscription-card.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/admin/_components/account-subscription-card.tsx) لإظهار ميزة وسقف البايو لينك للأدمن.
+  - **لوحة المستخدم والشريط الجانبي (User Panel & Sidebar UX)**:
+    - إضافة **"🌐 صفحة بايو لينك (Bio Link)"** في شريط التنقل الجانبي الرئيسي للمستخدمين ([`sidebar.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/layout/sidebar.tsx)) مع مسار مباشر `/settings?tab=store` و صفحة توجيه `/biolink`.
+    - إضافة **بطاقة مؤشر أداء رئيسية (7th Primary KPI Card)** في لوحة استهلاك الخطة [`plan-usage-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/plan-usage-panel.tsx) تظهر حالة البايو لينك، سقف تغيير السابدومين المتبقي، وزر إدارة مباشر أو ترقية.
+    - إدراج الميزة وسقف السابدومين ضمن بطاقات مقارنة الباقات الثلاث المتاحة للمستخدم (Free, Pro, Enterprise) في كل من الحدود التشغيلية وقائمة الميزات.
+    - إضافة بطاقة سريعة في صفحة نظرة عامة على الإعدادات ([`settings-overview.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/settings-overview.tsx)).
+    - بناء شاشة القفل الترويجية الفاخرة للخطط التي لا تتضمن البايو لينك في استوديو البايو لينك [`store-settings-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/store-settings-panel.tsx).
+    - عرض شارة العداد والرصيد المتبقي لتغيير النطاق الفرعي وقفل الحقل عند استنفاد الرصيد.
+  - **تذييل حقوق المنصة ورابط التوجيه (Brand Copyright Footer Link)**:
+    - في صفحة البايو لينك المباشرة ([`bio-storefront.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/storefront/bio-storefront.tsx)): تحويل نص الكوبيرايت `mkwacrm` في أسفل الصفحة إلى رابط تفاعلي مباشر يوجّه الزائر فوراً إلى `https://mkwacrm.mstoviral.online/` في علامة تبويب جديدة مع تأثير hover مميز.
+    - في المعاينة الهاتفية الحية بالاستوديو ([`live-phone-preview.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/store-builder/live-phone-preview.tsx)): تحديث تذييل المعاينة ليعكس الرابط التفاعلي نفسه.
+  - **تنظيف وتخصيص البايو لينك حصراً (Bio Link Pure Architecture)**:
+    - حذف ملفات القوالب القديمة غير المستخدمة (`cafe-storefront.tsx`, `clinic-storefront.tsx`, `salon-storefront.tsx`, `booking-modal.tsx`, `order-drawer.tsx`).
+    - تبسيط وتجريد [`storefront-client-view.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/storefront/storefront-client-view.tsx) ليقوم بعرض صفحة البايو لينك الحصرية [`bio-storefront.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/storefront/bio-storefront.tsx) مباشرة ودون أي اعتماديات زائدة.
+  - **فصل وضبط تخصيص بطاقات الصور في البايو لينك (Independent Image Card Studio & Controls)**:
+    - **فصل حواف الصورة كلياً عن أزرار الروابط**: لم تعد بطاقة الصورة ترث شكل الأزرار (كالـ Full Pill أو غيرها) حتى لا تتشوه الصورة أو تتحول لشكل بيضاوي يقطع أطرافها.
+    - **التحكم المستقل بحواف الصورة (Image Corner Radius)**: إتاحة خيارات مستقلة خاصة بالصور (2xl منحنية 16px، xl ناعمة 12px، lg خفيفة 8px، none حادة 0px).
+    - **أبعاد ومقاسات مخصصة (Aspect Ratio & Dimensions)**: إمكانية الاختيار بين (16:9 بانر عريض، 1:1 مربع، 4:3 كلاسيكي، أو Auto الحجم الطبيعي الكامل دون اقتصاص).
+    - **وضوح تام للنص والعنوان (Display Style)**: إتاحة نمطين للعرض:
+      - **بطاقة أسفل الصورة (Card Below Image - الافتراضي والأوضح)**: يظهر العنوان (Title) والوصف (Description) في بطاقة عالية التباين وواضحة 100% أسفل الصورة مباشرة ولا تنقص إطلاقاً.
+      - **تراكب متدرج فوق الصورة (Overlay with Gradient)**: تراكب ظلي داكن متوازن يُظهر النص الأبيض بوضوح.
+    - **الرابط والإجراء عند النقر (Destination URL & Lightbox)**: حقل لرابط التوجيه مع مفتاح فتح في نافذة جديدة، أو التكبير التلقائي في عارض الصور (Lightbox) عند عدم وجود رابط.
+    - انعكاس فوري ومطابق تماماً في المعاينة الهاتفية الحية ([`live-phone-preview.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/store-builder/live-phone-preview.tsx)) وفي صفحة العرض المباشرة ([`bio-storefront.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/storefront/bio-storefront.tsx)).
+  - **صفحة الأسعار ونوافذ الترقية**:
+    - تحديث [`landing-pricing.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-pricing.tsx)، [`plan-usage-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/plan-usage-panel.tsx)، و [`upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/upgrade-plan-modal.tsx).
+  - **الاختبارات والتحقق البرمجي**:
+    - إضافة اختبارات وحدة مخصصة في [`src/lib/plans/biolink-quota.test.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/lib/plans/biolink-quota.test.ts) واجتياز 704 اختبارات بنجاح تام.
+
+- ✅ **إخفاء وتشفير روابط التخزين السحابي (Supabase Storage URL Masking & Dual-Mode Device Upload UX)**:
+  - **حجب روابط Supabase كلياً ومنع ظهورها في الواجهات (Complete Storage URL Masking & Obfuscation)**:
+    - بناء مكتبة التوجيه والتشفير [`src/lib/storage/mask-storage-url.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/lib/storage/mask-storage-url.ts):
+      - دالة `maskStorageUrl(url)`: تحويل أي رابط صادر من Supabase Storage تلقائياً من المسار المباشر المكشوف `https://<ref>.supabase.co/storage/v1/object/public/<bucket>/<path>` إلى المسار الداخلي المشفر والمحمى `/api/storage/<bucket>/<path>`.
+      - دالة `isInternalStorageUrl(url)`: الكشف التلقائي عما إذا كان الرابط يمثل ملفاً تم رفعه داخلياً أم رابطاً خارجياً مباشراً.
+  - **بروكسي وسائط المنصة المحمي والآمن ([`src/app/api/storage/[bucket]/[...path]/route.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/storage/%5Bbucket%5D/%5B...path%5D/route.ts))**:
+    - إنشاء مسار وسيط ذكي (Internal Media Stream Proxy) يستقبل الطلبات الداخلية، ويقوم بتحميل ودفق الملفات مع التحقق من الحاويات المصرح بها (`storefront-media`, `avatars`, `support-attachments`, `flow-media`, `chat-media`, `receipts`).
+    - تعيين ترويسات التخزين المؤقت القياسية `Cache-Control: public, max-age=31536000, immutable` لسرعة فائقة في التصفح وعدم كشف هوية الخادم السحابي إطلاقاً.
+  - **تحديث مسارات الرفع في الواجهة الخلفية (Backend Upload Routes Masked)**:
+    - مسار وسائط البايو لينك [`/api/storefront/upload`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/storefront/upload/route.ts): يعيد فوراً الرابط المحمي `/api/storage/storefront-media/${fileName}`.
+    - مسار شعار المنصة المشرف [`/api/admin/upload-logo`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/admin/upload-logo/route.ts): يعيد الرابط المحمي `/api/storage/avatars/${filename}`.
+    - مسار إيصالات الدفع [`/api/upload-receipt`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/upload-receipt/route.ts): يعيد الرابط المحمي `/api/storage/avatars/${filename}`.
+    - مسار مرفقات الدعم الفني [`/api/support/upload`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/support/upload/route.ts): يعيد الرابط المحمي `/api/storage/support-attachments/${fileName}`.
+    - مسار الصورة الشخصية للمستخدم [`profile-form.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/profile-form.tsx): يحفظ الرابط المحمي `/api/storage/avatars/${path}` في ملف المستخدم بدلاً من الرابط المباشر.
+  - **تجربة رفع الصور الثنائية في لوحة المستخدم (User Panel - Bio Link Studio & Storefront)**:
+    - في بطاقات الصور (`image_card`) بمحرر الروابط [`branding-editor.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/store-builder/branding-editor.tsx):
+      - توفير مفتاح اختيار ثنائي واضح: **"رفع من الجهاز" (Device Upload)** أو **"رابط صورة خارجي" (External Image URL)**.
+      - عند الرفع من الجهاز: إخفاء حقل الإدخال النصي تماماً لمنع عرض أي رابط تقني، وعرض شارة أنيقة: **"✅ صورة مرفوعة من جهازك (محفوظة بأمان)"** مع صورة مصغرة وأزرار (استبدال / إزالة).
+      - عند اختيار رابط خارجي: يتاح للمستخدم وضع أي رابط من الإنترنت (مثل Unsplash أو CDN خارجي) وتعمل الصورة فوراً وبسلاسة.
+    - في أيقونة الزر المخصص (`custom_image`): إظهار شارة الرفع النظيفة ومنع حقن رابط التخزين السحابي في حقل الرابط.
+    - في صفحة العرض المباشرة للبايو لينك ([`bio-storefront.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/storefront/bio-storefront.tsx)): تمرير جميع الصور والخلفيات والشعارات عبر `maskStorageUrl(...)` لضمان عدم تسرب أي رابط خام.
+    - في المعاينة الهاتفية الحية ([`live-phone-preview.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/store-builder/live-phone-preview.tsx)): حماية شعار المتجر وصورة الغلاف وبطاقات الصور عبر `maskStorageUrl`.
+    - في مدير منتجات وخدمات المتجر ([`items-manager.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/store-builder/items-manager.tsx)): حماية صور المنتجات والخدمات عبر `maskStorageUrl`.
+  - **لوحة تحكم المشرف (Admin Panel - Site Settings & CMS Settings)**:
+    - في إعدادات الموقع الرئيسية ([`site-settings-client.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/admin/site-settings/site-settings-client.tsx)):
+      - شعار المنصة (`logo_url`): عند الرفع من الجهاز يظهر إشعار وشارة **"✅ تم رفع الشعار من جهازك (محفوظ ومخفي بأمان)"** ولا يظهر رابط السوبا بيس في حقل النص إطلاقاً، وتطبيق القناع على المعاينة المباشرة.
+      - أيقونة تبويب المتصفح (`favicon_url`): شارة **"✅ تم رفع أيقونة المتصفح من جهازك (محفوظة بأمان)"** دون تسريب الرابط، مع تفعيل المعاينة الحية المشفرة.
+    - في صفحة تخصيص المنصة العامة ([`src/app/admin/settings/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/admin/settings/page.tsx)):
+      - حجب الرابط الخام للشعار واستبداله بشارة الرفع الآمنة مع أزرار الاستبدال والحذف والمعاينة المحمية.
+  - **التحقق والاختبارات**:
+    - فحص سلامة وتوافق الأنواع (`npx tsc --noEmit` بـ 0 أخطاء).
+    - اجتياز جميع اختبارات المنصة الآلية (704 اختبارات ناجحة بالكامل).
+
+- ✅ **إدراج ميزة Bio Link في صفحة المميزات ولوحة تحكم المشرف (Bio Link in Features Page & Admin CMS)**:
+  - **صفحة المميزات العامة ([`src/app/features/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/features/page.tsx))**:
+    - إضافة بطاقة ميزة **"منشئ صفحات البايو لينك والهوية الرقمية (Bio Link Studio)"** مع وسم `سابدومين مخصص + بطاقات وروابط` وشرح تفصيلي بالعربية والإنجليزية وأيقونة `Globe` المتوافقة.
+    - إضافة آلية دمج تلقائية تضمن ظهور الميزة حتى لو كانت قاعدة البيانات تحتوي على قائمة سابقة محفوظة.
+  - **لوحة تحكم المشرف - نظام إدارة محتوى الهبوط ([`landing-settings-client.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/admin/landing-settings/landing-settings-client.tsx))**:
+    - إدراج ميزة البايو لينك ضمن مصفوفة المميزات الافتراضية مع شارات `سابدومين مخصص` و `تحليلات حية`.
+    - تمكين المشرف (Admin) من الدخول إلى `/admin/landing-settings` -> تبويب المميزات لتعديل نصوص البطاقة، وصفها، أيقونتها، شاراتها، وترتيبها بين البطاقات وحفظها في قاعدة البيانات.
+  - **صفحة إعدادات المشرف وتخصيص المنصة ([`src/app/admin/settings/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/admin/settings/page.tsx))**:
+    - إضافة بطاقة البايو لينك ضمن محرر بطاقات الميزات (Tab 3: Features) لتمكين المشرف من تعديل العناوين والأوصاف وحفظها بنقرة واحدة.
+  - **صفحة الهبوط الرئيسية ([`src/app/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/page.tsx))**:
+    - إدراج بطاقة البايو لينك في شبكة مميزات صفحة الهبوط العامة (`defaultFeaturesList`).
+
+- ✅ **معالجة تعارض خصائص الـ CSS في الـ Console (React Style Conflict Elimination)**:
+  - القضاء التام على تحذيرات React Console بشأن خلط خاصية `background` مع `backgroundImage` و `backgroundSize` و `backgroundPosition`.
+  - توحيد خلفيات التدرجات اللونية والصور الحية في صفحة البايو لينك ([`bio-storefront.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/storefront/bio-storefront.tsx)) واستوديو المعاينة ([`live-phone-preview.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/store-builder/live-phone-preview.tsx)) تحت خاصية `backgroundImage` المفردة والمتوافقة 100%.
+
 
 - ✅ **إنجاز البنية التحتية للنطاقات الفرعية وشهادات SSL التلقائية (Wildcard Subdomain Infrastructure & Traefik DNS Challenge)**:
   - **شهادة أمان Wildcard SSL دائمة وتلقائية**:

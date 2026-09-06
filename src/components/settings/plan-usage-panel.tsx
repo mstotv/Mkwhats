@@ -43,6 +43,7 @@ import {
   Building2,
   Mic,
   ShieldAlert,
+  Globe,
 } from 'lucide-react'
 import { UpgradePlanModal, type PlanItem } from './upgrade-plan-modal'
 import { useTranslations, useLocale } from 'next-intl'
@@ -73,7 +74,9 @@ interface PlanData {
     custom_webhooks?: boolean
     woocommerce_integration?: boolean
     shopify_integration?: boolean
+    bio_link?: boolean
   }
+  max_subdomain_changes?: number
 }
 
 interface SubscriptionData {
@@ -467,6 +470,34 @@ export function PlanUsagePanel() {
       icon: ShoppingBag,
       enabled: Boolean(plan.features?.shopify_integration),
     },
+    {
+      key: 'bio_link',
+      label: isAr
+        ? `صفحة البايو لينك (Bio Link Studio)${
+            plan.features?.bio_link
+              ? ` — ${
+                  plan.max_subdomain_changes === -1
+                    ? 'تغيير غير محدود'
+                    : plan.max_subdomain_changes === 0
+                    ? 'دون تغيير السابدومين'
+                    : `سقف ${plan.max_subdomain_changes} تغييرات`
+                }`
+              : ''
+          }`
+        : `Bio Link Studio${
+            plan.features?.bio_link
+              ? ` — ${
+                  plan.max_subdomain_changes === -1
+                    ? 'Unlimited changes'
+                    : plan.max_subdomain_changes === 0
+                    ? '0 changes'
+                    : `${plan.max_subdomain_changes} changes`
+                }`
+              : ''
+          }`,
+      icon: Globe,
+      enabled: Boolean(plan.features?.bio_link),
+    },
   ]
 
   return (
@@ -758,6 +789,89 @@ export function PlanUsagePanel() {
                 </div>
               )}
             </div>
+
+            {/* 7. Bio Link Studio & Subdomain Card */}
+            <div className={`rounded-xl border p-4 space-y-2.5 shadow-sm transition-all ${
+              plan.features?.bio_link
+                ? 'border-border bg-card hover:border-emerald-500/30'
+                : 'border-border/60 bg-muted/20 opacity-80'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 truncate">
+                  <Globe className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> {isAr ? 'البايو لينك والسابدومين' : 'Bio Link & Subdomain'}
+                </span>
+                {plan.features?.bio_link ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] font-bold px-2 py-0">
+                    {plan.max_subdomain_changes === -1
+                      ? (isAr ? 'لا محدود ♾️' : 'Unlimited ♾️')
+                      : (isAr ? 'مفعّل بالخطة 🟢' : 'Active 🟢')}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-rose-500/10 text-rose-400 border-rose-500/20 text-[10px] font-bold px-2 py-0">
+                    {isAr ? 'غير متاح 🔒' : 'Locked 🔒'}
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex items-baseline justify-between pt-0.5">
+                <div className="space-y-0">
+                  <span className="text-xl font-black text-foreground font-mono">
+                    {plan.features?.bio_link
+                      ? (plan.max_subdomain_changes === -1
+                          ? '♾️'
+                          : plan.max_subdomain_changes === 0
+                          ? '0'
+                          : plan.max_subdomain_changes)
+                      : '0'}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-medium block">
+                    {plan.features?.bio_link
+                      ? (plan.max_subdomain_changes === -1
+                          ? (isAr ? 'تغييرات سابدومين غير محدودة' : 'Unlimited subdomain edits')
+                          : plan.max_subdomain_changes === 0
+                          ? (isAr ? 'تعيين أولي فقط (بدون تغيير)' : 'Initial set only (0 edits)')
+                          : (isAr ? `تغييرات سابدومين مسموحة: ${plan.max_subdomain_changes}` : `Allowed subdomain edits: ${plan.max_subdomain_changes}`))
+                      : (isAr ? 'غير مشمول في خطتك الحالية' : 'Not included in current plan')}
+                  </span>
+                </div>
+
+                <div className="text-right">
+                  {plan.features?.bio_link ? (
+                    <a
+                      href="/settings?tab=store"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 hover:underline pt-1"
+                    >
+                      <span>{isAr ? 'إدارة الرابط' : 'Manage Bio'}</span>
+                      <ArrowUpRight className="h-3 w-3 rtl:rotate-[-90deg]" />
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsUpgradeModalOpen(true)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 hover:underline pt-1"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      <span>{isAr ? 'ترقية لفتحه' : 'Upgrade'}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {plan.features?.bio_link ? (
+                <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold pt-0.5 truncate">
+                  <CheckCircle2 className="h-3 w-3 shrink-0" />
+                  <span className="truncate">
+                    {plan.max_subdomain_changes === -1
+                      ? (isAr ? 'تخصيص كامل للهوية والرابط 🌐' : 'Full link & branding access 🌐')
+                      : (isAr ? `صفحة بايو مع ${plan.max_subdomain_changes} تعديلات للرابط` : `Bio page with ${plan.max_subdomain_changes} link changes`)}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-[11px] text-muted-foreground pt-0.5 truncate">
+                  <span className="truncate">{isAr ? 'الترقية لـ Pro أو أعلى مطلوبة للاستخدام' : 'Upgrade to Pro or higher required'}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3 pt-2">
@@ -963,10 +1077,29 @@ export function PlanUsagePanel() {
                           {p.max_broadcasts_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : `${(p.max_broadcasts_monthly || 10).toLocaleString()}${isAr ? ' /ش' : ' /mo'}`}
                         </span>
                       </div>
+                      <div className="rounded-xl bg-muted/40 p-2.5 border border-border/40 col-span-2">
+                        <span className="text-[10px] text-muted-foreground block flex items-center gap-1">
+                          <Globe className="h-3 w-3 text-emerald-500 shrink-0" />
+                          {isAr ? 'البايو لينك وتغييرات السابدومين' : 'Bio Link & Subdomain Edits'}
+                        </span>
+                        <span className="font-bold text-foreground mt-0.5 block text-xs">
+                          {p.features?.bio_link ? (
+                            <span className="text-emerald-500 font-medium">
+                              {p.max_subdomain_changes === -1
+                                ? (isAr ? 'مفعّل (تغييرات غير محدودة ♾️)' : 'Enabled (Unlimited ♾️)')
+                                : p.max_subdomain_changes === 0
+                                ? (isAr ? 'مفعّل (تعيين أولي فقط - 0 تغيير)' : 'Enabled (Initial set only - 0 edits)')
+                                : (isAr ? `مفعّل (${p.max_subdomain_changes} تغييرات سابدومين)` : `Enabled (${p.max_subdomain_changes} edits)`)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground/60">{isAr ? 'غير مشمول في الخطة 🔒' : 'Not Included 🔒'}</span>
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Included Features Checklist (All 7 Platform Features) */}
+                  {/* Included Features Checklist (All 8 Platform Features) */}
                   <div className="space-y-2 border-t border-border/50 pt-3 text-xs">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
                       {isAr ? 'الميزات المتوفرة في الخطة' : 'Included Features'}
@@ -1065,6 +1198,27 @@ export function PlanUsagePanel() {
                       )}
                       <span className={p.features?.shopify_integration ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
                         {isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Integration'}
+                      </span>
+                    </div>
+
+                    {/* Bio Link Studio */}
+                    <div className="flex items-center gap-2">
+                      {p.features?.bio_link ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5 text-muted-foreground/30 shrink-0" />
+                      )}
+                      <span className={p.features?.bio_link ? 'font-medium text-foreground' : 'text-muted-foreground/40 line-through'}>
+                        {isAr ? 'صفحة البايو لينك (Bio Link Studio)' : 'Bio Link Studio'}
+                        {p.features?.bio_link && (
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold ms-1">
+                            ({p.max_subdomain_changes === -1
+                              ? (isAr ? 'تغيير غير محدود' : 'Unlimited')
+                              : p.max_subdomain_changes === 0
+                              ? (isAr ? 'تعيين أولي فقط' : 'Initial only')
+                              : (isAr ? `${p.max_subdomain_changes} تغييرات` : `${p.max_subdomain_changes} changes`)})
+                          </span>
+                        )}
                       </span>
                     </div>
                   </div>

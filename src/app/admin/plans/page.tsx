@@ -30,6 +30,7 @@ import {
   ShieldCheck,
   Boxes,
   HelpCircle,
+  Globe,
 } from 'lucide-react';
 import {
   Dialog,
@@ -56,6 +57,7 @@ export interface PlanRow {
   max_messages_monthly: number;
   max_broadcasts_monthly: number;
   max_orders_monthly: number;
+  max_subdomain_changes?: number;
   is_popular: boolean;
   features: {
     ai_assistant?: boolean;
@@ -67,6 +69,7 @@ export interface PlanRow {
     custom_webhooks?: boolean;
     woocommerce_integration?: boolean;
     shopify_integration?: boolean;
+    bio_link?: boolean;
   };
   is_active: boolean;
   subscriber_count?: number;
@@ -130,6 +133,7 @@ export default function AdminPlansPage() {
     max_messages_monthly: 5000,
     max_broadcasts_monthly: 50,
     max_orders_monthly: 1000,
+    max_subdomain_changes: 1,
     is_popular: false,
     is_active: true,
     features: {
@@ -141,6 +145,7 @@ export default function AdminPlansPage() {
       telegram_bot: true,
       woocommerce_integration: false,
       shopify_integration: false,
+      bio_link: true,
     },
   });
 
@@ -204,10 +209,12 @@ export default function AdminPlansPage() {
           price_yearly: editingPlan.price_yearly,
           price_yearly_discounted: editingPlan.price_yearly_discounted,
           max_users: editingPlan.max_users,
+          max_whatsapp_instances: editingPlan.max_whatsapp_instances,
           max_contacts: editingPlan.max_contacts,
           max_messages_monthly: editingPlan.max_messages_monthly,
           max_orders_monthly: editingPlan.max_orders_monthly,
           max_broadcasts_monthly: editingPlan.max_broadcasts_monthly,
+          max_subdomain_changes: editingPlan.max_subdomain_changes ?? 0,
           is_popular: editingPlan.is_popular,
           features: editingPlan.features,
         }),
@@ -249,6 +256,7 @@ export default function AdminPlansPage() {
           max_messages_monthly: Number(newPlan.max_messages_monthly ?? 500),
           max_orders_monthly: Number(newPlan.max_orders_monthly ?? 50),
           max_broadcasts_monthly: Number(newPlan.max_broadcasts_monthly ?? 5),
+          max_subdomain_changes: Number(newPlan.max_subdomain_changes ?? 0),
           is_popular: Boolean(newPlan.is_popular),
           is_active: true,
           features: newPlan.features,
@@ -540,9 +548,21 @@ export default function AdminPlansPage() {
                     <span className="text-muted-foreground font-medium">{isAr ? 'حملات البرودكاست:' : 'Broadcast Campaigns:'}</span>
                     <span className="font-mono font-bold text-foreground">{formatQuotaVal(plan.max_broadcasts_monthly)}</span>
                   </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground font-medium">{isAr ? 'تغييرات سابدومين البايو:' : 'Bio Subdomain Changes:'}</span>
+                    <span className="font-mono font-bold text-emerald-500">
+                      {plan.features?.bio_link
+                        ? (plan.max_subdomain_changes === -1
+                            ? (isAr ? 'لا محدود ♾️' : 'Unlimited ♾️')
+                            : plan.max_subdomain_changes === 0
+                            ? (isAr ? 'تعيين أولي فقط (0)' : 'Initial only (0)')
+                            : (isAr ? `${plan.max_subdomain_changes} مرات` : `${plan.max_subdomain_changes} times`))
+                        : (isAr ? 'غير متاح 🔒' : 'Disabled 🔒')}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Feature Toggles List (8 Features with Check / Cross) */}
+                {/* Feature Toggles List (9 Features with Check / Cross) */}
                 <div className="mt-6 space-y-2.5 border-t border-border/50 pt-5 text-xs font-semibold">
                   {/* 1. AI Assistant */}
                   <div className="flex items-center gap-2">
@@ -637,6 +657,18 @@ export default function AdminPlansPage() {
                     )}
                     <span className={plan.features?.shopify_integration ? 'text-foreground' : 'text-muted-foreground/60'}>
                       Shopify Integration
+                    </span>
+                  </div>
+
+                  {/* 9. Bio Link Studio */}
+                  <div className="flex items-center gap-2">
+                    {plan.features?.bio_link ? (
+                      <Check className="h-4 w-4 text-emerald-500 shrink-0" strokeWidth={3} />
+                    ) : (
+                      <X className="h-4 w-4 text-muted-foreground/40 shrink-0" strokeWidth={2.5} />
+                    )}
+                    <span className={plan.features?.bio_link ? 'text-foreground' : 'text-muted-foreground/60'}>
+                      Bio Link Studio (صفحة البايو لينك)
                     </span>
                   </div>
                 </div>
@@ -859,6 +891,23 @@ export default function AdminPlansPage() {
                       className="h-10 text-xs"
                     />
                   </div>
+
+                  <div className="space-y-1 sm:col-span-2 lg:col-span-2">
+                    <Label className="text-xs font-bold flex items-center justify-between">
+                      <span>{isAr ? 'مرات تغيير سابدومين البايو لينك' : 'Bio Subdomain Changes'}</span>
+                      <span className="text-[10px] text-muted-foreground font-normal">
+                        {isAr ? '(-1: لا محدود | 0: أولي فقط)' : '(-1: unlim, 0: initial)'}
+                      </span>
+                    </Label>
+                    <Input
+                      type="number"
+                      value={editingPlan.max_subdomain_changes ?? 0}
+                      onChange={(e) =>
+                        setEditingPlan({ ...editingPlan, max_subdomain_changes: parseInt(e.target.value) || 0 })
+                      }
+                      className="h-10 text-xs font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -878,6 +927,7 @@ export default function AdminPlansPage() {
                     { key: 'flows_builder', label: 'Visual Workflow Builder (باني التدفقات المرئي)' },
                     { key: 'woocommerce_integration', label: 'WooCommerce Integration (ربط ووكومرس)' },
                     { key: 'shopify_integration', label: 'Shopify Integration (ربط شوبيفاي)' },
+                    { key: 'bio_link', label: 'Bio Link Studio (صفحة البايو لينك للروابط والهوية)' },
                   ].map((feat) => {
                     const isChecked = Boolean(editingPlan.features?.[feat.key as keyof typeof editingPlan.features]);
                     return (
@@ -986,6 +1036,37 @@ export default function AdminPlansPage() {
                   value={newPlan.price_yearly}
                   onChange={(e) => setNewPlan({ ...newPlan, price_yearly: parseFloat(e.target.value) || 0 })}
                   className="h-10 text-xs"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-bold">{isAr ? 'تغييرات السابدومين (-1 لا محدود)' : 'Subdomain Changes (-1 = unlim)'}</Label>
+                <Input
+                  type="number"
+                  value={newPlan.max_subdomain_changes ?? 1}
+                  onChange={(e) => setNewPlan({ ...newPlan, max_subdomain_changes: parseInt(e.target.value) || 0 })}
+                  className="h-10 text-xs font-mono"
+                />
+              </div>
+
+              <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-xl border border-border/60 bg-muted/20">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-foreground">Bio Link Studio</span>
+                  <p className="text-[11px] text-muted-foreground">{isAr ? 'تفعيل صفحة البايو لينك لهذه الباقة' : 'Enable Bio Link Studio for this plan'}</p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={Boolean(newPlan.features?.bio_link)}
+                  onChange={(e) =>
+                    setNewPlan({
+                      ...newPlan,
+                      features: {
+                        ...newPlan.features,
+                        bio_link: e.target.checked,
+                      },
+                    })
+                  }
+                  className="h-4 w-4 rounded border-border text-emerald-600 focus:ring-emerald-500/20"
                 />
               </div>
             </div>

@@ -28,6 +28,7 @@ import {
   Workflow,
   X,
   Zap,
+  Globe,
 } from "lucide-react";
 import type { AccountRole } from "@/lib/auth/roles";
 
@@ -104,6 +105,7 @@ const navItems: NavItem[] = [
   { href: "/appointments", labelKey: "appointments", icon: Calendar },
   { href: "/flows", labelKey: "flows", icon: Workflow, beta: true },
   { href: "/agents", labelKey: "aiAgents", icon: Bot },
+  { href: "/settings?tab=store", labelKey: "bioLink", icon: Globe },
 ];
 
 const bottomNavItems = [
@@ -261,9 +263,10 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <ul className="flex flex-col gap-1">
             {navItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              const isActive = item.href.includes("tab=store")
+                ? pathname === "/settings" && typeof window !== "undefined" && window.location.search.includes("tab=store")
+                : pathname === item.href ||
+                  (item.href !== "/dashboard" && !item.href.includes("?") && pathname.startsWith(item.href));
 
               const showUnreadDot =
                 item.href === "/inbox" && totalUnread > 0 && !isActive;
@@ -324,7 +327,9 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
 
           <ul className="flex flex-col gap-1">
             {bottomNavItems.map((item) => {
-              const isActive = pathname.startsWith(item.href);
+              const isActive =
+                pathname === item.href &&
+                (typeof window === "undefined" || !window.location.search.includes("tab=store"));
               return (
                 <li key={item.href}>
                   <Link

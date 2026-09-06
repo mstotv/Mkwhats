@@ -94,6 +94,7 @@ export async function GET() {
       max_messages_monthly: p.max_messages_monthly,
       max_broadcasts_monthly: p.max_broadcasts_monthly,
       max_orders_monthly: p.max_orders_monthly || 500,
+      max_subdomain_changes: p.max_subdomain_changes ?? 0,
       is_popular: p.is_popular || false,
       features: p.features || {},
     }));
@@ -108,7 +109,8 @@ export async function GET() {
       max_messages_monthly: 1000,
       max_broadcasts_monthly: 10,
       max_orders_monthly: 500,
-      features: { ai_assistant: false, excel_export: false, telegram_bot: false },
+      max_subdomain_changes: 0,
+      features: { ai_assistant: false, excel_export: false, telegram_bot: false, bio_link: false },
     };
 
     const messagesCount = msgCountRes.count ?? 0;
@@ -122,6 +124,7 @@ export async function GET() {
     const maxUsers = currentPlanObj.max_users ?? 1;
     const maxContacts = currentPlanObj.max_contacts ?? 1000;
     const maxOrders = currentPlanObj.max_orders_monthly ?? 500;
+    const maxSubdomainChanges = currentPlanObj.max_subdomain_changes ?? 0;
 
     return NextResponse.json({
       plan: currentPlanObj,
@@ -167,6 +170,7 @@ export async function GET() {
         max_messages_monthly: maxMessages,
         max_broadcasts_monthly: maxBroadcasts,
         max_orders_monthly: maxOrders,
+        max_subdomain_changes: maxSubdomainChanges,
       },
     }, {
       headers: {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createClient } from '@/lib/supabase/server'
 import { validateSubdomain } from '@/lib/storefront/validation'
+import { getAccountBioLinkAccess } from '@/lib/plans/check-usage-limit'
 
 export async function GET(request: Request) {
   try {
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
 
     const normalized = validation.normalized
 
-    // Optional: detect if the checking user already owns this subdomain
+    // Optional: detect if the checking user already owns this subdomain or has bio link access
     let userAccountId: string | null = null
     try {
       const supabaseUser = await createClient()
@@ -37,6 +38,35 @@ export async function GET(request: Request) {
     }
 
     const service = createServiceClient()
+
+    if (userAccountId) {
+      const bioAccess = await getAccountBioLinkAccess(userAccountId)
+      if (!bioAccess.allowed) {
+        return NextResponse.json({
+          available: false,
+          reason: bioAccess.reason || 'ميزة البايو لينك غير متوفرة في خطتك الحالية. يرجى الترقية.',
+          normalized,
+          upgradeRequired: true,
+        })
+      }
+      if (!bioAccess.canChangeSubdomain) {
+        const { data: userStorefront } = await service
+          .from('storefronts')
+          .select('subdomain')
+          .eq('account_id', userAccountId)
+          .maybeSingle()
+
+        if (userStorefront && userStorefront.subdomain !== normalized) {
+          return NextResponse.json({
+            available: false,
+            reason: `لقد استنفدت الحد المسموح لتغيير النطاق الفرعي في خطتك (${bioAccess.subdomainChangesCount}/${bioAccess.maxSubdomainChanges}). يرجى ترقية الخطة.`,
+            normalized,
+            quotaExceeded: true,
+          })
+        }
+      }
+    }
+
     const { data: existing, error } = await service
       .from('storefronts')
       .select('id, account_id, subdomain')
