@@ -111,6 +111,7 @@ export async function POST(req: Request) {
       updateObj.how_it_works_content = payload.how_it_works_content;
     }
     if (payload.testimonials !== undefined) updateObj.testimonials = payload.testimonials;
+    if (payload.home_content !== undefined) updateObj.home_content = payload.home_content;
     if (payload.faqs !== undefined) updateObj.faqs = payload.faqs;
     if (payload.cta_banner_content !== undefined) updateObj.cta_banner_content = payload.cta_banner_content;
     if (payload.logo_height !== undefined) updateObj.logo_height = Number(payload.logo_height);
@@ -130,10 +131,12 @@ export async function POST(req: Request) {
     if (error) {
       console.warn('[SiteSettingsAPI] First update attempt note:', error.message);
 
-      // If ecommerce_content column does not exist yet in DB schema, retry without ecommerce_content column
-      // (how_it_works_content will safely retain the ecommerce payload)
+      // If newer columns do not exist yet in DB schema, retry without them
       if (updateObj.ecommerce_content !== undefined) {
         delete updateObj.ecommerce_content;
+      }
+      if (updateObj.home_content !== undefined) {
+        delete updateObj.home_content;
       }
 
       const retryRes = await supabase

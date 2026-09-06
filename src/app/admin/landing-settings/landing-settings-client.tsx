@@ -44,6 +44,7 @@ import {
   Store,
   Mic,
   CalendarCheck,
+  Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,6 +59,14 @@ import {
   DEFAULT_ECOMMERCE_CONTENT,
 } from '@/components/landing/landing-ecommerce-section'
 import { EcommerceTab } from './ecommerce-tab'
+import {
+  HomeContent,
+  DEFAULT_HOME_CONTENT,
+  TestimonialItem,
+  DEFAULT_TESTIMONIALS,
+} from '@/lib/types/home-cms'
+import { HomeSectionsTab } from './home-sections-tab'
+import { ReviewsTab } from './reviews-tab'
 
 interface SocialLink {
   platform: string
@@ -156,6 +165,8 @@ interface LandingSettings {
   hero_content: HeroContent
   features_content: FeaturesSectionContent
   ecommerce_content: EcommerceSectionContent
+  home_content: HomeContent
+  testimonials: TestimonialItem[]
   faqs: FAQ[]
   social_links: SocialLink[]
   partners: Partner[]
@@ -549,6 +560,38 @@ function normalizeEcommerceContent(raw: any): EcommerceSectionContent {
   }
 }
 
+function normalizeTestimonials(raw: any): TestimonialItem[] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return DEFAULT_TESTIMONIALS
+  }
+  return raw.map((t: any, idx: number) => ({
+    id: t.id || `review-${idx + 1}`,
+    visible: t.visible !== false,
+    name_ar: t.name_ar || t.name || '',
+    name_en: t.name_en || '',
+    role_ar: t.role_ar || t.role || '',
+    role_en: t.role_en || '',
+    quote_ar: t.quote_ar || t.quote || '',
+    quote_en: t.quote_en || '',
+    stars: typeof t.stars === 'number' ? t.stars : (typeof t.rating === 'number' ? t.rating : 5),
+    image_url: t.image_url || '',
+    avatar_initial: t.avatar_initial || t.avatar || '⭐',
+  }))
+}
+
+function normalizeHomeContent(raw: any): HomeContent {
+  if (!raw || typeof raw !== 'object') {
+    return DEFAULT_HOME_CONTENT
+  }
+  return {
+    comparison: raw.comparison ? { ...DEFAULT_HOME_CONTENT.comparison, ...raw.comparison } : DEFAULT_HOME_CONTENT.comparison,
+    pillars: raw.pillars ? { ...DEFAULT_HOME_CONTENT.pillars, ...raw.pillars } : DEFAULT_HOME_CONTENT.pillars,
+    roi_calculator: raw.roi_calculator ? { ...DEFAULT_HOME_CONTENT.roi_calculator, ...raw.roi_calculator } : DEFAULT_HOME_CONTENT.roi_calculator,
+    metrics_proof: raw.metrics_proof ? { ...DEFAULT_HOME_CONTENT.metrics_proof, ...raw.metrics_proof } : DEFAULT_HOME_CONTENT.metrics_proof,
+    final_cta: raw.final_cta ? { ...DEFAULT_HOME_CONTENT.final_cta, ...raw.final_cta } : DEFAULT_HOME_CONTENT.final_cta,
+  }
+}
+
 export function LandingSettingsClient({ initialSettings }: { initialSettings: any }) {
   const locale = useLocale()
   const isAr = locale === 'ar'
@@ -560,6 +603,8 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
     hero_content: normalizeHero(initialSettings?.hero_content || {}),
     features_content: normalizeFeatures(initialSettings?.features_content),
     ecommerce_content: normalizeEcommerceContent(initialSettings?.ecommerce_content),
+    home_content: normalizeHomeContent(initialSettings?.home_content),
+    testimonials: normalizeTestimonials(initialSettings?.testimonials),
     faqs: (initialSettings?.faqs || [
       {
         id: '1',
@@ -916,10 +961,20 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
       </div>
 
       <Tabs defaultValue="ecommerce" className="w-full space-y-6">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 bg-muted p-1 rounded-xl gap-1">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-11 bg-muted p-1 rounded-xl gap-1">
           <TabsTrigger value="hero" className="text-xs font-bold gap-1.5">
             <Sparkles className="h-3.5 w-3.5" />
             {isAr ? 'الهيرو' : 'Hero'}
+          </TabsTrigger>
+
+          <TabsTrigger value="home-sections" className="text-xs font-bold gap-1.5 text-blue-600 dark:text-blue-400">
+            <Layers className="h-3.5 w-3.5" />
+            {isAr ? 'أقسام الرئيسية 🏠' : 'Home Sections'}
+          </TabsTrigger>
+
+          <TabsTrigger value="reviews" className="text-xs font-bold gap-1.5 text-amber-600 dark:text-amber-400">
+            <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+            {isAr ? 'المراجعات ⭐' : 'Reviews'}
           </TabsTrigger>
 
           <TabsTrigger value="ecommerce" className="text-xs font-bold gap-1.5 text-purple-600 dark:text-purple-400">
@@ -962,6 +1017,34 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
             {isAr ? 'أزرار الدعم' : 'Support'}
           </TabsTrigger>
         </TabsList>
+
+        {/* Home Marketing Sections CMS Tab */}
+        <TabsContent value="home-sections" className="space-y-6">
+          <HomeSectionsTab
+            isAr={isAr}
+            content={settings.home_content}
+            onChange={(updated) =>
+              setSettings((prev) => ({
+                ...prev,
+                home_content: updated,
+              }))
+            }
+          />
+        </TabsContent>
+
+        {/* Reviews & Testimonials CMS Tab */}
+        <TabsContent value="reviews" className="space-y-6">
+          <ReviewsTab
+            isAr={isAr}
+            testimonials={settings.testimonials}
+            onChange={(updated) =>
+              setSettings((prev) => ({
+                ...prev,
+                testimonials: updated,
+              }))
+            }
+          />
+        </TabsContent>
 
         {/* 0. E-Commerce Integration Section Tab — BILINGUAL FULL CMS */}
         <TabsContent value="ecommerce" className="space-y-6">
