@@ -13,6 +13,7 @@ import {
   Radio,
 } from 'lucide-react'
 import { useLocale } from 'next-intl'
+import { WooCommerceLogo, ShopifyLogo } from '@/components/icons/platform-logos'
 
 export interface PlanFeatureFlags {
   ai_assistant?: boolean
@@ -383,8 +384,9 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
                       ) : (
                         <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
                       )}
-                      <span className={p.features?.woocommerce_integration ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
-                        {isAr ? 'ربط متجر ووكومرس (WooCommerce)' : 'WooCommerce Store Integration'}
+                      <span className={`inline-flex items-center gap-1.5 ${p.features?.woocommerce_integration ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}`}>
+                        <WooCommerceLogo className="h-3.5 w-auto object-contain shrink-0" />
+                        <span>{isAr ? 'ربط متجر ووكومرس (WooCommerce)' : 'WooCommerce Store Integration'}</span>
                       </span>
                     </div>
 
@@ -399,8 +401,9 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
                       ) : (
                         <XCircle className="h-4 w-4 text-neutral-300 dark:text-zinc-700 shrink-0" />
                       )}
-                      <span className={p.features?.shopify_integration ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}>
-                        {isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Store Integration'}
+                      <span className={`inline-flex items-center gap-1.5 ${p.features?.shopify_integration ? 'font-medium text-[#1B1C1C] dark:text-white' : 'text-neutral-400 line-through'}`}>
+                        <ShopifyLogo className="h-3.5 w-3.5 object-contain shrink-0" />
+                        <span>{isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Store Integration'}</span>
                       </span>
                     </div>
 

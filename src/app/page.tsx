@@ -245,17 +245,28 @@ export default async function LandingPage() {
   const socialLinks = (settings?.social_links as any[]) || []
 
   const defaultPartners = [
-    { name: 'WooCommerce', logo_url: 'https://cdn.simpleicons.org/woocommerce/96588a' },
-    { name: 'Shopify', logo_url: 'https://cdn.simpleicons.org/shopify/96bf48' },
+    { name: 'WooCommerce', logo_url: '/logos/woocommerce.png' },
+    { name: 'Shopify', logo_url: '/logos/shopify.png' },
     { name: 'Stripe', logo_url: 'https://cdn.simpleicons.org/stripe/635BFF' },
     { name: 'Telegram', logo_url: 'https://cdn.simpleicons.org/telegram/26A5E4' },
     { name: 'Sheets', logo_url: 'https://cdn.simpleicons.org/google/4285F4' },
     { name: 'HubSpot', logo_url: 'https://cdn.simpleicons.org/hubspot/FF7A59' },
   ]
 
-  const partners = (Array.isArray(settings?.partners) && settings.partners.length > 0)
+  const rawPartnersList = (Array.isArray(settings?.partners) && settings.partners.length > 0)
     ? settings.partners
     : ((dbPartners && dbPartners.length > 0) ? dbPartners : defaultPartners)
+
+  const partners = rawPartnersList.map((p: any) => {
+    const nameLower = (p.name || '').toLowerCase()
+    if (nameLower.includes('woo') || nameLower.includes('wordpress')) {
+      return { ...p, logo_url: '/logos/woocommerce.png' }
+    }
+    if (nameLower.includes('shopify')) {
+      return { ...p, logo_url: '/logos/shopify.png' }
+    }
+    return p
+  })
   const ArrowIcon = isAr ? ArrowLeft : ArrowRight
 
   return (

@@ -45,6 +45,7 @@ import {
   ShieldAlert,
   Globe,
 } from 'lucide-react'
+import { WooCommerceLogo, ShopifyLogo } from '@/components/icons/platform-logos'
 import { UpgradePlanModal, type PlanItem } from './upgrade-plan-modal'
 import { useTranslations, useLocale } from 'next-intl'
 import { toast } from 'sonner'
@@ -461,13 +462,13 @@ export function PlanUsagePanel() {
     {
       key: 'woocommerce_integration',
       label: isAr ? 'ربط متجر ووكومرس (WooCommerce)' : 'WooCommerce Store Integration',
-      icon: ShoppingBag,
+      icon: WooCommerceLogo,
       enabled: Boolean(plan.features?.woocommerce_integration),
     },
     {
       key: 'shopify_integration',
       label: isAr ? 'ربط متجر شوبيفاي (Shopify)' : 'Shopify Store Integration',
-      icon: ShoppingBag,
+      icon: ShopifyLogo,
       enabled: Boolean(plan.features?.shopify_integration),
     },
     {

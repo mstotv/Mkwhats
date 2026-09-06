@@ -6,23 +6,27 @@ import { useTranslations, useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import {
   ShoppingBag,
-  ExternalLink,
   CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Loader2,
-  RefreshCw,
-  Trash2,
-  KeyRound,
-  Globe,
-  Lock,
+  ExternalLink,
   Copy,
-  Check,
+  RefreshCw,
+  Plus,
+  Trash2,
+  AlertCircle,
   HelpCircle,
+  Lock,
+  Sparkles,
   BookOpen,
   ArrowRight,
-  Sparkles,
+  ArrowLeft,
+  Loader2,
+  Eye,
+  EyeOff,
+  Check,
+  Globe,
+  KeyRound,
 } from 'lucide-react';
+import { WooCommerceLogo, ShopifyLogo } from '@/components/icons/platform-logos';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -254,8 +258,8 @@ export function IntegrationsPanel() {
         <div className={`rounded-xl border ${canUseWooCommerce ? 'border-border bg-card' : 'border-purple-500/30 bg-purple-950/10 dark:bg-purple-950/20'} p-6 shadow-sm transition-all`}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                <ShoppingBag className="h-6 w-6" />
+              <div className="flex h-12 w-14 items-center justify-center rounded-xl bg-purple-500/10 border border-purple-500/20 p-2">
+                <WooCommerceLogo className="h-6 w-auto object-contain" />
               </div>
               <div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -499,8 +503,8 @@ export function IntegrationsPanel() {
         <div className={`rounded-xl border ${canUseShopify ? 'border-border bg-card' : 'border-emerald-500/30 bg-emerald-950/10 dark:bg-emerald-950/20'} p-6 shadow-sm transition-all`}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <ShoppingBag className="h-6 w-6" />
+              <div className="flex h-12 w-14 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2">
+                <ShopifyLogo className="h-7 w-7 object-contain" />
               </div>
               <div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -729,10 +733,17 @@ export function IntegrationsPanel() {
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto" dir="rtl">
           <DialogHeader className="text-right">
             <DialogTitle className="flex items-center gap-2 text-base font-bold">
-              <BookOpen className="h-5 w-5 text-primary" />
-              {guideProvider === 'woocommerce'
-                ? 'دليل ربط ووكومرس (WooCommerce Integration Guide)'
-                : 'دليل ربط شوبيفاي (Shopify Integration Guide)'}
+              {guideProvider === 'woocommerce' ? (
+                <>
+                  <WooCommerceLogo className="h-5 w-auto object-contain" />
+                  <span>{isAr ? 'دليل ربط ووكومرس (WooCommerce Integration Guide)' : 'WooCommerce Integration Guide'}</span>
+                </>
+              ) : (
+                <>
+                  <ShopifyLogo className="h-5 w-5 object-contain" />
+                  <span>{isAr ? 'دليل ربط شوبيفاي (Shopify Integration Guide)' : 'Shopify Integration Guide'}</span>
+                </>
+              )}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
               {guideProvider === 'woocommerce'

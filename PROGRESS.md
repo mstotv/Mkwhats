@@ -29,6 +29,19 @@
 > 
 > 🛡️ **الجودة والاستقرار**: اجتياز كامل ومطلق لفحص الأنواع البرمجية (`npx tsc --noEmit` بـ 0 أخطاء) واجتياز 100% من الاختبارات الآلية (704 اختباراً في 73 ملف اختبار).
 
+- ✅ **اعتماد اللوغوهات الرسمية الحقيقية لمنصات المتاجر (Official Platform Logos for WooCommerce & Shopify)**:
+  - **أصول الصور عالية الدقة والشفافة ([`public/logos/`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/public/logos))**:
+    - اعتماد لوغو ووكومرس الرسمي الحقيقي والحديث (**Woo** باللون البنفسجي المعتمد من Automattic) مقتطع ومعد لدقة بكسل مثالية بدون أي هوامش زائدة وبخلفية شفافة 100% (`/logos/woocommerce.png` و `/logos/woocommerce-square.png`).
+    - اعتماد لوغو شوبيفاي الرسمي الحقيقي ثلاثي الأبعاد بالحقيبة الخضراء والأبعاد الرسمية وخلفية شفافة بالكامل (`/logos/shopify.png`).
+  - **مكونات React موحدة فائقة الأداء ([`src/components/icons/platform-logos.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/icons/platform-logos.tsx))**:
+    - بناء المكونين `WooCommerceLogo` و `ShopifyLogo` لتقديم جودة بصرية حقيقية في الثيمين الفاتح والداكن.
+  - **تحديث كل الواجهات المعنية في المنصة**:
+    - **صفحة وتكاملات المتاجر (`/settings?tab=integrations`)**: استبدال الأيقونات الرمزية العامة بلوغو WooCommerce الحقيقي في بطاقة ووكومرس، ولوغو Shopify الحقيقي في بطاقة شوبيفاي، وكذلك في عنوان نافذة دليل الربط المتقدم (Guide Modal).
+    - **قسم المتاجر الإلكترونية في الصفحة الرئيسية وصفحة المميزات ([`landing-ecommerce-section.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-ecommerce-section.tsx))**: تحديث بطاقات المتاجر لتعرض اللوغوهات الحقيقية الرسمية.
+    - **شريط الشركاء والتكاملات بالصفحة الرئيسية ([`src/app/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/page.tsx))**: ربط WooCommerce و Shopify باللوغوهات الرسمية الحقيقية محلياً.
+    - **لوحة استهلاك الخطة ونافذة الترقية ([`plan-usage-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/plan-usage-panel.tsx) و [`upgrade-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/upgrade-plan-modal.tsx) و [`landing-pricing.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-pricing.tsx))**: إظهار اللوغوهات الحقيقية بجانب بنود ربط ووكومرس وشوبيفاي.
+    - **لوحة تحكم المشرف (Admin Plan Editor)**: تحديث مفاتيح ميزات الباقات في [`edit-plan-modal.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/admin/_components/edit-plan-modal.tsx).
+
 - ✅ **إنجاز ميزة البايو لينك في الخطط والتحكم بسقف السابدومين (Bio Link Plan Features & Subdomain Limits)**:
   - **ميجريشن قاعدة البيانات (Migration 092)**:
     - ملف [`supabase/migrations/092_plan_biolink_feature_and_subdomain_limits.sql`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/supabase/migrations/092_plan_biolink_feature_and_subdomain_limits.sql) لإضافة `max_subdomain_changes` لجدول `plans` و `subdomain_changes_count` لجدول `storefronts`.

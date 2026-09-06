@@ -8,6 +8,7 @@ import {
   Globe,
   Zap,
 } from 'lucide-react'
+import { WooCommerceLogo, ShopifyLogo } from '@/components/icons/platform-logos'
 
 export interface StoreFeature {
   id: string
@@ -212,18 +213,10 @@ interface LandingEcommerceSectionProps {
 function getStoreLogo(storeName: string) {
   const normalized = storeName.toLowerCase()
   if (normalized.includes('woo') || normalized.includes('wordpress')) {
-    return (
-      <svg viewBox="0 0 24 24" className="h-6 w-6 fill-current" role="img">
-        <path d="M23.015 11.085c-.172-3.805-2.67-6.085-6.538-6.085-3.328 0-5.834 1.83-6.84 4.542-.712-1.077-1.848-1.742-3.21-1.742-2.378 0-4.048 1.637-4.42 4.093-.207 1.344.025 2.873.743 4.22 1.488 2.766 4.39 4.747 8.016 4.887l.234-1.393c-2.825-.138-5.112-1.737-6.289-3.926-.523-.974-.694-2.023-.538-2.956.249-1.503 1.258-2.52 2.712-2.52.88 0 1.62.404 2.083 1.107l-1.312 7.747h1.492l1.243-7.361c.42-.511 1.054-.836 1.769-.836 1.402 0 2.457 1.05 2.457 2.467 0 .393-.08.826-.239 1.285l-1.34 3.987c-.504 1.507-.074 2.83 1.157 3.535 1.072.613 2.502.66 3.659.123 2.012-.934 3.498-2.998 3.978-5.524.237-1.257.25-2.458.037-3.415z" />
-      </svg>
-    )
+    return <WooCommerceLogo className="h-6 w-auto max-w-full object-contain" />
   }
   if (normalized.includes('shopify')) {
-    return (
-      <svg viewBox="0 0 24 24" className="h-6 w-6 fill-current" role="img">
-        <path d="M19.68 5.76c-.03-.26-.23-.46-.48-.48l-4.14-.37c-.1-.01-.19-.06-.25-.14L13.1 2.5c-.17-.23-.47-.32-.73-.22L10.3 3c-.15.06-.27.18-.33.33L8.85 6.07c-.06.15-.18.27-.33.33L6.45 7.1c-.26.1-.42.36-.38.64l.87 9.87c.02.26.22.47.48.5l8.76 1.04c.03 0 .06 0 .09 0 .23 0 .44-.16.48-.39l2.93-13zm-6.84-2.22l1.19 1.76-2.56-.23 1.37-1.53zm-2.02.83l2.25.2-1.2 3.58-1.53-3.23.48-.55zm-1.89 2.51l1.62 3.42-3.1-.28 1.48-3.14z" />
-      </svg>
-    )
+    return <ShopifyLogo className="h-6 w-6 object-contain" />
   }
   return <Store className="h-6 w-6" />
 }
