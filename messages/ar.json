@@ -34,6 +34,7 @@
     "orders": "الطلبات",
     "appointments": "المواعيد",
     "bioLink": "صفحة بايو لينك",
+    "reseller": "برنامج الموزعين (Reseller)",
     "settings": "الإعدادات",
     "beta": "Beta",
     "unreadConversations": "{count} unread {count, plural, =1 {conversation} other {conversations}}",

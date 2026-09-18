@@ -104,6 +104,39 @@ export async function POST(request: NextRequest) {
       currency,
     })
 
+    // 4.1 Handle Reseller Plan Plisio Payment
+    if (orderNumber?.startsWith('reseller_')) {
+      const parts = orderNumber.split('_');
+      const resellerId = parts[1];
+      const isCompleted = plisioStatus === 'completed' || plisioStatus === 'mismatch';
+
+      if (resellerId) {
+        if (isCompleted) {
+          const now = new Date();
+          const periodEnd = new Date(now);
+          periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+          await serviceClient
+            .from('resellers')
+            .update({
+              status: 'active',
+              subscription_expires_at: periodEnd.toISOString(),
+              custom_settings: {
+                payment_gateway: 'plisio',
+                plisio_invoice_id: invoiceId,
+                plisio_status: plisioStatus,
+                paid_at: now.toISOString(),
+              },
+            })
+            .eq('id', resellerId);
+
+          return NextResponse.json({ success: true, message: 'Reseller activated via Plisio' });
+        } else {
+          return NextResponse.json({ status: plisioStatus });
+        }
+      }
+    }
+
     // 5. Find corresponding upgrade request
     let query = serviceClient.from('upgrade_requests').select('*, plans:target_plan_id(*)')
 

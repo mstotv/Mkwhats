@@ -14,6 +14,7 @@ import {
   Headphones,
   Sparkles,
   ArrowRight,
+  Network,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslations, useLocale } from 'next-intl'
@@ -79,6 +80,13 @@ export function AdminNav({ isOpen = false, onClose }: AdminNavProps) {
       label: isAr ? 'الباقات والأسعار (Plans)' : 'Plans',
       href: '/admin/plans',
       icon: CreditCard,
+    },
+    {
+      label: isAr ? 'شبكة الريسيلر (Resellers)' : 'Resellers Hub',
+      href: '/admin/resellers',
+      icon: Network,
+      badge: 'White-Label',
+      badgeEn: 'White-Label',
     },
     {
       label: isAr ? 'الدفع المحلي (Offline)' : 'Offline Payments',

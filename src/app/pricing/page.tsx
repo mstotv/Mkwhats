@@ -6,10 +6,17 @@ import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { LandingFooter } from '@/components/landing/landing-footer'
 import { LandingPricing } from '@/components/landing/landing-pricing'
 import { FloatingSupport } from '@/components/landing/floating-support'
+import { getEffectiveSiteSettings } from '@/lib/reseller/settings'
 
 export const dynamic = 'force-dynamic'
 
-export default async function PricingPage() {
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string }>
+}) {
+  const resolvedParams = searchParams ? await searchParams : {}
+  const activeTab = resolvedParams?.tab === 'reseller' ? 'reseller' : 'business'
   const cookieStore = await cookies()
   const locale = (cookieStore.get('NEXT_LOCALE')?.value as 'en' | 'ar') || 'en'
   const isAr = locale === 'ar'
@@ -37,14 +44,19 @@ export default async function PricingPage() {
 
   const serviceClient = createServiceClient()
 
-  const [{ data: settings }, { data: plans }, { data: contentPages }] =
+  const [settings, { data: plans }, { data: resellerPlans }, { data: contentPages }] =
     await Promise.all([
-      serviceClient.from('site_settings').select('*').limit(1).maybeSingle(),
+      getEffectiveSiteSettings(),
       serviceClient
         .from('plans')
         .select('*')
         .eq('is_active', true)
         .order('price_monthly', { ascending: true }),
+      serviceClient
+        .from('reseller_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true }),
       serviceClient
         .from('content_pages')
         .select('slug, title, title_en')
@@ -70,8 +82,9 @@ export default async function PricingPage() {
         logoUrl={logoUrl}
         logoHeight={logoHeight}
         locale={locale}
-        activePage="pricing"
+        activePage={activeTab === 'reseller' ? 'reseller' : 'pricing'}
         userLoggedIn={Boolean(user)}
+        isResellerPortal={settings?.is_reseller_portal}
       />
 
       {/* ── 2. Pricing Header ──────────────────────────────────── */}
@@ -94,8 +107,10 @@ export default async function PricingPage() {
         <div className="pt-6">
           <LandingPricing
             plans={(plans as any[]) || []}
+            resellerPlans={settings?.is_reseller_portal ? [] : ((resellerPlans as any[]) || [])}
             userLoggedIn={Boolean(user)}
             primaryColor="#00685F"
+            initialTab={activeTab}
           />
         </div>
       </section>
@@ -162,7 +177,11 @@ export default async function PricingPage() {
         whatsapp={settings?.support_whatsapp}
         telegram={settings?.support_telegram}
         email={settings?.support_email}
-        enabled={settings?.support_floating_enabled}
+        enabled={
+          settings?.support_floating_enabled
+            ? { whatsapp: Boolean(settings?.support_whatsapp), telegram: Boolean(settings?.support_telegram), email: Boolean(settings?.support_email) }
+            : { whatsapp: false, telegram: false, email: false }
+        }
         locale={locale}
       />
     </div>

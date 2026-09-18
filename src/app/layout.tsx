@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { Cairo, Inter, Playfair_Display } from "next/font/google";
-import Script from "next/script";
+import { getEffectiveSiteSettings } from "@/lib/reseller/settings";
 import "./globals.css";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { ThemedToaster } from "@/components/themed-toaster";
@@ -35,20 +35,12 @@ const playfair = Playfair_Display({
   display: "swap",
 });
 
-import { createServiceClient } from "@/lib/supabase/service";
-
 export async function generateMetadata(): Promise<Metadata> {
   let title = "mkwacrm";
   let favicon = "/icon";
 
   try {
-    const supabase = createServiceClient();
-    const { data: settings } = await supabase
-      .from("site_settings")
-      .select("platform_name, platform_name_en, platform_name_ar, favicon_url")
-      .limit(1)
-      .maybeSingle();
-
+    const settings = await getEffectiveSiteSettings();
     if (settings) {
       title =
         settings.platform_name_en?.trim() ||
@@ -136,10 +128,10 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <Script
+        <script
           id="theme-boot"
-          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }}
+          suppressHydrationWarning
         />
       </head>
       <body className={`min-h-full bg-background text-foreground font-sans font-cairo ${dir === 'rtl' ? 'dir-rtl' : 'dir-ltr'}`}>

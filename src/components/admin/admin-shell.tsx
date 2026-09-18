@@ -23,6 +23,10 @@ const pageTitles: Record<string, { ar: string; en: string }> = {
   '/admin/pages': { ar: 'إدارة الصفحات والمحتوى', en: 'Pages & Content Directory' },
   '/admin/landing-settings': { ar: 'إعدادات صفحة الهبوط الشاملة', en: 'Landing Page CMS & Theme Settings' },
   '/admin/site-settings': { ar: 'إعدادات المنصة وبوابات الدفع', en: 'Site & Payment Settings' },
+  '/admin/resellers': { ar: 'إدارة شبكة الريسيلر والموزعين', en: 'White-Label Resellers Network' },
+  '/admin/resellers/plans': { ar: 'باقات واشتراكات الريسيلر', en: 'Reseller Plans & Quotas' },
+  '/admin/resellers/users': { ar: 'حسابات ومستخدمو الريسيلر', en: 'Reseller Sub-Accounts Directory' },
+  '/admin/resellers/updates': { ar: 'تحديثات ومميزات الريسيلر', en: 'Reseller Feature Updates' },
 };
 
 export function AdminShell({ children, userEmail }: AdminShellProps) {

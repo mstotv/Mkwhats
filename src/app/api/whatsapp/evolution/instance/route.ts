@@ -112,16 +112,16 @@ export async function POST(request: Request) {
     }
 
     // Check if there is already a config row for THIS account.
-    const { data: existing } = await supabase
+    const { data: existing } = await supabaseAdmin()
       .from('whatsapp_config')
       .select('id, connection_type, evolution_instance_name, status')
       .eq('account_id', accountId)
       .maybeSingle()
 
     if (existing) {
-      // If the account is currently using Meta, block — they must
-      // disconnect Meta first (DELETE /api/whatsapp/config).
-      if (existing.connection_type === 'meta') {
+      // If the account is currently using Meta actively, block — they must
+      // disconnect Meta first (Settings → WhatsApp → Reset Configuration) before switching to Evolution.
+      if (existing.connection_type === 'meta' && existing.status === 'connected') {
         return NextResponse.json(
           {
             error:
@@ -132,14 +132,19 @@ export async function POST(request: Request) {
         )
       }
 
-      // Already has an Evolution config — return it so the UI
-      // can resume showing the QR without re-creating.
-      return NextResponse.json({
-        success: true,
-        already_exists: true,
-        instanceName: existing.evolution_instance_name,
-        connected: existing.status === 'connected',
-      })
+      // If already has an active connected Evolution config with this instance, return it
+      if (
+        existing.connection_type === 'evolution' &&
+        existing.status === 'connected' &&
+        existing.evolution_instance_name === cleanInstanceName
+      ) {
+        return NextResponse.json({
+          success: true,
+          already_exists: true,
+          instanceName: existing.evolution_instance_name,
+          connected: true,
+        })
+      }
     }
 
     // Build the webhook URL that Evolution will call for events.
@@ -187,28 +192,30 @@ export async function POST(request: Request) {
       )
     }
 
-    // Persist to whatsapp_config. Use the service-role client for
-    // the insert so the account_id uniqueness conflict (if there's
-    // a race) surfaces as a clear DB error rather than an RLS block.
+    // Persist to whatsapp_config. Use upsert with onConflict: 'account_id'
+    // so existing rows for this account are updated rather than throwing a duplicate key error.
     const { error: insertError } = await supabaseAdmin()
       .from('whatsapp_config')
-      .insert({
-        account_id: accountId,
-        user_id: user.id,
-        // Evolution rows don't use Meta fields; set required columns
-        // to safe sentinel values.
-        phone_number_id: '',      // NOT NULL in original schema; empty string for evolution
-        access_token: '',         // NOT NULL in original schema; empty string for evolution
-        connection_type: 'evolution',
-        evolution_server_url: getEvolutionServerUrl(),
-        evolution_api_key: encryptedApiKey,
-        evolution_instance_name: instanceResult.instanceName,
-        status: 'disconnected',
-        updated_at: new Date().toISOString(),
-      })
+      .upsert(
+        {
+          account_id: accountId,
+          user_id: user.id,
+          // Evolution rows don't use Meta fields; set required column
+          // to a unique sentinel value so it doesn't collide with the UNIQUE(phone_number_id) constraint.
+          phone_number_id: `evolution_${cleanInstanceName}`,
+          access_token: '',         // NOT NULL in original schema; empty string for evolution
+          connection_type: 'evolution',
+          evolution_server_url: getEvolutionServerUrl(),
+          evolution_api_key: encryptedApiKey,
+          evolution_instance_name: instanceResult.instanceName,
+          status: 'disconnected',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'account_id' },
+      )
 
     if (insertError) {
-      console.error('[evolution/instance POST] DB insert failed:', insertError)
+      console.error('[evolution/instance POST] DB upsert failed:', insertError)
       // Best-effort cleanup: delete the just-created Evolution instance
       // so the server doesn't accumulate orphans.
       try {
@@ -217,7 +224,7 @@ export async function POST(request: Request) {
         console.warn('[evolution/instance POST] orphan cleanup failed:', cleanupErr)
       }
       return NextResponse.json(
-        { error: 'Failed to save Evolution configuration' },
+        { error: `Failed to save Evolution configuration: ${insertError.message || 'database error'}` },
         { status: 500 },
       )
     }
@@ -266,7 +273,7 @@ export async function DELETE() {
       )
     }
 
-    const { data: config } = await supabase
+    const { data: config } = await supabaseAdmin()
       .from('whatsapp_config')
       .select('evolution_instance_name, connection_type')
       .eq('account_id', accountId)
@@ -295,7 +302,7 @@ export async function DELETE() {
     }
 
     // Remove the config row.
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseAdmin()
       .from('whatsapp_config')
       .delete()
       .eq('account_id', accountId)

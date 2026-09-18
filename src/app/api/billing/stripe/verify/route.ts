@@ -36,6 +36,64 @@ export async function POST(req: Request) {
     }
 
     if (sessionData.payment_status === 'paid') {
+      // 0. Handle Reseller White-Label Plan Payment
+      if (sessionData.metadata?.type === 'reseller_plan') {
+        const planId = sessionData.metadata.plan_id;
+        const subdomain = sessionData.metadata.subdomain;
+        const brandName = sessionData.metadata.brand_name;
+        const userId = sessionData.metadata.user_id;
+        const accountId = sessionData.metadata.account_id;
+        const billingCycle = sessionData.metadata.billing_cycle || 'monthly';
+        const now = new Date();
+        const periodEnd = new Date(now);
+        if (billingCycle === 'yearly') {
+          periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+        } else {
+          periodEnd.setMonth(periodEnd.getMonth() + 1);
+        }
+
+        const { data: resRow } = await supabase
+          .from('resellers')
+          .upsert(
+            {
+              owner_account_id: accountId,
+              plan_id: planId,
+              subdomain,
+              display_name: brandName,
+              display_name_ar: brandName,
+              status: 'active',
+              subscription_expires_at: periodEnd.toISOString(),
+              custom_settings: {
+                payment_gateway: 'stripe',
+                stripe_session_id: session_id,
+                billing_cycle: billingCycle,
+                activated_at: now.toISOString(),
+              },
+            },
+            { onConflict: 'subdomain' }
+          )
+          .select('id')
+          .single();
+
+        if (resRow?.id && userId) {
+          await supabase.from('reseller_admins').upsert(
+            {
+              reseller_id: resRow.id,
+              user_id: userId,
+              role: 'owner',
+            },
+            { onConflict: 'reseller_id,user_id', ignoreDuplicates: true }
+          );
+        }
+
+        return NextResponse.json({
+          success: true,
+          paid: true,
+          is_reseller: true,
+          message: 'تم التحقق من الدفع وتفعيل حساب الموزع بنجاح 🎉',
+        });
+      }
+
       const planId = sessionData.metadata?.plan_id;
       let accountId = sessionData.metadata?.account_id;
 

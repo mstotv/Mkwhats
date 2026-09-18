@@ -29,6 +29,7 @@ import {
   X,
   Zap,
   Globe,
+  Network,
 } from "lucide-react";
 import type { AccountRole } from "@/lib/auth/roles";
 
@@ -91,6 +92,7 @@ interface NavItem {
    * Purely informational — doesn't affect routing or access.
    */
   beta?: boolean;
+  isReseller?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -106,6 +108,7 @@ const navItems: NavItem[] = [
   { href: "/flows", labelKey: "flows", icon: Workflow, beta: true },
   { href: "/agents", labelKey: "aiAgents", icon: Bot },
   { href: "/settings?tab=store", labelKey: "bioLink", icon: Globe },
+  { href: "/reseller", labelKey: "reseller", icon: Network, isReseller: true },
 ];
 
 const bottomNavItems = [
@@ -298,6 +301,13 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                         className="rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-amber-300"
                       >
                         {t("beta")}
+                      </span>
+                    )}
+                    {item.isReseller && (
+                      <span
+                        className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-bold text-emerald-400"
+                      >
+                        {isAr ? "شريك" : "Partner"}
                       </span>
                     )}
                     {showUnreadDot && (

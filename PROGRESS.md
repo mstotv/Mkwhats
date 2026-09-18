@@ -1,6 +1,43 @@
-# حالة المشروع - آخر تحديث: [6/9/2026]
+# حالة المشروع - آخر تحديث: [18/9/2026]
 
-> 🎯 **ملخص الحالة الراهنة الشامل (Home Marketing Overhaul, Full Admin CMS, Reviews System, Bio Link Studio & Zero-Error Stability):**
+> 🎯 **ملخص الإنجاز الكبير (White-Label Reseller Engine, User Dashboard Portal & Landing Marketing):**
+> تم بحمد الله تأسيس وبناء المنظومة المتكاملة لنظام **White-Label Reseller** فائق الأمان، مع إضافة مركز إدارة كامل في Super Admin، وإبراز الباقات في اللاندينغ بيج، وبناء بوابة الموزع داخل لوحة المستخدم:
+> 1. **قاعدة البيانات والأمان المشدد (Migrations 094, 095, 096)**:
+>    - جداول `reseller_plans`, `resellers`, `reseller_admins`, `reseller_updates`, `reseller_site_settings` مع حماية RLS كاملة ودالة `is_reseller_admin()` بصلاحية `SECURITY DEFINER` وأتمتة دورة حياة الاشتراكات.
+> 2. **مركز إدارة الريسيلر الشامل في Super Admin (`/admin/resellers`)**:
+>    - دليل الموزعين والإحصائيات (`/admin/resellers`)، باقات وخطط الموزعين (`/admin/resellers/plans`)، الشركات والعملاء (`/admin/resellers/users`)، ومركز التحديثات (`/admin/resellers/updates`).
+> 3. **الواجهة العامة وصفحة الأسعار (Landing & Pricing Page)**:
+>    - صفحة الأسعار (`/pricing`): مبدل تبويبات عصري بين "باقات الشركات" و "باقات الموزعين (White-Label)" مع إبراز الحصص والمزايا الاستثمارية وزر الاشتراك.
+>    - الصفحة الرئيسية (`/`): قسم تسويقي تفاعلي عالي الإقناع (`LandingResellerShowcase`) مع ركائز القيمة التنافسية وبانر الحث على إطلاق منصة الـ SaaS.
+> 4. **بوابة وميزة الموزع في لوحة المستخدم (`/reseller`)**:
+>    - القائمة الجانبية: إضافة بند "برنامج الموزعين" مع شارة الشريك `Partner`.
+>    - لغير المشتركين: حاسبة أرباح تفاعلية، استعراض باقات الموزعين، ونافذة لتقديم طلب الترقية.
+>    - للمشتركين النشطين: بوابة متكاملة لتخصيص الهوية (الاسم، اللوجو، الألوان، الدومين المخصص CNAME)، استعراض الشركات المسجلة، وإعدادات بوابات الدفع (Stripe والدفع المحلي).
+> 5. **التوجيه الذكي في `src/proxy.ts`**:
+>    - فحص الساب دومين والدومين المخصص، كاش 60 ثانية، وتوجيه الحسابات المعلقة إلى صفحة إيقاف الخدمة `/reseller-suspended`.
+> 7. **إزالة الحاسبات التفاعلية حسب رغبة المستخدم (Removal of Interactive Calculators)**:
+>    - تم حذف حاسبة العائد الاستثماري (`Interactive ROI Calculator`) بالكامل من الصفحة الرئيسية (`src/app/page.tsx`).
+>    - تم حذف حاسبة أرباح الموزع (`Reseller Profit Calculator`) بالكامل من لوحة تحكم الموزع للمستخدم (`src/app/(dashboard)/reseller/page.tsx`).
+> 8. **إضافة رابط خطط الريسيلر في شريط التنقل العلوي (Reseller Plans in LandingNavbar)**:
+>    - إضافة بند `خطط الريسيلر` / `Reseller Plans` في شريط التنقل العلوي بجانب بند الأسعار (`PRICING`) في [landing-navbar.tsx](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-navbar.tsx).
+>    - ربطه تلقائياً بتبويب باقات الموزعين في صفحة الأسعار (`/pricing?tab=reseller`) مع تفعيل التبويب فورياً.
+> 10. **بوابة الدفع الشاملة لباقات الموزعين (Reseller Plan Checkout)**:
+>    - بناء نافذة دفع متكاملة تجمع كافة بوابات الدفع المهيأة في السوبر أدمن:
+>      - **Stripe**: بطاقات الائتمان مع إنشاء جلسة Checkout رسمية والتحقق الآلي منها عند العودة وتفعيل حساب الموزع تلقائياً.
+>      - **Plisio**: الدفع المشفر عبر العملات الرقمية (USDT / BTC) وإنشاء الفاتورة وربطها مع Webhook المنصة.
+>      - **Offline / التحويل اليدوي**: عرض الحسابات البنكية المعتمدة، رقم الحساب، التعليمات، إدخال رقم الحوالة، ورفع إشعار التحويل (الوصل) فورياً عبر `/api/upload-receipt`.
+>    - إنشاء مسار الدفع الموحد `/api/reseller/checkout`، وتحديث `/api/billing/stripe/verify` و `/api/v1/webhooks/plisio`.
+> 11. **الفصل الجذري بين الساب دومين للريسيلر ومتاجر البايو لينك (Subdomain Isolation & White-Label Branding)**:
+>    - تحديث `src/proxy.ts`: البحث أولاً في جدول `resellers`، وتمرير الهيدرز المخصصة `x-reseller-id` للمنصة.
+>    - حماية الساب دومين من التحويل الخاطئ إلى `/store/[subdomain]` من خلال التأكد مسبقاً من وجود المتجر في جدول `storefronts` قبل أي Rewrite.
+>    - بناء محرك الهوية السحابي [src/lib/reseller/settings.ts](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/lib/reseller/settings.ts): قراءة هوية الموزع تلقائياً وتطبيقها على اللوجو، الفافيكون، الاسم، الدعم، وألوان المنصة في كافة صفحات الدخول والتسجيل والواجهة، وحجب عروض الريسيلر عن زبائن الموزع.
+> 12. **الاستقرار والجودة**: فحص الأنواع البرمجية (`npx tsc --noEmit`) ناجح 100% وبصفر أخطاء.
+> 13. **معالجة خطأ انتهاء المهلة وحلقة الـ RLS اللانهائية (Migration 097: Fix Statement Timeout & RLS Recursion)**:
+>    - اكتشاف وحل سبب الخطأ `57014 (canceling statement due to statement timeout)`: في Migration 095 كانت سياسة جدول `reseller_admins` تستدعي الدالة `is_reseller_admin()`، والتي بدورها تستعلم من نفس الجدول `reseller_admins`، مما كان يُدخل قاعدة البيانات في تكرار لا نهائي (Infinite Recursive Loop) ويجعل الاستعلامات تتجمد لمدة 20 ثانية قبل أن تفصل بالـ timeout.
+>    - إنشاء Migration رقم [097_fix_reseller_rls_recursion.sql](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/supabase/migrations/097_fix_reseller_rls_recursion.sql): فك الارتباط التكراري في سياسات `reseller_admins`، وتحسين دالة `is_reseller_admin()` لتستعلم مباشرة وسريعاً بدون أي RLS recursion، وضبط ترتيب الشروط في جدول `resellers` ليتحقق من الحالات النشطة أولاً (`status IN ('active', 'grace_period')`).
+>    - تحسين مسار الـ Checkout [src/app/api/reseller/checkout/route.ts](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/reseller/checkout/route.ts) بدعم البحث التلقائي عن الحساب البديل للمستخدم والتعامل الآمن مع القيم الفارغة.
+
+> 🎯 **ملخص الحالة السابقة (Home Marketing Overhaul, Full Admin CMS, Reviews System, Bio Link Studio & Zero-Error Stability):**
 > تم بحمد الله وتوفيقه إنجاز وتثبيت كافة الميزات والتحسينات المطلوبة للمنصة بالكامل:
 > 1. **إعادة هيكلة الصفحة الرئيسية كـ محرك تحويل تسويقي وفصلها عن صفحة المميزات (High-Converting Conversion Engine)**:
 >    - إلغاء التكرار: حذف باقات الأسعار المكررة من الصفحة الرئيسية (`src/app/page.tsx`) والاعتماد الحصري على صفحة باقات الأسعار المخصصة (`/pricing`).

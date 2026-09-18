@@ -173,9 +173,9 @@ export async function createEvolutionInstance(
 
   const data = await evolutionFetch<{
     instance?: { instanceName?: string; name?: string; status?: string }
-    hash?: { apikey?: string }
+    hash?: { apikey?: string } | string
     token?: string
-    qrcode?: { base64?: string }
+    qrcode?: { base64?: string; code?: string }
   }>('/instance/create', {
     method: 'POST',
     apiKey: globalKey,
@@ -183,7 +183,11 @@ export async function createEvolutionInstance(
   })
 
   const returnedInstanceName = data.instance?.instanceName ?? data.instance?.name ?? args.instanceName
-  const returnedApiKey = data.hash?.apikey ?? data.token ?? args.token ?? ''
+  const returnedApiKey =
+    (typeof data.hash === 'string' ? data.hash : data.hash?.apikey) ??
+    data.token ??
+    args.token ??
+    ''
 
   // Automatically register the Webhook on Evolution v2 via POST /webhook/set/{instanceName}
   try {
@@ -232,7 +236,7 @@ export async function setEvolutionWebhook(args: {
     },
   }
 
-  await evolutionFetch(`/webhook/set/${args.instanceName}`, {
+  await evolutionFetch<unknown>(`/webhook/set/${args.instanceName}`, {
     method: 'POST',
     apiKey,
     body: JSON.stringify(body),
@@ -240,18 +244,24 @@ export async function setEvolutionWebhook(args: {
 }
 
 /**
- * Deletes an Evolution instance permanently.
- * Called when the account disconnects from Evolution.
- * Uses the global key (instance key may be lost if DB row deleted).
+ * Deletes an Evolution instance by name on the server.
+ * Idempotent: 404 is swallowed.
  */
 export async function deleteEvolutionInstance(args: {
   instanceName: string
 }): Promise<void> {
   const globalKey = getEvolutionGlobalApiKey()
-  await evolutionFetch<unknown>(`/instance/delete/${args.instanceName}`, {
-    method: 'DELETE',
-    apiKey: globalKey,
-  })
+  try {
+    await evolutionFetch<unknown>(`/instance/delete/${args.instanceName}`, {
+      method: 'DELETE',
+      apiKey: globalKey,
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    if (!message.includes('404')) {
+      throw err
+    }
+  }
 }
 
 // ─── QR code ─────────────────────────────────────────────────
@@ -271,24 +281,30 @@ export interface EvolutionQrResult {
  */
 export async function getEvolutionQr(args: {
   instanceName: string
-  instanceApiKey: string
+  instanceApiKey?: string
 }): Promise<EvolutionQrResult> {
+  const globalKey = getEvolutionGlobalApiKey()
+  const apiKey = args.instanceApiKey?.trim() || globalKey
   try {
     const data = await evolutionFetch<{
       base64?: string
       code?: string
+      qrcode?: { base64?: string; code?: string }
     }>(`/instance/connect/${args.instanceName}`, {
       method: 'GET',
-      apiKey: args.instanceApiKey,
+      apiKey,
     })
 
+    const base64 = data.base64 ?? data.qrcode?.base64 ?? null
+    const code = data.code ?? data.qrcode?.code ?? null
+
     return {
-      base64: data.base64 ?? null,
-      code: data.code ?? null,
-      connected: !data.base64 && !data.code,
+      base64,
+      code,
+      connected: !base64 && !code,
     }
   } catch (err) {
-    // Evolution returns 404 / specific error when already connected
+    // Evolution returns specific error / message when already connected
     const message = err instanceof Error ? err.message : String(err)
     if (
       message.toLowerCase().includes('already connected') ||

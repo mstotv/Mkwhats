@@ -34,6 +34,7 @@
     "orders": "Orders",
     "appointments": "Appointments",
     "bioLink": "Bio Link",
+    "reseller": "Reseller Partner",
     "settings": "Settings",
     "beta": "Beta",
     "unreadConversations": "{count} unread {count, plural, =1 {conversation} other {conversations}}",
