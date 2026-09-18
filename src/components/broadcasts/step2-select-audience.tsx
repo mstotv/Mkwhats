@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Contact, CustomField, Tag } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -19,8 +19,18 @@ import {
   Square,
   CalendarDays,
   Calendar,
+  FileSpreadsheet,
+  Download,
+  CheckCircle2,
+  AlertCircle,
+  Trash2,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import {
+  parseAudienceFile,
+  downloadSampleExcelTemplate,
+  type ParseAudienceFileResult,
+} from '@/lib/broadcasts/parse-audience-file';
 
 type AudienceType = 'all' | 'tags' | 'custom_field' | 'csv' | 'manual' | 'date_range';
 type CustomFieldOperator = 'is' | 'is_not' | 'contains';
@@ -122,6 +132,49 @@ export function Step2SelectAudience({
   const [allContacts, setAllContacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [contactSearch, setContactSearch] = useState('');
+
+  // Excel / CSV upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [parsingFile, setParsingFile] = useState(false);
+  const [fileResult, setFileResult] = useState<ParseAudienceFileResult | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const processUploadedFile = async (file: File) => {
+    setParsingFile(true);
+    setFileError(null);
+    try {
+      const res = await parseAudienceFile(file);
+      if (res.validCount === 0) {
+        setFileError(
+          'لم يتم العثور على أرقام هواتف صالحة في الملف. يرجى التأكد من أن الملف يحتوي على عمود أرقام (مثل: الهاتف، الجوال، Phone).'
+        );
+        setFileResult(null);
+        onUpdate({ ...audience, csvContacts: undefined });
+        setEstimatedCount(0);
+      } else {
+        setFileResult(res);
+        onUpdate({ ...audience, csvContacts: res.contacts });
+        setEstimatedCount(res.validCount);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'حدث خطأ أثناء قراءة الملف.';
+      setFileError(msg);
+      setFileResult(null);
+      onUpdate({ ...audience, csvContacts: undefined });
+      setEstimatedCount(0);
+    } finally {
+      setParsingFile(false);
+    }
+  };
+
+  const handleClearFile = () => {
+    setFileResult(null);
+    setFileError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    onUpdate({ ...audience, csvContacts: undefined });
+    setEstimatedCount(null);
+  };
 
   useEffect(() => {
     async function fetchTags() {
@@ -678,6 +731,178 @@ export function Step2SelectAudience({
                 placeholder={t('selectAudience.valuePlaceholder')}
                 className="h-9 rounded-lg border border-border bg-muted px-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
               />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Excel / CSV File Upload ────────────────────────────── */}
+      {audience.type === 'csv' && (
+        <div className="space-y-4 rounded-xl border border-border bg-card/50 p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                <FileSpreadsheet className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  رفع ملف الأرقام (Excel / CSV)
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  يدعم صيغ .xlsx و .xls و .csv مع التعرف التلقائي على الأعمدة
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={downloadSampleExcelTemplate}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/60 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted hover:border-primary/40 transition-colors"
+            >
+              <Download className="h-3.5 w-3.5 text-primary" />
+              تحميل نموذج Excel جاهز
+            </button>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) processUploadedFile(f);
+            }}
+          />
+
+          {!fileResult && !parsingFile && (
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+                const f = e.dataTransfer.files?.[0];
+                if (f) processUploadedFile(f);
+              }}
+              onClick={() => fileInputRef.current?.click()}
+              className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center cursor-pointer transition-all ${
+                isDragOver
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border bg-muted/30 hover:border-primary/50 hover:bg-muted/50'
+              }`}
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-3">
+                <Upload className="h-6 w-6" />
+              </div>
+              <p className="text-sm font-medium text-foreground">
+                اسحب وأفلت ملف الإكسل أو CSV هنا، أو <span className="text-primary underline">تصفح من جهازك</span>
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                يدعم أعمدة: الهاتف / الجوال / Phone، والاسم / Name (اختياري)
+              </p>
+            </div>
+          )}
+
+          {parsingFile && (
+            <div className="flex flex-col items-center justify-center py-10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+              <p className="text-sm font-medium text-foreground">جاري قراءة ومعالجة الملف...</p>
+            </div>
+          )}
+
+          {fileError && (
+            <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{fileError}</span>
+            </div>
+          )}
+
+          {fileResult && (
+            <div className="space-y-4">
+              {/* File Info Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                    <FileSpreadsheet className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate max-w-xs sm:max-w-md">
+                      {fileResult.filename}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      تم استخراج {fileResult.validCount} رقم صالح من إجمالي {fileResult.totalRows} صف
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-8 text-xs border-border"
+                  >
+                    تغيير الملف
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearFile}
+                    className="h-8 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                    حذف
+                  </Button>
+                </div>
+              </div>
+
+              {/* Stats badges */}
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-2.5 text-xs text-emerald-400">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <span><strong>{fileResult.validCount}</strong> أرقام صالحة للإرسال</span>
+                </div>
+                {fileResult.duplicateCount > 0 && (
+                  <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-2.5 text-xs text-amber-400">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span><strong>{fileResult.duplicateCount}</strong> أرقام مكررة تم دمجها</span>
+                  </div>
+                )}
+                {fileResult.invalidCount > 0 && (
+                  <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-2.5 text-xs text-red-400">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span><strong>{fileResult.invalidCount}</strong> صفوف غير صالحة تم تخطيها</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Preview Table */}
+              {fileResult.preview.length > 0 && (
+                <div className="rounded-lg border border-border bg-card overflow-hidden">
+                  <div className="bg-muted/50 px-3 py-2 border-b border-border flex items-center justify-between text-xs text-muted-foreground">
+                    <span>معاينة لأول {Math.min(5, fileResult.preview.length)} جهات اتصال من الملف:</span>
+                    <span className="text-emerald-500 font-medium">جاهز للإرسال ✓</span>
+                  </div>
+                  <div className="divide-y divide-border text-xs">
+                    {fileResult.preview.map((contact, idx) => (
+                      <div key={idx} className="flex items-center justify-between px-3 py-2">
+                        <span className="font-medium text-foreground">
+                          {contact.name || <span className="text-muted-foreground italic">بدون اسم</span>}
+                        </span>
+                        <span className="font-mono text-muted-foreground" dir="ltr">
+                          {contact.phone}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

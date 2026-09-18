@@ -764,7 +764,7 @@
           "all": "All Contacts",
           "tags": "Filter by Tags",
           "customField": "Custom Field",
-          "csv": "Upload CSV",
+          "csv": "Upload Excel / CSV",
           "dateRange": "By Date Range",
           "manual": "Manual Selection"
         },
@@ -772,7 +772,7 @@
         "allDescLoading": "Send to all contacts in your database.",
         "tagDesc": "Send to contacts matching specific tags.",
         "customFieldDesc": "Send to contacts matching a custom field rule.",
-        "csvDesc": "Upload a CSV with phone numbers (and optional names).",
+        "csvDesc": "Upload an Excel (.xlsx, .xls) or CSV file with numbers.",
         "manualDesc": "Select specific contacts manually.",
         "dateRangeDesc": "Send to contacts who messaged you between specific dates.",
         "dateRangeTitle": "Filter by Inbound Message Date",
