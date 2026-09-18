@@ -79,7 +79,18 @@ export async function GET() {
     ]);
 
     const accountPlan = accountRes.data?.plans ? (Array.isArray(accountRes.data.plans) ? accountRes.data.plans[0] : accountRes.data.plans) : null;
-    const sub = subRes.data;
+    let sub = subRes.data;
+
+    // Check if trial has expired
+    if (sub && sub.status === 'trialing' && sub.trial_ends_at && new Date(sub.trial_ends_at).getTime() < Date.now()) {
+      await service
+        .from('subscriptions')
+        .update({ status: 'expired', updated_at: new Date().toISOString() })
+        .eq('account_id', accountId)
+        .eq('status', 'trialing');
+      sub = { ...sub, status: 'expired' };
+    }
+
     const subPlan = sub?.plans ? (Array.isArray(sub.plans) ? sub.plans[0] : sub.plans) : null;
     const availablePlans = (allPlansRes.data || []).map((p: any) => ({
       id: p.id,

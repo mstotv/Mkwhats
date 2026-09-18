@@ -14,7 +14,6 @@ import {
   Headphones,
   Sparkles,
   ArrowRight,
-  Network,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslations, useLocale } from 'next-intl'
@@ -44,7 +43,7 @@ export function AdminNav({ isOpen = false, onClose }: AdminNavProps) {
     try {
       const cached = localStorage.getItem("mk_site_settings");
       if (cached) setSiteSettings(JSON.parse(cached));
-    } catch {}
+    } catch { }
 
     fetch('/api/site-settings')
       .then((res) => res.json())
@@ -53,10 +52,10 @@ export function AdminNav({ isOpen = false, onClose }: AdminNavProps) {
           setSiteSettings(data.settings);
           try {
             localStorage.setItem("mk_site_settings", JSON.stringify(data.settings));
-          } catch {}
+          } catch { }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const adminPlatformName = isAr
@@ -80,13 +79,6 @@ export function AdminNav({ isOpen = false, onClose }: AdminNavProps) {
       label: isAr ? 'الباقات والأسعار (Plans)' : 'Plans',
       href: '/admin/plans',
       icon: CreditCard,
-    },
-    {
-      label: isAr ? 'شبكة الريسيلر (Resellers)' : 'Resellers Hub',
-      href: '/admin/resellers',
-      icon: Network,
-      badge: 'White-Label',
-      badgeEn: 'White-Label',
     },
     {
       label: isAr ? 'الدفع المحلي (Offline)' : 'Offline Payments',
@@ -203,11 +195,10 @@ export function AdminNav({ isOpen = false, onClose }: AdminNavProps) {
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
-                className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all group ${
-                  isActive
+                className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all group ${isActive
                     ? 'bg-primary/15 text-primary border border-primary/30 shadow-sm font-bold'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon className={`h-4 w-4 transition-transform group-hover:scale-110 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />

@@ -58,6 +58,7 @@ export interface PlanRow {
   max_broadcasts_monthly: number;
   max_orders_monthly: number;
   max_subdomain_changes?: number;
+  trial_days?: number;
   is_popular: boolean;
   features: {
     ai_assistant?: boolean;
@@ -134,6 +135,7 @@ export default function AdminPlansPage() {
     max_broadcasts_monthly: 50,
     max_orders_monthly: 1000,
     max_subdomain_changes: 1,
+    trial_days: 14,
     is_popular: false,
     is_active: true,
     features: {
@@ -215,6 +217,7 @@ export default function AdminPlansPage() {
           max_orders_monthly: editingPlan.max_orders_monthly,
           max_broadcasts_monthly: editingPlan.max_broadcasts_monthly,
           max_subdomain_changes: editingPlan.max_subdomain_changes ?? 0,
+          trial_days: editingPlan.trial_days !== undefined ? Number(editingPlan.trial_days) : 14,
           is_popular: editingPlan.is_popular,
           features: editingPlan.features,
         }),
@@ -257,6 +260,7 @@ export default function AdminPlansPage() {
           max_orders_monthly: Number(newPlan.max_orders_monthly ?? 50),
           max_broadcasts_monthly: Number(newPlan.max_broadcasts_monthly ?? 5),
           max_subdomain_changes: Number(newPlan.max_subdomain_changes ?? 0),
+          trial_days: Number(newPlan.trial_days ?? 14),
           is_popular: Boolean(newPlan.is_popular),
           is_active: true,
           features: newPlan.features,
@@ -547,6 +551,14 @@ export default function AdminPlansPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground font-medium">{isAr ? 'حملات البرودكاست:' : 'Broadcast Campaigns:'}</span>
                     <span className="font-mono font-bold text-foreground">{formatQuotaVal(plan.max_broadcasts_monthly)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground font-medium">{isAr ? 'أيام التجربة المجانية:' : 'Free Trial Days:'}</span>
+                    <span className="font-mono font-bold text-amber-500">
+                      {(plan.trial_days ?? 14) > 0
+                        ? (isAr ? `${plan.trial_days ?? 14} يوم مجاني 🎁` : `${plan.trial_days ?? 14} days trial 🎁`)
+                        : (isAr ? 'بدون تجربة (تفعيل فوري)' : 'No trial (Immediate)')}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground font-medium">{isAr ? 'تغييرات سابدومين البايو:' : 'Bio Subdomain Changes:'}</span>
@@ -892,6 +904,24 @@ export default function AdminPlansPage() {
                     />
                   </div>
 
+                  <div className="space-y-1">
+                    <Label className="text-xs font-bold flex items-center justify-between">
+                      <span>{isAr ? 'أيام التجربة المجانية' : 'Free Trial Days'}</span>
+                      <span className="text-[10px] text-amber-500 font-normal">
+                        {isAr ? '(0 = بدون تجربة)' : '(0 = none)'}
+                      </span>
+                    </Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={editingPlan.trial_days ?? 0}
+                      onChange={(e) =>
+                        setEditingPlan({ ...editingPlan, trial_days: parseInt(e.target.value) || 0 })
+                      }
+                      className="h-10 text-xs font-mono font-bold"
+                    />
+                  </div>
+
                   <div className="space-y-1 sm:col-span-2 lg:col-span-2">
                     <Label className="text-xs font-bold flex items-center justify-between">
                       <span>{isAr ? 'مرات تغيير سابدومين البايو لينك' : 'Bio Subdomain Changes'}</span>
@@ -1036,6 +1066,17 @@ export default function AdminPlansPage() {
                   value={newPlan.price_yearly}
                   onChange={(e) => setNewPlan({ ...newPlan, price_yearly: parseFloat(e.target.value) || 0 })}
                   className="h-10 text-xs"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-bold">{isAr ? 'أيام التجربة المجانية (0 = لا يوجد)' : 'Free Trial Days (0 = none)'}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={newPlan.trial_days ?? 14}
+                  onChange={(e) => setNewPlan({ ...newPlan, trial_days: parseInt(e.target.value) || 0 })}
+                  className="h-10 text-xs font-mono font-bold"
                 />
               </div>
 

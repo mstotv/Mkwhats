@@ -14,15 +14,14 @@ import { LandingHeroMockup } from '@/components/landing/landing-hero-mockup'
 import { LandingComparison } from '@/components/landing/landing-comparison'
 import { LandingValuePillars } from '@/components/landing/landing-value-pillars'
 import { LandingMetricsProof } from '@/components/landing/landing-metrics-proof'
+import { LandingPricing } from '@/components/landing/landing-pricing'
 import { LandingTestimonials } from '@/components/landing/landing-testimonials'
-import { LandingResellerShowcase } from '@/components/landing/landing-reseller-showcase'
 import { LandingFinalCta } from '@/components/landing/landing-final-cta'
 import { FloatingSupport } from '@/components/landing/floating-support'
-import { getEffectiveSiteSettings } from '@/lib/reseller/settings'
 
 export const dynamic = 'force-dynamic'
 
-export default async function HomePage() {
+export default async function LandingPage() {
   const cookieStore = await cookies()
   const locale = (cookieStore.get('NEXT_LOCALE')?.value as 'en' | 'ar') || 'en'
   const isAr = locale === 'ar'
@@ -50,9 +49,9 @@ export default async function HomePage() {
 
   const serviceClient = createServiceClient()
 
-  const [settings, { data: dbPartners }, { data: contentPages }, { data: plans }] =
+  const [{ data: settings }, { data: dbPartners }, { data: contentPages }, { data: plans }] =
     await Promise.all([
-      getEffectiveSiteSettings(),
+      serviceClient.from('site_settings').select('*').limit(1).maybeSingle(),
       serviceClient.from('partners').select('*').order('display_order', { ascending: true }),
       serviceClient
         .from('content_pages')
@@ -135,7 +134,6 @@ export default async function HomePage() {
         activePage="home"
         userLoggedIn={Boolean(user)}
         primaryCtaText={heroContent.primary_cta_text}
-        isResellerPortal={settings?.is_reseller_portal}
       />
 
       {/* ── 2. Hero Section ───────────────────────────────────── */}
@@ -213,14 +211,34 @@ export default async function HomePage() {
       {/* ── 5. 4 Core Outcome Pillars (+ Link to Features) ───── */}
       <LandingValuePillars isAr={isAr} content={settings?.home_content?.pillars} />
 
-      {/* ── 6. Proof by the Numbers & Key Metrics ────────────── */}
+
+      {/* ── 7. Proof by the Numbers & Key Metrics ────────────── */}
       <LandingMetricsProof isAr={isAr} content={settings?.home_content?.metrics_proof} />
 
-      {/* ── 8. Real Customer Testimonials & Success Stories ───── */}
-      <LandingTestimonials isAr={isAr} testimonials={settings?.testimonials} />
+      {/* ── 8. Plans & Pricing ─────────────────────────────────── */}
+      <section id="pricing" className="py-16 md:py-24 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 text-center space-y-8">
+        <div className="inline-flex items-center gap-2 bg-[#00685F]/10 border border-[#00685F]/20 rounded-full px-4 py-1.5 text-xs font-semibold text-[#00685F] dark:text-[#6BD8CB] uppercase tracking-wider">
+          {isAr ? 'خطط شفافة وتجربة مجانية' : 'TRANSPARENT PLANS & FREE TRIAL'}
+        </div>
+        <h2 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-[#1B1C1C] dark:text-white max-w-3xl mx-auto">
+          {isAr ? 'اختر الخطة المناسبة وابدأ تجربتك المجانية' : 'Choose Your Plan & Start Your Free Trial'}
+        </h2>
+        <p className="text-base text-[#605E5B] dark:text-[#C9C6C1] max-w-2xl mx-auto">
+          {isAr
+            ? 'جرب جميع ميزات المنصة مجاناً بدون الحاجة لبطاقة ائتمان. يمكنك الترقية أو الإلغاء في أي وقت.'
+            : 'Try all features free without a credit card. Upgrade or cancel at any time.'}
+        </p>
+        <div className="pt-4">
+          <LandingPricing
+            plans={(plans as any[]) || []}
+            userLoggedIn={Boolean(user)}
+            primaryColor="#00685F"
+          />
+        </div>
+      </section>
 
-      {/* ── 9. White-Label Reseller Showcase Section (Only on main platform) ─────────── */}
-      {!settings?.is_reseller_portal && <LandingResellerShowcase />}
+      {/* ── 9. Real Customer Testimonials & Success Stories ───── */}
+      <LandingTestimonials isAr={isAr} testimonials={settings?.testimonials} />
 
       {/* ── 10. Magnetic Final Call-to-Action ─────────────────── */}
       <LandingFinalCta isAr={isAr} userLoggedIn={Boolean(user)} content={settings?.home_content?.final_cta} />
@@ -238,11 +256,7 @@ export default async function HomePage() {
         whatsapp={settings?.support_whatsapp}
         telegram={settings?.support_telegram}
         email={settings?.support_email}
-        enabled={
-          settings?.support_floating_enabled
-            ? { whatsapp: Boolean(settings?.support_whatsapp), telegram: Boolean(settings?.support_telegram), email: Boolean(settings?.support_email) }
-            : { whatsapp: false, telegram: false, email: false }
-        }
+        enabled={settings?.support_floating_enabled}
         locale={locale}
       />
     </div>

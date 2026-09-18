@@ -71,6 +71,7 @@ export async function PATCH(
       max_broadcasts_monthly,
       max_orders_monthly,
       max_subdomain_changes,
+      trial_days,
       is_popular,
       features,
       is_active,
@@ -102,6 +103,7 @@ export async function PATCH(
       updateData.max_orders_monthly = Number(max_orders_monthly)
     if (max_subdomain_changes !== undefined)
       updateData.max_subdomain_changes = Number(max_subdomain_changes)
+    if (trial_days !== undefined) updateData.trial_days = Number(trial_days)
     if (is_popular !== undefined) updateData.is_popular = Boolean(is_popular)
     if (features !== undefined) updateData.features = features
     if (is_active !== undefined) updateData.is_active = Boolean(is_active)

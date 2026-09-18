@@ -62,13 +62,13 @@ export async function GET(req: NextRequest) {
     // Fetch profile information for each user_id
     const userIds = Array.from(new Set(tickets?.map((t) => t.user_id) || []))
     let profilesMap: Record<string, any> = {}
-    
+
     if (userIds.length > 0) {
       const { data: profiles } = await serviceClient
         .from('profiles')
         .select('user_id, full_name, email')
         .in('user_id', userIds)
-      
+
       if (profiles) {
         profilesMap = profiles.reduce((acc: any, curr: any) => {
           acc[curr.user_id] = curr

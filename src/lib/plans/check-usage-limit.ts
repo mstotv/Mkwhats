@@ -26,13 +26,26 @@ export async function checkAccountFeature(
   // Fetch active subscription & plan features
   const { data: sub, error } = await supabase
     .from('subscriptions')
-    .select('status, plans(is_active, features)')
+    .select('status, trial_ends_at, current_period_end, plans(is_active, features)')
     .eq('account_id', accountId)
     .in('status', ['active', 'trialing'])
     .maybeSingle()
 
   if (error || !sub || !sub.plans) {
     return { allowed: false, reason: 'لا يوجد اشتراك نشط لهذا الحساب' }
+  }
+
+  // Check if trial has expired in real time
+  if (sub.status === 'trialing' && sub.trial_ends_at) {
+    const isExpired = new Date(sub.trial_ends_at).getTime() < Date.now()
+    if (isExpired) {
+      await supabase
+        .from('subscriptions')
+        .update({ status: 'expired', updated_at: new Date().toISOString() })
+        .eq('account_id', accountId)
+        .eq('status', 'trialing')
+      return { allowed: false, reason: 'انتهت الفترة التجريبية المجانية لحسابك. يرجى الترقية لمواصلة استخدام المنصة.' }
+    }
   }
 
   const plan = Array.isArray(sub.plans) ? sub.plans[0] : sub.plans
@@ -67,7 +80,7 @@ export async function checkAccountUsageLimit(
   // 1. Fetch active subscription & plan limits
   const { data: sub, error: subError } = await supabase
     .from('subscriptions')
-    .select('status, plans(is_active, max_messages_monthly, max_broadcasts_monthly)')
+    .select('status, trial_ends_at, current_period_end, plans(is_active, max_messages_monthly, max_broadcasts_monthly)')
     .eq('account_id', accountId)
     .in('status', ['active', 'trialing'])
     .maybeSingle()
@@ -78,6 +91,24 @@ export async function checkAccountUsageLimit(
       reason: 'لا يوجد اشتراك نشط لهذا الحساب',
       current: 0,
       limit: 0,
+    }
+  }
+
+  // Check if trial has expired in real time
+  if (sub.status === 'trialing' && sub.trial_ends_at) {
+    const isExpired = new Date(sub.trial_ends_at).getTime() < Date.now()
+    if (isExpired) {
+      await supabase
+        .from('subscriptions')
+        .update({ status: 'expired', updated_at: new Date().toISOString() })
+        .eq('account_id', accountId)
+        .eq('status', 'trialing')
+      return {
+        allowed: false,
+        reason: 'انتهت الفترة التجريبية المجانية لحسابك. يرجى الترقية لمواصلة استخدام المنصة.',
+        current: 0,
+        limit: 0,
+      }
     }
   }
 

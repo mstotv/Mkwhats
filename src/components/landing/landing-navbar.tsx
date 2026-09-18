@@ -11,10 +11,9 @@ interface LandingNavbarProps {
   logoUrl?: string | null
   logoHeight?: number
   locale: 'en' | 'ar'
-  activePage?: 'home' | 'features' | 'pricing' | 'reseller' | 'faq'
+  activePage?: 'home' | 'features' | 'pricing' | 'faq'
   userLoggedIn?: boolean
   primaryCtaText?: string
-  isResellerPortal?: boolean
 }
 
 export function LandingNavbar({
@@ -25,23 +24,17 @@ export function LandingNavbar({
   activePage = 'home',
   userLoggedIn = false,
   primaryCtaText,
-  isResellerPortal = false,
 }: LandingNavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const isAr = locale === 'ar'
   const ArrowIcon = isAr ? ArrowLeft : ArrowRight
 
-  const allNavLinks = [
+  const navLinks = [
     { key: 'home', href: '/', labelAr: 'الرئيسية', labelEn: 'Home' },
     { key: 'features', href: '/features', labelAr: 'المميزات', labelEn: 'Features' },
     { key: 'pricing', href: '/pricing', labelAr: 'الأسعار', labelEn: 'Pricing' },
-    { key: 'reseller', href: '/pricing?tab=reseller', labelAr: 'خطط الريسيلر', labelEn: 'Reseller Plans' },
     { key: 'faq', href: '/faq', labelAr: 'الأسئلة الشائعة', labelEn: 'FAQ' },
   ]
-
-  const navLinks = isResellerPortal
-    ? allNavLinks.filter((link) => link.key !== 'reseller')
-    : allNavLinks
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#BCC9C6]/30 dark:border-white/10 bg-[#F9F5F0]/95 dark:bg-[#1A1A1A]/95 backdrop-blur-md transition-colors">
@@ -62,18 +55,17 @@ export function LandingNavbar({
         </Link>
 
         {/* Navigation Links (Centered on Desktop) */}
-        <nav className="hidden md:flex items-center gap-4 lg:gap-7 text-[13px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1] md:absolute md:left-1/2 md:-translate-x-1/2">
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-[13px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1] md:absolute md:left-1/2 md:-translate-x-1/2">
           {navLinks.map((link) => {
             const isActive = activePage === link.key
             return (
               <Link
                 key={link.key}
                 href={link.href}
-                className={`transition-colors pb-1 ${
-                  isActive
+                className={`transition-colors pb-1 ${isActive
                     ? 'text-[#00685F] dark:text-[#6BD8CB] border-b-2 border-[#00685F] dark:border-[#6BD8CB] font-bold'
                     : 'hover:text-[#00685F] dark:hover:text-[#6BD8CB]'
-                }`}
+                  }`}
               >
                 {isAr ? link.labelAr : link.labelEn}
               </Link>
@@ -137,11 +129,10 @@ export function LandingNavbar({
                   key={link.key}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`text-sm font-semibold py-2 px-3 rounded-md transition-colors ${
-                    isActive
+                  className={`text-sm font-semibold py-2 px-3 rounded-md transition-colors ${isActive
                       ? 'bg-[#00685F]/10 dark:bg-[#00685F]/20 text-[#00685F] dark:text-[#6BD8CB] font-bold'
                       : 'text-[#605E5B] dark:text-[#C9C6C1] hover:text-[#00685F] dark:hover:text-[#6BD8CB]'
-                  }`}
+                    }`}
                 >
                   {isAr ? link.labelAr : link.labelEn}
                 </Link>

@@ -209,6 +209,8 @@ export default function AdminAccountsPage() {
 
   const [changingAccount, setChangingAccount] = useState<AdminAccountDetailRow | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  const [planSubStatus, setPlanSubStatus] = useState<'active' | 'trialing'>('active');
+  const [planTrialDays, setPlanTrialDays] = useState<number>(14);
   const [savingPlan, setSavingPlan] = useState(false);
 
   const [resettingAccount, setResettingAccount] = useState<AdminAccountDetailRow | null>(null);
@@ -421,6 +423,8 @@ export default function AdminAccountsPage() {
         body: JSON.stringify({
           account_id: changingAccount.account_id,
           plan_id: selectedPlanId,
+          status: planSubStatus,
+          trial_days: planSubStatus === 'trialing' ? planTrialDays : undefined,
         }),
       });
       const data = await res.json();
@@ -1402,6 +1406,66 @@ export default function AdminAccountsPage() {
                   )}
                 </label>
               ))}
+            </div>
+
+            {/* Trial vs Active Configuration */}
+            <div className="rounded-xl border border-border/70 bg-muted/30 p-3 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-foreground">{isAr ? 'نوع التفعيل:' : 'Activation Mode:'}</span>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setPlanSubStatus('active')}
+                    className={`px-3 py-1 rounded-md transition-all text-xs font-bold ${
+                      planSubStatus === 'active'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground bg-muted/60'
+                    }`}
+                  >
+                    {isAr ? 'نشط مباشرة' : 'Active'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPlanSubStatus('trialing')}
+                    className={`px-3 py-1 rounded-md transition-all text-xs font-bold ${
+                      planSubStatus === 'trialing'
+                        ? 'bg-sky-600 text-white shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground bg-muted/60'
+                    }`}
+                  >
+                    {isAr ? 'تجربة مجانية 🎁' : 'Free Trial 🎁'}
+                  </button>
+                </div>
+              </div>
+
+              {planSubStatus === 'trialing' && (
+                <div className="flex items-center justify-between border-t border-border/50 pt-2">
+                  <span className="text-sky-500 font-bold text-[11px]">{isAr ? 'عدد الأيام المجانية:' : 'Trial Days:'}</span>
+                  <div className="flex items-center gap-1.5">
+                    {[7, 14, 30].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setPlanTrialDays(d)}
+                        className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold transition-all ${
+                          planTrialDays === d
+                            ? 'bg-sky-500 text-slate-950'
+                            : 'bg-muted text-muted-foreground hover:text-foreground border border-border'
+                        }`}
+                      >
+                        {d} {isAr ? 'يوم' : 'd'}
+                      </button>
+                    ))}
+                    <input
+                      type="number"
+                      min="1"
+                      value={planTrialDays}
+                      onChange={(e) => setPlanTrialDays(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-14 h-7 text-center rounded bg-background border border-border text-foreground text-xs font-mono font-bold focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // 3. Parse request body
     const body = await request.json()
-    const { account_id, plan_id, billing_cycle = 'monthly' } = body || {}
+    const { account_id, plan_id, billing_cycle = 'monthly', status: requestedStatus, trial_days } = body || {}
 
     if (!account_id || !plan_id) {
       return NextResponse.json(
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     // 4. Fetch target plan
     const { data: targetPlan, error: planError } = await serviceClient
       .from('plans')
-      .select('id, name, is_active')
+      .select('id, name, is_active, trial_days')
       .eq('id', plan_id)
       .maybeSingle()
 
@@ -84,6 +84,12 @@ export async function POST(request: NextRequest) {
     } else {
       periodEnd.setMonth(periodEnd.getMonth() + 1)
     }
+
+    const isTrial = requestedStatus === 'trialing' || (trial_days !== undefined && Number(trial_days) > 0)
+    const trialDaysCount = trial_days !== undefined ? Number(trial_days) : (targetPlan.trial_days || 14)
+    const trialEndsAt = isTrial ? new Date(now.getTime() + trialDaysCount * 24 * 60 * 60 * 1000).toISOString() : null
+    const finalStatus = isTrial ? 'trialing' : (requestedStatus || 'active')
+    const finalPeriodEnd = isTrial && trialEndsAt ? trialEndsAt : periodEnd.toISOString()
 
     // 5. Fetch current active or trialing subscription for this account
     const { data: currentSub } = await serviceClient
@@ -132,10 +138,11 @@ export async function POST(request: NextRequest) {
       .insert({
         account_id,
         plan_id,
-        status: 'active',
+        status: finalStatus,
         billing_cycle,
         current_period_start: now.toISOString(),
-        current_period_end: periodEnd.toISOString(),
+        current_period_end: finalPeriodEnd,
+        trial_ends_at: trialEndsAt,
         created_at: now.toISOString(),
         updated_at: now.toISOString(),
       })

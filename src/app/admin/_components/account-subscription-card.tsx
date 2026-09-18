@@ -84,6 +84,8 @@ export function AccountSubscriptionCard({
     subscription?.plan_id || availablePlans[0]?.id || ''
   )
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
+  const [subStatus, setSubStatus] = useState<'active' | 'trialing'>('active')
+  const [trialDays, setTrialDays] = useState<number>(14)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -102,6 +104,8 @@ export function AccountSubscriptionCard({
           account_id: accountId,
           plan_id: selectedPlanId,
           billing_cycle: billingCycle,
+          status: subStatus,
+          trial_days: subStatus === 'trialing' ? trialDays : undefined,
         }),
       })
 
@@ -311,6 +315,66 @@ export function AccountSubscriptionCard({
                   سنوياً
                 </button>
               </div>
+            </div>
+
+            {/* Subscription Type & Trial Days */}
+            <div className="bg-slate-950/60 border border-slate-800/80 p-3 rounded-lg text-xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-300 font-medium">نوع الاشتراك:</span>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSubStatus('active')}
+                    className={`px-3 py-1 rounded-md transition-all text-xs font-medium ${
+                      subStatus === 'active'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    نشط مباشرة
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSubStatus('trialing')}
+                    className={`px-3 py-1 rounded-md transition-all text-xs font-medium ${
+                      subStatus === 'trialing'
+                        ? 'bg-sky-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    فترة تجريبية مجانية 🎁
+                  </button>
+                </div>
+              </div>
+
+              {subStatus === 'trialing' && (
+                <div className="flex items-center justify-between border-t border-slate-800/60 pt-2">
+                  <span className="text-sky-300 font-medium text-[11px]">عدد أيام التجربة المجانية:</span>
+                  <div className="flex items-center gap-1.5">
+                    {[7, 14, 30].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setTrialDays(d)}
+                        className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold transition-all ${
+                          trialDays === d
+                            ? 'bg-sky-500 text-slate-950'
+                            : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                        }`}
+                      >
+                        {d} يوم
+                      </button>
+                    ))}
+                    <input
+                      type="number"
+                      min="1"
+                      value={trialDays}
+                      onChange={(e) => setTrialDays(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-14 h-7 text-center rounded bg-slate-900 border border-slate-700 text-slate-100 text-xs font-mono font-bold focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Plans List Options */}
