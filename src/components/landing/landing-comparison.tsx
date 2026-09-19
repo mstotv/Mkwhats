@@ -48,21 +48,27 @@ export function LandingComparison({ isAr, content: rawContent }: LandingComparis
         {/* The Old Way (The Pain) */}
         <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.03] dark:bg-rose-950/10 p-6 sm:p-8 space-y-6 flex flex-col justify-between backdrop-blur-md">
           <div className="space-y-4">
-            <div className="flex items-center gap-3.5 border-b border-rose-500/10 pb-4">
-              <LinearIconBadge
-                icon={<XCircle className="h-5 w-5" />}
-                variant="rose"
-                size="md"
-                glow
-              />
-              <div>
-                <h3 className="text-lg font-bold text-[#1B1C1C] dark:text-white">
-                  {isAr ? 'بدون MK Whats (المعاناة اليدوية)' : 'Without MK Whats (Manual Grind)'}
-                </h3>
-                <p className="text-xs text-rose-500 font-medium">
-                  {isAr ? 'إهدار الوقت والفرص البيعية يومياً' : 'Hours wasted and lost sales opportunities'}
-                </p>
+            <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 border-b border-rose-500/10 pb-4">
+              <div className="flex items-center gap-3.5">
+                <LinearIconBadge
+                  icon={<XCircle className="h-5 w-5" />}
+                  variant="rose"
+                  size="md"
+                  glow
+                />
+                <div>
+                  <h3 className="text-lg font-bold text-[#1B1C1C] dark:text-white">
+                    {isAr ? 'بدون MK Whats (المعاناة اليدوية)' : 'Without MK Whats (Manual Grind)'}
+                  </h3>
+                  <p className="text-xs text-rose-500 font-medium">
+                    {isAr ? 'إهدار الوقت والفرص البيعية يومياً' : 'Hours wasted and lost sales opportunities'}
+                  </p>
+                </div>
               </div>
+
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-[11px] font-bold px-3 py-1 shadow-sm shrink-0">
+                ✕ {isAr ? 'جهد يدوي بطيء' : 'Manual & Slow'}
+              </span>
             </div>
 
             <div className="space-y-4 pt-2">
@@ -93,29 +99,29 @@ export function LandingComparison({ isAr, content: rawContent }: LandingComparis
 
         {/* The New Way (MK Whats Solution) */}
         <div className="rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-b from-emerald-500/[0.04] to-transparent dark:from-emerald-950/20 p-6 sm:p-8 space-y-6 flex flex-col justify-between relative shadow-lg shadow-emerald-500/5 backdrop-blur-md">
-          <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 shadow-sm">
-              <Zap className="h-3 w-3" strokeWidth={1.5} />
-              {isAr ? 'الأتمتة الذكية 24/7' : '24/7 Autopilot'}
-            </span>
-          </div>
-
           <div className="space-y-4">
-            <div className="flex items-center gap-3.5 border-b border-emerald-500/10 pb-4">
-              <LinearIconBadge
-                icon={<CheckCircle2 className="h-5 w-5" />}
-                variant="emerald"
-                size="md"
-                glow
-              />
-              <div>
-                <h3 className="text-lg font-bold text-[#1B1C1C] dark:text-white">
-                  {isAr ? 'مع MK Whats (التحول الشامل)' : 'With MK Whats (Full Automation)'}
-                </h3>
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                  {isAr ? 'مبيعات مضاعفة وخدمة عملاء لحظية' : 'Higher conversion, instant replies, full peace of mind'}
-                </p>
+            <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 border-b border-emerald-500/10 pb-4">
+              <div className="flex items-center gap-3.5">
+                <LinearIconBadge
+                  icon={<CheckCircle2 className="h-5 w-5" />}
+                  variant="emerald"
+                  size="md"
+                  glow
+                />
+                <div>
+                  <h3 className="text-lg font-bold text-[#1B1C1C] dark:text-white">
+                    {isAr ? 'مع MK Whats (التحول الشامل)' : 'With MK Whats (Full Automation)'}
+                  </h3>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                    {isAr ? 'مبيعات مضاعفة وخدمة عملاء لحظية' : 'Higher conversion, instant replies, full peace of mind'}
+                  </p>
+                </div>
               </div>
+
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 shadow-sm shrink-0">
+                <Zap className="h-3 w-3" strokeWidth={1.5} />
+                {isAr ? 'الأتمتة الذكية 24/7' : '24/7 Autopilot'}
+              </span>
             </div>
 
             <div className="space-y-4 pt-2">

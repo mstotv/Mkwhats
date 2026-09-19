@@ -1,131 +1,152 @@
 'use client'
 
-import Image from 'next/image'
+import React from 'react'
 import { useLocale } from 'next-intl'
-import { Sparkles, Calendar, Send, ShoppingBag } from 'lucide-react'
-import { LinearIconBadge } from '@/components/ui/linear-icon-badge'
+import {
+  MessageSquare,
+  Sparkles,
+  ShoppingBag,
+  Calendar,
+  Send,
+  CreditCard,
+  Zap,
+} from 'lucide-react'
+import { AnimatedList } from '@/components/magicui/animated-list'
+
+interface NotificationItem {
+  nameAr: string
+  nameEn: string
+  descriptionAr: string
+  descriptionEn: string
+  timeAr: string
+  timeEn: string
+  icon: React.ReactNode
+  color: string
+}
+
+const NOTIFICATIONS: NotificationItem[] = [
+  {
+    nameAr: 'رسالة واتساب جديدة',
+    nameEn: 'New WhatsApp Lead',
+    descriptionAr: 'مرحباً، أود تفعيل المساعد الذكي وربط متجر ووكومرس 🚀',
+    descriptionEn: 'Hello! I want to activate AI assistant & connect WooCommerce 🚀',
+    timeAr: 'الآن',
+    timeEn: 'Just now',
+    icon: <MessageSquare className="h-4.5 w-4.5 text-white" />,
+    color: 'bg-emerald-500 shadow-emerald-500/25',
+  },
+  {
+    nameAr: 'رد تلقائي ذكي (Gemini AI)',
+    nameEn: 'Smart AI Auto-Reply (Gemini)',
+    descriptionAr: 'تمت الإجابة فورياً وتوضيح الباقات وإرسال تفاصيل الربط ⚡',
+    descriptionEn: 'Instant reply sent with product specs & checkout link ⚡',
+    timeAr: 'منذ ثانية',
+    timeEn: '1s ago',
+    icon: <Sparkles className="h-4.5 w-4.5 text-white" />,
+    color: 'bg-[#00685F] dark:bg-[#00E785] text-slate-950 shadow-[#00685F]/25',
+  },
+  {
+    nameAr: 'طلب جديد تم توثيقه (E-Commerce)',
+    nameEn: 'Order Captured & Synced',
+    descriptionAr: 'طلب بقيمة 450 ر.س — تم استخراج المقاس واللون وحفظه بالسلة 📦',
+    descriptionEn: 'Order of $120 captured, size & address extracted 📦',
+    timeAr: 'منذ دقيقة',
+    timeEn: '1m ago',
+    icon: <ShoppingBag className="h-4.5 w-4.5 text-white" />,
+    color: 'bg-amber-500 shadow-amber-500/25',
+  },
+  {
+    nameAr: 'تثبيت موعد في التقويم',
+    nameEn: 'Appointment Confirmed',
+    descriptionAr: 'تم حجز موعد استشارة الأحد 10:30 ص وإرسال تذكير للعميل 📅',
+    descriptionEn: 'Meeting scheduled for Sun 10:30 AM + auto WhatsApp reminder 📅',
+    timeAr: 'منذ 2 دقيقة',
+    timeEn: '2m ago',
+    icon: <Calendar className="h-4.5 w-4.5 text-white" />,
+    color: 'bg-blue-500 shadow-blue-500/25',
+  },
+  {
+    nameAr: 'إشعار فوري لفريق العمل (Telegram)',
+    nameEn: 'Instant Team Alert (Telegram)',
+    descriptionAr: 'إرسال بيانات العميل والطلب لحظياً لقناة المبيعات 🚀',
+    descriptionEn: 'Lead details & phone dispatched to staff Telegram channel 🚀',
+    timeAr: 'منذ 5 دقائق',
+    timeEn: '5m ago',
+    icon: <Send className="h-4.5 w-4.5 text-white" />,
+    color: 'bg-cyan-500 shadow-cyan-500/25',
+  },
+  {
+    nameAr: 'استرداد سلة متروكة ناجح',
+    nameEn: 'Cart Recovery Success',
+    descriptionAr: 'تم تحويل العميل واسترداد طلب بقيمة 320 ر.س بنقرة زر 💳',
+    descriptionEn: 'Customer returned & finished $85 checkout via 1-click WhatsApp 💳',
+    timeAr: 'منذ 10 دقائق',
+    timeEn: '10m ago',
+    icon: <CreditCard className="h-4.5 w-4.5 text-white" />,
+    color: 'bg-purple-500 shadow-purple-500/25',
+  },
+]
+
+function NotificationCard({ item, isAr }: { item: NotificationItem; isAr: boolean }) {
+  return (
+    <figure className="relative mx-auto min-h-fit w-full max-w-[420px] cursor-pointer overflow-hidden rounded-2xl p-4 transition-all duration-300 ease-out hover:scale-[1.02] bg-white/80 dark:bg-[#18191E]/90 border border-black/[0.08] dark:border-white/[0.1] shadow-[0_8px_24px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+      <div className="flex flex-row items-center gap-3.5">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-2xl shadow-md shrink-0 ${item.color}`}>
+          {item.icon}
+        </div>
+        <div className="flex flex-col overflow-hidden text-start min-w-0 flex-1">
+          <figcaption className="flex flex-row items-center justify-between gap-1 text-xs font-bold text-foreground">
+            <span className="truncate">{isAr ? item.nameAr : item.nameEn}</span>
+            <span className="text-[10px] font-mono font-medium text-muted-foreground shrink-0">
+              {isAr ? item.timeAr : item.timeEn}
+            </span>
+          </figcaption>
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-relaxed truncate">
+            {isAr ? item.descriptionAr : item.descriptionEn}
+          </p>
+        </div>
+      </div>
+    </figure>
+  )
+}
 
 export function LandingHeroMockup() {
   const locale = useLocale()
   const isAr = locale === 'ar'
 
   return (
-    <div className="relative max-w-6xl mx-auto pt-6 sm:pt-10">
-      {/* ── Main Showcase Container with Glow and Rounded Corners ── */}
-      <div className="relative rounded-2xl sm:rounded-3xl border border-black/10 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.12)] overflow-hidden bg-white/60 dark:bg-[#141416]/60 backdrop-blur-md p-1.5 sm:p-3">
-        {/* The Realistic MacBook Dashboard Pro Image */}
-        <Image
-          src="/dashboard-hero.jpg"
-          alt="WhatsApp Automation & AI Dashboard Pro"
-          width={1200}
-          height={675}
-          priority
-          quality={85}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 95vw, 1200px"
-          className="w-full h-auto rounded-xl sm:rounded-2xl object-cover shadow-sm transition-transform duration-700 hover:scale-[1.005]"
-        />
-
-        {/* ── Floating Animated Badges Around the Edges ───────────── */}
-
-        {/* 1. Top-Left: Google Gemini & OpenAI Badge */}
-        <div
-          className="absolute top-4 sm:top-8 start-4 sm:start-8 z-20 animate-bounce motion-reduce:animate-none"
-          style={{ animationDuration: '3.5s' }}
-        >
-          <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl bg-white/90 dark:bg-zinc-950/80 border border-black/10 dark:border-white/10 px-3 sm:px-4 py-2 shadow-2xl backdrop-blur-xl">
-            <LinearIconBadge
-              icon={<Sparkles className="h-4 w-4 animate-spin motion-reduce:animate-none" style={{ animationDuration: '8s' }} />}
-              variant="emerald"
-              size="sm"
-            />
-            <div className="text-start">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] sm:text-xs font-bold text-neutral-900 dark:text-white tracking-tight">
-                  Gemini &amp; OpenAI
-                </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#00A389] animate-ping" />
-              </div>
-              <span className="text-[9.5px] sm:text-[10px] text-[#00A389] dark:text-[#6BD8CB] font-semibold block">
-                {isAr ? 'ذكاء اصطناعي تفاعلي مباشر' : 'Conversational AI Engine'}
-              </span>
-            </div>
+    <div className="relative w-full max-w-lg mx-auto pt-2 select-none">
+      {/* Subtle Floating Live Badge */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 dark:border-emerald-500/30 backdrop-blur-md">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          </span>
+          <span className="text-[11px] sm:text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+            {isAr ? 'نشاط الأتمتة المباشر 24/7' : 'Live Automation Stream 24/7'}
+          </span>
+          <span className="text-muted-foreground/40">•</span>
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Zap className="h-3 w-3 text-amber-500" />
+            <span>{isAr ? 'معالجة فورية' : 'Zero-delay AI'}</span>
           </div>
         </div>
+      </div>
 
-        {/* 2. Top-Right: Automated Appointments & Calendar Badge */}
-        <div
-          className="absolute top-4 sm:top-8 end-4 sm:end-8 z-20 animate-bounce motion-reduce:animate-none hidden sm:block"
-          style={{ animationDuration: '4s', animationDelay: '0.5s' }}
-        >
-          <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl bg-white/90 dark:bg-zinc-950/80 border border-black/10 dark:border-white/10 px-3 sm:px-4 py-2 shadow-2xl backdrop-blur-xl">
-            <LinearIconBadge
-              icon={<Calendar className="h-4 w-4" />}
-              variant="blue"
-              size="sm"
-            />
-            <div className="text-start">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] sm:text-xs font-bold text-neutral-900 dark:text-white tracking-tight">
-                  {isAr ? 'حجز وتذكير المواعيد' : 'Smart Appointments'}
-                </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#3B82F6] animate-pulse motion-reduce:animate-none" />
-              </div>
-              <span className="text-[9.5px] sm:text-[10px] text-[#2563EB] dark:text-[#60A5FA] font-semibold block">
-                {isAr ? 'تذكيرات واتساب تلقائية' : 'Auto WhatsApp Reminders'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Bottom-Left: AI Order Taking Badge */}
-        <div
-          className="absolute bottom-6 sm:bottom-12 start-4 sm:start-10 z-20 animate-bounce motion-reduce:animate-none hidden sm:block"
-          style={{ animationDuration: '3.8s', animationDelay: '1s' }}
-        >
-          <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl bg-white/90 dark:bg-zinc-950/80 border border-black/10 dark:border-white/10 px-3.5 py-2 shadow-2xl backdrop-blur-xl">
-            <LinearIconBadge
-              icon={<ShoppingBag className="h-4 w-4" />}
-              variant="amber"
-              size="sm"
-            />
-            <div className="text-start">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] sm:text-xs font-bold text-neutral-900 dark:text-white tracking-tight">
-                  {isAr ? 'أخذ واستقبال الطلبات' : 'AI Order Taking'}
-                </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B] animate-ping motion-reduce:animate-none" />
-              </div>
-              <span className="text-[9.5px] sm:text-[10px] text-[#D97706] dark:text-[#FBBF24] font-semibold block">
-                {isAr ? 'أتمتة وحفظ الطلبات آلياً' : 'Automate Orders & Sales'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* 4. Bottom-Right: Telegram Bot Notifications Badge */}
-        <div
-          className="absolute bottom-6 sm:bottom-12 end-4 sm:end-10 z-20 animate-bounce motion-reduce:animate-none hidden sm:block"
-          style={{ animationDuration: '4.2s', animationDelay: '1.5s' }}
-        >
-          <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl bg-white/90 dark:bg-zinc-950/80 border border-black/10 dark:border-white/10 px-3.5 py-2 shadow-2xl backdrop-blur-xl">
-            <LinearIconBadge
-              icon={<Send className="h-4 w-4" />}
-              variant="cyan"
-              size="sm"
-            />
-            <div className="text-start">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] sm:text-xs font-bold text-neutral-900 dark:text-white tracking-tight">
-                  Telegram Bot
-                </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#229ED9] animate-ping motion-reduce:animate-none" />
-              </div>
-              <span className="text-[9.5px] sm:text-[10px] text-[#229ED9] font-semibold block">
-                {isAr ? 'إشعارات فورية لفريق المبيعات' : 'Instant Staff Alerts'}
-              </span>
-            </div>
-          </div>
-        </div>
+      {/* Magic UI Animated List - Seamless Floating Stream */}
+      <div
+        className="relative h-[310px] sm:h-[340px] w-full overflow-hidden"
+        style={{
+          maskImage: 'linear-gradient(to bottom, black 0%, black 72%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 72%, transparent 100%)',
+        }}
+      >
+        <AnimatedList delay={2200}>
+          {NOTIFICATIONS.map((item, idx) => (
+            <NotificationCard key={idx} item={item} isAr={isAr} />
+          ))}
+        </AnimatedList>
       </div>
     </div>
   )

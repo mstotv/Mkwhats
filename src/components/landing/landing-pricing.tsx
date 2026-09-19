@@ -96,7 +96,7 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
 
   return (
     <div className="space-y-12 max-w-6xl mx-auto">
-      {/* ── 1. Billing Cycle Switcher (Matching Screenshot Design) ── */}
+      {/* 1. Billing Cycle Switcher */}
       <div className="flex items-center justify-center gap-3 text-xs sm:text-sm font-medium text-[#1B1C1C] dark:text-[#F2F0F0]">
         <span className={!isYearly ? 'font-bold text-[#1B1C1C] dark:text-white' : 'text-[#605E5B] dark:text-[#C9C6C1]'}>
           {isAr ? 'الفوترة الشهرية' : 'Monthly Billing'}
@@ -126,7 +126,7 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
         </span>
       </div>
 
-      {/* ── 2. Pricing Cards Grid (Live DB Data with Screenshot Typography & Design) ── */}
+      {/* 2. Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {plans.map((p, idx) => {
           const isPopular = p.is_popular || p.slug === 'pro' || p.name.toLowerCase().includes('pro') || idx === 1
@@ -184,12 +184,12 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
 
               <div className="space-y-6">
                 {/* Plan Header: Name & Price */}
-                <div>
+                <div className="space-y-3">
                   <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#1B1C1C] dark:text-white">
                     {localizedName}
                   </h3>
 
-                  <div className="flex items-baseline gap-1 mt-3 font-serif">
+                  <div className="flex items-baseline gap-1 font-serif">
                     <span className="text-4xl sm:text-5xl font-bold tracking-tight text-[#1B1C1C] dark:text-white">
                       ${displayPrice}
                     </span>
@@ -198,33 +198,41 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
                     </span>
                   </div>
 
-                  {/* Prominent Free Trial Badge */}
-                  {trialDaysCount > 0 && (
-                    <div className="mt-2.5">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-3 py-1 text-xs font-bold shadow-xs">
+                  {/* Uniform Free Trial Badge / Tier Badge */}
+                  <div className="h-7 flex items-center">
+                    {trialDaysCount > 0 ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-3 py-0.5 text-xs font-bold shadow-xs">
                         🎁 {isAr ? `تجربة مجانية لمدة ${trialDaysCount} يوم` : `${trialDaysCount}-Day Free Trial`}
                       </span>
-                    </div>
-                  )}
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-black/5 dark:bg-white/10 text-[#605E5B] dark:text-[#C9C6C1] border border-black/10 dark:border-white/10 px-3 py-0.5 text-xs font-medium">
+                        ✨ {isAr ? 'متاحة مجاناً للجميع' : 'Free Forever Tier'}
+                      </span>
+                    )}
+                  </div>
 
-                  <p className="text-xs text-[#605E5B] dark:text-[#C9C6C1] mt-3 leading-relaxed min-h-[36px]">
+                  <p className="text-xs text-[#605E5B] dark:text-[#C9C6C1] leading-relaxed min-h-[40px] flex items-center">
                     {planDescription}
                   </p>
                 </div>
 
                 {/* Plan CTA Button */}
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <Link
                     href={userLoggedIn ? '/dashboard' : '/signup'}
                     className={`w-full inline-flex items-center justify-center rounded-[4px] py-2.5 sm:py-3 text-[13px] font-bold uppercase tracking-wider transition-all duration-200 text-center ${btnStyle}`}
                   >
                     {btnText}
                   </Link>
-                  {trialDaysCount > 0 && !userLoggedIn && (
+                  <div className="h-4 flex items-center justify-center">
                     <p className="text-[11px] text-center font-medium text-[#00685F] dark:text-[#6BD8CB]">
-                      {isAr ? 'بدون بطاقة ائتمان • إلغاء في أي وقت' : 'No credit card required • Cancel anytime'}
+                      {trialDaysCount > 0 && !userLoggedIn
+                        ? (isAr ? 'بدون بطاقة ائتمان • إلغاء في أي وقت' : 'No credit card required • Cancel anytime')
+                        : !userLoggedIn
+                          ? (isAr ? 'لا يلزم إدخال بطاقة بنكية' : 'No credit card required')
+                          : ''}
                     </p>
-                  )}
+                  </div>
                 </div>
 
                 {/* Dynamic DB Quotas & Limits List */}

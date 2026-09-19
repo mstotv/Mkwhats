@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Menu, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { ModeToggle } from '@/components/layout/mode-toggle'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { ShimmerButton } from '@/components/magicui/shimmer-button'
 
 interface LandingNavbarProps {
   platformName: string
@@ -107,12 +108,18 @@ export function LandingNavbar({
           <LanguageSwitcher />
 
           {isLoggedIn ? (
-            <Link
-              href="/dashboard"
-              prefetch={true}
-              className="inline-flex items-center gap-1.5 rounded-full bg-foreground text-background hover:bg-foreground/90 px-3.5 py-1.5 text-xs sm:text-[13px] font-medium shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              {isAr ? 'لوحة التحكم' : 'Dashboard'} <ArrowIcon className="h-3.5 w-3.5" strokeWidth={1.5} />
+            <Link href="/dashboard" prefetch={true}>
+              <ShimmerButton
+                shimmerColor="#00E785"
+                shimmerDuration="2.8s"
+                shimmerSize="1.5px"
+                background="#121316"
+                className="shadow-md shadow-emerald-500/10"
+                innerClassName="px-3.5 py-1.5 text-xs sm:text-[13px] font-semibold text-white"
+              >
+                <span>{isAr ? 'لوحة التحكم' : 'Dashboard'}</span>
+                <ArrowIcon className="h-3.5 w-3.5 text-[#00E785]" strokeWidth={2} />
+              </ShimmerButton>
             </Link>
           ) : (
             <>
@@ -123,12 +130,17 @@ export function LandingNavbar({
               >
                 {isAr ? 'تسجيل الدخول' : 'Sign In'}
               </Link>
-              <Link
-                href="/signup"
-                prefetch={true}
-                className="inline-flex items-center gap-1.5 rounded-full bg-foreground text-background hover:bg-foreground/90 px-4 py-1.5 text-xs sm:text-[13px] font-medium shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                {primaryCtaText || (isAr ? 'ابدأ مجاناً' : 'Get Started Free')}
+              <Link href="/signup" prefetch={true}>
+                <ShimmerButton
+                  shimmerColor="#00E785"
+                  shimmerDuration="2.4s"
+                  shimmerSize="1.5px"
+                  background="#121316"
+                  className="shadow-md shadow-emerald-500/10"
+                  innerClassName="px-4 py-1.5 text-xs sm:text-[13px] font-semibold text-white"
+                >
+                  <span>{primaryCtaText || (isAr ? 'ابدأ مجاناً' : 'Get Started Free')}</span>
+                </ShimmerButton>
               </Link>
             </>
           )}
@@ -178,9 +190,19 @@ export function LandingNavbar({
                 href="/dashboard"
                 prefetch={true}
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 rounded-full bg-foreground text-background py-2.5 text-sm font-medium shadow-sm"
+                className="w-full"
               >
-                {isAr ? 'لوحة التحكم' : 'Dashboard'} <ArrowIcon className="h-4 w-4" strokeWidth={1.5} />
+                <ShimmerButton
+                  shimmerColor="#00E785"
+                  shimmerDuration="2.8s"
+                  shimmerSize="1.5px"
+                  background="#121316"
+                  className="w-full shadow-md"
+                  innerClassName="py-2.5 text-sm font-semibold text-white"
+                >
+                  <span>{isAr ? 'لوحة التحكم' : 'Dashboard'}</span>
+                  <ArrowIcon className="h-4 w-4 text-[#00E785]" strokeWidth={2} />
+                </ShimmerButton>
               </Link>
             ) : (
               <>
@@ -188,15 +210,24 @@ export function LandingNavbar({
                   href="/signup"
                   prefetch={true}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center justify-center gap-2 rounded-full bg-foreground text-background py-2.5 text-sm font-medium shadow-sm"
+                  className="w-full"
                 >
-                  {primaryCtaText || (isAr ? 'ابدأ مجاناً' : 'Get Started Free')}
+                  <ShimmerButton
+                    shimmerColor="#00E785"
+                    shimmerDuration="2.4s"
+                    shimmerSize="1.5px"
+                    background="#121316"
+                    className="w-full shadow-md"
+                    innerClassName="py-2.5 text-sm font-semibold text-white"
+                  >
+                    <span>{primaryCtaText || (isAr ? 'ابدأ مجاناً' : 'Get Started Free')}</span>
+                  </ShimmerButton>
                 </Link>
                 <Link
                   href="/login"
                   prefetch={true}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex items-center justify-center gap-2 rounded-full border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.05] text-foreground py-2.5 text-sm font-medium shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 rounded-full border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.05] text-foreground py-2.5 text-sm font-medium shadow-sm hover:bg-black/[0.06] dark:hover:bg-white/[0.1] transition-all"
                 >
                   {isAr ? 'تسجيل الدخول' : 'Sign In'}
                 </Link>

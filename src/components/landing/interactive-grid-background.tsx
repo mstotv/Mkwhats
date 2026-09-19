@@ -180,7 +180,7 @@ export function InteractiveGridBackground({
       className={`fixed inset-0 overflow-hidden pointer-events-none select-none z-0 ${className}`}
       aria-hidden="true"
     >
-      {/* ── 1. Parallax Interactive Container ─────────────────────── */}
+      {/* 1. Parallax Interactive Container */}
       <div
         ref={gridLayerRef}
         className="absolute -inset-x-16 -inset-y-16 will-change-transform"
@@ -209,7 +209,7 @@ export function InteractiveGridBackground({
           <rect width="100%" height="100%" fill="url(#base-grid-pattern)" />
         </svg>
 
-        {/* ── 2. Glowing Soft Grid Layer (Smoothly Revealed around cursor) ── */}
+        {/* 2. Glowing Soft Grid Layer (Smoothly Revealed around cursor) */}
         <div
           ref={glowLayerRef}
           className="absolute inset-0"

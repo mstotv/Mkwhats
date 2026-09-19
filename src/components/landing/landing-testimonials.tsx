@@ -117,7 +117,7 @@ export function LandingTestimonials({ isAr, testimonials: rawTestimonials, speed
         </p>
       </div>
 
-      {/* ── Vertical Multi-Column Infinite Scrolling Marquee Container with True Alpha Mask ── */}
+      {/* Vertical Multi-Column Infinite Scrolling Marquee Container with True Alpha Mask */}
       <div
         className="relative h-[680px] sm:h-[760px] overflow-hidden group"
         style={{

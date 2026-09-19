@@ -42,7 +42,7 @@ export default async function PricingPage() {
       dir={isAr ? 'rtl' : 'ltr'}
       className="min-h-screen bg-[#F9F5F0] dark:bg-[#1A1A1A] text-[#1B1C1C] dark:text-[#F2F0F0] font-sans relative overflow-x-hidden transition-colors duration-300"
     >
-      {/* ── Interactive Geometric Grid with Spotlight & Parallax ── */}
+      {/* Interactive Geometric Grid with Spotlight & Parallax */}
       <InteractiveGridBackground gridSize={44} glowRadius={420} parallaxStrength={20} />
 
       {/* Top Ambient Mesh Lighting behind Floating Glass Navbar */}
@@ -50,7 +50,7 @@ export default async function PricingPage() {
       <div className="absolute -top-20 left-1/3 w-[350px] h-[280px] bg-emerald-500/15 dark:bg-emerald-500/25 blur-[90px] pointer-events-none -z-0" />
       <div className="absolute -top-20 right-1/3 w-[350px] h-[280px] bg-teal-500/15 dark:bg-teal-500/25 blur-[90px] pointer-events-none -z-0" />
 
-      {/* ── 1. Top Navigation Bar ──────────────────────────────── */}
+      {/* 1. Top Navigation Bar */}
       <LandingNavbar
         platformName={platformName}
         logoUrl={logoUrl}
@@ -59,7 +59,7 @@ export default async function PricingPage() {
         activePage="pricing"
       />
 
-      {/* ── 2. Pricing Header ──────────────────────────────────── */}
+      {/* 2. Pricing Header */}
       <section className="pt-20 pb-16 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 text-center space-y-6 relative z-10">
         <div className="inline-flex items-center gap-2 bg-[#00685F]/10 border border-[#00685F]/20 rounded-full px-4 py-1.5 text-xs font-semibold text-[#00685F] dark:text-[#6BD8CB] uppercase tracking-wider">
           {isAr ? 'خطط شفافة وقابلة للتوسع' : 'TRANSPARENT & SCALABLE PLANS'}
@@ -75,7 +75,7 @@ export default async function PricingPage() {
             : 'No hidden setup fees. Upgrade or cancel anytime easily on all plans.'}
         </p>
 
-        {/* ── Pricing Cards Table ────────────────────────────── */}
+        {/* Pricing Cards Table */}
         <div className="pt-6">
           <LandingPricing
             plans={(plans as any[]) || []}
@@ -84,8 +84,8 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      {/* ── 3. Trust & Guarantee Badges (Screen 3 Bottom) ──────── */}
-      <section className="py-16 border-t border-[#BCC9C6]/30 dark:border-white/10 bg-white/40 dark:bg-[#242424]/30">
+      {/* 3. Trust & Guarantee Badges (Screen 3 Bottom) */}
+      <section className="py-16 border-t border-[#BCC9C6]/30 dark:border-white/10 bg-white/40 dark:bg-[#242424]/30 relative z-10">
         <div className="mx-auto max-w-7xl px-6 sm:px-12 lg:px-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="space-y-3 p-6 rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
@@ -133,7 +133,7 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      {/* ── 4. Dark Editorial Footer ──────────────────────────── */}
+      {/* 4. Dark Editorial Footer */}
       <LandingFooter
         platformName={platformName}
         locale={locale}

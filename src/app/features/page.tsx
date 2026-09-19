@@ -264,8 +264,8 @@ export default async function FeaturesPage() {
         </div>
       </section>
 
-      {/* ── 3. Comprehensive Features Grid (Dynamic CMS) ────────── */}
-      <section className="py-12 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16">
+      {/* 3. Comprehensive Features Grid (Dynamic CMS) */}
+      <section className="py-12 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {featuresList.map((card: any, idx: number) => {
             const cardTitle = isAr
@@ -281,7 +281,7 @@ export default async function FeaturesPage() {
             return (
               <div
                 key={card.id || idx}
-                className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 space-y-4 flex flex-col justify-between"
+                className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:border-[#00685F] transition-colors duration-200 space-y-4 flex flex-col justify-between relative z-10"
               >
                 <div className="space-y-4">
                   <div className="h-10 w-10 rounded-[4px] bg-[#00685F]/10 flex items-center justify-center text-[#00685F] dark:text-[#6BD8CB]">
@@ -305,11 +305,11 @@ export default async function FeaturesPage() {
         </div>
       </section>
 
-      {/* ── E-Commerce & Store Integrations (WooCommerce & Shopify) ── */}
+      {/* E-Commerce & Store Integrations (WooCommerce & Shopify) */}
       <LandingEcommerceSection isAr={isAr} />
 
-      {/* ── 4. Built for High-Velocity Businesses ─────────────── */}
-      <section className="py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-12">
+      {/* 4. Built for High-Velocity Businesses */}
+      <section className="py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-12 relative z-10">
         <div className="text-center space-y-3">
           <h2 className="font-serif text-3xl sm:text-5xl font-bold text-[#1B1C1C] dark:text-white">
             {isAr ? 'مصمم للأنشطة والشركات سريعة النمو' : 'Built for High-Velocity Businesses'}
@@ -318,7 +318,7 @@ export default async function FeaturesPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Card 1: E-Commerce & Retail */}
-          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] relative overflow-hidden flex flex-col justify-between">
+          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] relative overflow-hidden flex flex-col justify-between z-10">
             <div className="space-y-6 z-10">
               <div className="flex items-center gap-3">
                 <ShoppingBag className="h-6 w-6 text-[#00685F] dark:text-[#6BD8CB]" />
@@ -351,7 +351,7 @@ export default async function FeaturesPage() {
           </div>
 
           {/* Card 2: Healthcare & Services */}
-          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] relative overflow-hidden flex flex-col justify-between">
+          <div className="rounded-lg bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-10 shadow-[0_4px_20px_rgba(0,0,0,0.04)] relative overflow-hidden flex flex-col justify-between z-10">
             <div className="space-y-6 z-10">
               <div className="flex items-center gap-3">
                 <CalendarCheck className="h-6 w-6 text-[#00685F] dark:text-[#6BD8CB]" />
@@ -389,7 +389,7 @@ export default async function FeaturesPage() {
         </div>
       </section>
 
-      {/* ── 5. Dark Editorial Footer ──────────────────────────── */}
+      {/* 5. Dark Editorial Footer */}
       <LandingFooter
         platformName={platformName}
         locale={locale}

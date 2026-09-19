@@ -84,6 +84,11 @@ function applyModeDom(next: Mode) {
   } else {
     document.documentElement.classList.remove("dark");
   }
+  try {
+    document.cookie = `${MODE_STORAGE_KEY}=${next}; path=/; max-age=31536000; SameSite=Lax`;
+  } catch (_e) {
+    // ignore
+  }
 }
 
 function runCircularViewTransition(

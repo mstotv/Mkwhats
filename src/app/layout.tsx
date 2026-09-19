@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { Cairo, Inter, Playfair_Display } from "next/font/google";
@@ -12,6 +13,7 @@ import {
   MODES,
   STORAGE_KEY,
   THEME_IDS,
+  isMode,
 } from "@/lib/themes";
 
 const inter = Inter({
@@ -125,13 +127,17 @@ export default async function RootLayout({
   const messages = await getMessages();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
+  const cookieStore = await cookies();
+  const cookieMode = cookieStore.get(MODE_STORAGE_KEY)?.value;
+  const initialMode = isMode(cookieMode) ? cookieMode : DEFAULT_MODE;
+
   return (
     <html
       lang={locale}
       dir={dir}
       data-theme={DEFAULT_THEME}
-      data-mode={DEFAULT_MODE}
-      className={`${cairo.variable} ${inter.variable} ${playfair.variable} h-full antialiased`}
+      data-mode={initialMode}
+      className={`${cairo.variable} ${inter.variable} ${playfair.variable} h-full antialiased ${initialMode === 'dark' ? 'dark' : ''}`}
       suppressHydrationWarning
     >
       <head>

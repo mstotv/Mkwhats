@@ -7,8 +7,10 @@
 >    - إيقاف الحلقة فوراً عند مغادرة التبويب ودعم `prefers-reduced-motion`.
 > 2. **القضاء على طلبات الـ CDN الخارجية واستبدالها بأيقونات مدمجة فائقة السرعة ([`partner-logo-icon.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/partner-logo-icon.tsx) & [`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/page.tsx))**:
 >    - استبدال استدعاءات `cdn.simpleicons.org` بـ SVG مدمجة وأصول محلية محسنة، مما وفر 6 طلبات شبكية خارجية وألغى عمليات الـ DNS lookup والـ TLS handshake عند الإقلاع.
-> 3. **ترقية صورة الواجهة الرئيسية إلى `next/image` ومحاذاة الـ LCP و CLS ([`landing-hero-mockup.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-hero-mockup.tsx))**:
->    - استخدام مكون `next/image` المطور مع أبعاد محددة بدقة، أولوية تحميل `priority`، دعم AVIF/WebP وتجاوب `sizes` لمنع الـ Layout Shift وتسريع LCP لأقل من 1.2 ثانية.
+> 3. **تضمين وبرمجة وودجت القائمة المتحركة الحية من Magic UI في الـ Hero ([`animated-list.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/magicui/animated-list.tsx) & [`landing-hero-mockup.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-hero-mockup.tsx))**:
+>    - بناء وبرمجة مكوّن **Magic UI Animated List** الأصيل بخاصية التلاشي العمودي الانسيابي والانبثاق الذكي للعناصر.
+>    - عرض تدفق الأنشطة الحية التفاعلية للمنصة: رسائل الواتساب الواردة، ردود الذكاء الاصطناعي (Gemini)، توثيق طلبات المتاجر، حجوزات التقويم، تنبيهات تيليجرام، واسترداد السلات المتروكة.
+>    - توافق تام مع وضعي Light/Dark Mode، دعم الشاشات الصغيرة، وإيقاف الحركات في وضع `prefers-reduced-motion`.
 > 4. **تقسيم الكود والاستيراد الديناميكي للمكونات الثقيلة ([`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/page.tsx))**:
 >    - تطبيق `dynamic import` على ودجت الدعم الفني العائم `FloatingSupport` لتقليص حزمة الـ JavaScript الأولية وتسريع FCP.
 > 5. **ترشيد أوزان الخطوط المحملة ([`layout.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/layout.tsx))**:
@@ -17,6 +19,18 @@
 >    - إضافة سمات `contain: content` لشريط المراجعات اللانهائي، وضبط كثافة الـ `backdrop-filter` في الهواتف لضمان تمرير 60fps/120fps سلس جداً على كافة الأجهزة.
 > 7. **تحديث إعدادات جودة الصور في Next.js ([`next.config.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/next.config.ts))**:
 >    - إضافة `qualities: [75, 85]` لمطابقة مواصفات Next.js 16 والقضاء على أي تنبيهات في كونسول المتصفح.
+> 8. **تصحيح محاذاة شارة (الأتمتة الذكية 24/7) في قسم المقارنة ([`landing-comparison.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-comparison.tsx))**:
+>    - القضاء على التداخل البصري في وضع اللغة العربية (RTL) عبر دمج الشارات كـ Flex Item متوازن في الطرف المقابل للترويسة في كلا الصندوقين.
+> 9. **تحديث نصوص العنوان الرئيسي بالهيكل التيبوغرافي الفاخر ([`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/page.tsx))**:
+>    - اعتماد العنوان الصريح والنظيف: *"نمِّ عملك مع / واتساب والذكاء الاصطناعي"* باللغة العربية و *"Scale Your Business with / WhatsApp & AI"* باللغة الإنجليزية بخط سيريف فاخر وتنسيق مائل أنيق للسطر الثاني.
+> 10. **تطبيق أزرار الوميض التفاعلية Magic UI Shimmer Button ([`shimmer-button.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/magicui/shimmer-button.tsx))**:
+>     - بناء وتضمين مكوّن **Magic UI ShimmerButton** مع طبقتين حركيتين للوميض (Sharp Beam + Soft Outer Glow) لضمان وضوح شعاع الوميض الساطع (#00E785 و #6BD8CB).
+>     - ضبط خلفيات الأزرار على لون داكن صريح وثابت عالي التباين (`#121316`) في وضعي الـ Light والـ Dark لضمان ظهور الوميض النيون الأخضر بوضوح وقوة فائقة دون أن يبهت أو يختفي.
+>     - تطبيق الوميض على أزرار *"ابدأ مجاناً"*، *"تسجيل الدخول"*، و *"إنشاء الحساب"* في الهيدر، قسم الـ Hero، والقسم الختامي النهائي.
+> 11. **القضاء الجذري والنهائي على وميض الوضع الفاتح عند تحديث الصفحة (Zero-FOUC Theme Architecture)**:
+>     - حفظ وضع الثيم (`mkwhats_mode`) فورياً في ملفات تعريف الارتباط (`document.cookie`) بالتزامن مع `localStorage`.
+>     - قراءة الثيم على خادم Next.js في الـ SSR عبر [`src/app/layout.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/layout.tsx) وتضمين فئة `dark` و `data-mode="dark"` في استجابة الـ HTML الأولية مباشرة.
+>     - الإبقاء على السكريبت التزامني المانع في `<head>` كنسخة احتياطية فائقة السرعة؛ مما يلغي تماماً أي ارتداد أو وميض للوضع الفاتح عند عمل Refresh في الدارك مود.
 > 🛡️ **الجودة والاستقرار**: اجتياز كامل ومطلق لفحص الأنواع البرمجية (`npm run typecheck` بـ 0 أخطاء)، واجتياز 100% من الاختبارات الآلية (704 اختباراً في 73 ملف اختبار).
 
 - ✅ **التموج الدائري الفوري لزر الوضع الفاتح والداكن ومطابقة اللاندينغ بيج مع الداشبورد**:
@@ -1201,9 +1215,23 @@
   - استبدال وسم `<script>` التقليدي بـ `<Script id="theme-boot" strategy="beforeInteractive">` المعتمد في Next.js لمنع تحذيرات الـ Console.
   - ضبط حالة البدء في المكونات لتتطابق 100% بين السيرفر (SSR) والعميل أثناء الإقلاع، وتحميل التخزين المؤقت `localStorage` داخل `useEffect` مع إضافة `suppressHydrationWarning`.
 
-- ✅ **التحكم المستقل بقنوات الدعم المباشر لوحة المستخدم (`User Panel Support Channel Controls`)**:
-  - **مايقريشن `072_add_user_panel_support_enabled.sql`**: إضافة عمود `user_panel_support_enabled` JSONB.
-  - **مفاتيح التحكم بالأدمن**: إضافة مفاتيح تفعيل/تعطيل لكل من واتساب، تلغرام، والبريد الإلكتروني على حدة للوحة المستخدمين.
+- ✅ **أزرار التوهج التفاعلي Magic UI ShimmerButton بنية النواة المصمتة (`Magic UI ShimmerButton Architecture`)**:
+  - ترقية أزرار تسجيل الدخول، وإنشاء الحساب، والبدء مجاناً في الهيدر والـ Hero والـ Final CTA بمكون [shimmer-button.tsx](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/magicui/shimmer-button.tsx).
+  - استخدام بنية الطبقتين: طبقة مسار الضوء المحيطي الخارجي السريع + نواة داخلية مصمتة عاتمة (`Solid Inner Core`) لضمان عدم تسرب الضوء للداخل ووضوح النص والتباين في الوضعين الداكن والفاتح.
+
+- ✅ **إصلاح وميض الثيم عند التحديث (Zero-FOUC SSR Dark/Light Mode)**:
+  - مزامنة كوكيز الجلسة `mkwhats_mode` فورياً مع `document.cookie` وقراءتها مباشرة من السيرفر في [layout.tsx](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/layout.tsx) قبل إرسال HTML للعميل، مما يمنع وميض الشاشة عند إعادة تحميل الصفحة أثناء تفعيل الدارك مود.
+
+- ✅ **إصلاح طبقات شبكة الخلفية التفاعلية (Interactive Grid Layering Behind Cards & Text)**:
+  - ضبط خلفية الشبكة التفاعلية [interactive-grid-background.tsx](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/interactive-grid-background.tsx) بطبقة `z-0` مع تعيين `relative z-10` وخلفيات معتمة لكافة البطاقات في صفحات المميزات [features/page.tsx](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/features/page.tsx)، والأسعار [pricing/page.tsx](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/pricing/page.tsx)، وبطاقات قسم التجارة الإلكترونية والإحصائيات [landing-ecommerce-section.tsx](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-ecommerce-section.tsx) والأسئلة الشائعة [faq/page.tsx](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/faq/page.tsx) لتبقى الشبكة ظاهرة ومتحركة في خلفية الصفحة بالكامل دون أن تتداخل خطوطها إطلاقاً مع النصوص أو داخل البطاقات.
+
+- ✅ **توحيد أبعاد ومحاذاة أزرار بطاقات الخطط والأسعار (`Pricing Cards Horizontal Alignment`)**:
+  - توحيد ارتفاعات حاويات الشارات (`h-7`)، وأوصاف الخطط (`min-h-[40px]`)، ونصوص الضمان السفلية (`h-4`) في [landing-pricing.tsx](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-pricing.tsx) لتكون أزرار الخطط الثلاث (`Free`, `Pro`, `Enterprise`) متقابلة ومتساوية على نفس الخط الأفقي بدقة.
+
+- ✅ **تحسين وتجميل قسم المقارنة الفاصلة (`Comparison Section Refinement`)**:
+  - تنظيف القوائم في [landing-comparison.tsx](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-comparison.tsx) وإزالة المربعات الصندوقية الخارجية لمنح القسم مظهراً انسيابياً واحترافياً.
+
+
   - **الالتزام بالرؤية باللوحة**: إخفاء/إظهار قنوات الدعم تلقائياً في `support-panel.tsx` بناءً على إعدادات الأدمن.
 
 - ✅ **دليل ربط ووكومرس والسلات المتروكة والأتمتة في الإعدادات (`WooCommerce & Cart Abandonment Integration Guide`)**:

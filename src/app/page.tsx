@@ -17,6 +17,7 @@ import { LandingTestimonials } from '@/components/landing/landing-testimonials'
 import { LandingFinalCta } from '@/components/landing/landing-final-cta'
 import { InteractiveGridBackground } from '@/components/landing/interactive-grid-background'
 import { PartnerLogoIcon } from '@/components/landing/partner-logo-icon'
+import { ShimmerButton } from '@/components/magicui/shimmer-button'
 
 const FloatingSupport = dynamic(
   () => import('@/components/landing/floating-support').then((mod) => mod.FloatingSupport)
@@ -52,11 +53,11 @@ export default async function LandingPage() {
       ? (settings?.hero_content?.trust_badge_text_ar || settings?.hero_content?.trust_badge_text || '#1 منصة أتمتة وتسويق الواتساب للأعمال')
       : (settings?.hero_content?.trust_badge_text_en || '#1 WhatsApp Automation & Marketing Platform for Businesses'),
     headline: isAr
-      ? (settings?.hero_content?.headline_ar || settings?.hero_content?.headline || 'نمِّ أعمالك مع')
+      ? (settings?.hero_content?.headline_ar || settings?.hero_content?.headline || 'نمِّ عملك مع')
       : (settings?.hero_content?.headline_en || 'Scale Your Business with'),
     headline_highlight: isAr
-      ? (settings?.hero_content?.headline_highlight_ar || settings?.hero_content?.headline_highlight || 'واتساب و Gemini AI')
-      : (settings?.hero_content?.headline_highlight_en || 'WhatsApp & Gemini AI'),
+      ? (settings?.hero_content?.headline_highlight_ar || settings?.hero_content?.headline_highlight || 'واتساب والذكاء الاصطناعي')
+      : (settings?.hero_content?.headline_highlight_en || 'WhatsApp & AI'),
     subtitle: isAr
       ? (settings?.hero_content?.subtitle_ar || settings?.hero_content?.subtitle || 'مساعد ذكي تفاعلي يجيب على استفسارات العملاء بلباقة، يلتقط الطلبات لحظياً، ويدير حملات التسويق بدقة.')
       : (settings?.hero_content?.subtitle_en || 'Interactive AI agent that answers customer queries, captures orders in real-time, and powers your marketing campaigns.'),
@@ -101,7 +102,7 @@ export default async function LandingPage() {
       dir={isAr ? 'rtl' : 'ltr'}
       className="min-h-screen bg-[#F9F5F0] dark:bg-[#1A1A1A] text-[#1B1C1C] dark:text-[#F2F0F0] font-sans relative overflow-x-hidden"
     >
-      {/* ── Interactive Geometric Grid with Spotlight & Parallax ── */}
+      {/* 1. Interactive Geometric Grid with Spotlight & Parallax */}
       <InteractiveGridBackground gridSize={44} glowRadius={420} parallaxStrength={20} />
 
       {/* Top Ambient Mesh Lighting behind Floating Glass Navbar */}
@@ -109,7 +110,7 @@ export default async function LandingPage() {
       <div className="absolute -top-20 left-1/3 w-[350px] h-[280px] bg-emerald-500/15 dark:bg-emerald-500/25 blur-[90px] pointer-events-none -z-0" />
       <div className="absolute -top-20 right-1/3 w-[350px] h-[280px] bg-teal-500/15 dark:bg-teal-500/25 blur-[90px] pointer-events-none -z-0" />
 
-      {/* ── 1. Top Navigation Bar ──────────────────────────────── */}
+      {/* 1. Top Navigation Bar */}
       <LandingNavbar
         platformName={platformName}
         logoUrl={logoUrl}
@@ -119,7 +120,7 @@ export default async function LandingPage() {
         primaryCtaText={heroContent.primary_cta_text}
       />
 
-      {/* ── 2. Hero Section ───────────────────────────────────── */}
+      {/* 2. Hero Section */}
       <section id="home" className="relative pt-20 pb-16 md:pt-28 md:pb-24 max-w-6xl mx-auto px-6 sm:px-12 lg:px-16 text-center space-y-8 z-10">
         {/* Ambient Raycast/Linear Radial Glow */}
         <div className="absolute top-12 left-1/2 -translate-x-1/2 w-[700px] max-w-full h-[400px] bg-gradient-to-b from-emerald-500/15 via-teal-500/8 to-transparent blur-3xl pointer-events-none rounded-full -z-10" />
@@ -145,23 +146,33 @@ export default async function LandingPage() {
           {heroContent.subtitle}
         </p>
 
-        {/* CTA Buttons */}
+        {/* CTA Buttons with Magic UI ShimmerButton */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
-          <Link
-            href="/signup"
-            prefetch={true}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-foreground text-background hover:bg-foreground/90 px-8 py-3.5 text-sm font-medium shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
-          >
-            {heroContent.primary_cta_text}
-            <ArrowIcon className="h-4 w-4" strokeWidth={1.5} />
+          <Link href="/signup" prefetch={true} className="w-full sm:w-auto">
+            <ShimmerButton
+              shimmerColor="#00E785"
+              shimmerDuration="2.4s"
+              shimmerSize="2px"
+              background="#121316"
+              className="w-full sm:w-auto shadow-xl shadow-emerald-500/15"
+              innerClassName="px-8 py-3.5 text-sm font-semibold text-white"
+            >
+              <span>{heroContent.primary_cta_text}</span>
+              <ArrowIcon className="h-4 w-4 text-[#00E785]" strokeWidth={2} />
+            </ShimmerButton>
           </Link>
-          <Link
-            href="/login"
-            prefetch={true}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.05] hover:bg-black/[0.06] dark:hover:bg-white/[0.1] text-foreground px-8 py-3.5 text-sm font-medium shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all backdrop-blur-sm"
-          >
-            <LogIn className="h-4 w-4" strokeWidth={1.5} />
-            {heroContent.secondary_cta_text}
+          <Link href="/login" prefetch={true} className="w-full sm:w-auto">
+            <ShimmerButton
+              shimmerColor="#6BD8CB"
+              shimmerDuration="3s"
+              shimmerSize="1.5px"
+              background="#1A1B20"
+              className="w-full sm:w-auto shadow-md"
+              innerClassName="px-8 py-3.5 text-sm font-semibold text-white"
+            >
+              <LogIn className="h-4 w-4 text-[#6BD8CB]" strokeWidth={1.5} />
+              <span>{heroContent.secondary_cta_text}</span>
+            </ShimmerButton>
           </Link>
         </div>
 
@@ -169,7 +180,7 @@ export default async function LandingPage() {
         <LandingHeroMockup />
       </section>
 
-      {/* ── 3. Integrations Bar ───────────────────────────────── */}
+      {/* 3. Integrations Bar */}
       <section id="partners" className="relative z-10 py-12 border-y border-black/5 dark:border-white/10 bg-[#F9F5F0]/80 dark:bg-[#1A1A1A]/80 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-6 sm:px-12 lg:px-16 text-center space-y-6">
           <p className="text-[12px] font-bold uppercase tracking-widest text-[#605E5B] dark:text-[#C9C6C1]">
@@ -187,27 +198,27 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── 4. The Transformation: Pain vs Solution ───────────── */}
+      {/* 4. The Transformation: Pain vs Solution */}
       <LandingComparison isAr={isAr} content={settings?.home_content?.comparison} />
 
-      {/* ── 5. 4 Core Outcome Pillars (+ Link to Features) ───── */}
+      {/* 5. 4 Core Outcome Pillars (+ Link to Features) */}
       <LandingValuePillars isAr={isAr} content={settings?.home_content?.pillars} />
 
 
-      {/* ── 7. Proof by the Numbers & Key Metrics ────────────── */}
+      {/* 7. Proof by the Numbers & Key Metrics */}
       <LandingMetricsProof isAr={isAr} content={settings?.home_content?.metrics_proof} />
 
-      {/* ── 7. Real Customer Testimonials & Success Stories ───── */}
+      {/* 7. Real Customer Testimonials & Success Stories */}
       <LandingTestimonials
         isAr={isAr}
         testimonials={settings?.testimonials}
         speedSeconds={settings?.home_content?.testimonials_speed}
       />
 
-      {/* ── 10. Magnetic Final Call-to-Action ─────────────────── */}
+      {/* 10. Magnetic Final Call-to-Action */}
       <LandingFinalCta isAr={isAr} content={settings?.home_content?.final_cta} />
 
-      {/* ── 11. Dark Editorial Footer ─────────────────────────── */}
+      {/* 11. Dark Editorial Footer */}
       <LandingFooter
         platformName={platformName}
         locale={locale}

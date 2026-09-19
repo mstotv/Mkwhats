@@ -5,6 +5,7 @@ import { Sparkles, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { HomeFinalCtaContent, DEFAULT_HOME_CONTENT } from '@/lib/types/home-cms'
+import { ShimmerButton } from '@/components/magicui/shimmer-button'
 
 interface LandingFinalCtaProps {
   isAr: boolean
@@ -73,18 +74,30 @@ export function LandingFinalCta({ isAr, userLoggedIn = false, content: rawConten
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 z-10 relative">
-          <Link
-            href={primaryBtnUrl}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[4px] bg-white hover:bg-emerald-50 text-[#005049] px-8 py-4 text-sm font-bold uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all"
-          >
-            <span>{primaryBtnText}</span>
-            <ArrowIcon className="h-4 w-4" />
+          <Link href={primaryBtnUrl} className="w-full sm:w-auto">
+            <ShimmerButton
+              shimmerColor="#00E785"
+              shimmerDuration="2.4s"
+              shimmerSize="2px"
+              background="#ffffff"
+              className="w-full sm:w-auto shadow-2xl"
+              innerClassName="px-8 py-4 text-sm font-bold text-[#005049] hover:bg-emerald-50"
+            >
+              <span>{primaryBtnText}</span>
+              <ArrowIcon className="h-4 w-4" />
+            </ShimmerButton>
           </Link>
-          <Link
-            href={secondaryBtnUrl}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[4px] border border-white/30 bg-white/10 hover:bg-white/20 text-white px-8 py-4 text-sm font-bold uppercase tracking-wider shadow-sm transition-all backdrop-blur-sm"
-          >
-            <span>{secondaryBtnText}</span>
+          <Link href={secondaryBtnUrl} className="w-full sm:w-auto">
+            <ShimmerButton
+              shimmerColor="rgba(255, 255, 255, 0.6)"
+              shimmerDuration="3.5s"
+              shimmerSize="1.5px"
+              background="#004640"
+              className="w-full sm:w-auto shadow-sm"
+              innerClassName="px-8 py-4 text-sm font-bold text-white hover:bg-white/10 border border-white/20"
+            >
+              <span>{secondaryBtnText}</span>
+            </ShimmerButton>
           </Link>
         </div>
 

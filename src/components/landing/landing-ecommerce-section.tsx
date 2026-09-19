@@ -332,7 +332,7 @@ export function LandingEcommerceSection({ isAr, userLoggedIn, content }: Landing
     : DEFAULT_ECOMMERCE_CONTENT.metrics!
 
   return (
-    <section id="ecommerce" className="py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-12">
+    <section id="ecommerce" className="relative z-10 py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-12">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-3.5">
         <div className="inline-flex items-center gap-2 bg-[#00685F]/10 dark:bg-[#00685F]/20 border border-[#00685F]/25 rounded-full px-4 py-1.5 shadow-sm">
@@ -368,7 +368,7 @@ export function LandingEcommerceSection({ isAr, userLoggedIn, content }: Landing
             return (
               <div
                 key={card.id}
-                className={`rounded-xl bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] ${styles.hoverBorder} transition-all duration-300 relative group overflow-hidden`}
+                className={`rounded-xl bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] ${styles.hoverBorder} transition-all duration-300 relative z-10 group overflow-hidden`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[#EFEDED] dark:border-zinc-800">
                   <div className="flex items-center gap-3">
@@ -602,7 +602,7 @@ export function LandingEcommerceSection({ isAr, userLoggedIn, content }: Landing
             return (
               <div
                 key={m.id}
-                className="rounded-xl bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-5 text-center space-y-1.5 shadow-sm"
+                className="rounded-xl bg-white dark:bg-[#242424] border border-[#EFEDED] dark:border-zinc-800 p-5 text-center space-y-1.5 shadow-sm relative z-10"
               >
                 <div className={`text-3xl font-bold font-serif ${valColorClass}`}>
                   {m.value}
