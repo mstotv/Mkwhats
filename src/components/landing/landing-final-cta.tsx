@@ -20,9 +20,18 @@ export function LandingFinalCta({ isAr, userLoggedIn = false, content: rawConten
   useEffect(() => {
     setIsLoggedIn(userLoggedIn)
     const supabase = createClient()
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) setIsLoggedIn(true)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (!error && data?.session?.user) {
+          setIsLoggedIn(true)
+        } else {
+          setIsLoggedIn(false)
+        }
+      })
+      .catch(() => {
+        setIsLoggedIn(false)
+      })
   }, [userLoggedIn])
 
   const perks = isAr

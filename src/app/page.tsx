@@ -1,10 +1,10 @@
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { getLocale } from 'next-intl/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import {
   ArrowLeft,
   ArrowRight,
-  Globe,
   LogIn,
 } from 'lucide-react'
 import { LandingNavbar } from '@/components/landing/landing-navbar'
@@ -15,8 +15,12 @@ import { LandingValuePillars } from '@/components/landing/landing-value-pillars'
 import { LandingMetricsProof } from '@/components/landing/landing-metrics-proof'
 import { LandingTestimonials } from '@/components/landing/landing-testimonials'
 import { LandingFinalCta } from '@/components/landing/landing-final-cta'
-import { FloatingSupport } from '@/components/landing/floating-support'
 import { InteractiveGridBackground } from '@/components/landing/interactive-grid-background'
+import { PartnerLogoIcon } from '@/components/landing/partner-logo-icon'
+
+const FloatingSupport = dynamic(
+  () => import('@/components/landing/floating-support').then((mod) => mod.FloatingSupport)
+)
 
 export const revalidate = 60
 
@@ -175,11 +179,7 @@ export default async function LandingPage() {
           <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-14 opacity-80 grayscale hover:grayscale-0 transition-all duration-500">
             {partners.map((p: any, idx: number) => (
               <div key={idx} className="flex items-center gap-2.5 text-sm font-semibold text-[#1B1C1C] dark:text-[#F2F0F0]">
-                {p.logo_url ? (
-                  <img src={p.logo_url} alt={p.name} className="h-5 w-5 object-contain" />
-                ) : (
-                  <Globe className="h-5 w-5 text-[#00685F]" />
-                )}
+                <PartnerLogoIcon name={p.name} logoUrl={p.logo_url} className="h-5 w-5" />
                 <span>{p.name}</span>
               </div>
             ))}

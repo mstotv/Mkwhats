@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useLocale } from 'next-intl'
 import { Sparkles, Calendar, Send, ShoppingBag } from 'lucide-react'
 import { LinearIconBadge } from '@/components/ui/linear-icon-badge'
@@ -13,9 +14,14 @@ export function LandingHeroMockup() {
       {/* ── Main Showcase Container with Glow and Rounded Corners ── */}
       <div className="relative rounded-2xl sm:rounded-3xl border border-black/10 dark:border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.12)] overflow-hidden bg-white/60 dark:bg-[#141416]/60 backdrop-blur-md p-1.5 sm:p-3">
         {/* The Realistic MacBook Dashboard Pro Image */}
-        <img
+        <Image
           src="/dashboard-hero.jpg"
           alt="WhatsApp Automation & AI Dashboard Pro"
+          width={1200}
+          height={675}
+          priority
+          quality={85}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 95vw, 1200px"
           className="w-full h-auto rounded-xl sm:rounded-2xl object-cover shadow-sm transition-transform duration-700 hover:scale-[1.005]"
         />
 
@@ -23,12 +29,12 @@ export function LandingHeroMockup() {
 
         {/* 1. Top-Left: Google Gemini & OpenAI Badge */}
         <div
-          className="absolute top-4 sm:top-8 start-4 sm:start-8 z-20 animate-bounce"
+          className="absolute top-4 sm:top-8 start-4 sm:start-8 z-20 animate-bounce motion-reduce:animate-none"
           style={{ animationDuration: '3.5s' }}
         >
           <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl bg-white/90 dark:bg-zinc-950/80 border border-black/10 dark:border-white/10 px-3 sm:px-4 py-2 shadow-2xl backdrop-blur-xl">
             <LinearIconBadge
-              icon={<Sparkles className="h-4 w-4 animate-spin" style={{ animationDuration: '8s' }} />}
+              icon={<Sparkles className="h-4 w-4 animate-spin motion-reduce:animate-none" style={{ animationDuration: '8s' }} />}
               variant="emerald"
               size="sm"
             />
@@ -48,7 +54,7 @@ export function LandingHeroMockup() {
 
         {/* 2. Top-Right: Automated Appointments & Calendar Badge */}
         <div
-          className="absolute top-4 sm:top-8 end-4 sm:end-8 z-20 animate-bounce hidden sm:block"
+          className="absolute top-4 sm:top-8 end-4 sm:end-8 z-20 animate-bounce motion-reduce:animate-none hidden sm:block"
           style={{ animationDuration: '4s', animationDelay: '0.5s' }}
         >
           <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl bg-white/90 dark:bg-zinc-950/80 border border-black/10 dark:border-white/10 px-3 sm:px-4 py-2 shadow-2xl backdrop-blur-xl">
@@ -62,7 +68,7 @@ export function LandingHeroMockup() {
                 <span className="text-[11px] sm:text-xs font-bold text-neutral-900 dark:text-white tracking-tight">
                   {isAr ? 'حجز وتذكير المواعيد' : 'Smart Appointments'}
                 </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#3B82F6] animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-[#3B82F6] animate-pulse motion-reduce:animate-none" />
               </div>
               <span className="text-[9.5px] sm:text-[10px] text-[#2563EB] dark:text-[#60A5FA] font-semibold block">
                 {isAr ? 'تذكيرات واتساب تلقائية' : 'Auto WhatsApp Reminders'}
@@ -73,7 +79,7 @@ export function LandingHeroMockup() {
 
         {/* 3. Bottom-Left: AI Order Taking Badge */}
         <div
-          className="absolute bottom-6 sm:bottom-12 start-4 sm:start-10 z-20 animate-bounce hidden sm:block"
+          className="absolute bottom-6 sm:bottom-12 start-4 sm:start-10 z-20 animate-bounce motion-reduce:animate-none hidden sm:block"
           style={{ animationDuration: '3.8s', animationDelay: '1s' }}
         >
           <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl bg-white/90 dark:bg-zinc-950/80 border border-black/10 dark:border-white/10 px-3.5 py-2 shadow-2xl backdrop-blur-xl">
@@ -87,7 +93,7 @@ export function LandingHeroMockup() {
                 <span className="text-[11px] sm:text-xs font-bold text-neutral-900 dark:text-white tracking-tight">
                   {isAr ? 'أخذ واستقبال الطلبات' : 'AI Order Taking'}
                 </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B] animate-ping" />
+                <span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B] animate-ping motion-reduce:animate-none" />
               </div>
               <span className="text-[9.5px] sm:text-[10px] text-[#D97706] dark:text-[#FBBF24] font-semibold block">
                 {isAr ? 'أتمتة وحفظ الطلبات آلياً' : 'Automate Orders & Sales'}
@@ -98,7 +104,7 @@ export function LandingHeroMockup() {
 
         {/* 4. Bottom-Right: Telegram Bot Notifications Badge */}
         <div
-          className="absolute bottom-6 sm:bottom-12 end-4 sm:end-10 z-20 animate-bounce hidden sm:block"
+          className="absolute bottom-6 sm:bottom-12 end-4 sm:end-10 z-20 animate-bounce motion-reduce:animate-none hidden sm:block"
           style={{ animationDuration: '4.2s', animationDelay: '1.5s' }}
         >
           <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl bg-white/90 dark:bg-zinc-950/80 border border-black/10 dark:border-white/10 px-3.5 py-2 shadow-2xl backdrop-blur-xl">
@@ -112,7 +118,7 @@ export function LandingHeroMockup() {
                 <span className="text-[11px] sm:text-xs font-bold text-neutral-900 dark:text-white tracking-tight">
                   Telegram Bot
                 </span>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#229ED9] animate-ping" />
+                <span className="h-1.5 w-1.5 rounded-full bg-[#229ED9] animate-ping motion-reduce:animate-none" />
               </div>
               <span className="text-[9.5px] sm:text-[10px] text-[#229ED9] font-semibold block">
                 {isAr ? 'إشعارات فورية لفريق المبيعات' : 'Instant Staff Alerts'}

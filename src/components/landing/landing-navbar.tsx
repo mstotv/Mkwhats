@@ -34,12 +34,22 @@ export function LandingNavbar({
   useEffect(() => {
     setIsLoggedIn(userLoggedIn)
     const supabase = createClient()
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setIsLoggedIn(true)
-      }
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (!error && data?.session?.user) {
+          setIsLoggedIn(true)
+        } else {
+          setIsLoggedIn(false)
+        }
+      })
+      .catch(() => {
+        setIsLoggedIn(false)
+      })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session?.user)
     })
     return () => subscription.unsubscribe()

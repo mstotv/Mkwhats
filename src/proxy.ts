@@ -110,7 +110,21 @@ export async function proxy(request: NextRequest) {
       }
     )
 
-    const { data: { user: adminUser } } = await adminSupabase.auth.getUser()
+    let adminUser = null
+    try {
+      const { data, error: adminAuthError } = await adminSupabase.auth.getUser()
+      if (!adminAuthError && data?.user) {
+        adminUser = data.user
+      } else if (adminAuthError) {
+        request.cookies.getAll().forEach((c) => {
+          if (c.name.includes('sb-') && c.name.includes('-auth-token')) {
+            supabaseResponse.cookies.set(c.name, '', { maxAge: 0, path: '/' })
+          }
+        })
+      }
+    } catch {
+      adminUser = null
+    }
 
     // 1. Admin Login Page (/admin/login)
     if (pathname === '/admin/login') {
@@ -226,10 +240,21 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError) {
-    // Evict stale invalid auth cookies to prevent repeated 'refresh_token_not_found' errors
+  let user = null
+  try {
+    const { data, error: authError } = await supabase.auth.getUser()
+    if (!authError && data?.user) {
+      user = data.user
+    } else if (authError) {
+      // Evict stale invalid auth cookies to prevent repeated 'refresh_token_not_found' errors
+      request.cookies.getAll().forEach((c) => {
+        if (c.name.includes('sb-') && c.name.includes('-auth-token')) {
+          supabaseResponse.cookies.set(c.name, '', { maxAge: 0, path: '/' })
+        }
+      })
+    }
+  } catch {
+    user = null
     request.cookies.getAll().forEach((c) => {
       if (c.name.includes('sb-') && c.name.includes('-auth-token')) {
         supabaseResponse.cookies.set(c.name, '', { maxAge: 0, path: '/' })

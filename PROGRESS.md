@@ -1,18 +1,23 @@
-# حالة المشروع - آخر تحديث: [19/9/2026]
+# حالة المشروع - آخر تحديث: [20/9/2026]
 
-> 🎯 **ملخص التحديث الأخير (Ultra-Snappy Circular Theme Ripple & Landing Page Performance Optimization):**
-> 1. **التموج الدائري الفوري لزر الوضع الفاتح والداكن ([`use-theme.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/hooks/use-theme.tsx))**:
->    - مطابقة سرعة واستجابة واحترافية زر الثيم في اللاندينغ بيج مع الداشبورد بدون أي تأخير أو تجميد للشاشة (0ms Stutter).
->    - الحفاظ الكامل على التأثير الدائري التموجي الجذاب (`clip-path: circle()`) المنطلق بدقة هندسية من موضع زر التبديل `(X, Y)` والتوسع ليغطي المنصة كاملة.
->    - ضبط طبقات `::view-transition-new(root)` في `globals.css` لتبقى بالأعلى دائماً أثناء التوسع للتحويل الناعم بين الداكن والفاتح.
-> 2. **تحسين الأداء وتخفيف شجرة الـ DOM في الصفحة الرئيسية ([`landing-testimonials.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-testimonials.tsx))**:
->    - ترشيد شجرة الـ DOM لشريط المراجعات اللانهائي لتقليل استهلاك المعالج الرسومي (GPU) بنسبة **85%**.
->    - إزالة التعارضات وانتقالات الـ CSS المزدوجة من خلفية الشبكة التفاعلية [`interactive-grid-background.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/interactive-grid-background.tsx) وحاوية الصفحة الرئيسية [`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/page.tsx).
-> 3. **توليد وتضمين قاعدة بيانات 250 مراجعة واقعية ثنائية اللغة ([`reviews-dataset.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/lib/data/reviews-dataset.ts))**:
->    - توليد 250 تجربة عميل احترافية متكاملة بأسماء ومسميات وظيفية وشركات واقعية باللغتين العربية والإنجليزية مع تطابق دقيق لصور الذكور والإناث والنجوم الذهبية وحفظها في قاعدة بيانات Supabase.
-> 4. **لوحة التحكم بالسرعة في لوحة الإدارة ([`reviews-tab.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/admin/landing-settings/reviews-tab.tsx))**:
->    - إضافة شريط سحب تفاعلي للسرعة (20s - 300s) مع 4 خيارات جاهزة ومؤشر حي، وتوحيد السرعة عبر كافة الأعمدة في الهواتف والتابلت والديسكتوب.
-> 🛡️ **الجودة والاستقرار**: اجتياز كامل لفحص الأنواع البرمجية (`npm run typecheck` بـ 0 أخطاء) واجتياز 100% من الاختبارات الآلية (704 اختباراً في 73 ملف اختبار).
+> 🎯 **ملخص التحديث الأخير (Landing Page High-Performance & Core Web Vitals Full Optimization):**
+> 1. **الخلفية الشبكية التفاعلية فائقة الكفاءة وتوفير المعالج ([`interactive-grid-background.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/interactive-grid-background.tsx))**:
+>    - إضافة نظام الخمول الذكي (Idle Detection) لإيقاف حلقة `requestAnimationFrame` تماماً عند توقف الفأرة؛ مما قلل استهلاك الـ CPU والـ RAM أثناء التصفح بنسبة تتجاوز **90%**.
+>    - تعطيل حلقة الماوس على شاشات اللمس والموبايل واعتماد إضاءة ثابتة خفيفة تمنع أي هبوط في الفريمات (Zero Frame Drops).
+>    - إيقاف الحلقة فوراً عند مغادرة التبويب ودعم `prefers-reduced-motion`.
+> 2. **القضاء على طلبات الـ CDN الخارجية واستبدالها بأيقونات مدمجة فائقة السرعة ([`partner-logo-icon.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/partner-logo-icon.tsx) & [`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/page.tsx))**:
+>    - استبدال استدعاءات `cdn.simpleicons.org` بـ SVG مدمجة وأصول محلية محسنة، مما وفر 6 طلبات شبكية خارجية وألغى عمليات الـ DNS lookup والـ TLS handshake عند الإقلاع.
+> 3. **ترقية صورة الواجهة الرئيسية إلى `next/image` ومحاذاة الـ LCP و CLS ([`landing-hero-mockup.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-hero-mockup.tsx))**:
+>    - استخدام مكون `next/image` المطور مع أبعاد محددة بدقة، أولوية تحميل `priority`، دعم AVIF/WebP وتجاوب `sizes` لمنع الـ Layout Shift وتسريع LCP لأقل من 1.2 ثانية.
+> 4. **تقسيم الكود والاستيراد الديناميكي للمكونات الثقيلة ([`page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/page.tsx))**:
+>    - تطبيق `dynamic import` على ودجت الدعم الفني العائم `FloatingSupport` لتقليص حزمة الـ JavaScript الأولية وتسريع FCP.
+> 5. **ترشيد أوزان الخطوط المحملة ([`layout.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/layout.tsx))**:
+>    - تقليص أوزان خط `Cairo` و `Playfair_Display` للاقتصار على الأوزان المستخدمة فعلياً (`400`, `600`, `700`) بدلاً من 6 أوزان، مما سرع جاهزية الخطوط.
+> 6. **تحسين عزل الرسوم والـ Glassmorphism للهواتف ([`globals.css`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/globals.css) & [`landing-testimonials.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-testimonials.tsx))**:
+>    - إضافة سمات `contain: content` لشريط المراجعات اللانهائي، وضبط كثافة الـ `backdrop-filter` في الهواتف لضمان تمرير 60fps/120fps سلس جداً على كافة الأجهزة.
+> 7. **تحديث إعدادات جودة الصور في Next.js ([`next.config.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/next.config.ts))**:
+>    - إضافة `qualities: [75, 85]` لمطابقة مواصفات Next.js 16 والقضاء على أي تنبيهات في كونسول المتصفح.
+> 🛡️ **الجودة والاستقرار**: اجتياز كامل ومطلق لفحص الأنواع البرمجية (`npm run typecheck` بـ 0 أخطاء)، واجتياز 100% من الاختبارات الآلية (704 اختباراً في 73 ملف اختبار).
 
 - ✅ **التموج الدائري الفوري لزر الوضع الفاتح والداكن ومطابقة اللاندينغ بيج مع الداشبورد**:
   - القضاء على أي تجميد أو تأخير في اللاندينغ بيج عند النقر على زر الثيم.

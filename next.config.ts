@@ -41,6 +41,8 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react"],
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
+    qualities: [75, 85],
     remotePatterns: [
       { protocol: "https", hostname: "**" },
       { protocol: "http", hostname: "**" },

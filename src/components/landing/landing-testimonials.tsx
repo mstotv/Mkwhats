@@ -43,6 +43,10 @@ function TestimonialCard({ t, isAr }: { t: TestimonialItem; isAr: boolean }) {
             <img
               src={t.image_url}
               alt={t.name_ar || t.name_en || 'Avatar'}
+              width={40}
+              height={40}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
             />
           ) : (

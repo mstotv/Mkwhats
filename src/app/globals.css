@@ -474,7 +474,7 @@ html[data-mode="light"] .raycast-navbar-glass,
 }
 
 /* ============================================================
- * Vertical Infinite Scroll Testimonials Marquee
+ * Vertical Infinite Scroll Testimonials Marquee & Performance
  * ============================================================ */
 @keyframes marquee-up {
   0% {
@@ -497,26 +497,31 @@ html[data-mode="light"] .raycast-navbar-glass,
 .animate-marquee-up {
   animation: marquee-up 120s linear infinite;
   will-change: transform;
+  contain: content;
 }
 
 .animate-marquee-up-fast {
   animation: marquee-up 28s linear infinite;
   will-change: transform;
+  contain: content;
 }
 
 .animate-marquee-up-medium {
   animation: marquee-up 38s linear infinite;
   will-change: transform;
+  contain: content;
 }
 
 .animate-marquee-up-slow {
   animation: marquee-up 48s linear infinite;
   will-change: transform;
+  contain: content;
 }
 
 .animate-marquee-down-medium {
   animation: marquee-down 40s linear infinite;
   will-change: transform;
+  contain: content;
 }
 
 .marquee-pause:hover,
@@ -525,18 +530,34 @@ html[data-mode="light"] .raycast-navbar-glass,
 }
 
 /* ============================================================
- * Ultra-Fast Snappy Circular View Transitions for Theme Toggle
+ * Reduced Motion Accessibility & Performance Rules
  * ============================================================ */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-marquee-up,
+  .animate-marquee-up-fast,
+  .animate-marquee-up-medium,
+  .animate-marquee-up-slow,
+  .animate-marquee-down-medium {
+    animation: none !important;
+    transform: none !important;
+  }
 }
 
-::view-transition-old(root) {
-  z-index: 1;
-}
-
-::view-transition-new(root) {
-  z-index: 9999;
+/* ============================================================
+ * Mobile GPU Optimization for Glassmorphism
+ * ============================================================ */
+@media (max-width: 640px) {
+  .raycast-navbar-glass {
+    backdrop-filter: blur(12px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+  }
 }

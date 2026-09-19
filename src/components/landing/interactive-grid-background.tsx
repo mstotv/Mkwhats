@@ -33,16 +33,92 @@ export function InteractiveGridBackground({
   })
 
   useEffect(() => {
-    let animationFrameId: number
+    if (typeof window === 'undefined') return
 
-    // Center coordinates initially
-    if (typeof window !== 'undefined') {
-      const initialX = window.innerWidth / 2
-      const initialY = window.innerHeight * 0.35
-      mouseState.current.currentX = initialX
-      mouseState.current.currentY = initialY
-      mouseState.current.targetX = initialX
-      mouseState.current.targetY = initialY
+    // 1. Check for reduced motion or touch/mobile screens
+    const isCoarse = window.matchMedia?.('(pointer: coarse)').matches || 'ontouchstart' in window
+    const isReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+    // Default center glow
+    const initialX = window.innerWidth / 2
+    const initialY = window.innerHeight * 0.35
+    mouseState.current.currentX = initialX
+    mouseState.current.currentY = initialY
+    mouseState.current.targetX = initialX
+    mouseState.current.targetY = initialY
+
+    if (glowLayerRef.current) {
+      const maskStyle = `radial-gradient(${glowRadius}px circle at ${initialX}px ${initialY}px, black 0%, rgba(0,0,0,0.6) 45%, transparent 80%)`
+      glowLayerRef.current.style.maskImage = maskStyle
+      glowLayerRef.current.style.webkitMaskImage = maskStyle
+    }
+
+    // On touch devices or reduced motion, maintain static beautiful glow without spinning CPU cycles
+    if (isCoarse || isReducedMotion) {
+      return
+    }
+
+    let animationFrameId: number | null = null
+    let isRunning = false
+
+    const animate = () => {
+      const state = mouseState.current
+
+      // Smooth interpolation (Lerp)
+      const dx = state.targetX - state.currentX
+      const dy = state.targetY - state.currentY
+      const dpx = state.targetParallaxX - state.parallaxX
+      const dpy = state.targetParallaxY - state.parallaxY
+
+      // Check if settled (Idle Detection) to save 100% CPU/GPU when mouse is stationary
+      if (
+        Math.abs(dx) < 0.2 &&
+        Math.abs(dy) < 0.2 &&
+        Math.abs(dpx) < 0.05 &&
+        Math.abs(dpy) < 0.05
+      ) {
+        state.currentX = state.targetX
+        state.currentY = state.targetY
+        state.parallaxX = state.targetParallaxX
+        state.parallaxY = state.targetParallaxY
+
+        if (glowLayerRef.current) {
+          const maskStyle = `radial-gradient(${glowRadius}px circle at ${state.currentX}px ${state.currentY}px, black 0%, rgba(0,0,0,0.6) 45%, transparent 80%)`
+          glowLayerRef.current.style.maskImage = maskStyle
+          glowLayerRef.current.style.webkitMaskImage = maskStyle
+        }
+        if (gridLayerRef.current) {
+          gridLayerRef.current.style.transform = `translate3d(${state.parallaxX}px, ${state.parallaxY}px, 0)`
+        }
+
+        isRunning = false
+        animationFrameId = null
+        return
+      }
+
+      state.currentX += dx * 0.12
+      state.currentY += dy * 0.12
+      state.parallaxX += dpx * 0.08
+      state.parallaxY += dpy * 0.08
+
+      if (glowLayerRef.current) {
+        const maskStyle = `radial-gradient(${glowRadius}px circle at ${state.currentX}px ${state.currentY}px, black 0%, rgba(0,0,0,0.6) 45%, transparent 80%)`
+        glowLayerRef.current.style.maskImage = maskStyle
+        glowLayerRef.current.style.webkitMaskImage = maskStyle
+      }
+
+      if (gridLayerRef.current) {
+        gridLayerRef.current.style.transform = `translate3d(${state.parallaxX}px, ${state.parallaxY}px, 0)`
+      }
+
+      animationFrameId = requestAnimationFrame(animate)
+    }
+
+    const startAnimation = () => {
+      if (!isRunning) {
+        isRunning = true
+        animationFrameId = requestAnimationFrame(animate)
+      }
     }
 
     const handlePointerMove = (e: PointerEvent) => {
@@ -57,53 +133,44 @@ export function InteractiveGridBackground({
       mouseState.current.targetY = y
       mouseState.current.isVisible = true
 
-      // Calculate normalized parallax delta (-1 to 1) from viewport center
       const centerX = window.innerWidth / 2
       const centerY = window.innerHeight / 2
-      const normX = (e.clientX - centerX) / centerX
-      const normY = (e.clientY - centerY) / centerY
+      const normX = (e.clientX - centerX) / (centerX || 1)
+      const normY = (e.clientY - centerY) / (centerY || 1)
 
       mouseState.current.targetParallaxX = normX * parallaxStrength
       mouseState.current.targetParallaxY = normY * parallaxStrength
+
+      startAnimation()
     }
 
     const handlePointerLeave = () => {
       mouseState.current.targetParallaxX = 0
       mouseState.current.targetParallaxY = 0
+      startAnimation()
     }
 
-    // 60FPS / 120FPS smooth Lerp loop with GPU transforms
-    const animate = () => {
-      const state = mouseState.current
-
-      // Smooth interpolation (Lerp factor 0.12)
-      state.currentX += (state.targetX - state.currentX) * 0.12
-      state.currentY += (state.targetY - state.currentY) * 0.12
-      state.parallaxX += (state.targetParallaxX - state.parallaxX) * 0.08
-      state.parallaxY += (state.targetParallaxY - state.parallaxY) * 0.08
-
-      if (glowLayerRef.current) {
-        const maskStyle = `radial-gradient(${glowRadius}px circle at ${state.currentX}px ${state.currentY}px, black 0%, rgba(0,0,0,0.6) 45%, transparent 80%)`
-        glowLayerRef.current.style.maskImage = maskStyle
-        glowLayerRef.current.style.webkitMaskImage = maskStyle
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId)
+          animationFrameId = null
+          isRunning = false
+        }
       }
-
-      if (gridLayerRef.current) {
-        // Subtle 3D parallax translation on the grid plane
-        gridLayerRef.current.style.transform = `translate3d(${state.parallaxX}px, ${state.parallaxY}px, 0)`
-      }
-
-      animationFrameId = requestAnimationFrame(animate)
     }
 
     window.addEventListener('pointermove', handlePointerMove, { passive: true })
     window.addEventListener('pointerleave', handlePointerLeave, { passive: true })
-    animationFrameId = requestAnimationFrame(animate)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerleave', handlePointerLeave)
-      cancelAnimationFrame(animationFrameId)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+      }
     }
   }, [glowRadius, parallaxStrength])
 
