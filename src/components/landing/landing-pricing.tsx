@@ -52,7 +52,7 @@ export interface Plan {
 
 interface LandingPricingProps {
   plans: Plan[]
-  userLoggedIn: boolean
+  userLoggedIn?: boolean
   primaryColor?: string
 }
 

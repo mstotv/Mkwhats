@@ -1,6 +1,7 @@
 'use client';
 
 import { useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { Globe } from 'lucide-react';
 import {
@@ -18,6 +19,7 @@ export function LanguageSwitcher({
   className?: string;
 }) {
   const locale = useLocale();
+  const router = useRouter();
   const t = useTranslations('Navigation');
   const [isPending, startTransition] = useTransition();
 
@@ -26,6 +28,12 @@ export function LanguageSwitcher({
 
     startTransition(() => {
       document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`;
+      try {
+        localStorage.setItem('NEXT_LOCALE', nextLocale);
+      } catch {
+        // Safe in sandboxed environments
+      }
+      router.refresh();
       window.location.reload();
     });
   }

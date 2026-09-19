@@ -305,14 +305,14 @@ function FlowCanvasInner() {
 
     return shouldAutoLayout(builderNodes)
       ? autoLayout(
-          builderNodes.map((n) => ({
-            id: n.node_key,
-            width: NODE_WIDTH,
-            height: NODE_HEIGHT,
-          })),
-          canvasEdges.map((e) => ({ source: e.source, target: e.target })),
-          { direction: 'TB' }
-        )
+        builderNodes.map((n) => ({
+          id: n.node_key,
+          width: NODE_WIDTH,
+          height: NODE_HEIGHT,
+        })),
+        canvasEdges.map((e) => ({ source: e.source, target: e.target })),
+        { direction: 'TB' }
+      )
       : null;
   }, [builderNodes]);
 

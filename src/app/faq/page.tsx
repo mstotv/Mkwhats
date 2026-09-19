@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { getLocale } from 'next-intl/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { CheckCircle2, MessageCircle } from 'lucide-react'
 import { LandingNavbar } from '@/components/landing/landing-navbar'
@@ -8,33 +7,11 @@ import { LandingFooter } from '@/components/landing/landing-footer'
 import { LandingFAQ, FAQItem } from '@/components/landing/landing-faq'
 import { FloatingSupport } from '@/components/landing/floating-support'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export default async function FAQPage() {
-  const cookieStore = await cookies()
-  const locale = (cookieStore.get('NEXT_LOCALE')?.value as 'en' | 'ar') || 'en'
+  const locale = (await getLocale()) as 'en' | 'ar'
   const isAr = locale === 'ar'
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options)
-          })
-        },
-      },
-    }
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
   const serviceClient = createServiceClient()
 
@@ -78,7 +55,6 @@ export default async function FAQPage() {
         logoHeight={logoHeight}
         locale={locale}
         activePage="faq"
-        userLoggedIn={Boolean(user)}
       />
 
       {/* ── 2. FAQ Header ──────────────────────────────────────── */}

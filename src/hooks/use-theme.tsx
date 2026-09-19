@@ -41,8 +41,8 @@ interface ThemeContextValue {
   theme: ThemeId;
   setTheme: (next: ThemeId) => void;
   mode: Mode;
-  setMode: (next: Mode) => void;
-  toggleMode: () => void;
+  setMode: (next: Mode, event?: React.MouseEvent | MouseEvent) => void;
+  toggleMode: (event?: React.MouseEvent | MouseEvent) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -76,6 +76,74 @@ function readInitialMode(): Mode {
   return DEFAULT_MODE;
 }
 
+function applyModeDom(next: Mode) {
+  if (typeof document === "undefined") return;
+  document.documentElement.dataset.mode = next;
+  if (next === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}
+
+function runCircularViewTransition(
+  next: Mode,
+  commit: () => void,
+  event?: React.MouseEvent | MouseEvent,
+) {
+  if (typeof document === "undefined") {
+    commit();
+    return;
+  }
+
+  const doc = document as any;
+  const isReducedMotion = window.matchMedia?.(
+    "(prefers-reduced-motion: reduce)",
+  )?.matches;
+
+  if (!doc.startViewTransition || isReducedMotion) {
+    commit();
+    return;
+  }
+
+  let x = window.innerWidth / 2;
+  let y = window.innerHeight / 2;
+
+  if (event) {
+    if ("clientX" in event && typeof event.clientX === "number") {
+      x = event.clientX;
+      y = event.clientY;
+    }
+  }
+
+  const endRadius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y),
+  );
+
+  const transition = doc.startViewTransition(() => {
+    commit();
+  });
+
+  transition.ready.then(() => {
+    const clipPath = [
+      `circle(0px at ${x}px ${y}px)`,
+      `circle(${endRadius}px at ${x}px ${y}px)`,
+    ];
+
+    document.documentElement.animate(
+      {
+        clipPath: clipPath,
+      },
+      {
+        duration: 450,
+        easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+        pseudoElement: "::view-transition-new(root)",
+      },
+    );
+  });
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeId>(readInitialTheme);
   const [mode, setModeState] = useState<Mode>(readInitialMode);
@@ -93,16 +161,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const setMode = useCallback((next: Mode) => {
-    setModeState(next);
-    if (typeof document !== "undefined") {
-      document.documentElement.dataset.mode = next;
-      if (next === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    }
+  const setMode = useCallback((next: Mode, event?: React.MouseEvent | MouseEvent) => {
+    runCircularViewTransition(
+      next,
+      () => {
+        setModeState(next);
+        applyModeDom(next);
+      },
+      event,
+    );
+
     try {
       localStorage.setItem(MODE_STORAGE_KEY, next);
     } catch {
@@ -110,9 +178,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const toggleMode = useCallback(() => {
-    setMode(mode === "dark" ? "light" : "dark");
-  }, [mode, setMode]);
+  const toggleMode = useCallback(
+    (event?: React.MouseEvent | MouseEvent) => {
+      const next = mode === "dark" ? "light" : "dark";
+      setMode(next, event);
+    },
+    [mode, setMode],
+  );
 
   // Sync from other tabs — change theme or mode in tab A, tab B
   // catches up without a refresh.
@@ -128,7 +200,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (e.key === MODE_STORAGE_KEY) {
         if (isMode(e.newValue) && e.newValue !== mode) {
           setModeState(e.newValue);
-          document.documentElement.dataset.mode = e.newValue;
+          applyModeDom(e.newValue);
         }
       }
     }

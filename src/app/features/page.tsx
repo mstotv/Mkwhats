@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { getLocale } from 'next-intl/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import {
   Bot,
@@ -26,7 +25,7 @@ import { LandingFooter } from '@/components/landing/landing-footer'
 import { LandingEcommerceSection } from '@/components/landing/landing-ecommerce-section'
 import { FloatingSupport } from '@/components/landing/floating-support'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 function getFeatureIcon(iconName: string) {
   const iconProps = { className: 'h-5 w-5' }
@@ -183,30 +182,8 @@ const DEFAULT_FEATURES = [
 ]
 
 export default async function FeaturesPage() {
-  const cookieStore = await cookies()
-  const locale = (cookieStore.get('NEXT_LOCALE')?.value as 'en' | 'ar') || 'en'
+  const locale = (await getLocale()) as 'en' | 'ar'
   const isAr = locale === 'ar'
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options)
-          })
-        },
-      },
-    }
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
   const serviceClient = createServiceClient()
 
@@ -250,7 +227,6 @@ export default async function FeaturesPage() {
         logoHeight={logoHeight}
         locale={locale}
         activePage="features"
-        userLoggedIn={Boolean(user)}
       />
 
       {/* ── 2. Header & Capability Tags ────────────────────────── */}
@@ -321,7 +297,7 @@ export default async function FeaturesPage() {
       </section>
 
       {/* ── E-Commerce & Store Integrations (WooCommerce & Shopify) ── */}
-      <LandingEcommerceSection isAr={isAr} userLoggedIn={Boolean(user)} />
+      <LandingEcommerceSection isAr={isAr} />
 
       {/* ── 4. Built for High-Velocity Businesses ─────────────── */}
       <section className="py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-12">

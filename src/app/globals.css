@@ -110,45 +110,6 @@ html[data-mode="dark"] input:-webkit-autofill:active,
 /* ---- MODE: neutral surfaces (Matching Landing Page & Stitch Design System) ---- */
 
 :root,
-html[data-mode="dark"] {
-  --background: oklch(0.14 0.005 70);
-  /* #141416 */
-  --foreground: oklch(0.95 0.002 70);
-  /* #F2F0F0 */
-  --card: oklch(0.18 0.005 70);
-  /* #1C1C1E */
-  --card-2: oklch(0.22 0.005 70);
-  /* #222226 */
-  --card-foreground: oklch(0.95 0.002 70);
-  --popover: oklch(0.18 0.005 70);
-  --popover-foreground: oklch(0.95 0.002 70);
-  --secondary: oklch(0.24 0.005 70);
-  /* #242428 */
-  --secondary-foreground: oklch(0.95 0.002 70);
-  --muted: oklch(0.24 0.005 70);
-  --muted-foreground: oklch(0.80 0.005 70);
-  /* #C9C6C1 */
-  --accent: oklch(0.26 0.005 70);
-  /* #2A2A2E */
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.28 0.005 70);
-  /* #2E2E32 */
-  --input: oklch(0.28 0.005 70);
-  --chart-2: oklch(0.82 0.12 175);
-  /* #6BD8CB */
-  --chart-3: oklch(0.65 0.14 195);
-  --chart-4: oklch(0.55 0.10 220);
-  --chart-5: oklch(0.45 0.08 240);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.16 0.005 70);
-  /* #18181B */
-  --sidebar-foreground: oklch(0.95 0.002 70);
-  --sidebar-accent: oklch(0.24 0.005 70);
-  --sidebar-accent-foreground: oklch(0.82 0.12 175);
-  --sidebar-border: oklch(0.26 0.005 70);
-}
-
 html[data-mode="light"] {
   --background: oklch(0.972 0.009 80);
   /* #F9F5F0 Warm Editorial Canvas */
@@ -187,6 +148,45 @@ html[data-mode="light"] {
   --sidebar-accent-foreground: oklch(0.48 0.11 175);
   /* #00685F */
   --sidebar-border: oklch(0.90 0.006 80);
+}
+
+html[data-mode="dark"] {
+  --background: oklch(0.14 0.005 70);
+  /* #141416 */
+  --foreground: oklch(0.95 0.002 70);
+  /* #F2F0F0 */
+  --card: oklch(0.18 0.005 70);
+  /* #1C1C1E */
+  --card-2: oklch(0.22 0.005 70);
+  /* #222226 */
+  --card-foreground: oklch(0.95 0.002 70);
+  --popover: oklch(0.18 0.005 70);
+  --popover-foreground: oklch(0.95 0.002 70);
+  --secondary: oklch(0.24 0.005 70);
+  /* #242428 */
+  --secondary-foreground: oklch(0.95 0.002 70);
+  --muted: oklch(0.24 0.005 70);
+  --muted-foreground: oklch(0.80 0.005 70);
+  /* #C9C6C1 */
+  --accent: oklch(0.26 0.005 70);
+  /* #2A2A2E */
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.28 0.005 70);
+  /* #2E2E32 */
+  --input: oklch(0.28 0.005 70);
+  --chart-2: oklch(0.82 0.12 175);
+  /* #6BD8CB */
+  --chart-3: oklch(0.65 0.14 195);
+  --chart-4: oklch(0.55 0.10 220);
+  --chart-5: oklch(0.45 0.08 240);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.16 0.005 70);
+  /* #18181B */
+  --sidebar-foreground: oklch(0.95 0.002 70);
+  --sidebar-accent: oklch(0.24 0.005 70);
+  --sidebar-accent-foreground: oklch(0.82 0.12 175);
+  --sidebar-border: oklch(0.26 0.005 70);
 }
 
 /* ---- ACCENT: primary color (Default: Ethos Teal #00685F from DESIGN.md) ---- */
@@ -345,4 +345,21 @@ html[data-theme="rose"] {
 
 .animate-marquee-infinite:hover {
   animation-play-state: paused;
+}
+
+/* ============================================================
+ * Circular Expanding Ripple Theme Transition (View Transitions)
+ * ============================================================ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
 }

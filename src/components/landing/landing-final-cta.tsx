@@ -1,25 +1,36 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Sparkles, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 import { HomeFinalCtaContent, DEFAULT_HOME_CONTENT } from '@/lib/types/home-cms'
 
 interface LandingFinalCtaProps {
   isAr: boolean
-  userLoggedIn: boolean
+  userLoggedIn?: boolean
   content?: HomeFinalCtaContent
 }
 
-export function LandingFinalCta({ isAr, userLoggedIn, content: rawContent }: LandingFinalCtaProps) {
+export function LandingFinalCta({ isAr, userLoggedIn = false, content: rawContent }: LandingFinalCtaProps) {
+  const [isLoggedIn, setIsLoggedIn] = useState(userLoggedIn)
   const ArrowIcon = isAr ? ArrowLeft : ArrowRight
   const data = rawContent || DEFAULT_HOME_CONTENT.final_cta
+
+  useEffect(() => {
+    setIsLoggedIn(userLoggedIn)
+    const supabase = createClient()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setIsLoggedIn(true)
+    })
+  }, [userLoggedIn])
 
   const perks = isAr
     ? (data.perks_ar && data.perks_ar.length > 0 ? data.perks_ar : DEFAULT_HOME_CONTENT.final_cta.perks_ar)
     : (data.perks_en && data.perks_en.length > 0 ? data.perks_en : DEFAULT_HOME_CONTENT.final_cta.perks_en)
 
-  const primaryBtnUrl = userLoggedIn ? '/dashboard' : (data.primary_btn_url || '/signup')
-  const primaryBtnText = userLoggedIn
+  const primaryBtnUrl = isLoggedIn ? '/dashboard' : (data.primary_btn_url || '/signup')
+  const primaryBtnText = isLoggedIn
     ? (isAr ? 'الانتقال للوحة التحكم' : 'Go to Dashboard')
     : (isAr ? (data.primary_btn_text_ar || 'أنشئ حسابك المجاني في دقيقة 🚀') : (data.primary_btn_text_en || 'Start Your Free Account Now 🚀'))
 

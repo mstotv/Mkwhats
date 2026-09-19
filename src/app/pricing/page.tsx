@@ -1,5 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { getLocale } from 'next-intl/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { ShieldCheck, Lock, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { LandingNavbar } from '@/components/landing/landing-navbar'
@@ -7,33 +6,11 @@ import { LandingFooter } from '@/components/landing/landing-footer'
 import { LandingPricing } from '@/components/landing/landing-pricing'
 import { FloatingSupport } from '@/components/landing/floating-support'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export default async function PricingPage() {
-  const cookieStore = await cookies()
-  const locale = (cookieStore.get('NEXT_LOCALE')?.value as 'en' | 'ar') || 'en'
+  const locale = (await getLocale()) as 'en' | 'ar'
   const isAr = locale === 'ar'
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options)
-          })
-        },
-      },
-    }
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
   const serviceClient = createServiceClient()
 
@@ -71,7 +48,6 @@ export default async function PricingPage() {
         logoHeight={logoHeight}
         locale={locale}
         activePage="pricing"
-        userLoggedIn={Boolean(user)}
       />
 
       {/* ── 2. Pricing Header ──────────────────────────────────── */}
@@ -94,7 +70,6 @@ export default async function PricingPage() {
         <div className="pt-6">
           <LandingPricing
             plans={(plans as any[]) || []}
-            userLoggedIn={Boolean(user)}
             primaryColor="#00685F"
           />
         </div>

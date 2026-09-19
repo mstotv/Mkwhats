@@ -206,7 +206,7 @@ export const DEFAULT_ECOMMERCE_CONTENT: EcommerceSectionContent = {
 
 interface LandingEcommerceSectionProps {
   isAr: boolean
-  userLoggedIn: boolean
+  userLoggedIn?: boolean
   content?: EcommerceSectionContent
 }
 

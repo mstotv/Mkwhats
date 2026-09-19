@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowLeft, ArrowRight, Menu, X } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { ModeToggle } from '@/components/layout/mode-toggle'
 import { LanguageSwitcher } from '@/components/language-switcher'
 
@@ -26,8 +27,23 @@ export function LandingNavbar({
   primaryCtaText,
 }: LandingNavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(userLoggedIn)
   const isAr = locale === 'ar'
   const ArrowIcon = isAr ? ArrowLeft : ArrowRight
+
+  useEffect(() => {
+    setIsLoggedIn(userLoggedIn)
+    const supabase = createClient()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setIsLoggedIn(true)
+      }
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user)
+    })
+    return () => subscription.unsubscribe()
+  }, [userLoggedIn])
 
   const navLinks = [
     { key: 'home', href: '/', labelAr: 'الرئيسية', labelEn: 'Home' },
@@ -40,7 +56,7 @@ export function LandingNavbar({
     <header className="sticky top-0 z-50 border-b border-[#BCC9C6]/30 dark:border-white/10 bg-[#F9F5F0]/95 dark:bg-[#1A1A1A]/95 backdrop-blur-md transition-colors">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-8 lg:px-16 relative">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-3 z-10 shrink-0 group">
+        <Link href="/" prefetch={true} className="flex items-center gap-3 z-10 shrink-0 group">
           {logoUrl ? (
             <img
               src={logoUrl}
@@ -62,6 +78,7 @@ export function LandingNavbar({
               <Link
                 key={link.key}
                 href={link.href}
+                prefetch={true}
                 className={`transition-colors pb-1 ${isActive
                     ? 'text-[#00685F] dark:text-[#6BD8CB] border-b-2 border-[#00685F] dark:border-[#6BD8CB] font-bold'
                     : 'hover:text-[#00685F] dark:hover:text-[#6BD8CB]'
@@ -78,9 +95,10 @@ export function LandingNavbar({
           <ModeToggle />
           <LanguageSwitcher />
 
-          {userLoggedIn ? (
+          {isLoggedIn ? (
             <Link
               href="/dashboard"
+              prefetch={true}
               className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#00685F] hover:bg-[#005049] dark:bg-[#008378] dark:hover:bg-[#00685F] text-white px-4 lg:px-5 py-2.5 text-xs lg:text-[13px] font-semibold uppercase tracking-wider shadow-sm transition-all"
             >
               {isAr ? 'لوحة التحكم' : 'Dashboard'} <ArrowIcon className="h-3.5 w-3.5" />
@@ -89,12 +107,14 @@ export function LandingNavbar({
             <>
               <Link
                 href="/login"
+                prefetch={true}
                 className="hidden lg:inline-flex items-center gap-1.5 text-xs lg:text-[13px] font-semibold uppercase tracking-wider text-[#605E5B] dark:text-[#C9C6C1] hover:text-[#00685F] dark:hover:text-[#6BD8CB] px-3 py-2 transition-colors"
               >
                 {isAr ? 'تسجيل الدخول' : 'Sign In'}
               </Link>
               <Link
                 href="/signup"
+                prefetch={true}
                 className="inline-flex items-center gap-1.5 rounded-[4px] bg-[#00685F] hover:bg-[#005049] dark:bg-[#008378] dark:hover:bg-[#00685F] text-white px-4 lg:px-6 py-2.5 text-xs lg:text-[13px] font-semibold uppercase tracking-wider shadow-sm transition-all"
               >
                 {primaryCtaText || (isAr ? 'إنشاء حساب مجاني' : 'Sign Up Free')}
@@ -128,6 +148,7 @@ export function LandingNavbar({
                 <Link
                   key={link.key}
                   href={link.href}
+                  prefetch={true}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`text-sm font-semibold py-2 px-3 rounded-md transition-colors ${isActive
                       ? 'bg-[#00685F]/10 dark:bg-[#00685F]/20 text-[#00685F] dark:text-[#6BD8CB] font-bold'
@@ -141,9 +162,10 @@ export function LandingNavbar({
           </nav>
 
           <div className="pt-3 border-t border-black/5 dark:border-white/10 flex flex-col gap-2.5">
-            {userLoggedIn ? (
+            {isLoggedIn ? (
               <Link
                 href="/dashboard"
+                prefetch={true}
                 onClick={() => setMobileMenuOpen(false)}
                 className="w-full flex items-center justify-center gap-2 rounded-[4px] bg-[#00685F] text-white py-3 text-xs font-bold uppercase tracking-wider shadow-sm"
               >
@@ -153,6 +175,7 @@ export function LandingNavbar({
               <>
                 <Link
                   href="/signup"
+                  prefetch={true}
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full flex items-center justify-center gap-2 rounded-[4px] bg-[#00685F] text-white py-3 text-xs font-bold uppercase tracking-wider shadow-sm"
                 >
@@ -160,6 +183,7 @@ export function LandingNavbar({
                 </Link>
                 <Link
                   href="/login"
+                  prefetch={true}
                   onClick={() => setMobileMenuOpen(false)}
                   className="w-full flex items-center justify-center gap-2 rounded-[4px] border border-[#00685F]/30 dark:border-white/20 bg-white/50 dark:bg-white/5 text-[#00685F] dark:text-[#6BD8CB] py-3 text-xs font-bold uppercase tracking-wider shadow-sm"
                 >

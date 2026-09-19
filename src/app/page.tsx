@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { getLocale } from 'next-intl/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import {
   ArrowLeft,
@@ -18,33 +17,11 @@ import { LandingTestimonials } from '@/components/landing/landing-testimonials'
 import { LandingFinalCta } from '@/components/landing/landing-final-cta'
 import { FloatingSupport } from '@/components/landing/floating-support'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export default async function LandingPage() {
-  const cookieStore = await cookies()
-  const locale = (cookieStore.get('NEXT_LOCALE')?.value as 'en' | 'ar') || 'en'
+  const locale = (await getLocale()) as 'en' | 'ar'
   const isAr = locale === 'ar'
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options)
-          })
-        },
-      },
-    }
-  )
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
   const serviceClient = createServiceClient()
 
@@ -126,7 +103,6 @@ export default async function LandingPage() {
         logoHeight={logoHeight}
         locale={locale}
         activePage="home"
-        userLoggedIn={Boolean(user)}
         primaryCtaText={heroContent.primary_cta_text}
       />
 
@@ -156,21 +132,21 @@ export default async function LandingPage() {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
           <Link
-            href={user ? '/dashboard' : '/signup'}
+            href="/signup"
+            prefetch={true}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[4px] bg-[#00685F] hover:bg-[#005049] text-white px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider shadow-sm hover:scale-[1.01] transition-all"
           >
             {heroContent.primary_cta_text}
             <ArrowIcon className="h-4 w-4" />
           </Link>
-          {!user && (
-            <Link
-              href="/login"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[4px] border border-[#00685F]/30 dark:border-white/20 bg-white/60 dark:bg-white/5 hover:bg-[#00685F]/10 dark:hover:bg-white/10 text-[#00685F] dark:text-[#6BD8CB] px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider shadow-sm hover:scale-[1.01] transition-all backdrop-blur-sm"
-            >
-              <LogIn className="h-4 w-4" />
-              {heroContent.secondary_cta_text}
-            </Link>
-          )}
+          <Link
+            href="/login"
+            prefetch={true}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[4px] border border-[#00685F]/30 dark:border-white/20 bg-white/60 dark:bg-white/5 hover:bg-[#00685F]/10 dark:hover:bg-white/10 text-[#00685F] dark:text-[#6BD8CB] px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider shadow-sm hover:scale-[1.01] transition-all backdrop-blur-sm"
+          >
+            <LogIn className="h-4 w-4" />
+            {heroContent.secondary_cta_text}
+          </Link>
         </div>
 
         {/* Hero Interactive Laptop Showcase */}
@@ -213,7 +189,7 @@ export default async function LandingPage() {
       <LandingTestimonials isAr={isAr} testimonials={settings?.testimonials} />
 
       {/* ── 10. Magnetic Final Call-to-Action ─────────────────── */}
-      <LandingFinalCta isAr={isAr} userLoggedIn={Boolean(user)} content={settings?.home_content?.final_cta} />
+      <LandingFinalCta isAr={isAr} content={settings?.home_content?.final_cta} />
 
       {/* ── 11. Dark Editorial Footer ─────────────────────────── */}
       <LandingFooter
