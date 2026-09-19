@@ -59,8 +59,8 @@ export function AdminNav({ isOpen = false, onClose }: AdminNavProps) {
   }, []);
 
   const adminPlatformName = isAr
-    ? (siteSettings.platform_name_ar || '')
-    : (siteSettings.platform_name_en || '');
+    ? (siteSettings.platform_name_ar || siteSettings.platform_name || siteSettings.platform_name_en || '')
+    : (siteSettings.platform_name_en || siteSettings.platform_name || siteSettings.platform_name_ar || '');
 
   const navItems = [
     {

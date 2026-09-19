@@ -1391,6 +1391,9 @@
       "api": "مفاتيح API"
     },
     "overview": {
+      "planSubtitle": "عرض تفاصيل الخطة والرصيد الشهري",
+      "bioLinkSubtitle": "صفحة بايو لينك ورابط السابدومين",
+      "appointmentsSubtitle": "ساعات العمل والحجز بالذكاء الاصطناعي",
       "notSetup": "Not set up yet",
       "connected": "Connected",
       "needsReconnecting": "Needs reconnecting",

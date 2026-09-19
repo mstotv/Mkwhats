@@ -16,6 +16,10 @@ import {
   Eye,
   EyeOff,
   RotateCcw,
+  Gauge,
+  Clock,
+  Sparkles,
+  Sliders,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,10 +32,18 @@ import { TestimonialItem, DEFAULT_TESTIMONIALS } from '@/lib/types/home-cms'
 interface ReviewsTabProps {
   isAr: boolean
   testimonials: TestimonialItem[]
+  speedSeconds?: number
   onChange: (updated: TestimonialItem[]) => void
+  onSpeedChange?: (speed: number) => void
 }
 
-export function ReviewsTab({ isAr, testimonials, onChange }: ReviewsTabProps) {
+export function ReviewsTab({
+  isAr,
+  testimonials,
+  speedSeconds = 120,
+  onChange,
+  onSpeedChange,
+}: ReviewsTabProps) {
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({})
 
@@ -146,6 +158,89 @@ export function ReviewsTab({ isAr, testimonials, onChange }: ReviewsTabProps) {
             </Button>
           </div>
         </CardHeader>
+      </Card>
+
+      {/* ── Scroll Speed Controller Card ── */}
+      <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/[0.03] via-card to-card">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="space-y-1">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <Gauge className="h-4 w-4 text-amber-500" />
+                {isAr ? 'سرعة حركة وتمرير المراجعات في الصفحة الرئيسية' : 'Landing Page Testimonials Scrolling Speed'}
+              </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground">
+                {isAr
+                  ? 'تحكم في سرعة صعود بطاقات المراجعات عمودياً. زيادة الثواني تجعل التمرير أبطأ وأكثر راحة وهدوءاً للقراءة.'
+                  : 'Adjust vertical marquee speed. Higher duration makes scrolling slower and more relaxing for visitors.'}
+              </CardDescription>
+            </div>
+
+            {/* Live Speed Badge */}
+            <div className="inline-flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 font-mono text-xs font-bold shadow-xs">
+              <Clock className="h-3.5 w-3.5 animate-pulse" />
+              <span>
+                {speedSeconds} {isAr ? 'ثانية للّفة الكاملة' : 'sec / cycle'}
+              </span>
+              <span className="text-[10px] opacity-75 font-sans font-semibold">
+                ({speedSeconds >= 180
+                  ? isAr ? 'هادئ جداً' : 'Ultra Slow'
+                  : speedSeconds >= 110
+                  ? isAr ? 'متوازن ومريح' : 'Balanced'
+                  : speedSeconds >= 60
+                  ? isAr ? 'متوسط' : 'Moderate'
+                  : isAr ? 'سريع' : 'Fast'})
+              </span>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4 pt-1">
+          {/* Slider */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+              <span>{isAr ? 'سريع وحيوي (20 ثانية)' : 'Fast (20s)'}</span>
+              <span className="text-foreground font-bold">{speedSeconds}s</span>
+              <span>{isAr ? 'بطيء جداً ومريح (300 ثانية)' : 'Ultra Slow (300s)'}</span>
+            </div>
+            <input
+              type="range"
+              min={20}
+              max={300}
+              step={5}
+              value={speedSeconds}
+              onChange={(e) => onSpeedChange?.(Number(e.target.value))}
+              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-amber-500"
+            />
+          </div>
+
+          {/* Quick Presets Buttons */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1 mr-1">
+              <Sliders className="h-3 w-3" />
+              {isAr ? 'خيارات جاهزة:' : 'Presets:'}
+            </span>
+            {[
+              { val: 220, label_ar: 'بطيء ومريح جداً (220s)', label_en: 'Ultra Slow (220s)' },
+              { val: 130, label_ar: 'هادئ ومتوازن (130s) ✨', label_en: 'Balanced (130s) ✨' },
+              { val: 80, label_ar: 'سرعة متوسطة (80s)', label_en: 'Moderate (80s)' },
+              { val: 45, label_ar: 'سريع (45s)', label_en: 'Fast (45s)' },
+            ].map((preset) => (
+              <button
+                key={preset.val}
+                type="button"
+                onClick={() => onSpeedChange?.(preset.val)}
+                className={`text-xs px-2.5 py-1 rounded-md border transition-all ${
+                  speedSeconds === preset.val
+                    ? 'bg-amber-500 text-white font-bold border-amber-500 shadow-xs'
+                    : 'bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-border'
+                }`}
+              >
+                {isAr ? preset.label_ar : preset.label_en}
+              </button>
+            ))}
+          </div>
+        </CardContent>
       </Card>
 
       {/* Reviews List */}

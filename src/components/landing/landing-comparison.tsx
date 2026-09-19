@@ -3,6 +3,7 @@
 import { XCircle, CheckCircle2, Zap, ArrowRight, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { HomeComparisonContent, DEFAULT_HOME_CONTENT } from '@/lib/types/home-cms'
+import { LinearIconBadge } from '@/components/ui/linear-icon-badge'
 
 interface LandingComparisonProps {
   isAr: boolean
@@ -22,11 +23,11 @@ export function LandingComparison({ isAr, content: rawContent }: LandingComparis
     : DEFAULT_HOME_CONTENT.comparison.solution_points
 
   return (
-    <section className="py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-12">
+    <section className="relative z-10 py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-12">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-3.5">
         <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 rounded-full px-4 py-1.5 shadow-sm text-amber-600 dark:text-amber-400">
-          <Zap className="h-3.5 w-3.5" />
+          <Zap className="h-3.5 w-3.5" strokeWidth={1.5} />
           <span className="text-[12px] sm:text-[13px] font-semibold tracking-wide uppercase">
             {isAr ? (data.badge_ar || 'التحول الحقيقي لمشروعك') : (data.badge_en || 'THE ULTIMATE TRANSFORMATION')}
           </span>
@@ -45,12 +46,15 @@ export function LandingComparison({ isAr, content: rawContent }: LandingComparis
       {/* Comparison Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
         {/* The Old Way (The Pain) */}
-        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.03] dark:bg-rose-950/10 p-6 sm:p-8 space-y-6 flex flex-col justify-between">
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/[0.03] dark:bg-rose-950/10 p-6 sm:p-8 space-y-6 flex flex-col justify-between backdrop-blur-md">
           <div className="space-y-4">
-            <div className="flex items-center gap-3 border-b border-rose-500/10 pb-4">
-              <div className="h-10 w-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold">
-                <XCircle className="h-5 w-5" />
-              </div>
+            <div className="flex items-center gap-3.5 border-b border-rose-500/10 pb-4">
+              <LinearIconBadge
+                icon={<XCircle className="h-5 w-5" />}
+                variant="rose"
+                size="md"
+                glow
+              />
               <div>
                 <h3 className="text-lg font-bold text-[#1B1C1C] dark:text-white">
                   {isAr ? 'بدون MK Whats (المعاناة اليدوية)' : 'Without MK Whats (Manual Grind)'}
@@ -88,19 +92,22 @@ export function LandingComparison({ isAr, content: rawContent }: LandingComparis
         </div>
 
         {/* The New Way (MK Whats Solution) */}
-        <div className="rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-b from-emerald-500/[0.04] to-transparent dark:from-emerald-950/20 p-6 sm:p-8 space-y-6 flex flex-col justify-between relative shadow-lg shadow-emerald-500/5">
+        <div className="rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-b from-emerald-500/[0.04] to-transparent dark:from-emerald-950/20 p-6 sm:p-8 space-y-6 flex flex-col justify-between relative shadow-lg shadow-emerald-500/5 backdrop-blur-md">
           <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 text-white text-[11px] font-bold px-3 py-1 shadow-sm">
-              <Zap className="h-3 w-3" />
+              <Zap className="h-3 w-3" strokeWidth={1.5} />
               {isAr ? 'الأتمتة الذكية 24/7' : '24/7 Autopilot'}
             </span>
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center gap-3 border-b border-emerald-500/10 pb-4">
-              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
+            <div className="flex items-center gap-3.5 border-b border-emerald-500/10 pb-4">
+              <LinearIconBadge
+                icon={<CheckCircle2 className="h-5 w-5" />}
+                variant="emerald"
+                size="md"
+                glow
+              />
               <div>
                 <h3 className="text-lg font-bold text-[#1B1C1C] dark:text-white">
                   {isAr ? 'مع MK Whats (التحول الشامل)' : 'With MK Whats (Full Automation)'}
@@ -139,7 +146,7 @@ export function LandingComparison({ isAr, content: rawContent }: LandingComparis
               className="inline-flex items-center gap-1 text-xs font-bold text-[#00685F] dark:text-[#6BD8CB] hover:underline"
             >
               <span>{isAr ? 'استكشف المميزات' : 'Explore Features'}</span>
-              <ArrowIcon className="h-3.5 w-3.5" />
+              <ArrowIcon className="h-3.5 w-3.5" strokeWidth={1.5} />
             </Link>
           </div>
         </div>

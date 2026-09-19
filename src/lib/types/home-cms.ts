@@ -112,49 +112,12 @@ export interface HomeContent {
   roi_calculator: HomeRoiCalculatorContent
   metrics_proof: HomeMetricsProofContent
   final_cta: HomeFinalCtaContent
+  testimonials_speed?: number
 }
 
-export const DEFAULT_TESTIMONIALS: TestimonialItem[] = [
-  {
-    id: '1',
-    visible: true,
-    name_ar: 'عبدالرحمن الشهري',
-    name_en: 'Abdulrahman Al-Shehri',
-    role_ar: 'مؤسس متجر أزياء وعطور (Shopify)',
-    role_en: 'Founder, Fashion & Fragrances Brand',
-    quote_ar: 'كنا نخسر ما لا يقل عن 25 سلة متروكة يومياً بسبب انشغال موظفي خدمة العملاء. بعد ربط MK Whats مع شوبيفاي، أصبح استرجاع السلات يتم تلقائياً عبر واتساب وزادت مبيعاتنا بنسبة 32% في أول شهر!',
-    quote_en: 'We were losing dozens of abandoned carts daily because reps were busy. With MK Whats Shopify integration, recovery is fully automated on WhatsApp and our sales spiked 32% in month one!',
-    stars: 5,
-    avatar_initial: '🛍️',
-    image_url: '',
-  },
-  {
-    id: '2',
-    visible: true,
-    name_ar: 'د. ياسمين القحطاني',
-    name_en: 'Dr. Yasmeen Al-Qahtani',
-    role_ar: 'مديرة مركز عيادات أسنان وتجميل',
-    role_en: 'Managing Director, Dental & Aesthetic Clinics',
-    quote_ar: 'الميزة الذهبية بالنسبة لنا هي تفريغ وفهم الرسائل الصوتية (Voice STT) وحجز المواعيد. المريض يرسل فويس نوت بلهجته، والذكاء الاصطناعي يفهمه ويحجز له الموعد ويرسل تفاصيل الحجز للطبيب على تيليجرام فورياً.',
-    quote_en: 'The Voice STT feature is pure magic. Patients send voice notes in local dialect, AI transcribes, coordinates available doctor slots, and pings our team on Telegram instantly.',
-    stars: 5,
-    avatar_initial: '🩺',
-    image_url: '',
-  },
-  {
-    id: '3',
-    visible: true,
-    name_ar: 'م. طارق منصور',
-    name_en: 'Eng. Tareq Mansour',
-    role_ar: 'صاحب سلسلة مقاهي ومحامص مختصة',
-    role_en: 'Co-Founder, Specialty Coffee Roasters',
-    quote_ar: 'صفحة البايو لينك بالسابدومين الخاص بنا غيرت طريقة استقبالنا للطلبات من انستغرام وتيك توك. الزائر يضغط على المنتج ويفتح واتساب مباشرة مع مواصفات طلبه وموقعه دون تعقيد.',
-    quote_en: 'The custom subdomain Bio Link transformed how we capture orders from Instagram and TikTok. Customers click the item card and land directly in WhatsApp with their exact order ready.',
-    stars: 5,
-    avatar_initial: '☕',
-    image_url: '',
-  },
-]
+import { REVIEWS_DATASET_250 } from '@/lib/data/reviews-dataset';
+
+export const DEFAULT_TESTIMONIALS: TestimonialItem[] = REVIEWS_DATASET_250;
 
 export const DEFAULT_HOME_CONTENT: HomeContent = {
   comparison: {

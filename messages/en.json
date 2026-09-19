@@ -1401,6 +1401,9 @@
       "api": "API keys"
     },
     "overview": {
+      "planSubtitle": "View plan details and monthly quotas",
+      "bioLinkSubtitle": "Bio link page and custom subdomain",
+      "appointmentsSubtitle": "Working hours and smart AI booking",
       "notSetup": "Not set up yet",
       "connected": "Connected",
       "needsReconnecting": "Needs reconnecting",

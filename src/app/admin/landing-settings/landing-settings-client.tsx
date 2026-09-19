@@ -589,6 +589,7 @@ function normalizeHomeContent(raw: any): HomeContent {
     roi_calculator: raw.roi_calculator ? { ...DEFAULT_HOME_CONTENT.roi_calculator, ...raw.roi_calculator } : DEFAULT_HOME_CONTENT.roi_calculator,
     metrics_proof: raw.metrics_proof ? { ...DEFAULT_HOME_CONTENT.metrics_proof, ...raw.metrics_proof } : DEFAULT_HOME_CONTENT.metrics_proof,
     final_cta: raw.final_cta ? { ...DEFAULT_HOME_CONTENT.final_cta, ...raw.final_cta } : DEFAULT_HOME_CONTENT.final_cta,
+    testimonials_speed: typeof raw.testimonials_speed === 'number' ? raw.testimonials_speed : 120,
   }
 }
 
@@ -1037,10 +1038,20 @@ export function LandingSettingsClient({ initialSettings }: { initialSettings: an
           <ReviewsTab
             isAr={isAr}
             testimonials={settings.testimonials}
+            speedSeconds={settings.home_content?.testimonials_speed ?? 120}
             onChange={(updated) =>
               setSettings((prev) => ({
                 ...prev,
                 testimonials: updated,
+              }))
+            }
+            onSpeedChange={(speed) =>
+              setSettings((prev) => ({
+                ...prev,
+                home_content: {
+                  ...prev.home_content,
+                  testimonials_speed: speed,
+                },
               }))
             }
           />

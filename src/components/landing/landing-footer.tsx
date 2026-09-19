@@ -63,7 +63,7 @@ export function LandingFooter({
   })
 
   return (
-    <footer className="border-t border-neutral-800 bg-[#1A1A1A] py-16 text-xs text-[#C9C6C1]">
+    <footer className="relative z-10 border-t border-neutral-800 bg-[#1A1A1A] py-16 text-xs text-[#C9C6C1]">
       <div className="mx-auto max-w-7xl px-6 sm:px-12 lg:px-16 space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12">
           {/* Column 1: Platform Overview */}

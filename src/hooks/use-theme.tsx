@@ -110,9 +110,16 @@ function runCircularViewTransition(
   let y = window.innerHeight / 2;
 
   if (event) {
-    if ("clientX" in event && typeof event.clientX === "number") {
+    if ("clientX" in event && typeof event.clientX === "number" && event.clientX > 0) {
       x = event.clientX;
       y = event.clientY;
+    } else if ("target" in event && event.target) {
+      const el = event.target as HTMLElement;
+      if (el && typeof el.getBoundingClientRect === "function") {
+        const rect = el.getBoundingClientRect();
+        x = rect.left + rect.width / 2;
+        y = rect.top + rect.height / 2;
+      }
     }
   }
 
@@ -136,11 +143,13 @@ function runCircularViewTransition(
         clipPath: clipPath,
       },
       {
-        duration: 450,
+        duration: 350,
         easing: "cubic-bezier(0.4, 0, 0.2, 1)",
         pseudoElement: "::view-transition-new(root)",
       },
     );
+  }).catch(() => {
+    // If transition is aborted or fails, state is already committed
   });
 }
 
@@ -223,10 +232,10 @@ export function useTheme(): ThemeContextValue {
     // applied the right CSS attributes, so visually the page is fine.
     return {
       theme: DEFAULT_THEME,
-      setTheme: () => {},
+      setTheme: () => { },
       mode: DEFAULT_MODE,
-      setMode: () => {},
-      toggleMode: () => {},
+      setMode: () => { },
+      toggleMode: () => { },
     };
   }
   return ctx;

@@ -6,6 +6,7 @@ import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { LandingFooter } from '@/components/landing/landing-footer'
 import { LandingFAQ, FAQItem } from '@/components/landing/landing-faq'
 import { FloatingSupport } from '@/components/landing/floating-support'
+import { InteractiveGridBackground } from '@/components/landing/interactive-grid-background'
 
 export const revalidate = 60
 
@@ -48,6 +49,14 @@ export default async function FAQPage() {
       dir={isAr ? 'rtl' : 'ltr'}
       className="min-h-screen bg-[#F9F5F0] dark:bg-[#1A1A1A] text-[#1B1C1C] dark:text-[#F2F0F0] font-sans relative overflow-x-hidden transition-colors duration-300"
     >
+      {/* ── Interactive Geometric Grid with Spotlight & Parallax ── */}
+      <InteractiveGridBackground gridSize={44} glowRadius={420} parallaxStrength={20} />
+
+      {/* Top Ambient Mesh Lighting behind Floating Glass Navbar */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] max-w-[95vw] h-[450px] bg-gradient-to-b from-emerald-500/20 via-teal-500/10 to-transparent blur-[110px] pointer-events-none -z-0" />
+      <div className="absolute -top-20 left-1/3 w-[350px] h-[280px] bg-emerald-500/15 dark:bg-emerald-500/25 blur-[90px] pointer-events-none -z-0" />
+      <div className="absolute -top-20 right-1/3 w-[350px] h-[280px] bg-teal-500/15 dark:bg-teal-500/25 blur-[90px] pointer-events-none -z-0" />
+
       {/* ── 1. Top Navigation Bar ──────────────────────────────── */}
       <LandingNavbar
         platformName={platformName}
@@ -58,7 +67,7 @@ export default async function FAQPage() {
       />
 
       {/* ── 2. FAQ Header ──────────────────────────────────────── */}
-      <section className="pt-20 pb-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-16">
+      <section className="pt-20 pb-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-16 relative z-10">
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-[#00685F]/10 border border-[#00685F]/20 rounded-full px-4 py-1.5 text-xs font-semibold text-[#00685F] dark:text-[#6BD8CB] uppercase tracking-wider">
             <CheckCircle2 className="h-3.5 w-3.5" />

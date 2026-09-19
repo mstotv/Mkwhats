@@ -161,17 +161,17 @@ export function SettingsOverview({
     {
       section: 'plan',
       loading: false,
-      subtitle: 'عرض تفاصيل الخطة والرصيد الشهري',
+      subtitle: t('planSubtitle'),
     },
     {
       section: 'store',
       loading: false,
-      subtitle: 'صفحة بايو لينك ورابط السابدومين',
+      subtitle: t('bioLinkSubtitle'),
     },
     {
       section: 'appointments',
       loading: false,
-      subtitle: 'ساعات العمل والحجز بالذكاء الاصطناعي',
+      subtitle: t('appointmentsSubtitle'),
     },
     {
       section: 'whatsapp',
@@ -284,8 +284,8 @@ export function SettingsOverview({
                 'hover:border-primary-soft-2 hover:bg-card-2',
               )}
             >
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                <Icon className="size-4" />
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary transition-transform duration-200 group-hover:scale-105 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]">
+                <Icon className="size-4" strokeWidth={1.5} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-foreground">
@@ -294,14 +294,14 @@ export function SettingsOverview({
                 <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                   {loading ? (
                     <>
-                      <Loader2 className="size-3 animate-spin" /> {t('loading')}
+                      <Loader2 className="size-3 animate-spin" strokeWidth={1.5} /> {t('loading')}
                     </>
                   ) : (
                     subtitle
                   )}
                 </span>
               </span>
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" strokeWidth={1.5} />
             </button>
           );
         })}

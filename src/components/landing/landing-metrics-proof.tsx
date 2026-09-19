@@ -51,7 +51,7 @@ export function LandingMetricsProof({ isAr, content: rawContent }: LandingMetric
     : DEFAULT_HOME_CONTENT.metrics_proof.metrics.filter((m) => m.visible !== false)
 
   return (
-    <section className="py-16 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-8">
+    <section className="relative z-10 py-16 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 space-y-8">
       <div className="rounded-2xl border border-[#EFEDED] dark:border-zinc-800 bg-white dark:bg-[#242424] p-8 sm:p-12 shadow-[0_4px_20px_rgba(0,0,0,0.04)] space-y-8">
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <p className="text-[12px] font-bold uppercase tracking-widest text-[#00685F] dark:text-[#6BD8CB]">

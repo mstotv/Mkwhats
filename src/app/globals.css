@@ -348,6 +348,115 @@ html[data-theme="rose"] {
 }
 
 /* ============================================================
+ * Linear & Apple HIG Typography & Micro-Aesthetics
+ * ============================================================ */
+@utility font-cairo {
+  font-family: var(--font-cairo), system-ui, -apple-system, sans-serif;
+}
+
+@utility font-inter {
+  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "calt" 1, "ss01" 1;
+  letter-spacing: -0.015em;
+}
+
+html[dir="ltr"] body,
+html[lang="en"] body,
+.dir-ltr,
+.font-inter,
+:lang(en) {
+  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "calt" 1, "ss01" 1;
+  letter-spacing: -0.015em;
+}
+
+html[dir="rtl"] body,
+html[lang="ar"] body,
+.dir-rtl,
+.font-cairo {
+  font-family: var(--font-cairo), system-ui, -apple-system, sans-serif;
+}
+
+h1, h2, h3, h4, .heading-linear {
+  letter-spacing: -0.022em;
+}
+
+/* ============================================================
+ * Global Lucide & SVG Stroke Consistency (Linear & Apple HIG Precision)
+ * Applies 1.5px hairline stroke across all Dashboard, Inbox, Sidebar & Settings icons.
+ * ============================================================ */
+svg.lucide,
+[data-lucide],
+svg[class*="lucide-"] {
+  stroke-width: 1.5px !important;
+}
+
+/* Linear Glass & Apple HIG Material Badges */
+.linear-glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 4px 20px -2px rgba(0, 0, 0, 0.2);
+}
+
+html[data-mode="light"] .linear-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.8), 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+}
+
+.linear-glass-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.linear-glass-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.2), 0 8px 30px -4px rgba(0, 0, 0, 0.35);
+}
+
+html[data-mode="light"] .linear-glass-hover:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.9), 0 8px 30px -4px rgba(0, 0, 0, 0.08);
+}
+
+/* Linear subtle glow text */
+.linear-glow-text {
+  background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.7) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+html[data-mode="light"] .linear-glow-text {
+  background: linear-gradient(180deg, #09090b 0%, #3f3f46 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ============================================================
+ * Raycast Floating Island Glassmorphism (High Blur & Saturation)
+ * ============================================================ */
+.raycast-navbar-glass {
+  background: rgba(18, 19, 23, 0.65) !important;
+  backdrop-filter: blur(20px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+html[data-mode="light"] .raycast-navbar-glass,
+.light .raycast-navbar-glass {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(20px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+/* ============================================================
  * Circular Expanding Ripple Theme Transition (View Transitions)
  * ============================================================ */
 ::view-transition-old(root),
@@ -363,3 +472,71 @@ html[data-theme="rose"] {
 ::view-transition-new(root) {
   z-index: 9999;
 }
+
+/* ============================================================
+ * Vertical Infinite Scroll Testimonials Marquee
+ * ============================================================ */
+@keyframes marquee-up {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes marquee-down {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+.animate-marquee-up {
+  animation: marquee-up 120s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-up-fast {
+  animation: marquee-up 28s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-up-medium {
+  animation: marquee-up 38s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-up-slow {
+  animation: marquee-up 48s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-down-medium {
+  animation: marquee-down 40s linear infinite;
+  will-change: transform;
+}
+
+.marquee-pause:hover,
+.group:hover .marquee-pause-group {
+  animation-play-state: paused !important;
+}
+
+/* ============================================================
+ * Ultra-Fast Snappy Circular View Transitions for Theme Toggle
+ * ============================================================ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}

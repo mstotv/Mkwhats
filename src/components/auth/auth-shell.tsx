@@ -96,14 +96,7 @@ export function AuthShell({
                   style={{ height: `${logoHeight}px` }}
                   className="w-auto object-contain transition-transform group-hover:scale-105"
                 />
-              ) : (
-                <div
-                  style={{ backgroundColor: primaryColor }}
-                  className="flex h-10 w-10 items-center justify-center rounded-2xl text-white font-black shadow-lg transition-transform group-hover:scale-105 shrink-0"
-                >
-                  <MessageSquare className="h-5 w-5" />
-                </div>
-              )}
+              ) : null}
               <span className="text-xl font-extrabold tracking-tight text-foreground dark:text-zinc-100">
                 {platformName}
               </span>

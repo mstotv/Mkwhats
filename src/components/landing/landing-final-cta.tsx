@@ -40,7 +40,7 @@ export function LandingFinalCta({ isAr, userLoggedIn = false, content: rawConten
     : (data.secondary_btn_text_en || 'View Full Technical Features')
 
   return (
-    <section className="py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16">
+    <section className="relative z-10 py-20 max-w-7xl mx-auto px-6 sm:px-12 lg:px-16">
       <div className="rounded-3xl bg-gradient-to-r from-[#00685F] via-[#005049] to-[#003833] p-10 sm:p-16 text-white text-center space-y-8 shadow-[0_20px_50px_rgba(0,104,95,0.3)] relative overflow-hidden">
         {/* Glow Circles */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />

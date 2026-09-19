@@ -16,6 +16,7 @@ import { LandingMetricsProof } from '@/components/landing/landing-metrics-proof'
 import { LandingTestimonials } from '@/components/landing/landing-testimonials'
 import { LandingFinalCta } from '@/components/landing/landing-final-cta'
 import { FloatingSupport } from '@/components/landing/floating-support'
+import { InteractiveGridBackground } from '@/components/landing/interactive-grid-background'
 
 export const revalidate = 60
 
@@ -94,8 +95,16 @@ export default async function LandingPage() {
   return (
     <div
       dir={isAr ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-[#F9F5F0] dark:bg-[#1A1A1A] text-[#1B1C1C] dark:text-[#F2F0F0] font-sans relative overflow-x-hidden transition-colors duration-300"
+      className="min-h-screen bg-[#F9F5F0] dark:bg-[#1A1A1A] text-[#1B1C1C] dark:text-[#F2F0F0] font-sans relative overflow-x-hidden"
     >
+      {/* ── Interactive Geometric Grid with Spotlight & Parallax ── */}
+      <InteractiveGridBackground gridSize={44} glowRadius={420} parallaxStrength={20} />
+
+      {/* Top Ambient Mesh Lighting behind Floating Glass Navbar */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] max-w-[95vw] h-[480px] bg-gradient-to-b from-emerald-500/20 via-teal-500/10 to-transparent blur-[110px] pointer-events-none -z-0" />
+      <div className="absolute -top-20 left-1/3 w-[350px] h-[280px] bg-emerald-500/15 dark:bg-emerald-500/25 blur-[90px] pointer-events-none -z-0" />
+      <div className="absolute -top-20 right-1/3 w-[350px] h-[280px] bg-teal-500/15 dark:bg-teal-500/25 blur-[90px] pointer-events-none -z-0" />
+
       {/* ── 1. Top Navigation Bar ──────────────────────────────── */}
       <LandingNavbar
         platformName={platformName}
@@ -107,11 +116,14 @@ export default async function LandingPage() {
       />
 
       {/* ── 2. Hero Section ───────────────────────────────────── */}
-      <section id="home" className="relative pt-20 pb-16 md:pt-28 md:pb-24 max-w-6xl mx-auto px-6 sm:px-12 lg:px-16 text-center space-y-8">
+      <section id="home" className="relative pt-20 pb-16 md:pt-28 md:pb-24 max-w-6xl mx-auto px-6 sm:px-12 lg:px-16 text-center space-y-8 z-10">
+        {/* Ambient Raycast/Linear Radial Glow */}
+        <div className="absolute top-12 left-1/2 -translate-x-1/2 w-[700px] max-w-full h-[400px] bg-gradient-to-b from-emerald-500/15 via-teal-500/8 to-transparent blur-3xl pointer-events-none rounded-full -z-10" />
+
         {/* Pill Badge */}
-        <div className="inline-flex items-center gap-2 bg-[#00685F]/10 dark:bg-[#00685F]/20 border border-[#00685F]/25 rounded-full px-4 py-1.5 shadow-sm">
-          <span className="h-2 w-2 rounded-full bg-[#00685F] dark:bg-[#6BD8CB] animate-pulse" />
-          <span className="text-[12px] sm:text-[13px] font-semibold tracking-wide text-[#00685F] dark:text-[#6BD8CB]">
+        <div className="inline-flex items-center gap-2 bg-black/[0.04] dark:bg-white/[0.06] border border-black/10 dark:border-white/10 backdrop-blur-md rounded-full px-4 py-1.5 shadow-sm">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[12px] sm:text-[13px] font-medium tracking-tight text-foreground">
             {heroContent.trust_badge_text}
           </span>
         </div>
@@ -130,21 +142,21 @@ export default async function LandingPage() {
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
           <Link
             href="/signup"
             prefetch={true}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[4px] bg-[#00685F] hover:bg-[#005049] text-white px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider shadow-sm hover:scale-[1.01] transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-foreground text-background hover:bg-foreground/90 px-8 py-3.5 text-sm font-medium shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
             {heroContent.primary_cta_text}
-            <ArrowIcon className="h-4 w-4" />
+            <ArrowIcon className="h-4 w-4" strokeWidth={1.5} />
           </Link>
           <Link
             href="/login"
             prefetch={true}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[4px] border border-[#00685F]/30 dark:border-white/20 bg-white/60 dark:bg-white/5 hover:bg-[#00685F]/10 dark:hover:bg-white/10 text-[#00685F] dark:text-[#6BD8CB] px-8 py-3.5 text-[13px] font-semibold uppercase tracking-wider shadow-sm hover:scale-[1.01] transition-all backdrop-blur-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.05] hover:bg-black/[0.06] dark:hover:bg-white/[0.1] text-foreground px-8 py-3.5 text-sm font-medium shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all backdrop-blur-sm"
           >
-            <LogIn className="h-4 w-4" />
+            <LogIn className="h-4 w-4" strokeWidth={1.5} />
             {heroContent.secondary_cta_text}
           </Link>
         </div>
@@ -154,7 +166,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ── 3. Integrations Bar ───────────────────────────────── */}
-      <section id="partners" className="py-12 border-y border-[#BCC9C6]/30 dark:border-white/10 bg-white/50 dark:bg-[#242424]/40">
+      <section id="partners" className="relative z-10 py-12 border-y border-black/5 dark:border-white/10 bg-[#F9F5F0]/80 dark:bg-[#1A1A1A]/80 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-6 sm:px-12 lg:px-16 text-center space-y-6">
           <p className="text-[12px] font-bold uppercase tracking-widest text-[#605E5B] dark:text-[#C9C6C1]">
             {isAr ? 'يتكامل بسلاسة مع أشهر المنصات والخدمات' : 'SEAMLESSLY INTEGRATES WITH TOP PLATFORMS'}
@@ -186,7 +198,11 @@ export default async function LandingPage() {
       <LandingMetricsProof isAr={isAr} content={settings?.home_content?.metrics_proof} />
 
       {/* ── 7. Real Customer Testimonials & Success Stories ───── */}
-      <LandingTestimonials isAr={isAr} testimonials={settings?.testimonials} />
+      <LandingTestimonials
+        isAr={isAr}
+        testimonials={settings?.testimonials}
+        speedSeconds={settings?.home_content?.testimonials_speed}
+      />
 
       {/* ── 10. Magnetic Final Call-to-Action ─────────────────── */}
       <LandingFinalCta isAr={isAr} content={settings?.home_content?.final_cta} />

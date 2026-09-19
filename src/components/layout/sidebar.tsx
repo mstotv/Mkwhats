@@ -9,26 +9,27 @@ import { useTotalUnread } from "@/hooks/use-total-unread";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import {
   Bell,
-  Bot,
-  Calendar,
+  BrainCircuit,
+  CalendarDays,
   Crown,
-  GitBranch,
+  Kanban,
   Headphones,
-  LayoutDashboard,
+  LayoutGrid,
+  Link2,
   LogOut,
-  MessageSquare,
-  Radio,
-  Settings,
+  Megaphone,
+  MessageCircle,
+  Package,
+  Settings2,
   Shield,
   ShoppingBag,
+  Sparkles,
   User,
   UserCog,
-  Users,
   UsersRound,
   Workflow,
   X,
   Zap,
-  Globe,
 } from "lucide-react";
 import type { AccountRole } from "@/lib/auth/roles";
 
@@ -85,7 +86,7 @@ import {
 interface NavItem {
   href: string;
   labelKey: string;
-  icon: typeof LayoutDashboard;
+  icon: typeof LayoutGrid;
   /**
    * When true, the nav row renders a small "Beta" chip after the label.
    * Purely informational — doesn't affect routing or access.
@@ -94,22 +95,22 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
-  { href: "/inbox", labelKey: "inbox", icon: MessageSquare },
+  { href: "/dashboard", labelKey: "dashboard", icon: LayoutGrid },
+  { href: "/inbox", labelKey: "inbox", icon: MessageCircle },
   { href: "/notifications", labelKey: "notifications", icon: Bell },
-  { href: "/contacts", labelKey: "contacts", icon: Users },
-  { href: "/pipelines", labelKey: "pipelines", icon: GitBranch },
-  { href: "/broadcasts", labelKey: "broadcasts", icon: Radio },
+  { href: "/contacts", labelKey: "contacts", icon: UsersRound },
+  { href: "/pipelines", labelKey: "pipelines", icon: Kanban },
+  { href: "/broadcasts", labelKey: "broadcasts", icon: Megaphone },
   { href: "/automations", labelKey: "automations", icon: Zap },
-  { href: "/orders", labelKey: "orders", icon: ShoppingBag },
-  { href: "/appointments", labelKey: "appointments", icon: Calendar },
+  { href: "/orders", labelKey: "orders", icon: Package },
+  { href: "/appointments", labelKey: "appointments", icon: CalendarDays },
   { href: "/flows", labelKey: "flows", icon: Workflow, beta: true },
-  { href: "/agents", labelKey: "aiAgents", icon: Bot },
-  { href: "/settings?tab=store", labelKey: "bioLink", icon: Globe },
+  { href: "/agents", labelKey: "aiAgents", icon: BrainCircuit },
+  { href: "/settings?tab=store", labelKey: "bioLink", icon: Link2 },
 ];
 
 const bottomNavItems = [
-  { href: "/settings", labelKey: "settings", icon: Settings },
+  { href: "/settings", labelKey: "settings", icon: Settings2 },
 ];
 
 interface SidebarProps {
@@ -238,15 +239,15 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
             {siteSettings.logo_url ? (
               <img
                 src={siteSettings.logo_url}
-                alt={isAr ? (siteSettings.platform_name_ar || '') : (siteSettings.platform_name_en || '')}
+                alt={isAr ? (siteSettings.platform_name_ar || siteSettings.platform_name || siteSettings.platform_name_en || '') : (siteSettings.platform_name_en || siteSettings.platform_name || siteSettings.platform_name_ar || '')}
                 style={{ height: `${siteSettings.logo_height || 32}px` }}
                 className="w-auto object-contain max-h-9"
               />
             ) : null}
             <span className="text-sm font-bold text-foreground" suppressHydrationWarning>
               {isAr
-                ? (siteSettings.platform_name_ar || '')
-                : (siteSettings.platform_name_en || '')}
+                ? (siteSettings.platform_name_ar || siteSettings.platform_name || siteSettings.platform_name_en || '')
+                : (siteSettings.platform_name_en || siteSettings.platform_name || siteSettings.platform_name_ar || '')}
             </span>
           </Link>
           <button
@@ -284,13 +285,13 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                     href={item.href}
                     className={cn(
                       // Taller on mobile so fingers can hit the row reliably (≥44px).
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors lg:py-2",
+                      "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 lg:py-2",
                       isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        ? "bg-primary/10 text-primary font-semibold shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                     )}
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-105" strokeWidth={1.5} />
                     <span className="flex-1">{t(item.labelKey as string)}</span>
                     {item.beta && (
                       <span
@@ -335,13 +336,13 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   <Link
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors lg:py-2",
+                      "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 lg:py-2",
                       isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        ? "bg-primary/10 text-primary font-semibold shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]"
+                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                     )}
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-105" strokeWidth={1.5} />
                     {t(item.labelKey as string)}
                   </Link>
                 </li>
@@ -438,7 +439,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   />
                 }
               >
-                <Settings className="size-4" />
+                <Settings2 className="size-4" strokeWidth={1.5} />
                 {t("menuSettings")}
               </DropdownMenuItem>
               <DropdownMenuItem
