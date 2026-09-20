@@ -181,10 +181,12 @@ export function buildSystemPrompt(args: {
       '   - If the requested day is closed or outside hours, politely inform them in Arabic, state the working hours, and suggest an alternative.\n' +
       '   - Ask for customer name and desired service if not provided.\n' +
       '   - Present the summary (Date, Time, Service, Customer Name) and ask for confirmation.\n' +
-      '2. In appointment mode, whenever an appointment date/time is discussed or confirmed, append an appointment JSON block at the VERY END on a new line in this format:\n' +
+      '2. In appointment mode, whenever an appointment date/time is discussed or confirmed, ALWAYS append an appointment JSON block at the VERY END on a new line in this EXACT format:\n' +
       '|||{"appointment": {"customer_name": "Name", "service_name": "Service", "date_time": "YYYY-MM-DD HH:mm", "confirmed": false}}|||\n' +
       '- "date_time": format strictly as standard "YYYY-MM-DD HH:mm" (24-hour format, e.g. "2026-08-30 15:00") in the business local timezone.\n' +
-      '- "confirmed": set to true ONLY when the customer explicitly agrees/confirms the appointment summary. When confirmed is true, YOU MUST STILL include the full "date_time", "customer_name", and "service_name" in the JSON.\n' +
+      '- CRITICAL RULE: "confirmed" set to true ONLY when the customer explicitly agrees. When "confirmed" is true, you ABSOLUTELY MUST include "date_time", "customer_name", and "service_name" in THE SAME JSON block — never omit date_time when confirmed=true.\n' +
+      '  If you mentioned the date/time in an earlier message, you MUST repeat it verbatim in the confirmed JSON block. Look at your previous assistant messages in the conversation to retrieve it.\n' +
+      '- Always include the JSON block in EVERY reply where a date/time has been agreed upon, even if the customer is just saying "yes" or confirming.\n' +
       'Write the Arabic message first, then append the single-line JSON block at the end.'
     )
   }

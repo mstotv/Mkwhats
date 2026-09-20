@@ -791,7 +791,15 @@ async function processMessage(
   // message all exist before any step — including send_message — runs.
   // Fire-and-forget: a slow or failing automation must not block the
   // webhook's 200 OK response to Meta.
-  const inboundText = effectiveContentText ?? message.text?.body ?? ''
+  //
+  // For audio messages, use the transcribed text as the primary inbound
+  // text so automations and AI can act on the spoken content rather than
+  // the empty placeholder that parseMessageContent returns for audio.
+  const inboundText =
+    message.type === 'audio' && transcribedText
+      ? transcribedText
+      : (effectiveContentText ?? message.text?.body ?? '')
+
   const automationTriggers: (
     | 'new_contact_created'
     | 'first_inbound_message'
@@ -803,7 +811,7 @@ async function processMessage(
   // message — see the comment block above.
   if (!flowConsumed) {
     automationTriggers.push('new_message_received', 'keyword_match')
-    // Interactive tap → fire the interactive_reply trigger too (only
+    // Interactive tap -> fire the interactive_reply trigger too (only
     // meaningful when a button/list reply actually arrived). Enables
     // automation-only chained menus; when a Flow owns the menu it will
     // have consumed the reply and this is skipped.
@@ -834,20 +842,25 @@ async function processMessage(
     }).catch((err) => console.error('[automations] dispatch failed:', err))
   }
 
-  // AI auto-reply. Runs only for plain-text inbound the deterministic
-  // flow runner did NOT consume (flows win over the LLM), and only when
-  // the account has enabled it. Awaited inside `after()` (same reason as
-  // the webhook dispatch below); `dispatchInboundToAiReply` owns its
-  // eligibility gates + try/catch and never throws.
-  if (!flowConsumed && !interactiveReplyId && inboundText.trim()) {
+  // AI auto-reply. Dispatched when:
+  //   - No deterministic flow consumed the message (flows win over the LLM)
+  //   - Not an interactive reply (button tap)
+  //   - There is actionable text for the AI:
+  //     * Audio messages: transcribedText (spoken content)
+  //     * Text messages:  effectiveContentText / message.text.body
+  // `dispatchInboundToAiReply` owns its eligibility gates + try/catch
+  // and never throws.
+  const hasTextForAi = inboundText.trim().length > 0
+  if (!flowConsumed && !interactiveReplyId && hasTextForAi) {
     await dispatchInboundToAiReply({
       accountId,
       conversationId: conversation.id,
       contactId: contactRecord.id,
       configOwnerUserId,
     })
-  } else if (!flowConsumed && message.type === 'audio' && !transcribedText) {
-    // Audio note arrived but voice STT was not available or disabled: send custom fallback reply if configured
+  } else if (!flowConsumed && message.type === 'audio' && !transcribedText && !inboundText.trim()) {
+    // Audio note arrived but voice STT was not available or disabled AND
+    // there is no other text — send the configured fallback reply.
     await handleVoiceFallbackReply({
       accountId,
       conversationId: conversation.id,

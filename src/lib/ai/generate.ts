@@ -125,7 +125,7 @@ export function tryParseAppointmentBlock(raw: string): ExtractedAppointmentData 
   const apptObj = (parsed.appointment as Record<string, unknown>) || parsed
   if (!apptObj || typeof apptObj !== 'object') return null
 
-  if (!('date_time' in apptObj) && !('service_name' in apptObj) && !('cancel_appointment' in apptObj)) {
+  if (!('date_time' in apptObj) && !('service_name' in apptObj) && !('cancel_appointment' in apptObj) && !('confirmed' in apptObj)) {
     return null
   }
 

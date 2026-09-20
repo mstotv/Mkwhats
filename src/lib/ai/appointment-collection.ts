@@ -112,25 +112,29 @@ export async function processAppointmentAction(
     try {
       const { data: recentMsgs } = await db
         .from('messages')
-        .select('content, created_at')
+        .select('content_text, transcribed_text, sender_type, created_at')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: false })
-        .limit(6);
+        .limit(12);
 
       if (recentMsgs && recentMsgs.length > 0) {
         for (const msg of recentMsgs) {
-          const content = String(msg.content || '');
-          // Try match date pattern YYYY-MM-DD HH:mm or |||{"appointment":...}|||
+          // Search in both content_text and transcribed_text (voice notes)
+          const content = String(msg.transcribed_text || msg.content_text || '');
+          if (!content.trim()) continue;
+
+          // Try match date_time from JSON block (works for both customer + bot messages)
           const jsonMatch = content.match(/"date_time"\s*:\s*"([^"]+)"/);
           if (jsonMatch && jsonMatch[1]) {
             dateTimeStr = jsonMatch[1];
-            console.log('[DIAG][appointment-collection] Found date_time from previous message json:', dateTimeStr);
+            console.log('[DIAG][appointment-collection] Found date_time from previous message json (sender:', msg.sender_type, '):', dateTimeStr);
             break;
           }
+          // Try match plain YYYY-MM-DD HH:mm pattern in text
           const textDateMatch = content.match(/(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})/);
           if (textDateMatch && textDateMatch[1]) {
             dateTimeStr = textDateMatch[1];
-            console.log('[DIAG][appointment-collection] Found date_time from previous message text:', dateTimeStr);
+            console.log('[DIAG][appointment-collection] Found date_time from previous message text (sender:', msg.sender_type, '):', dateTimeStr);
             break;
           }
         }

@@ -331,6 +331,17 @@ export async function dispatchInboundToAiReply(
       // and (c) leave a short internal note so whoever picks it up has
       // context. Assigning fires the `on_conversation_assigned` trigger,
       // which notifies the agent.
+      //
+      // Guard: if text is empty but the model never emitted the handoff
+      // sentinel, it is most likely a transient LLM failure (empty
+      // response, truncated output) rather than a deliberate escalation.
+      // Treat it as a soft no-op instead of permanently disabling AI on
+      // this thread, which would route every future message straight to a
+      // human with no explanation.
+      if (!text && !handoff) {
+        console.warn('[ai auto-reply] AI returned empty text without [[HANDOFF]] sentinel — skipping to avoid spurious handoff on this thread.')
+        return
+      }
       const summary = buildHandoffSummary({
         messages,
         replyCount: conv.ai_reply_count ?? 0,
