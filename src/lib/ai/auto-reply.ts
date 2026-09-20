@@ -207,6 +207,8 @@ export async function dispatchInboundToAiReply(
       userPrompt: config.systemPrompt,
       mode: 'auto_reply',
       knowledge,
+      // Inform AI when booking is disabled so it never fake-confirms appointments
+      appointmentsDisabled: !config.appointmentsEnabled,
       // Pass orderContext only when order mode is active AND we have a live order.
       ...(orderContext
         ? {

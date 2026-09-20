@@ -88,6 +88,11 @@ export function buildSystemPrompt(args: {
     serviceLabel: string
     currentDateTimeLocal: string
   }
+  /**
+   * When true, explicitly instructs the AI that automated appointment booking is OFF,
+   * preventing it from confirming appointments, fabricating business hours, or saying "تم تأكيد موعدك".
+   */
+  appointmentsDisabled?: boolean
 }): string {
   const { userPrompt, mode, knowledge } = args
   const parts: string[] = [
@@ -160,6 +165,20 @@ export function buildSystemPrompt(args: {
   }
 
   // ── Appointment-booking instructions (auto_reply only) ─────────
+  if (mode === 'auto_reply' && args.appointmentsDisabled) {
+    parts.push(
+      'IMPORTANT — APPOINTMENT BOOKING IS DISABLED FOR THIS BUSINESS:\n' +
+      'The automated appointment booking system is currently turned OFF.\n' +
+      'You do NOT have access to the business calendar, availability, or working hours.\n' +
+      'RULES (strictly enforce all of them):\n' +
+      '• Never confirm, promise, or schedule any appointment.\n' +
+      '• Never state or imply a specific date, time, or slot is available.\n' +
+      '• Never say "تم تأكيد موعدك" or any equivalent confirmation.\n' +
+      '• If the customer asks to book, politely inform them in Arabic that appointments must be arranged by contacting the business directly.\n' +
+      '• You may collect the customer\'s name and preferred time as a NOTE only, then say the team will follow up to confirm — never confirm yourself.'
+    )
+  }
+
   if (mode === 'auto_reply' && args.appointmentContext) {
     const {
       formattedBusinessHours,

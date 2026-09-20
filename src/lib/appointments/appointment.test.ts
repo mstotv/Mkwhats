@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseGeneration } from '@/lib/ai/generate';
+import { buildSystemPrompt } from '@/lib/ai/defaults';
 
 describe('Appointments AI JSON Block Extraction', () => {
   it('extracts appointment block when appointmentMode is true', () => {
@@ -47,4 +48,27 @@ describe('Appointments AI JSON Block Extraction', () => {
     expect(apptRes.extracted).toBeNull();
     expect(apptRes.appointmentData?.date_time).toBe('2026-09-02 11:00');
   });
+
+  it('injects appointment disabled guard when appointmentsDisabled is true', () => {
+    const prompt = buildSystemPrompt({
+      userPrompt: 'You are a helpful assistant.',
+      mode: 'auto_reply',
+      appointmentsDisabled: true,
+    });
+
+    expect(prompt).toContain('APPOINTMENT BOOKING IS DISABLED FOR THIS BUSINESS');
+    expect(prompt).toContain('Never confirm, promise, or schedule any appointment');
+    expect(prompt).toContain('Never say "تم تأكيد موعدك"');
+  });
+
+  it('does NOT inject appointment disabled guard when appointmentsDisabled is false or omitted', () => {
+    const prompt = buildSystemPrompt({
+      userPrompt: 'You are a helpful assistant.',
+      mode: 'auto_reply',
+      appointmentsDisabled: false,
+    });
+
+    expect(prompt).not.toContain('APPOINTMENT BOOKING IS DISABLED FOR THIS BUSINESS');
+  });
 });
+
