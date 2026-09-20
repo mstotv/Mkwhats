@@ -57,8 +57,9 @@ describe('Appointments AI JSON Block Extraction', () => {
     });
 
     expect(prompt).toContain('APPOINTMENT BOOKING IS DISABLED FOR THIS BUSINESS');
-    expect(prompt).toContain('Never confirm, promise, or schedule any appointment');
-    expect(prompt).toContain('Never say "تم تأكيد موعدك"');
+    expect(prompt).toContain('NEVER ask the customer for their name, preferred day, or preferred time');
+    expect(prompt).toContain('NEVER pretend to take a note');
+    expect(prompt).toContain('NEVER say "تم تأكيد موعدك"');
   });
 
   it('does NOT inject appointment disabled guard when appointmentsDisabled is false or omitted', () => {
@@ -69,6 +70,28 @@ describe('Appointments AI JSON Block Extraction', () => {
     });
 
     expect(prompt).not.toContain('APPOINTMENT BOOKING IS DISABLED FOR THIS BUSINESS');
+  });
+
+  it('injects orders disabled guard when ordersDisabled is true and no orderContext', () => {
+    const prompt = buildSystemPrompt({
+      userPrompt: 'You are a helpful assistant.',
+      mode: 'auto_reply',
+      ordersDisabled: true,
+    });
+
+    expect(prompt).toContain('ORDER COLLECTION IS DISABLED FOR THIS BUSINESS');
+    expect(prompt).toContain('Never collect order details');
+    expect(prompt).toContain('Never say "تم تسجيل طلبك"');
+  });
+
+  it('does NOT inject orders disabled guard when ordersDisabled is false or omitted', () => {
+    const prompt = buildSystemPrompt({
+      userPrompt: 'You are a helpful assistant.',
+      mode: 'auto_reply',
+      ordersDisabled: false,
+    });
+
+    expect(prompt).not.toContain('ORDER COLLECTION IS DISABLED FOR THIS BUSINESS');
   });
 });
 

@@ -90,9 +90,14 @@ export function buildSystemPrompt(args: {
   }
   /**
    * When true, explicitly instructs the AI that automated appointment booking is OFF,
-   * preventing it from confirming appointments, fabricating business hours, or saying "تم تأكيد موعدك".
+   * preventing it from confirming appointments, collecting appointment dates/times, or taking fake notes.
    */
   appointmentsDisabled?: boolean
+  /**
+   * When true, explicitly instructs the AI that automated order collection is OFF,
+   * preventing it from taking orders, collecting order fields, or confirming fake orders.
+   */
+  ordersDisabled?: boolean
 }): string {
   const { userPrompt, mode, knowledge } = args
   const parts: string[] = [
@@ -112,6 +117,17 @@ export function buildSystemPrompt(args: {
   }
 
   // ── Order-collection instructions (auto_reply only) ───────────
+  if (mode === 'auto_reply' && args.ordersDisabled && !args.orderContext) {
+    parts.push(
+      'CRITICAL — ORDER COLLECTION IS DISABLED FOR THIS BUSINESS:\n' +
+      'Automated order collection is currently turned OFF for this business.\n' +
+      'RULES (strictly enforce all of them):\n' +
+      '• Never collect order details (name, delivery address, phone, quantities, items, etc.).\n' +
+      '• Never say "تم تسجيل طلبك" or promise that an order has been registered or placed.\n' +
+      '• If the customer wants to place an order or buy products: Politely inform them in Arabic that automated ordering via chat is currently unavailable, and guide them to contact the business directly or visit the store link if available in the context.'
+    )
+  }
+
   if (mode === 'auto_reply' && args.orderContext) {
     const { missingFields, collectedFields, readyToConfirm } = args.orderContext
 
@@ -167,15 +183,15 @@ export function buildSystemPrompt(args: {
   // ── Appointment-booking instructions (auto_reply only) ─────────
   if (mode === 'auto_reply' && args.appointmentsDisabled) {
     parts.push(
-      'IMPORTANT — APPOINTMENT BOOKING IS DISABLED FOR THIS BUSINESS:\n' +
-      'The automated appointment booking system is currently turned OFF.\n' +
-      'You do NOT have access to the business calendar, availability, or working hours.\n' +
-      'RULES (strictly enforce all of them):\n' +
-      '• Never confirm, promise, or schedule any appointment.\n' +
-      '• Never state or imply a specific date, time, or slot is available.\n' +
-      '• Never say "تم تأكيد موعدك" or any equivalent confirmation.\n' +
-      '• If the customer asks to book, politely inform them in Arabic that appointments must be arranged by contacting the business directly.\n' +
-      '• You may collect the customer\'s name and preferred time as a NOTE only, then say the team will follow up to confirm — never confirm yourself.'
+      'CRITICAL — APPOINTMENT BOOKING IS DISABLED FOR THIS BUSINESS:\n' +
+      'The automated appointment booking system is currently turned OFF for this business.\n' +
+      'You do NOT have access to the business calendar, availability, or working hours, and cannot register appointments.\n' +
+      'STRICT RULES (strictly enforce all of them — zero exceptions):\n' +
+      '• NEVER ask the customer for their name, preferred day, or preferred time for booking.\n' +
+      '• NEVER pretend to take a note, record their request, or say "تم تسجيل طلبك للموعد" or "سيقوم فريقنا بالتواصل لتأكيد الموعد" — no notes or appointments are saved in the system!\n' +
+      '• NEVER say "تم تأكيد موعدك" or state/imply that any date, time, or slot is reserved.\n' +
+      '• If the customer asks to book an appointment (e.g. mentions "موعد", "حجز", "دكتور", "كشف", "استشارة", "جلسة"): Politely and clearly inform them in Arabic that automated appointment booking is currently unavailable/stopped via chat. State clearly that to arrange an appointment they must call the business directly or speak with a human customer support agent.\n' +
+      `• If the customer asks to speak with a human agent or representative, reply with exactly ${HANDOFF_SENTINEL} and nothing else so a team member can take over.`
     )
   }
 
