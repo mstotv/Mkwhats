@@ -1,6 +1,15 @@
-# حالة المشروع - آخر تحديث: [20/9/2026]
+# حالة المشروع - آخر تحديث: [24/9/2026]
 
-> 🎯 **ملخص التحديث الأخير (Landing Page High-Performance & Core Web Vitals Full Optimization):**
+> 🎯 **ملخص التحديث الأخير (Admin Plan Deletion & Cross-Platform Quota Alignment Fix):**
+> 1. **ميزة حذف الخطط من لوحة تحكم الأدمن ([`src/app/admin/plans/page.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/admin/plans/page.tsx) & [`/api/admin/plans/[id]`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/admin/plans/%5Bid%5D/route.ts))**:
+>    - إضافة معالج `DELETE` آمن في واجهة الـ API يتحقق من صلاحيات السوبر أدمن، ويفحص وجود أي اشتراكات نشطة لحسابات على هذه الخطة قبل الحذف لحماية بيانات العملاء، ويمنع حذف الخطة المجانية الافتراضية للنظام.
+>    - إضافة زر حذف أحمر أنيق (`Trash2`) في كل بطاقة خطة وداخل نافذة تعديل الخطة، مع نافذة تأكيد حذف احترافية تطلب كتابة اسم الخطة لمنع الحذف العرضي، وتنظيف الكاش تلقائياً.
+> 2. **معالجة تضارب وحدود الخطط ومطابقة الصفر التامة بين الأدمن واللاندينغ ولوحة المستخدم**:
+>    - القضاء على مشكلة سقوط الصفر `0` واستبداله بالقيم القديمة (500، 1000، 10) الناتجة عن المعامل `||` في الجافاسكربت.
+>    - تحديث صفحة الهبوط ([`landing-pricing.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/landing-pricing.tsx)) ولوحة المستخدم ([`plan-usage-panel.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/plan-usage-panel.tsx)) لاستخدام `?? 0` لتعكس الأرقام الحقيقية المحددة في لوحة الأدمن بدقة تامة.
+> 🛡️ **الجودة والاستقرار**: اجتياز فحص الأنواع البرمجية (`npx tsc --noEmit` بـ 0 أخطاء) واجتياز 100% من الاختبارات الآلية (708 اختباراً في 73 ملف اختبار).
+
+
 > 1. **الخلفية الشبكية التفاعلية فائقة الكفاءة وتوفير المعالج ([`interactive-grid-background.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/interactive-grid-background.tsx))**:
 >    - إضافة نظام الخمول الذكي (Idle Detection) لإيقاف حلقة `requestAnimationFrame` تماماً عند توقف الفأرة؛ مما قلل استهلاك الـ CPU والـ RAM أثناء التصفح بنسبة تتجاوز **90%**.
 >    - تعطيل حلقة الماوس على شاشات اللمس والموبايل واعتماد إضاءة ثابتة خفيفة تمنع أي هبوط في الفريمات (Zero Frame Drops).

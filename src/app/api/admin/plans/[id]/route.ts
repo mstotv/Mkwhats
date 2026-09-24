@@ -139,3 +139,128 @@ export async function PATCH(
     )
   }
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: planId } = await params
+    const cookieStore = await cookies()
+
+    // 1. Verify caller session with Supabase Auth
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          },
+        },
+      }
+    )
+
+    const {
+      data: { user: adminUser },
+    } = await supabase.auth.getUser()
+
+    if (!adminUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // 2. Verify platform super-admin role
+    const serviceClient = createServiceClient()
+    const { data: adminRow } = await serviceClient
+      .from('platform_admins')
+      .select('user_id')
+      .eq('user_id', adminUser.id)
+      .maybeSingle()
+
+    if (!adminRow) {
+      return NextResponse.json(
+        { error: 'Forbidden: Super-admin access required.' },
+        { status: 403 }
+      )
+    }
+
+    // 3. Find plan
+    const { data: targetPlan, error: findError } = await serviceClient
+      .from('plans')
+      .select('id, name, slug')
+      .eq('id', planId)
+      .maybeSingle()
+
+    if (findError || !targetPlan) {
+      return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+    }
+
+    // Protect system default 'free' plan
+    if (targetPlan.slug === 'free') {
+      return NextResponse.json(
+        { error: 'Cannot delete the system default Free plan.' },
+        { status: 400 }
+      )
+    }
+
+    // 4. Check if any accounts have subscriptions on this plan
+    const { count: subsCount, error: subsError } = await serviceClient
+      .from('subscriptions')
+      .select('*', { count: 'exact', head: true })
+      .eq('plan_id', planId)
+
+    if (subsError) {
+      console.error('[AdminPlansDeleteAPI] Error checking subscriptions:', subsError)
+      return NextResponse.json({ error: 'Failed to verify active subscriptions' }, { status: 500 })
+    }
+
+    if (subsCount && subsCount > 0) {
+      return NextResponse.json(
+        {
+          error: `لا يمكن حذف هذه الباقة لوجود ${subsCount} اشتراك مرتبط بها حالياً. يمكنك تعطيل الباقة بدلاً من حذفها لمنع اشتراك مستخدمين جدد.`,
+          subscribersCount: subsCount,
+        },
+        { status: 400 }
+      )
+    }
+
+    // 5. Clean up any related upgrade requests if any
+    await serviceClient
+      .from('upgrade_requests')
+      .delete()
+      .or(`target_plan_id.eq.${planId},current_plan_id.eq.${planId}`)
+
+    // 6. Delete the plan
+    const { error: deleteError } = await serviceClient
+      .from('plans')
+      .delete()
+      .eq('id', planId)
+
+    if (deleteError) {
+      console.error('[AdminPlansDeleteAPI] Error deleting plan:', deleteError)
+      return NextResponse.json({ error: deleteError.message || 'Failed to delete plan' }, { status: 500 })
+    }
+
+    try {
+      revalidatePath('/pricing')
+      revalidatePath('/')
+      revalidatePath('/settings')
+      revalidatePath('/admin/plans')
+    } catch (revalErr) {
+      console.error('[AdminPlansDeleteAPI] Revalidation error:', revalErr)
+    }
+
+    return NextResponse.json({ success: true, deletedPlanId: planId })
+  } catch (err: any) {
+    console.error('[AdminPlansDeleteAPI] Unexpected error:', err)
+    return NextResponse.json(
+      { error: err?.message || 'An unexpected error occurred' },
+      { status: 500 }
+    )
+  }
+}

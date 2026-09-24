@@ -31,6 +31,7 @@ import {
   Boxes,
   HelpCircle,
   Globe,
+  Trash2,
 } from 'lucide-react';
 import {
   Dialog,
@@ -119,6 +120,9 @@ export default function AdminPlansPage() {
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [settingPopularId, setSettingPopularId] = useState<string | null>(null);
+  const [deletingPlan, setDeletingPlan] = useState<PlanRow | null>(null);
+  const [confirmDeleteName, setConfirmDeleteName] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // New Plan Draft
   const [newPlan, setNewPlan] = useState<Partial<PlanRow>>({
@@ -232,6 +236,29 @@ export default function AdminPlansPage() {
       toast.error(err.message || 'Failed to update plan');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Delete Plan Handler
+  const handleDeletePlan = async (planId: string) => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/plans/${planId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        toast.error(data.error || (isAr ? 'فشل حذف الخطة' : 'Failed to delete plan'));
+        return;
+      }
+      toast.success(isAr ? 'تم حذف الخطة بنجاح 🗑️' : 'Plan deleted successfully 🗑️');
+      setDeletingPlan(null);
+      setEditingPlan(null);
+      fetchPlans();
+    } catch (err: any) {
+      toast.error(err?.message || (isAr ? 'حدث خطأ أثناء حذف الخطة' : 'Error deleting plan'));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -714,19 +741,34 @@ export default function AdminPlansPage() {
                   </Button>
                 )}
 
-                {/* Edit Prices, Quotas & Features Button */}
-                <Button
-                  variant="outline"
-                  onClick={() => setEditingPlan(JSON.parse(JSON.stringify(plan)))}
-                  className={`w-full h-11 text-xs font-bold gap-1.5 shadow-xs ${
-                    isPopular
-                      ? 'border-amber-500/40 bg-amber-500/5 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10'
-                      : 'border-border/80 hover:bg-muted/80'
-                  }`}
-                >
-                  <Edit className="h-3.5 w-3.5 text-amber-500" />
-                  <span>{isAr ? 'تعديل الأسعار والحصص والميزات' : 'Edit Prices, Quotas & Features'}</span>
-                </Button>
+                {/* Edit Prices, Quotas & Features & Delete Buttons */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditingPlan(JSON.parse(JSON.stringify(plan)))}
+                    className={`flex-1 h-11 text-xs font-bold gap-1.5 shadow-xs ${
+                      isPopular
+                        ? 'border-amber-500/40 bg-amber-500/5 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10'
+                        : 'border-border/80 hover:bg-muted/80'
+                    }`}
+                  >
+                    <Edit className="h-3.5 w-3.5 text-amber-500" />
+                    <span>{isAr ? 'تعديل الأسعار والحصص والميزات' : 'Edit Prices, Quotas & Features'}</span>
+                  </Button>
+                  {plan.slug !== 'free' && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setDeletingPlan(plan);
+                        setConfirmDeleteName('');
+                      }}
+                      title={isAr ? 'حذف الخطة' : 'Delete Plan'}
+                      className="h-11 px-3 border-rose-500/30 text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/50 shadow-xs shrink-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -992,13 +1034,75 @@ export default function AdminPlansPage() {
             </div>
           )}
 
-          <DialogFooter className="border-t border-border/60 pt-4">
-            <Button variant="outline" onClick={() => setEditingPlan(null)} disabled={saving}>
+          <DialogFooter className="border-t border-border/60 pt-4 flex flex-col sm:flex-row sm:justify-between items-center w-full gap-3">
+            {editingPlan?.slug !== 'free' ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setDeletingPlan(editingPlan);
+                  setConfirmDeleteName('');
+                }}
+                className="w-full sm:w-auto border-rose-500/40 text-rose-500 hover:bg-rose-500/10 hover:border-rose-500 text-xs font-bold gap-1.5"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>{isAr ? 'حذف الخطة نهائياً' : 'Delete Plan'}</span>
+              </Button>
+            ) : <div />}
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <Button variant="outline" onClick={() => setEditingPlan(null)} disabled={saving}>
+                {isAr ? 'إلغاء' : 'Cancel'}
+              </Button>
+              <Button onClick={handleSaveEdit} disabled={saving} className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin me-1.5" /> : <Check className="h-4 w-4 me-1.5" />}
+                {isAr ? 'حفظ التعديلات' : 'Save Changes'}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============================================================ */}
+      {/* 4.5 Delete Plan Confirmation Modal */}
+      {/* ============================================================ */}
+      <Dialog open={!!deletingPlan} onOpenChange={(open) => !open && setDeletingPlan(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl p-6 bg-card border-border shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-black text-rose-500 flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              {isAr ? `تأكيد حذف الخطة: ${deletingPlan?.name}` : `Confirm Delete Plan: ${deletingPlan?.name}`}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed pt-1">
+              {isAr
+                ? 'هل أنت متأكد من رغبتك في حذف هذه الخطة نهائياً؟ هذا الإجراء لا يمكن التراجع عنه. لن يتم الحذف إذا كانت هناك اشتراكات نشطة مرتبطة بها لحماية بيانات العملاء.'
+                : 'Are you sure you want to permanently delete this plan? This action cannot be undone. It will be rejected if active subscriptions are linked.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-3 space-y-2">
+            <Label className="text-xs text-muted-foreground font-semibold">
+              {isAr ? `للتأكيد، اكتب اسم الخطة: "${deletingPlan?.name}"` : `To confirm, type the plan name: "${deletingPlan?.name}"`}
+            </Label>
+            <Input
+              value={confirmDeleteName}
+              onChange={(e) => setConfirmDeleteName(e.target.value)}
+              placeholder={deletingPlan?.name || ''}
+              className="h-10 text-xs font-medium"
+            />
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
+            <Button variant="outline" onClick={() => setDeletingPlan(null)} disabled={isDeleting}>
               {isAr ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button onClick={handleSaveEdit} disabled={saving} className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin me-1.5" /> : <Check className="h-4 w-4 me-1.5" />}
-              {isAr ? 'حفظ التعديلات' : 'Save Changes'}
+            <Button
+              variant="destructive"
+              disabled={isDeleting || confirmDeleteName.trim().toLowerCase() !== deletingPlan?.name.trim().toLowerCase()}
+              onClick={() => deletingPlan && handleDeletePlan(deletingPlan.id)}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-1.5"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              <span>{isAr ? 'نعم، حذف الخطة نهائياً' : 'Yes, Delete Plan'}</span>
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -248,7 +248,7 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
                       <span>{isAr ? 'أعضاء الفريق' : 'Team Members'}</span>
                     </span>
                     <span className="font-bold text-[#1B1C1C] dark:text-white">
-                      {p.max_users === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : `${p.max_users} ${isAr ? 'أعضاء' : 'Members'}`}
+                      {p.max_users === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : `${p.max_users ?? 0} ${isAr ? 'أعضاء' : 'Members'}`}
                     </span>
                   </div>
 
@@ -265,7 +265,7 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
                     <span className="font-bold text-[#1B1C1C] dark:text-white">
                       {p.max_broadcasts_monthly === -1
                         ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️')
-                        : (p.max_broadcasts_monthly || 500).toLocaleString('en-US')}
+                        : (p.max_broadcasts_monthly ?? 0).toLocaleString('en-US')}
                     </span>
                   </div>
 
@@ -282,7 +282,7 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
                     <span className="font-bold text-[#1B1C1C] dark:text-white">
                       {p.max_messages_monthly === -1
                         ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️')
-                        : (p.max_messages_monthly || 1000).toLocaleString('en-US')}
+                        : (p.max_messages_monthly ?? 0).toLocaleString('en-US')}
                     </span>
                   </div>
 
@@ -297,9 +297,9 @@ export function LandingPricing({ plans, userLoggedIn }: LandingPricingProps) {
                       <span>{isAr ? 'سقف جهات الاتصال' : 'Max Contacts'}</span>
                     </span>
                     <span className="font-bold text-[#1B1C1C] dark:text-white">
-                      {p.max_contacts === -1 || p.max_contacts === undefined
+                      {p.max_contacts === -1
                         ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️')
-                        : (p.max_contacts || 1000).toLocaleString('en-US')}
+                        : (p.max_contacts ?? 0).toLocaleString('en-US')}
                     </span>
                   </div>
 

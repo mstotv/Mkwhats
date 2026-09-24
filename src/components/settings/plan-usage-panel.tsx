@@ -659,7 +659,7 @@ export function PlanUsagePanel() {
                     {(usage?.contacts_count || 0).toLocaleString()}
                   </span>
                   <span className="text-[11px] text-muted-foreground font-medium block">
-                    {plan.max_contacts === -1 ? (isAr ? 'عملاء محفوظين' : 'Saved Contacts') : (isAr ? `من ${(plan.max_contacts || 1000).toLocaleString()}` : `of ${(plan.max_contacts || 1000).toLocaleString()}`)}
+                    {plan.max_contacts === -1 ? (isAr ? 'عملاء محفوظين' : 'Saved Contacts') : (isAr ? `من ${(plan.max_contacts ?? 0).toLocaleString()}` : `of ${(plan.max_contacts ?? 0).toLocaleString()}`)}
                   </span>
                 </div>
 
@@ -710,7 +710,7 @@ export function PlanUsagePanel() {
                     {usage?.members_count || 1}
                   </span>
                   <span className="text-[11px] text-muted-foreground font-medium block">
-                    {plan.max_users === -1 ? (isAr ? 'موظفين بالحساب' : 'Account Members') : (isAr ? `من ${plan.max_users} مقاعد` : `of ${plan.max_users} seats`)}
+                    {plan.max_users === -1 ? (isAr ? 'موظفين بالحساب' : 'Account Members') : (isAr ? `من ${plan.max_users ?? 0} مقاعد` : `of ${plan.max_users ?? 0} seats`)}
                   </span>
                 </div>
 
@@ -1047,7 +1047,7 @@ export function PlanUsagePanel() {
                           {isAr ? 'أعضاء الفريق' : 'Team Members'}
                         </span>
                         <span className="font-bold text-foreground mt-0.5 block text-xs">
-                          {p.max_users === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (isAr ? `${p.max_users} أعضاء` : `${p.max_users} Seats`)}
+                          {p.max_users === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (isAr ? `${p.max_users ?? 0} أعضاء` : `${p.max_users ?? 0} Seats`)}
                         </span>
                       </div>
                       <div className="rounded-xl bg-muted/40 p-2.5 border border-border/40">
@@ -1056,7 +1056,7 @@ export function PlanUsagePanel() {
                           {isAr ? 'جهات الاتصال' : 'Contacts'}
                         </span>
                         <span className="font-bold text-foreground mt-0.5 block text-xs">
-                          {p.max_contacts === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (p.max_contacts || 1000).toLocaleString()}
+                          {p.max_contacts === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : (p.max_contacts ?? 0).toLocaleString()}
                         </span>
                       </div>
                       <div className="rounded-xl bg-muted/40 p-2.5 border border-border/40">
@@ -1065,7 +1065,7 @@ export function PlanUsagePanel() {
                           {isAr ? 'الرسائل' : 'Messages'}
                         </span>
                         <span className="font-bold text-foreground mt-0.5 block text-xs">
-                          {p.max_messages_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : `${(p.max_messages_monthly || 1000).toLocaleString()}${isAr ? ' /ش' : ' /mo'}`}
+                          {p.max_messages_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : `${(p.max_messages_monthly ?? 0).toLocaleString()}${isAr ? ' /ش' : ' /mo'}`}
                         </span>
                       </div>
                       <div className="rounded-xl bg-muted/40 p-2.5 border border-border/40">
@@ -1074,7 +1074,7 @@ export function PlanUsagePanel() {
                           {isAr ? 'البرودكاست' : 'Broadcasts'}
                         </span>
                         <span className="font-bold text-foreground mt-0.5 block text-xs">
-                          {p.max_broadcasts_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : `${(p.max_broadcasts_monthly || 10).toLocaleString()}${isAr ? ' /ش' : ' /mo'}`}
+                          {p.max_broadcasts_monthly === -1 ? (isAr ? 'غير محدود ♾️' : 'Unlimited ♾️') : `${(p.max_broadcasts_monthly ?? 0).toLocaleString()}${isAr ? ' /ش' : ' /mo'}` }
                         </span>
                       </div>
                       <div className="rounded-xl bg-muted/40 p-2.5 border border-border/40 col-span-2">
