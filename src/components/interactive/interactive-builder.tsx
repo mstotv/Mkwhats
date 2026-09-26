@@ -88,8 +88,8 @@ export function InteractiveBuilder({
   };
 
   return (
-    <div className="flex flex-col gap-4 md:flex-row">
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
+    <div className="flex flex-wrap gap-4 md:flex-nowrap">
+      <div className="flex min-w-[260px] flex-1 flex-col gap-3">
         {/* Kind toggle */}
         <div className="flex gap-2">
           <KindButton
@@ -161,7 +161,7 @@ export function InteractiveBuilder({
       </div>
 
       {showPreview && (
-        <div className="flex shrink-0 flex-col gap-1.5 md:w-[280px]">
+        <div className="flex shrink-0 flex-col gap-1.5 w-full md:w-[260px]">
           <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Preview
           </span>

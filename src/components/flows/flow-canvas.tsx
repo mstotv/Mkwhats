@@ -141,11 +141,9 @@ function FlowNodeCard({ data, selected }: NodeProps) {
   const tSummary = useTranslations('Flows.summary');
   const summary = summarizeNode(node, tSummary);
   const slots = outgoingSlots(node);
-  // Start nodes are entry-only; nothing ever targets them, so they
-  // don't need an incoming Handle. Every other node type accepts
-  // incoming edges (including terminal handoff / end — they're the
-  // common targets).
-  const hasTarget = node.node_type !== 'start';
+  // All node types accept incoming edges (including start nodes when
+  // flows loop back to start/menu, and terminal handoff / end).
+  const hasTarget = true;
   // Single-slot nodes get a single source handle floated on the right
   // edge of the card. Multi-slot nodes (condition, send_buttons,
   // send_list) render slot rows inline so each handle visually sits

@@ -770,7 +770,7 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
       {/* Canvas */}
       <div className="relative flex-1 overflow-y-auto">
         <div className="absolute inset-0 bg-[radial-gradient(circle,var(--border)_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
-        <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-0 px-4 py-10">
+        <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-0 px-4 py-10">
           <ResourcesProvider>
             <TriggerCard
               type={state.trigger_type}
@@ -1179,10 +1179,12 @@ function StepRenderer({
   const Icon = meta.icon
   const expanded = props.expandedId === step.cid
   const isCondition = step.step_type === "condition"
-  // Card widths on mobile fill the full canvas column (max-w-2xl px-4
-  // still keeps them reasonable). On sm+ the original fixed widths
-  // come back so the flow visual stays recognisable.
-  const width = isCondition
+  const isInteractive = step.step_type === "send_buttons" || step.step_type === "send_list"
+  // Card widths on mobile fill the full canvas column. On sm+ cards are fixed
+  // width, but interactive buttons/list steps expand when opened to provide comfortable editing room.
+  const width = isInteractive && expanded
+    ? "w-full max-w-[680px] sm:w-[640px]"
+    : isCondition
     ? "w-full max-w-[400px] sm:w-[400px]"
     : "w-full max-w-[320px] sm:w-80"
 
