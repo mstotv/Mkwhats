@@ -185,7 +185,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { phone_number_id, waba_id, access_token, verify_token, pin } = body
+    const { phone_number_id, waba_id, access_token, verify_token, pin, app_secret } = body
 
     if (!access_token || !phone_number_id) {
       return NextResponse.json(
@@ -254,9 +254,13 @@ export async function POST(request: Request) {
     // Encrypt sensitive tokens before storing
     let encryptedAccessToken: string
     let encryptedVerifyToken: string | null
+    let encryptedAppSecret: string | null = null
     try {
       encryptedAccessToken = encrypt(access_token)
       encryptedVerifyToken = verify_token ? encrypt(verify_token) : null
+      if (typeof app_secret === 'string' && app_secret.trim()) {
+        encryptedAppSecret = encrypt(app_secret.trim())
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown encryption error'
       console.error('Encryption failed:', message)
@@ -353,17 +357,22 @@ export async function POST(request: Request) {
     // Persist everything in one shot. If /register failed we still
     // store the credentials and the error so the UI can guide the
     // user through a retry.
-    const baseRow = {
+    const baseRow: Record<string, unknown> = {
       phone_number_id,
       waba_id: waba_id || null,
       access_token: encryptedAccessToken,
       verify_token: encryptedVerifyToken,
+      connection_type: 'meta', // Explicitly set connection_type to 'meta'
       status: registrationError ? 'disconnected' : 'connected',
       connected_at: registrationError ? null : new Date().toISOString(),
       registered_at: registrationError ? null : registeredAt,
       subscribed_apps_at: subscribedAppsAt ?? null,
       last_registration_error: registrationError,
       updated_at: new Date().toISOString(),
+    }
+
+    if (encryptedAppSecret) {
+      baseRow.app_secret = encryptedAppSecret
     }
 
     if (existing) {

@@ -68,6 +68,10 @@ export function WhatsAppConfig() {
   const [pin, setPin] = useState('');
   const [tokenEdited, setTokenEdited] = useState(false);
 
+  const [appSecret, setAppSecret] = useState('');
+  const [showAppSecret, setShowAppSecret] = useState(false);
+  const [registeringPin, setRegisteringPin] = useState(false);
+
   const isRegistered = Boolean(config?.registered_at);
   const lastRegistrationError = config?.last_registration_error ?? null;
 
@@ -179,6 +183,7 @@ export function WhatsAppConfig() {
           setWabaId(data.waba_id || '');
           setAccessToken(MASKED_TOKEN);
           setVerifyToken('');
+          setAppSecret(data.app_secret ? MASKED_TOKEN : '');
           setPin('');
           setTokenEdited(false);
         }
@@ -189,6 +194,7 @@ export function WhatsAppConfig() {
         setWabaId('');
         setAccessToken('');
         setVerifyToken('');
+        setAppSecret('');
         setPin('');
         setTokenEdited(false);
         setEvolutionQr(null);
@@ -340,6 +346,10 @@ export function WhatsAppConfig() {
         pin: pin.trim() || null,
       };
 
+      if (appSecret !== MASKED_TOKEN && appSecret.trim()) {
+        payload.app_secret = appSecret.trim();
+      }
+
       if (tokenEdited && accessToken !== MASKED_TOKEN && accessToken.trim()) {
         payload.access_token = accessToken.trim();
       } else if (config) {
@@ -444,6 +454,34 @@ export function WhatsAppConfig() {
       toast.error('Could not reach the verification endpoint.');
     } finally {
       setVerifyingRegistration(false);
+    }
+  }
+
+  async function handleRegisterPin() {
+    if (!pin || !/^\d{6}$/.test(pin.trim())) {
+      toast.error('يرجى كتابة رمز PIN المكون من 6 أرقام لتسجيل الرقم لدى Meta');
+      return;
+    }
+    try {
+      setRegisteringPin(true);
+      const res = await fetch('/api/whatsapp/config/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pin.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'فشل تسجيل الرقم لدى Meta');
+        return;
+      }
+      toast.success(data.message || 'تم تسجيل الرقم بنجاح لدى Meta! أصبحت الرسائل الواردة نشطة الآن.');
+      setPin('');
+      if (accountId) await fetchConfig(accountId);
+    } catch (err) {
+      console.error('handleRegisterPin error:', err);
+      toast.error('حدث خطأ أثناء محاولة تسجيل الرقم لدى Meta');
+    } finally {
+      setRegisteringPin(false);
     }
   }
 
@@ -941,7 +979,33 @@ export function WhatsAppConfig() {
                       . {t('retryHint')}
                     </>
                   ) : (
-                    <>{t('noRegistrationHint')}</>
+                    <div className="space-y-3 pt-1">
+                      <p>{t('noRegistrationHint')}</p>
+                      <div className="flex items-center gap-2 max-w-sm">
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          placeholder="6-digit PIN"
+                          value={pin}
+                          onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          className="bg-card border-border text-foreground tracking-widest text-xs h-8"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleRegisterPin}
+                          disabled={registeringPin || pin.length !== 6}
+                          className="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs h-8 shrink-0"
+                        >
+                          {registeringPin ? (
+                            <Loader2 className="size-3.5 animate-spin mr-1" />
+                          ) : (
+                            <CheckCircle2 className="size-3.5 mr-1" />
+                          )}
+                          تفعيل وتسجيل الرقم
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </AlertDescription>
 
@@ -1052,6 +1116,35 @@ export function WhatsAppConfig() {
                   />
                   <p className="text-xs text-muted-foreground">
                     {t('webhookVerifyTokenHint')}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-muted-foreground">Meta App Secret (حماية التوقيع الرقمي)</Label>
+                    <span className="text-xs text-muted-foreground">{t('optional')}</span>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      type={showAppSecret ? 'text' : 'password'}
+                      placeholder="e.g. 9a7b6c5d4e3f..."
+                      value={appSecret}
+                      onChange={(e) => setAppSecret(e.target.value)}
+                      onFocus={() => {
+                        if (appSecret === MASKED_TOKEN) setAppSecret('');
+                      }}
+                      className="bg-muted border-border text-foreground placeholder:text-muted-foreground pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAppSecret(!showAppSecret)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showAppSecret ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    مطلوب لحماية وتأمين الويب هوك والتحقق الصارم من توقيع HMAC-SHA256 المشفر من Meta لضمان قبول كافة الرسائل الواردة بأمان.
                   </p>
                 </div>
 

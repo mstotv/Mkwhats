@@ -179,19 +179,34 @@ export async function POST(request: Request) {
   const rawBody = await request.text()
   const signature = request.headers.get('x-hub-signature-256')
 
-  if (!verifyMetaWebhookSignature(rawBody, signature)) {
-    // 401 (not 200) — we want Meta's delivery dashboard to show failures
-    // loudly if a misconfiguration causes signatures to stop matching,
-    // rather than silently eating events.
-    console.warn('[webhook] rejected request with invalid signature')
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-  }
-
   let body: { entry?: WhatsAppWebhookEntry[] }
   try {
     body = JSON.parse(rawBody)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+
+  // Extract phone_number_id to check for per-account app_secret
+  let secretCandidate: string | null = null
+  const phoneId = body?.entry?.[0]?.changes?.[0]?.value?.metadata?.phone_number_id
+  if (phoneId) {
+    try {
+      const { data: config } = await supabaseAdmin()
+        .from('whatsapp_config')
+        .select('app_secret')
+        .eq('phone_number_id', phoneId)
+        .maybeSingle()
+      if (config?.app_secret) {
+        secretCandidate = decrypt(config.app_secret)
+      }
+    } catch {
+      // Keep secretCandidate as null to allow falling back to env secret
+    }
+  }
+
+  if (!verifyMetaWebhookSignature(rawBody, signature, secretCandidate)) {
+    console.warn('[webhook] rejected request with invalid signature')
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
   // Process AFTER the response so we ack Meta within their ~20s timeout
@@ -289,6 +304,7 @@ async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
       const config = configRows[0]
 
       const decryptedAccessToken = decrypt(config.access_token)
+      const displayPhone = value.metadata?.display_phone_number || null
 
       for (let i = 0; i < value.messages.length; i++) {
         const message = value.messages[i]
@@ -304,7 +320,8 @@ async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
           // inserts that need it for NOT NULL FK compliance. Always
           // the admin who saved the WhatsApp config.
           config.user_id,
-          decryptedAccessToken
+          decryptedAccessToken,
+          displayPhone
         )
       }
     }
@@ -572,7 +589,8 @@ async function processMessage(
   // (contacts, conversations). Always the admin who saved the
   // WhatsApp config; the choice is arbitrary post-017 but stable.
   configOwnerUserId: string,
-  accessToken: string
+  accessToken: string,
+  channelPhone?: string | null
 ) {
   const senderPhone = normalizePhone(message.from)
   const contactName = contact.profile.name
@@ -591,7 +609,8 @@ async function processMessage(
   const convResult = await findOrCreateConversation(
     accountId,
     configOwnerUserId,
-    contactRecord.id
+    contactRecord.id,
+    channelPhone
   )
   if (!convResult) return
   const conversation = convResult.conversation
@@ -712,6 +731,8 @@ async function processMessage(
     media_url: mediaUrl,
     message_id: message.id,
     status: 'delivered',
+    channel_phone: channelPhone || null,
+    channel_type: 'meta',
     created_at: new Date(parseInt(message.timestamp) * 1000).toISOString(),
     reply_to_message_id: replyToInternalId,
     // Only populated for content_type='interactive'. Migration 010 added
@@ -732,6 +753,8 @@ async function processMessage(
       last_message_text: contentText || `[${message.type}]`,
       last_message_at: new Date().toISOString(),
       unread_count: (conversation.unread_count || 0) + 1,
+      channel_phone: channelPhone || conversation.channel_phone || null,
+      channel_type: 'meta',
       updated_at: new Date().toISOString(),
     })
     .eq('id', conversation.id)
@@ -1157,6 +1180,7 @@ async function findOrCreateConversation(
   accountId: string,
   configOwnerUserId: string,
   contactId: string,
+  channelPhone?: string | null,
 ) {
   // Look for an existing conversation in this account, oldest-first.
   //
@@ -1196,6 +1220,8 @@ async function findOrCreateConversation(
       account_id: accountId,
       user_id: configOwnerUserId,
       contact_id: contactId,
+      channel_phone: channelPhone || null,
+      channel_type: 'meta',
     })
     .select()
     .single()

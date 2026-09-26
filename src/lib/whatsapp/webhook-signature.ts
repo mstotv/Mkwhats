@@ -21,27 +21,44 @@ import crypto from 'node:crypto'
 export function verifyMetaWebhookSignature(
   rawBody: string,
   signatureHeader: string | null,
+  secretCandidate?: string | null,
 ): boolean {
-  const secret = process.env.META_APP_SECRET
-  if (!secret) {
-    console.error(
-      '[webhook] META_APP_SECRET is not set — rejecting request. ' +
-        'Configure the env var (Meta → App Settings → Basic → App Secret) ' +
-        'to enable signature verification.',
-    )
-    return false
+  if (!signatureHeader || !signatureHeader.startsWith('sha256=')) return false
+
+  const tryVerify = (secret: string): boolean => {
+    if (!secret || secret === 'your-meta-app-secret') return false
+    try {
+      const expected =
+        'sha256=' +
+        crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
+
+      const a = Buffer.from(signatureHeader)
+      const b = Buffer.from(expected)
+      if (a.length !== b.length) return false
+      return crypto.timingSafeEqual(a, b)
+    } catch {
+      return false
+    }
   }
 
-  if (!signatureHeader) return false
-  if (!signatureHeader.startsWith('sha256=')) return false
+  // 1. Try account-specific secret if provided
+  if (secretCandidate && tryVerify(secretCandidate)) {
+    return true
+  }
 
-  const expected =
-    'sha256=' +
-    crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
+  // 2. Try environment secret
+  const envSecret = process.env.META_APP_SECRET
+  if (envSecret && tryVerify(envSecret)) {
+    return true
+  }
 
-  const a = Buffer.from(signatureHeader)
-  const b = Buffer.from(expected)
-  // Bail if lengths differ — timingSafeEqual throws otherwise.
-  if (a.length !== b.length) return false
-  return crypto.timingSafeEqual(a, b)
+  if (!envSecret && !secretCandidate) {
+    console.error(
+      '[webhook] META_APP_SECRET is not set — rejecting request. ' +
+        'Configure the env var (Meta → App Settings → Basic → App Secret) or account App Secret ' +
+        'to enable signature verification.',
+    )
+  }
+
+  return false
 }

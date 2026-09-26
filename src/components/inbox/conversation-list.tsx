@@ -35,6 +35,8 @@ interface ConversationListProps {
    * or the tab was throttled. Optional so existing callers keep working.
    */
   resyncToken?: number;
+  /** Active WhatsApp connection type for the account ('meta' or 'evolution'). */
+  activeConnectionType?: string | null;
 }
 
 const STATUS_COLORS: Record<ConversationStatus, string> = {
@@ -53,6 +55,7 @@ export function ConversationList({
   conversations,
   onConversationsLoaded,
   resyncToken = 0,
+  activeConnectionType = null,
 }: ConversationListProps) {
   const t = useTranslations("Inbox.conversationList");
   
@@ -66,6 +69,15 @@ export function ConversationList({
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<InboxFilter>("all");
+  const [channelFilter, setChannelFilter] = useState<"all" | "meta" | "evolution">(
+    (activeConnectionType as "meta" | "evolution") || "all"
+  );
+
+  useEffect(() => {
+    if (activeConnectionType === "meta" || activeConnectionType === "evolution") {
+      setChannelFilter(activeConnectionType);
+    }
+  }, [activeConnectionType]);
   const [loading, setLoading] = useState(true);
   // Contact-based filters (issue #272). Tags use OR logic (a conversation
   // matches if its contact carries any selected tag), consistent with
@@ -168,6 +180,10 @@ export function ConversationList({
       result = result.filter((c) => c.status === filter);
     }
 
+    if (channelFilter !== "all") {
+      result = result.filter((c) => c.channel_type === channelFilter);
+    }
+
     // Contact-based filters (tags via OR logic, exact company match).
     if (selectedTagIds.length > 0 || selectedCompany !== null) {
       result = result.filter((c) =>
@@ -197,7 +213,7 @@ export function ConversationList({
       const createdB = b.created_at ? new Date(b.created_at).getTime() : 0;
       return createdB - createdA;
     });
-  }, [conversations, filter, search, selectedTagIds, selectedCompany]);
+  }, [conversations, filter, channelFilter, search, selectedTagIds, selectedCompany]);
 
   const toggleTag = useCallback((id: string) => {
     setSelectedTagIds((prev) =>
@@ -269,6 +285,49 @@ export function ConversationList({
                   {opt.label}
                 </DropdownMenuItem>
               ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Channel Filter (Meta vs Evolution) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className={cn(
+                "inline-flex items-center justify-center h-7 gap-1 px-2 text-xs rounded-md hover:bg-muted",
+                channelFilter !== "all"
+                  ? "text-primary font-medium"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <span>
+                {channelFilter === "meta" ? "Meta API" : channelFilter === "evolution" ? "Evolution" : "القنوات"}
+              </span>
+              <ChevronDown className="h-3 w-3" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="border-border bg-popover">
+              <DropdownMenuItem
+                onClick={() => setChannelFilter("all")}
+                className={cn("text-sm", channelFilter === "all" ? "text-primary" : "text-popover-foreground")}
+              >
+                جميع القنوات (All)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setChannelFilter("meta")}
+                className={cn("text-sm", channelFilter === "meta" ? "text-primary" : "text-popover-foreground")}
+              >
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-sky-400" />
+                  Meta Business API
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setChannelFilter("evolution")}
+                className={cn("text-sm", channelFilter === "evolution" ? "text-primary" : "text-popover-foreground")}
+              >
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  Evolution API
+                </span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -494,9 +553,24 @@ function ConversationItem({
       {/* Content */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-medium text-foreground">
-            {displayName}
-          </span>
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="truncate text-sm font-medium text-foreground">
+              {displayName}
+            </span>
+            {conversation.channel_type && (
+              <span
+                className={cn(
+                  "inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[9px] font-semibold border leading-none",
+                  conversation.channel_type === "meta"
+                    ? "border-sky-500/30 bg-sky-500/10 text-sky-400"
+                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                )}
+                title={conversation.channel_phone ? `رقم الاستقبال: ${conversation.channel_phone}` : undefined}
+              >
+                {conversation.channel_type === "meta" ? "Meta" : "Evo"}
+              </span>
+            )}
+          </div>
           <span className="shrink-0 text-[10px] text-muted-foreground">{timeAgo}</span>
         </div>
         <div className="mt-0.5 flex items-center justify-between gap-2">

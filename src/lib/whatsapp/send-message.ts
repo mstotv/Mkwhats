@@ -349,6 +349,8 @@ export async function sendMessageToConversation(
         media_url: mediaUrl || null,
         message_id: evolutionResult.messageId,
         status: 'sent',
+        channel_phone: config.evolution_connected_phone || null,
+        channel_type: 'evolution',
         reply_to_message_id: replyToMessageId || null,
         created_at: now,
       })
@@ -596,6 +598,8 @@ export async function sendMessageToConversation(
         messageType === 'interactive' ? interactivePayload : null,
       message_id: waMessageId,
       status: 'sent',
+      channel_phone: conversation.channel_phone || null,
+      channel_type: 'meta',
       reply_to_message_id: replyToMessageId || null,
     })
     .select()

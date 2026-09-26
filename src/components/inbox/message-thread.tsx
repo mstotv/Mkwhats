@@ -919,7 +919,22 @@ export function MessageThread({
             />
           </div>
           <div className="min-w-0">
-            <h2 className="truncate text-sm font-semibold text-foreground">{displayName}</h2>
+            <div className="flex items-center gap-1.5">
+              <h2 className="truncate text-sm font-semibold text-foreground">{displayName}</h2>
+              {conversation.channel_type && (
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-semibold border leading-none",
+                    conversation.channel_type === "meta"
+                      ? "border-sky-500/30 bg-sky-500/10 text-sky-400"
+                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                  )}
+                  title={conversation.channel_phone ? `رقم الاستقبال: ${conversation.channel_phone}` : undefined}
+                >
+                  {conversation.channel_type === "meta" ? "Meta API" : "Evolution"}
+                </span>
+              )}
+            </div>
             <p className="truncate text-xs text-muted-foreground">{contact.phone}</p>
           </div>
           {/* Session timer badge — hidden on the narrowest phones so

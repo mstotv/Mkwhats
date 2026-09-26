@@ -181,6 +181,9 @@ export interface Conversation {
   ai_autoreply_disabled?: boolean;
   ai_reply_count?: number;
   ai_handoff_summary?: string | null;
+  /** Channel isolation: phone number and connection type */
+  channel_phone?: string;
+  channel_type?: WhatsAppConnectionType;
 }
 
 // ============================================================
@@ -255,6 +258,9 @@ export interface Message {
    * badge in the inbox. Migration 033.
    */
   ai_generated?: boolean;
+  /** Channel isolation: phone number and connection type */
+  channel_phone?: string;
+  channel_type?: WhatsAppConnectionType;
 }
 
 export type ReactionActor = 'customer' | 'agent';
@@ -278,6 +284,7 @@ export interface WhatsAppConfig {
   waba_id?: string;
   access_token: string;
   verify_token?: string;
+  app_secret?: string;
   status: 'connected' | 'disconnected';
   connected_at?: string;
   /**

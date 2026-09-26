@@ -135,7 +135,7 @@ async function processEvolutionEvent(body: EvolutionWebhookPayload) {
   // Resolve the account_id from the instance name
   const { data: configRow, error: configError } = await supabaseAdmin()
     .from('whatsapp_config')
-    .select('account_id, user_id, status, evolution_instance_name, evolution_api_key')
+    .select('account_id, user_id, status, evolution_instance_name, evolution_api_key, evolution_connected_phone')
     .eq('evolution_instance_name', instanceName)
     .eq('connection_type', 'evolution')
     .maybeSingle()
@@ -192,6 +192,7 @@ async function processEvolutionEvent(body: EvolutionWebhookPayload) {
           configOwnerUserId,
           configRow.evolution_instance_name,
           instanceApiKey,
+          configRow.evolution_connected_phone ?? null,
         )
       }
       break
@@ -263,6 +264,7 @@ async function processInboundMessage(
   configOwnerUserId: string,
   instanceName?: string,
   instanceApiKey?: string,
+  connectedPhone?: string | null,
 ) {
   const isFromMe = Boolean(msg.key?.fromMe)
 
@@ -305,6 +307,7 @@ async function processInboundMessage(
     accountId,
     configOwnerUserId,
     contactRecord.id,
+    connectedPhone
   )
   if (!convResult) return
   const conversation = convResult.conversation
@@ -347,6 +350,8 @@ async function processInboundMessage(
         media_url: mediaUrl ?? null,
         message_id: whatsappMessageId,
         status: 'delivered',
+        channel_phone: connectedPhone || null,
+        channel_type: 'evolution',
         created_at: messageTs,
       })
 
@@ -384,6 +389,8 @@ async function processInboundMessage(
       media_url: mediaUrl ?? null,
       message_id: whatsappMessageId,
       status: 'delivered',
+      channel_phone: connectedPhone || null,
+      channel_type: 'evolution',
       created_at: messageTs,
     })
     .select('id')
@@ -403,6 +410,8 @@ async function processInboundMessage(
       last_message_at: messageTs,
       status: 'open',
       unread_count: (conversation.unread_count || 0) + 1,
+      channel_phone: connectedPhone || conversation.channel_phone || null,
+      channel_type: 'evolution',
       updated_at: new Date().toISOString(),
     })
     .eq('id', conversation.id)
@@ -760,6 +769,7 @@ async function findOrCreateEvolutionConversation(
   accountId: string,
   userId: string,
   contactId: string,
+  connectedPhone?: string | null
 ) {
   try {
     const { data: existing } = await supabaseAdmin()
@@ -773,7 +783,13 @@ async function findOrCreateEvolutionConversation(
 
     const { data: created, error } = await supabaseAdmin()
       .from('conversations')
-      .insert({ account_id: accountId, user_id: userId, contact_id: contactId })
+      .insert({
+        account_id: accountId,
+        user_id: userId,
+        contact_id: contactId,
+        channel_phone: connectedPhone || null,
+        channel_type: 'evolution',
+      })
       .select()
       .single()
 
