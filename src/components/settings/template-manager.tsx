@@ -796,12 +796,12 @@ export function TemplateManager() {
               {form.buttons.length > 0 && (
                 <div className="mt-3 space-y-2">
                   {form.buttons.map((btn, idx) => (
-                    <div key={idx} className="flex items-center gap-2 rounded-lg border border-border/60 p-2.5 bg-background/30">
+                    <div key={idx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-lg border border-border/60 p-2.5 bg-background/30">
                       <Select
                         value={btn.type}
                         onValueChange={(v) => changeButtonType(idx, v as TemplateButton['type'])}
                       >
-                        <SelectTrigger className="w-32 h-8 text-xs bg-background">
+                        <SelectTrigger className="w-32 h-8 text-xs bg-background shrink-0">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -814,14 +814,30 @@ export function TemplateManager() {
                         value={btn.text}
                         onChange={(e) => updateButton(idx, { text: e.target.value })}
                         placeholder="Button label"
-                        className="h-8 text-xs bg-background"
+                        className="h-8 text-xs bg-background flex-1 min-w-[120px]"
                       />
+                      {btn.type === 'URL' && (
+                        <Input
+                          value={btn.url}
+                          onChange={(e) => updateButton(idx, { url: e.target.value })}
+                          placeholder="https://example.com"
+                          className="h-8 text-xs bg-background flex-1 min-w-[180px]"
+                        />
+                      )}
+                      {btn.type === 'PHONE_NUMBER' && (
+                        <Input
+                          value={btn.phone_number}
+                          onChange={(e) => updateButton(idx, { phone_number: e.target.value })}
+                          placeholder="+1234567890"
+                          className="h-8 text-xs bg-background flex-1 min-w-[140px]"
+                        />
+                      )}
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         onClick={() => removeButton(idx)}
-                        className="h-8 w-8 text-muted-foreground hover:text-red-400"
+                        className="h-8 w-8 text-muted-foreground hover:text-red-400 shrink-0 self-end sm:self-center"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
