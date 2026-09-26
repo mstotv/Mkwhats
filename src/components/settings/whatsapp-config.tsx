@@ -1143,8 +1143,8 @@ export function WhatsAppConfig() {
                       {showAppSecret ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    مطلوب لحماية وتأمين الويب هوك والتحقق الصارم من توقيع HMAC-SHA256 المشفر من Meta لضمان قبول كافة الرسائل الواردة بأمان.
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    مطلوب لتأمين الويب هوك والتحقق من التوقيع المشفر (يمكنك جلبه من Meta for Developers ← إعدادات التطبيق (App settings) ← أساسي (Basic) ← رمز التطبيق السري (App Secret)).
                   </p>
                 </div>
 

@@ -188,25 +188,70 @@ export async function POST(request: Request) {
 
   // Extract phone_number_id to check for per-account app_secret
   let secretCandidate: string | null = null
+  let matchedConfigInDb = false
   const phoneId = body?.entry?.[0]?.changes?.[0]?.value?.metadata?.phone_number_id
-  if (phoneId) {
+  const wabaId = body?.entry?.[0]?.id
+
+  if (phoneId || wabaId) {
     try {
-      const { data: config } = await supabaseAdmin()
+      let query = supabaseAdmin()
         .from('whatsapp_config')
-        .select('app_secret')
-        .eq('phone_number_id', phoneId)
-        .maybeSingle()
-      if (config?.app_secret) {
-        secretCandidate = decrypt(config.app_secret)
+        .select('app_secret, phone_number_id, whatsapp_business_account_id')
+      if (phoneId) {
+        query = query.eq('phone_number_id', phoneId)
+      } else if (wabaId) {
+        query = query.eq('whatsapp_business_account_id', wabaId)
+      }
+      const { data: config } = await query.maybeSingle()
+      if (config) {
+        matchedConfigInDb = true
+        if (config.app_secret) {
+          secretCandidate = decrypt(config.app_secret)
+        }
       }
     } catch {
       // Keep secretCandidate as null to allow falling back to env secret
     }
   }
 
-  if (!verifyMetaWebhookSignature(rawBody, signature, secretCandidate)) {
-    console.warn('[webhook] rejected request with invalid signature')
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+  // Fallback: If phoneId didn't match directly (e.g. Meta test webhook payload with dummy ID),
+  // check if any active config in the DB has an app_secret to verify against
+  if (!secretCandidate) {
+    try {
+      const { data: anyConfig } = await supabaseAdmin()
+        .from('whatsapp_config')
+        .select('app_secret')
+        .not('app_secret', 'is', null)
+        .limit(1)
+        .maybeSingle()
+      if (anyConfig?.app_secret) {
+        secretCandidate = decrypt(anyConfig.app_secret)
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  const hasConfiguredSecret = Boolean(
+    secretCandidate ||
+    (process.env.META_APP_SECRET && process.env.META_APP_SECRET !== 'your-meta-app-secret')
+  )
+
+  if (hasConfiguredSecret) {
+    if (!verifyMetaWebhookSignature(rawBody, signature, secretCandidate)) {
+      console.warn('[webhook] rejected request with invalid signature')
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
+  } else {
+    // If no secret is configured anywhere yet (operator hasn't pasted it in Settings nor in .env),
+    // allow the request only if the phone_number_id / WABA belongs to a registered account in our DB
+    if (!matchedConfigInDb) {
+      console.warn('[webhook] rejected request: no app secret configured and number not registered in DB')
+      return NextResponse.json({ error: 'Invalid signature or unregistered number' }, { status: 401 })
+    }
+    console.warn(
+      `[webhook] WARNING: Bypassing signature verification for ${phoneId || wabaId} because no App Secret is configured yet. Set Meta App Secret in Settings for strict HMAC protection.`
+    )
   }
 
   // Process AFTER the response so we ack Meta within their ~20s timeout
@@ -1209,7 +1254,17 @@ async function findOrCreateConversation(
   }
 
   if (existingRows && existingRows.length > 0) {
-    return { conversation: existingRows[0], created: false }
+    const existing = existingRows[0]
+    if (!existing.channel_type || (!existing.channel_phone && channelPhone)) {
+      void supabaseAdmin()
+        .from('conversations')
+        .update({
+          channel_type: existing.channel_type || 'meta',
+          channel_phone: existing.channel_phone || channelPhone || null,
+        })
+        .eq('id', existing.id)
+    }
+    return { conversation: existing, created: false }
   }
 
   // Create new conversation. Same tenancy + audit split as

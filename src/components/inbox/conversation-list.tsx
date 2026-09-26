@@ -181,7 +181,7 @@ export function ConversationList({
     }
 
     if (channelFilter !== "all") {
-      result = result.filter((c) => c.channel_type === channelFilter);
+      result = result.filter((c) => (c.channel_type || "meta") === channelFilter);
     }
 
     // Contact-based filters (tags via OR logic, exact company match).
