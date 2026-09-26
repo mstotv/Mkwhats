@@ -24,18 +24,40 @@ export interface MetaPhoneInfo {
 }
 
 interface MetaErrorResponse {
-  error?: { message?: string; code?: number; type?: string }
+  error?: {
+    message?: string;
+    code?: number;
+    type?: string;
+    error_subcode?: number;
+    error_user_title?: string;
+    error_user_msg?: string;
+    fbtrace_id?: string;
+  };
 }
 
 async function throwMetaError(response: Response, fallback: string): Promise<never> {
-  let message = fallback
+  let message = fallback;
   try {
-    const data = (await response.json()) as MetaErrorResponse
-    if (data.error?.message) message = data.error.message
+    const data = (await response.json()) as MetaErrorResponse;
+    if (data?.error) {
+      console.error(
+        '[meta-api] Meta API error details:',
+        response.status,
+        JSON.stringify(data.error)
+      );
+      const parts = [data.error.message || fallback];
+      if (data.error.error_user_msg) parts.push(data.error.error_user_msg);
+      if (data.error.code) {
+        parts.push(
+          `(Code: ${data.error.code}${data.error.error_subcode ? `, Subcode: ${data.error.error_subcode}` : ''})`
+        );
+      }
+      message = parts.join(' - ');
+    }
   } catch {
     // response body wasn't JSON — keep the fallback
   }
-  throw new Error(message)
+  throw new Error(message);
 }
 
 // ============================================================
