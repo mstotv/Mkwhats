@@ -347,6 +347,12 @@ async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
       }
 
       const config = configRows[0]
+      if (config.connection_type !== 'meta') {
+        void supabaseAdmin()
+          .from('whatsapp_config')
+          .update({ connection_type: 'meta' })
+          .eq('id', config.id)
+      }
 
       const decryptedAccessToken = decrypt(config.access_token)
       const displayPhone = value.metadata?.display_phone_number || null

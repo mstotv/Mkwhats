@@ -92,8 +92,23 @@ export async function engineSendText(
     throw new Error('WhatsApp not configured for this account')
   }
 
+  // Resolve effective provider: prioritize conversation channel_type if available
+  let channelType: 'meta' | 'evolution' | null = null
+  if (args.conversationId) {
+    const { data: conv } = await db
+      .from('conversations')
+      .select('channel_type')
+      .eq('id', args.conversationId)
+      .maybeSingle()
+    if (conv?.channel_type === 'meta' || conv?.channel_type === 'evolution') {
+      channelType = conv.channel_type
+    }
+  }
+
+  const effectiveProvider = channelType || config.connection_type || (config.access_token && config.phone_number_id ? 'meta' : 'evolution')
+
   // Evolution API Connection
-  if (config.connection_type === 'evolution') {
+  if (effectiveProvider === 'evolution') {
     if (!config.evolution_instance_name || !config.evolution_api_key) {
       throw new Error('Evolution WhatsApp connection is not fully configured')
     }
@@ -400,7 +415,21 @@ async function sendInteractiveViaMeta(
     throw new Error('WhatsApp not configured for this account')
   }
 
-  if (config.connection_type === 'evolution') {
+  let channelType: 'meta' | 'evolution' | null = null
+  if (input.conversationId) {
+    const { data: conv } = await db
+      .from('conversations')
+      .select('channel_type')
+      .eq('id', input.conversationId)
+      .maybeSingle()
+    if (conv?.channel_type === 'meta' || conv?.channel_type === 'evolution') {
+      channelType = conv.channel_type
+    }
+  }
+
+  const effectiveProvider = channelType || config.connection_type || (config.access_token && config.phone_number_id ? 'meta' : 'evolution')
+
+  if (effectiveProvider === 'evolution') {
     throw new Error('Interactive messages (buttons/list) are not supported on Evolution API connection.')
   }
 

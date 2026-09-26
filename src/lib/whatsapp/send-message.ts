@@ -280,8 +280,11 @@ export async function sendMessageToConversation(
     );
   }
 
+  // Provider resolution: If the conversation was established on a specific channel, prioritize it.
+  const effectiveProvider = conversation.channel_type || config.connection_type || (config.access_token && config.phone_number_id ? 'meta' : 'evolution');
+
   // ── Evolution API Outbound Send ────────────────────────────
-  if (config.connection_type === 'evolution') {
+  if (effectiveProvider === 'evolution') {
     if (!config.evolution_instance_name || !config.evolution_api_key) {
       throw new SendMessageError(
         'evolution_not_configured',

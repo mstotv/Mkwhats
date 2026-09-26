@@ -1,18 +1,14 @@
-# حالة المشروع - آخر تحديث: [26/9/2026]
+# حالة المشروع - آخر تحديث: [27/9/2026]
 
-> 🎯 **ملخص التحديث الأخير (Meta API Security Hardening & WhatsApp Channel Isolation in Inbox):**
-> 1. **حماية وتأمين Meta Webhook والتحقق الصارم من التوقيع الرقمي ([`webhook-signature.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/lib/whatsapp/webhook-signature.ts) & [`/api/whatsapp/webhook`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/whatsapp/webhook/route.ts))**:
->    - دعم حقل `app_secret` المشفر بـ `AES-256-GCM` في جدول `whatsapp_config` لكل حساب، مع إضافة حقل إدخال آمن بميزة الإظهار/الإخفاء في واجهة إعدادات الواتساب ([`whatsapp-config.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/settings/whatsapp-config.tsx)).
->    - فحص توقيع HMAC-SHA256 الخاص بـ Meta (`x-hub-signature-256`) بناءً على الـ `app_secret` المخصص للحساب صاحب الرقم الوارد مع دعم Fallback لمتغير البيئة العام `META_APP_SECRET`؛ مما منع رفض الرسائل الواردة بـ 401 عند عدم تطابق المفاتيح.
-> 2. **حل مشكلة عدم وصول الرسائل وتفعيل التسجيل بضغطة زر واحدة (1-Click Meta Number Registration UX)**:
->    - بناء مسار خلفي مستقل [`/api/whatsapp/config/register`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/app/api/whatsapp/config/register/route.ts) لتسجيل الرقم وتثبيت الـ 6-digit PIN واشتراك التطبيق لدى سيرفرات Meta فوراً.
->    - تضمين حقل وزر تفاعلي مباشر *"تفعيل وتسجيل الرقم"* داخل التنبيه الأصفر في واجهة الإعدادات لإنهاء حالة `⚠️ Not registered — Meta will not deliver events` فورياً دون الحاجة لإعادة كتابة التوكن.
->    - فرض تعيين `connection_type = 'meta'` صراحةً عند حفظ إعدادات Meta لمنع التضارب البرمجي عند التبديل من Evolution إلى Meta.
-> 3. **هندسة عزل القنوات والأرقام في الإنبوكس (Omnichannel & Number Isolation Architecture)**:
->    - إنشاء ملف التهجير الآمن [`095_whatsapp_channel_isolation_and_meta_security.sql`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/supabase/migrations/095_whatsapp_channel_isolation_and_meta_security.sql) لإضافة عمودي `channel_phone` و `channel_type` في جدولي `conversations` و `messages`.
->    - وسم كافة الرسائل والمحادثات الواردة والصادرة تلقائياً برقم الاستقبال ونوع المزود (`meta` أو `evolution`).
->    - إضافة قائمة منسدلة أنيقة في رأس الإنبوكس لفلترة المحادثات: *(جميع القنوات / Meta API / Evolution API)* مع شارات بصرية مدمجة في بطاقات المحادثات ورأس شاشة المحادثة توضح الرقم ونوع الاتصال.
-> 🛡️ **الأمان والاستقرار المطلق**: سلامة تامة 100% لكافة مسارات Evolution API دون أي مساس بها، اجتياز كامل لفحص الأنواع البرمجية (`npx tsc --noEmit` بـ 0 أخطاء)، واجتياز 100% من الاختبارات الآلية (708 اختباراً في 73 ملف اختبار).
+> 🎯 **ملخص التحديث الأخير (Strict Channel Isolation in Inbox & Workflows/Automations Meta Provider Routing):**
+> 1. **العزل التام والمنيع لمحادثات الأرقام في الإنبوكس (Strict Inbox Channel Isolation)**:
+>    - حل الخلل البصري لظهور محادثات الرقم القديم (Evolution API) داخل تبويب Meta API عبر ضبط فلتر `channelFilter === 'meta'` على `c.channel_type === 'meta'` حصرياً دون أي دمج للمحادثات السابقة أو غير المعرفة.
+>    - إنشاء ملف التهجير [`096_whatsapp_channel_cleanup_and_isolation.sql`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/supabase/migrations/096_whatsapp_channel_cleanup_and_isolation.sql) لتحويل كافة المحادثات والرسائل السابقة قبل التحديث إلى المزود `evolution`، وضبط `connection_type = 'meta'` تلقائياً للحسابات المسجلة في Meta.
+> 2. **توجيه الـ Workflows والـ Automations الذكي لدعم Meta Cloud API و Evolution معاً**:
+>    - تحديث محرك إرسال الرسائل للأتمتة [`src/lib/automations/meta-send.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/lib/automations/meta-send.ts) ومحرك الـ Flows [`src/lib/flows/meta-send.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/lib/flows/meta-send.ts) ومسار الإرسال العام [`src/lib/whatsapp/send-message.ts`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/lib/whatsapp/send-message.ts).
+>    - أصبح المحرك يقرأ قناة المحادثة `conversation.channel_type` أولاً: إذا كانت المحادثة قادمة من Meta يرسل رده عبر **Meta Cloud API** (سواء كان نصاً، أو أزراراً تفاعلية Buttons، أو قوائم Lists، أو وسائط)؛ وإذا كانت قادمة من Evolution يرسل رده عبر **Evolution API**.
+>    - إزالة التعطيل الذي كان يحصر الأتمتة في Evolution فقط أو يرمي خطأ عند محاولة إرسال أزرار عبر Meta.
+> 🛡️ **الأمان والاستقرار المطلق**: سلامة تامة 100% لمسارات Evolution API وعزل تام لمحادثاتها، اجتياز كامل لفحص الأنواع البرمجية (`npx tsc --noEmit` بـ 0 أخطاء)، واجتياز 100% من الاختبارات الآلية (708 اختباراً في 73 ملف اختبار).
 
 
 > 1. **الخلفية الشبكية التفاعلية فائقة الكفاءة وتوفير المعالج ([`interactive-grid-background.tsx`](file:///c:/Users/Mustafa/Desktop/mk%20whats%20-%20Copy/src/components/landing/interactive-grid-background.tsx))**:

@@ -180,8 +180,10 @@ export function ConversationList({
       result = result.filter((c) => c.status === filter);
     }
 
-    if (channelFilter !== "all") {
-      result = result.filter((c) => (c.channel_type || "meta") === channelFilter);
+    if (channelFilter === "meta") {
+      result = result.filter((c) => c.channel_type === "meta");
+    } else if (channelFilter === "evolution") {
+      result = result.filter((c) => c.channel_type === "evolution" || !c.channel_type);
     }
 
     // Contact-based filters (tags via OR logic, exact company match).
